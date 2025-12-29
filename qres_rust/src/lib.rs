@@ -363,8 +363,8 @@ pub fn decompress_chunk(compressed: &[u8], predictor_id: u8, weights: Option<&[u
 use rayon::prelude::*;
 
 // --- Embedded Brains ---
-const LSTM_WEIGHTS: &[u8] = include_bytes!("models/lstm.qnn");
-const TENSOR_WEIGHTS: &[u8] = include_bytes!("models/tensor.qnn");
+const LSTM_WEIGHTS: &[u8] = include_bytes!("../assets/lstm.qnn");
+const TENSOR_WEIGHTS: &[u8] = include_bytes!("../assets/tensor.qnn");
 
 // --- Autonomic Selector ---
 // --- Race Statistics ---

@@ -1,0 +1,26 @@
+# Build Artifacts
+/target
+/dist
+*.so
+*.dll
+*.dylib
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# QRES Output & Test Data
+*.qres
+*.bin
+*.log
+*.json
+*.png
+*.txt
+
+# Editor / IDE
+.vscode/
+.idea/
+.DS_Store
