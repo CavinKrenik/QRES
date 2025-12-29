@@ -69,6 +69,7 @@ maturin develop --release
 python benchmarks/torture_test.py
 ```
 
-## 📜 License
-
-MIT License. Copyright (c) 2025 Cavin Krenik.
+## License
+Copyright (c) 2025 Cavin Krenik. All Rights Reserved.
+Unauthorized copying of this file, via any medium is strictly prohibited.
+Proprietary and confidential.

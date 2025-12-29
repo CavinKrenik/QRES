@@ -13,7 +13,7 @@ dependencies = [
 ]
 readme = "README.md"
 authors = [{name = "Cavin Krenik"}]
-license = {text = "MIT"}
+
 
 [tool.maturin]
 # Point to the existing Rust Crate
