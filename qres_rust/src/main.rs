@@ -15,12 +15,19 @@ fn compress_file(input: &str, output: &str, brain_path: Option<String>) -> io::R
         f.read_exact(&mut magic)?; 
         // Expect "QNN1", but simplified training script might not match exactly if I changed it. 
         // Trainer wrote "QNN1". Good.
-        if &magic != b"QNN1" {
-             return Err(io::Error::new(io::ErrorKind::InvalidData, "Invalid QNN Brain file"));
+        // Detect Magic
+        if &magic == b"QNN1" {
+             let mut w = Vec::new();
+             f.read_to_end(&mut w)?;
+             (2, Some(w))
+        } else if &magic == b"LSTM" {
+             println!("🧠 LSTM Mode Detected!");
+             let mut w = Vec::new();
+             f.read_to_end(&mut w)?;
+             (3, Some(w))
+        } else {
+             return Err(io::Error::new(io::ErrorKind::InvalidData, "Invalid Brain file (Unknown Magic)"));
         }
-        let mut w = Vec::new();
-        f.read_to_end(&mut w)?;
-        (2, Some(w))
     } else {
         (1, None) // Default Linear
     };

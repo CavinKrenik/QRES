@@ -24,44 +24,38 @@ pub struct QresHeader {
     pub chunk_compressed_sizes: Vec<u64>, // Empty if streaming
 }
 
-// --- Predictor Logic (v0.5.0 + v0.6.0 Neural) ---
+// --- Predictor Logic ---
 #[derive(Clone, Copy)]
-enum PredictorMode { Previous = 0, Linear = 1, Neural = 2 }
+enum PredictorMode { Previous = 0, Linear = 1, Neural = 2, Lstm = 3 }
 impl From<u8> for PredictorMode {
     fn from(v: u8) -> Self { 
         match v {
             1 => PredictorMode::Linear,
             2 => PredictorMode::Neural,
+            3 => PredictorMode::Lstm,
             _ => PredictorMode::Previous,
         }
     }
 }
 
-// Fixed-sized Neural Network (3 -> 8 -> 1)
 struct NeuralPredictor {
-    w1: [f32; 24], // 3 inputs * 8 hidden
-    b1: [f32; 8],  // 8 hidden bias
-    w2: [f32; 8],  // 8 hidden * 1 output
-    b2: [f32; 1],  // 1 output bias
-    context: [f32; 3], // Rolling window (normalized 0-1)
+    w1: [f32; 24], b1: [f32; 8], w2: [f32; 8], b2: [f32; 1],
+    context: [f32; 3],
 }
-
 impl NeuralPredictor {
     fn new(weights: Option<&[u8]>) -> Self {
         let mut n = NeuralPredictor {
             w1: [0.0; 24], b1: [0.0; 8], w2: [0.0; 8], b2: [0.0; 1],
             context: [0.0; 3],
         };
-        
         if let Some(w_bytes) = weights {
-            // Load weights from bytes (assumes f32 LE)
-            // Safety: We assume the byte slice is correct size (164 bytes)
-            if w_bytes.len() >= 164 {
+             // Valid simple check for Neural (164 bytes)
+             if w_bytes.len() == 164 {
                 unsafe {
-                    std::ptr::copy_nonoverlapping(w_bytes.as_ptr(), n.w1.as_mut_ptr() as *mut u8, 96); // 24 * 4
-                    std::ptr::copy_nonoverlapping(w_bytes.as_ptr().add(96), n.b1.as_mut_ptr() as *mut u8, 32); // 8 * 4
-                    std::ptr::copy_nonoverlapping(w_bytes.as_ptr().add(128), n.w2.as_mut_ptr() as *mut u8, 32); // 8 * 4
-                    std::ptr::copy_nonoverlapping(w_bytes.as_ptr().add(160), n.b2.as_mut_ptr() as *mut u8, 4); // 1 * 4
+                    std::ptr::copy_nonoverlapping(w_bytes.as_ptr(), n.w1.as_mut_ptr() as *mut u8, 96);
+                    std::ptr::copy_nonoverlapping(w_bytes.as_ptr().add(96), n.b1.as_mut_ptr() as *mut u8, 32);
+                    std::ptr::copy_nonoverlapping(w_bytes.as_ptr().add(128), n.w2.as_mut_ptr() as *mut u8, 32);
+                    std::ptr::copy_nonoverlapping(w_bytes.as_ptr().add(160), n.b2.as_mut_ptr() as *mut u8, 4);
                 }
             }
         }
@@ -69,20 +63,68 @@ impl NeuralPredictor {
     }
 }
 
+// MicroLSTM (1 -> 8 -> 1)
+struct LstmPredictor {
+    // Weights: Input (32, 1), Hidden (32, 8), Biases (32 + 32 -> 64), FC (1, 8), FC Bias (1)
+    // Actually, let's pre-sum biases for efficiency logic if we want, but PyTorch exports separate.
+    // For simplicity, we lay them out as PyTorch exports.
+    w_ih: [f32; 32],
+    w_hh: [f32; 256],
+    b_ih: [f32; 32],
+    b_hh: [f32; 32],
+    w_fc: [f32; 8],
+    b_fc: [f32; 1],
+    
+    // State
+    h: [f32; 8],
+    c: [f32; 8],
+}
+
+impl LstmPredictor {
+    fn new(weights: Option<&[u8]>) -> Self {
+        let mut n = LstmPredictor {
+            w_ih: [0.0; 32], w_hh: [0.0; 256], b_ih: [0.0; 32], b_hh: [0.0; 32], 
+            w_fc: [0.0; 8], b_fc: [0.0; 1],
+            h: [0.0; 8], c: [0.0; 8],
+        };
+        
+        if let Some(w) = weights {
+            // Expected size: 32*4 + 256*4 + 32*4 + 32*4 + 8*4 + 4 = 128+1024+128+128+32+4 = 1444 bytes.
+            if w.len() >= 1444 {
+                unsafe {
+                    let mut ptr = w.as_ptr();
+                    std::ptr::copy_nonoverlapping(ptr, n.w_ih.as_mut_ptr() as *mut u8, 128); ptr = ptr.add(128);
+                    std::ptr::copy_nonoverlapping(ptr, n.w_hh.as_mut_ptr() as *mut u8, 1024); ptr = ptr.add(1024);
+                    std::ptr::copy_nonoverlapping(ptr, n.b_ih.as_mut_ptr() as *mut u8, 128); ptr = ptr.add(128);
+                    std::ptr::copy_nonoverlapping(ptr, n.b_hh.as_mut_ptr() as *mut u8, 128); ptr = ptr.add(128);
+                    std::ptr::copy_nonoverlapping(ptr, n.w_fc.as_mut_ptr() as *mut u8, 32); ptr = ptr.add(32);
+                    std::ptr::copy_nonoverlapping(ptr, n.b_fc.as_mut_ptr() as *mut u8, 4);
+                }
+            }
+        }
+        n
+    }
+
+    #[inline(always)]
+    fn sigmoid(x: f32) -> f32 { 1.0 / (1.0 + (-x).exp()) }
+    
+    #[inline(always)]
+    fn tanh(x: f32) -> f32 { x.tanh() }
+}
+
 struct PredictorEngine { 
     mode: PredictorMode, 
-    p1: u8, 
-    p2: u8,
+    p1: u8, p2: u8,
     neural: NeuralPredictor,
+    lstm: LstmPredictor,
 }
 
 impl PredictorEngine {
     fn new(mode: PredictorMode, weights: Option<&[u8]>) -> Self { 
         PredictorEngine { 
-            mode, 
-            p1: 0, 
-            p2: 0,
-            neural: NeuralPredictor::new(weights)
+            mode, p1: 0, p2: 0,
+            neural: if matches!(mode, PredictorMode::Neural) { NeuralPredictor::new(weights) } else { NeuralPredictor::new(None) },
+            lstm: if matches!(mode, PredictorMode::Lstm) { LstmPredictor::new(weights) } else { LstmPredictor::new(None) },
         } 
     }
     
@@ -92,30 +134,28 @@ impl PredictorEngine {
             PredictorMode::Previous => self.p1,
             PredictorMode::Linear => self.p1.wrapping_add(self.p1.wrapping_sub(self.p2)),
             PredictorMode::Neural => {
-                // Forward Pass
                 let mut hidden = [0.0f32; 8];
-                
-                // Layer 1: Inputs (3) -> Hidden (8)
                 for h in 0..8 {
                     let mut sum = self.neural.b1[h];
-                    for i in 0..3 {
-                        // W1 is [3][8] flattened -> index = i*8 + h
-                        // Wait, previous training logic: "PyTorch Linear weight is (out_features, in_features)"
-                        // My exporter transposed it to (in, out) -> (3, 8).
-                        // So W1 index [i*8 + h] is correct if data is row-major.
-                        sum += self.neural.context[i] * self.neural.w1[i * 8 + h];
-                    }
-                    // ReLU
+                    for i in 0..3 { sum += self.neural.context[i] * self.neural.w1[i * 8 + h]; }
                     hidden[h] = if sum > 0.0 { sum } else { 0.0 };
                 }
-                
-                // Layer 2: Hidden (8) -> Output (1)
                 let mut sum = self.neural.b2[0];
-                for h in 0..8 {
-                    sum += hidden[h] * self.neural.w2[h];
-                }
+                for h in 0..8 { sum += hidden[h] * self.neural.w2[h]; }
+                let out = (sum * 255.0).round();
+                if out > 255.0 { 255 } else if out < 0.0 { 0 } else { out as u8 }
+            },
+            PredictorMode::Lstm => {
+                // LSTM Forward (One step prediction) based on CURRENT state (h, c).
+                // Wait, LSTM predicts NEXT x[t+1] using x[t]. But here `predict()` is called BEFORE `update(x[t])`.
+                // So `predict()` uses state derived from x[0]...x[t-1] to predict x[t].
+                // But the very first byte? x[0]. State is 0.
+                // We run the FC layer on current hidden state `h`.
+                // Ideally, h[-1] (init 0) projects to x[0].
                 
-                // Denormalize (Output is 0-1)
+                let mut sum = self.lstm.b_fc[0];
+                for i in 0..8 { sum += self.lstm.h[i] * self.lstm.w_fc[i]; }
+                
                 let out = (sum * 255.0).round();
                 if out > 255.0 { 255 } else if out < 0.0 { 0 } else { out as u8 }
             }
@@ -127,11 +167,47 @@ impl PredictorEngine {
         self.p2 = self.p1; 
         self.p1 = actual; 
         
-        if let PredictorMode::Neural = self.mode {
-            // Shift Context: [0,1,2] <- new
-            self.neural.context[0] = self.neural.context[1];
-            self.neural.context[1] = self.neural.context[2];
-            self.neural.context[2] = (actual as f32) / 255.0;
+        match self.mode {
+            PredictorMode::Neural => {
+                self.neural.context[0] = self.neural.context[1];
+                self.neural.context[1] = self.neural.context[2];
+                self.neural.context[2] = (actual as f32) / 255.0;
+            },
+            PredictorMode::Lstm => {
+                // Run LSTM Cell Step feeding `actual`
+                let x = (actual as f32) / 255.0;
+                
+                // Gates (i, f, g, o) - 8 units each.
+                // gates_raw = W_ih * x + b_ih + W_hh * h + b_hh
+                
+                let mut gates = [0.0f32; 32];
+                
+                // Vectorized multiply (Input part)
+                for i in 0..32 {
+                    gates[i] = self.lstm.w_ih[i] * x + self.lstm.b_ih[i] + self.lstm.b_hh[i];
+                }
+                
+                // Matrix multiply (Hidden part: W_hh [32x8] * h [8x1])
+                for row in 0..32 {
+                    let mut sum = 0.0;
+                    for col in 0..8 {
+                        sum += self.lstm.w_hh[row * 8 + col] * self.lstm.h[col];
+                    }
+                    gates[row] += sum;
+                }
+                
+                // Apply Activations & Update Cells
+                for i in 0..8 {
+                    let it = LstmPredictor::sigmoid(gates[i]);      // Input Gate
+                    let ft = LstmPredictor::sigmoid(gates[i+8]);    // Forget Gate
+                    let gt = LstmPredictor::tanh(gates[i+16]);      // Cell Gate
+                    let ot = LstmPredictor::sigmoid(gates[i+24]);   // Output Gate
+                    
+                    self.lstm.c[i] = ft * self.lstm.c[i] + it * gt;
+                    self.lstm.h[i] = ot * LstmPredictor::tanh(self.lstm.c[i]);
+                }
+            },
+            _ => {}
         }
     }
 }
@@ -302,9 +378,9 @@ impl<W: Write> QresWriter<W> {
         self.writer.write_all(&(hb.len() as u32).to_le_bytes())?; 
         self.writer.write_all(&hb)?;
 
-        // V3.1: Embed Neural Weights if Neural Mode
-        if self.predictor_id == 2 {
-            // Write length (u32) then bytes
+        // V3.1: Embed Neural Weights (ID 2 or 3)
+        if self.predictor_id == 2 || self.predictor_id == 3 {
+             // Write length (u32) then bytes
             self.writer.write_all(&(self.weights.len() as u32).to_le_bytes())?;
             self.writer.write_all(&self.weights)?;
         }
@@ -316,7 +392,8 @@ impl<W: Write> QresWriter<W> {
     fn compress_and_flush_buffer(&mut self) -> io::Result<()> {
         if self.buffer.is_empty() { return Ok(()); }
         
-        let weights_ref = if self.predictor_id == 2 { Some(self.weights.as_slice()) } else { None };
+        // Pass weights only if Neural/LSTM
+        let weights_ref = if self.predictor_id >= 2 { Some(self.weights.as_slice()) } else { None };
         let compressed = compress_chunk(&self.buffer, self.predictor_id, weights_ref)?;
         
         self.writer.write_all(&(compressed.len() as u32).to_le_bytes())?;
@@ -385,8 +462,8 @@ impl<R: Read> QresReader<R> {
         
         let header: QresHeader = bincode::deserialize(&h_buf).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
         
-        // V3.1: Read Weights if Neural
-        if header.predictor_id == 2 {
+        // V3.1: Read Weights if Neural/LSTM
+        if header.predictor_id >= 2 {
             let mut w_len_b = [0u8; 4];
             self.reader.read_exact(&mut w_len_b)?;
             let w_len = u32::from_le_bytes(w_len_b) as usize;
@@ -415,7 +492,7 @@ impl<R: Read> QresReader<R> {
         self.reader.read_exact(&mut compressed)?;
         
         let header = self.header.as_ref().ok_or(io::Error::new(io::ErrorKind::Other, "No Header"))?;
-        let weights_ref = if header.predictor_id == 2 { Some(self.weights.as_slice()) } else { None };
+        let weights_ref = if header.predictor_id >= 2 { Some(self.weights.as_slice()) } else { None };
         
         let decoded = decompress_chunk(&compressed, header.predictor_id, weights_ref)?;
         
