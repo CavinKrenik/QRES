@@ -8,8 +8,9 @@ import shutil
 # Phase 19: The Swarm Simulation
 # Demonstrates "Zero-Shot Adaptation" via Federated Intelligence.
 
-CLI = "qres_rust/target/debug/qres-cli"
-if sys.platform == "win32": CLI += ".exe"
+CLI = "qres_rust/target/release/qres-cli"
+if os.name == 'nt':
+    CLI += ".exe"
 
 HIVE_SERVER = "utils/hive_server.py"
 HIVE_SYNC = "utils/hive_sync.py"
@@ -47,6 +48,9 @@ def main():
     time.sleep(5) # Warmup
     
     try:
+        # 0. Clean Slatre
+        if os.path.exists("qres_brain.json"): os.remove("qres_brain.json")
+    
         # 1. Agent A (The Teacher)
         print("\n🎓 Agent A: Learning from Experience...")
         # Run compress. This will trigger punishment/learning logic.

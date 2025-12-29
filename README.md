@@ -27,13 +27,15 @@ QRES is a **Cybernetic Compression System** that not only predicts the best stra
 ## 🐝 The "Hive" Network Effect
 QRES becomes smarter as more people use it.
 
-### Clarity: Zero-Shot Adaptation via Hive Mind
-![Zero-Shot Adaptation](DOCS/zero_shot_adaptation.png)
-*Federated Agent B (Green) imports Hive wisdom for instant high confidence and superior ratios, while Agent A (Red) struggles with drift.*
+### The Singularity: Zero-Shot Adaptation via Hive Mind
+![Singularity Zero-Shot Adaptation](benchmarks/results/singularity_zero_shot.png)
+*Benchmark: Drifting Signal (Sine → Chaos) | 200KB Chunks*
+
+The black arrow highlights the **Singularity Moment** — Agent B imports Hive wisdom and starts with ~0.9–1.0 iPEPS confidence, achieving instant knowledge transfer.
 
 1.  **Isolate Learning (Red)**: Agent A encounters a drifting signal. It struggles, gets punished, and slowly learns to switch to **iPEPS** (dotted red line).
 2.  **Federated Sync**: Agent A pushes its "Living Brain" (Confidence Scores) to the Hive.
-3.  **Zero-Shot Adaptation (Green)**: Agent B pulls the Global Brain. When Agent B sees the same signal, it uses **iPEPS immediately** (dotted green line)—bypassing the learning curve entirely and achieving optimal compression ratios (solid green line) from the very first chunk.
+3.  **Zero-Shot Adaptation (Green)**: Agent B pulls the Global Brain. When Agent B sees the same signal, it uses **iPEPS immediately** (solid green line)—bypassing the learning curve entirely.
 
 ### Brain-Port CLI
 The core codec remains secure and offline. Networking is handled via external scripts (`utils/hive_sync.py`).

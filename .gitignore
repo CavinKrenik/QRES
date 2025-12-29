@@ -17,7 +17,7 @@ venv/
 *.bin
 *.log
 *.json
-*.png
+# *.png (Allowed for documentation)
 *.txt
 
 # Editor / IDE

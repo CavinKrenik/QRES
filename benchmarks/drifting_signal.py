@@ -6,13 +6,18 @@ import sys
 def generate_drift_signal(filename):
     print("Generating Drifting Signal (Sine -> Chaos)...")
     
-    # Phase 1: Pure Sine (Easy for Linear/Tensor) - 20KB
-    t = np.linspace(0, 100, 20000)
+    # Phase 1: Pure Sine (Easy for Linear/Tensor) - 2MB
+    t = np.linspace(0, 1000, 2000000) 
     msg1 = (np.sin(t) * 100 + 128).astype(np.uint8)
     
-    # Phase 2: Chaos/Noise (Hard) - 200KB
+    # Phase 2: Interleaved Zero/Random (The "Comb" Pattern) - 8MB
+    # Linear (Stride 1): Sees 0, R, 0, R. Predicts garbage. Ratio ~1.0.
+    # iPEPS (Stride 2): Sees 0->0 (Perfect) and R->R (Fail). Ratio ~0.5.
+    
+    n_points = 4000000
+    msg2 = np.zeros(n_points * 2, dtype=np.uint8)
     np.random.seed(42)
-    msg2 = np.random.randint(0, 255, 200000, dtype=np.uint8)
+    msg2[1::2] = np.random.randint(0, 255, n_points, dtype=np.uint8)
     
     with open(filename, 'wb') as f:
         f.write(msg1.tobytes())
@@ -63,4 +68,5 @@ def run_test():
             print("❌ FAILURE: Data mismatch!")
 
 if __name__ == "__main__":
-    run_test()
+    # run_test() # Disabled to prevent brain pollution
+    generate_drift_signal("drift.bin")

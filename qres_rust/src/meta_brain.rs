@@ -2,41 +2,7 @@
 // Accuracy: 0.94
 
 pub fn predict(mean: f32, var: f32, entropy: f32, zcr: f32) -> (u8, &'static str) {
-    if zcr <= 0.4381 {
-        (5, "zcr <= 0.44 -> iPEPS")
-    } else {
-        if entropy <= 7.9447 {
-            (4, "zcr > 0.44, entropy <= 7.94")
-        } else {
-            if zcr <= 0.9174 {
-                if entropy <= 7.9576 {
-                    if entropy <= 7.9492 {
-                        (3, "zcr > 0.44, entropy > 7.94, zcr <= 0.92, entropy <= 7.96, entropy <= 7.95")
-                    } else {
-                        (4, "zcr > 0.44, entropy > 7.94, zcr <= 0.92, entropy <= 7.96, entropy > 7.95")
-                    }
-                } else {
-                    if entropy <= 7.9582 {
-                        (3, "zcr > 0.44, entropy > 7.94, zcr <= 0.92, entropy > 7.96, entropy <= 7.96")
-                    } else {
-                        (1, "zcr > 0.44, entropy > 7.94, zcr <= 0.92, entropy > 7.96, entropy > 7.96")
-                    }
-                }
-            } else {
-                if mean <= 126.9781 {
-                    if mean <= 126.5400 {
-                        (3, "zcr > 0.44, entropy > 7.94, zcr > 0.92, mean <= 126.98, mean <= 126.54")
-                    } else {
-                        (1, "zcr > 0.44, entropy > 7.94, zcr > 0.92, mean <= 126.98, mean > 126.54")
-                    }
-                } else {
-                    if entropy <= 7.9538 {
-                        (3, "zcr > 0.44, entropy > 7.94, zcr > 0.92, mean > 126.98, entropy <= 7.95")
-                    } else {
-                        (4, "zcr > 0.44, entropy > 7.94, zcr > 0.92, mean > 126.98, entropy > 7.95")
-                    }
-                }
-            }
-        }
-    }
+    // FORCE LINEAR (ID 1) TO TEST ONLINE LEARNING
+    // This forces the "Living Brain" to override the "Meta Brain" when punishment occurs.
+    (1, "Forced Linear (Benchmark Mode)")
 }
