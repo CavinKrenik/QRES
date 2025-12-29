@@ -50,7 +50,8 @@ def main():
         # 1. Agent A (The Teacher)
         print("\n🎓 Agent A: Learning from Experience...")
         # Run compress. This will trigger punishment/learning logic.
-        run_command([CLI, "compress", "drift.bin", "a.qres"])
+        print("📊 Agent A: Trace enabled -> agent_a.csv")
+        run_command([CLI, "compress", "drift.bin", "a.qres", "--trace", "agent_a.csv"])
         
         # Verify A learned iPEPS (ID 5)
         if not check_brain_confidence(5, 0.8):
@@ -79,7 +80,8 @@ def main():
             
         # 5. Run B
         print("\n🏃 Agent B: Compressing with Inherited Wisdom...")
-        run_command([CLI, "compress", "drift.bin", "b.qres", "--explain"])
+        print("📊 Agent B: Trace enabled -> agent_b.csv")
+        run_command([CLI, "compress", "drift.bin", "b.qres", "--explain", "--trace", "agent_b.csv"])
         
     finally:
         print("\n🧹 Cleaning up...")

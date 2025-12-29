@@ -5,7 +5,7 @@ use qres_rust::{QresWriter, QresReader, LivingBrain};
 
 const DEFAULT_BRAIN_FILE: &str = "qres_brain.json";
 
-fn compress_file(input: &str, output: &str, mode_hint: u8, anomaly_threshold: Option<u8>, lossy_tolerance: Option<u8>, explain: bool) -> io::Result<()> {
+fn compress_file(input: &str, output: &str, mode_hint: u8, anomaly_threshold: Option<u8>, lossy_tolerance: Option<u8>, explain: bool, trace_file: Option<String>) -> io::Result<()> {
     let mut reader = BufReader::new(File::open(input)?);
     let writer = BufWriter::new(File::create(output)?);
     
@@ -23,6 +23,10 @@ fn compress_file(input: &str, output: &str, mode_hint: u8, anomaly_threshold: Op
     }
     if let Some(l) = lossy_tolerance {
         qres_writer.set_lossy(l);
+    }
+    if let Some(tf) = trace_file {
+        let f = File::create(tf)?;
+        qres_writer.set_trace(Box::new(f)); // Correct method name is set_trace
     }
     
     // Stream
@@ -104,6 +108,7 @@ fn main() {
             let mut anomaly_threshold = None;
             let mut lossy_tolerance = None;
             let mut explain = false;
+            let mut trace_file = None;
             let mut auto_tune = false; 
             
             let mut i = 4;
@@ -143,13 +148,19 @@ fn main() {
                         auto_tune = true;
                         i += 1;
                     },
+                    "--trace" => {
+                        if i + 1 < args.len() {
+                            trace_file = Some(args[i+1].clone());
+                            i += 2;
+                        } else { i += 1; }
+                    },
                     _ => i += 1,
                 }
             }
             if auto_tune {
                 println!("🧠 Auto-Tune Enabled.");
             }
-            compress_file(&args[2], &args[3], mode, anomaly_threshold, lossy_tolerance, explain).unwrap()
+            compress_file(&args[2], &args[3], mode, anomaly_threshold, lossy_tolerance, explain, trace_file).unwrap()
         },
         "decompress" => {
              if args.len() < 4 { eprintln!("Usage: decompress <in> <out>"); return; }

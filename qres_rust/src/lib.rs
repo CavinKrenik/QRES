@@ -588,6 +588,9 @@ pub struct QresWriter<W: Write> {
     weights: Vec<u8>,
     header_written: bool,
     pub explain_str: String, // Neuro-Symbolic Reason
+    
+    // Phase 20: Instrumentation
+    tracer: Option<Box<dyn Write>>, 
 }
 
 fn calc_features(chunk: &[u8]) -> (f32, f32, f32, f32) {
@@ -650,6 +653,7 @@ impl<W: Write> QresWriter<W> {
             explain_str: String::new(),
             anomaly_threshold: None,
             lossy_tolerance: None,
+            tracer: None,
         }
     }
     
@@ -664,6 +668,14 @@ impl<W: Write> QresWriter<W> {
 
     pub fn set_anomaly_threshold(&mut self, threshold: u8) {
         self.anomaly_threshold = Some(threshold);
+    }
+    
+    pub fn set_trace(&mut self, tracer: Box<dyn Write>) {
+        self.tracer = Some(tracer);
+        // Write CSV Header
+        if let Some(w) = self.tracer.as_mut() {
+            writeln!(w, "ChunkID,EngineID,Ratio,ConfLinear,ConfIPEPS").unwrap_or(());
+        }
     }
 
     fn write_header(&mut self) -> io::Result<()> {
@@ -737,6 +749,19 @@ impl<W: Write> QresWriter<W> {
                      eprintln!("[Watchdog] Anomaly detected at offset +{}: delta={} (Threshold {})", i, r, threshold);
                  }
             }
+        }
+        
+        // Tracing
+        if let Some(w) = self.tracer.as_mut() {
+            let chunk_id = Utc::now().timestamp_subsec_millis(); // Approximate ID
+            // Log: ID, Engine, Ratio, Conf_L(1), Conf_I(5)
+            writeln!(w, "{},{},{:.4},{:.4},{:.4}", 
+                chunk_id, 
+                self.predictor_id, 
+                ratio, 
+                self.living_brain.confidence[1], 
+                self.living_brain.confidence[5]
+            ).unwrap_or(());
         }
 
         // Chunk Header: [Size u32] [EngineID u8] [Data]
