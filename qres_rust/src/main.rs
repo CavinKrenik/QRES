@@ -4,12 +4,15 @@ use std::io::{self, BufReader, BufWriter, Read, Write};
 use qres_rust::{QresWriter, QresReader};
 use serde_json;
 
-fn compress_file(input: &str, output: &str, mode_hint: u8, report_path: Option<String>) -> io::Result<()> {
+fn compress_file(input: &str, output: &str, mode_hint: u8, anomaly_threshold: Option<u8>) -> io::Result<()> {
     let mut reader = BufReader::new(File::open(input)?);
     let writer = BufWriter::new(File::create(output)?);
     
     // QresWriter handles detection internally now
     let mut qres_writer = QresWriter::new(writer, mode_hint);
+    if let Some(t) = anomaly_threshold {
+        qres_writer.set_anomaly_threshold(t);
+    }
     
     // Stream
     let start = std::time::Instant::now();
@@ -18,18 +21,6 @@ fn compress_file(input: &str, output: &str, mode_hint: u8, report_path: Option<S
     
     println!("Streamed {} bytes to {} (Mode: {}) in {:.2}s", 
         bytes, output, mode_hint, start.elapsed().as_secs_f64());
-        
-    // Dump Report
-    if let Some(path) = report_path {
-        if let Some(stats) = &qres_writer.race_stats {
-            let json = serde_json::to_string_pretty(stats)?;
-            let mut f = File::create(&path)?;
-            f.write_all(json.as_bytes())?;
-            println!("Race Report saved to {}", path);
-        } else {
-            println!("No Race Stats available (Buffer too small or forced mode).");
-        }
-    }
     Ok(())
 }
 
@@ -49,7 +40,7 @@ fn decompress_file(input: &str, output: &str) -> io::Result<()> {
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() < 4 { 
-        eprintln!("Usage: qres-cli <compress|decompress> <in> <out> [--mode <auto|max|fast>] [--report <stats.json>]");
+        eprintln!("Usage: qres-cli <compress|decompress> <in> <out> [--mode <auto|max|fast>] [--detect-anomalies <threshold>]");
         std::process::exit(1);
     }
     
@@ -57,7 +48,7 @@ fn main() {
         "compress" => {
             // Parse optional flags
             let mut mode = 0;
-            let mut report_path = None;
+            let mut anomaly_threshold = None;
             
             let mut i = 4;
             while i < args.len() {
@@ -72,16 +63,18 @@ fn main() {
                             i += 2;
                         } else { i += 1; }
                     },
-                    "--report" => {
+                    "--detect-anomalies" => {
                          if i + 1 < args.len() {
-                             report_path = Some(args[i+1].clone());
+                             if let Ok(t) = args[i+1].parse::<u8>() {
+                                 anomaly_threshold = Some(t);
+                             }
                              i += 2;
                          } else { i += 1; }
                     },
                     _ => i += 1,
                 }
             }
-            compress_file(&args[2], &args[3], mode, report_path).unwrap()
+            compress_file(&args[2], &args[3], mode, anomaly_threshold).unwrap()
         },
         "decompress" => decompress_file(&args[2], &args[3]).unwrap(),
         _ => eprintln!("Unknown command"),

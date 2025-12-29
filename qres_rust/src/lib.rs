@@ -8,6 +8,8 @@ use flate2::Compression;
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
 
+mod meta_brain;
+
 const CHUNK_SIZE: usize = 4 * 1024 * 1024; // 4MB
 const QRES_MAGIC: &[u8] = b"QRES";
 
@@ -457,27 +459,73 @@ pub struct QresWriter<W: Write> {
     
     // Config
     mode_hint: u8, // 0=Auto, 1=Fast(Linear), 3=Max(LSTM)
-    
+    anomaly_threshold: Option<u8>, // If Set, detect anomalies
+
     // State
     state: WriterState,
     predictor_id: u8,
     weights: Vec<u8>,
-    pub race_stats: Option<RaceStats>,
     header_written: bool,
+}
+
+fn calc_features(chunk: &[u8]) -> (f32, f32, f32, f32) {
+    if chunk.len() < 2 { return (0.0, 0.0, 0.0, 0.0); }
+    
+    let n = chunk.len() as f32;
+    let mut sum = 0.0;
+    let mut sq_sum = 0.0;
+    
+    // Hist for Entropy
+    let mut counts = [0u32; 256];
+    
+    // ZCR
+    let mut zcr_count = 0;
+    let mut prev = chunk[0] as i16;
+    
+    for &b in chunk {
+        sum += b as f32;
+        sq_sum += (b as f32).powi(2);
+        counts[b as usize] += 1;
+        
+        // ZCR Logic: Changes > 10
+        let curr = b as i16;
+        if (curr - prev).abs() > 10 {
+            zcr_count += 1;
+        }
+        prev = curr;
+    }
+    
+    let mean = sum / n;
+    let var = (sq_sum / n) - mean * mean;
+    
+    let mut entropy = 0.0;
+    for &c in counts.iter() {
+        if c > 0 {
+            let p = c as f32 / n;
+            entropy -= p * p.log2();
+        }
+    }
+    
+    let zcr = zcr_count as f32 / n;
+    (mean, var, entropy, zcr)
 }
 
 impl<W: Write> QresWriter<W> {
     pub fn new(writer: W, mode_hint: u8) -> Self {
         QresWriter {
             writer,
-            buffer: Vec::with_capacity(64 * 1024), // 64KB Buffer for race
+            buffer: Vec::with_capacity(4096), // 4KB Buffer for Psychic Predictor
             mode_hint, // 0=Auto
+            anomaly_threshold: None,
             state: WriterState::Buffering,
             predictor_id: 1, // Default
             weights: Vec::new(),
-            race_stats: None,
             header_written: false,
         }
+    }
+
+    pub fn set_anomaly_threshold(&mut self, threshold: u8) {
+        self.anomaly_threshold = Some(threshold);
     }
 
     fn write_header(&mut self) -> io::Result<()> {
@@ -516,6 +564,20 @@ impl<W: Write> QresWriter<W> {
         if chunk.is_empty() { return Ok(()); }
         
         let weights_ref = if self.predictor_id >= 2 { Some(self.weights.as_slice()) } else { None };
+        
+        // 1. Anomaly Detection (Watchdog)
+        if let Some(threshold) = self.anomaly_threshold {
+            let residuals = get_residuals(chunk, self.predictor_id, weights_ref);
+            // Check for large errors
+            for (i, &r) in residuals.iter().enumerate() {
+                 if r.abs() > threshold as i8 {
+                     eprintln!("[Watchdog] Anomaly detected at offset +{}: delta={} (Threshold {})", i, r, threshold);
+                     // Optional: Panic or just log? User said "Log... (Optional) Mark". We just log.
+                 }
+            }
+        }
+
+        // 2. Compress
         let compressed = compress_chunk(chunk, self.predictor_id, weights_ref)?;
         
         self.writer.write_all(&(compressed.len() as u32).to_le_bytes())?;
@@ -523,46 +585,38 @@ impl<W: Write> QresWriter<W> {
         Ok(())
     }
 
-    fn perform_race_and_flush(&mut self) -> io::Result<()> {
-        // Race Logic
-        if self.mode_hint == 3 {
-             // Force LSTM
-             self.predictor_id = 3;
-             self.weights = LSTM_WEIGHTS.to_vec();
-        } else if self.mode_hint == 1 {
-             // Force Linear
-             self.predictor_id = 1;
-             self.weights = Vec::new();
+    fn perform_psychic_select_and_flush(&mut self) -> io::Result<()> {
+        // Psychic Logic (Meta-Brain)
+        if self.mode_hint != 0 {
+             // Manual Override
+             if self.mode_hint == 3 { self.predictor_id = 3; self.weights = LSTM_WEIGHTS.to_vec(); }
+             else if self.mode_hint == 1 { self.predictor_id = 1; self.weights = Vec::new(); }
         } else {
-             // Auto (0) - RACE!
-             if self.buffer.len() > 1024 { // Only race if we have decent sample
-                 let (winner, w, stats) = qualify_stream(&self.buffer);
+             // Auto - Use Psychic
+             if self.buffer.len() >= 128 { // Need minimal data
+                 let (mean, var, entropy, zcr) = calc_features(&self.buffer);
+                 let winner = meta_brain::predict(mean, var, entropy, zcr);
                  self.predictor_id = winner;
-                 self.weights = w;
-                 self.race_stats = Some(stats);
+                 
+                 // Load weights
+                 match winner {
+                     3 => self.weights = LSTM_WEIGHTS.to_vec(),
+                     4 => self.weights = TENSOR_WEIGHTS.to_vec(),
+                     _ => self.weights.clear(),
+                 }
              } else {
-                 // Too small, default Linear
-                 self.predictor_id = 1; 
+                 self.predictor_id = 1; // Default Linear
              }
         }
         
         self.write_header()?;
         
-        // Flush buffer
-        // Note: buffer might be larger than chunk size? 
-        // Our buffer is 64KB, chunk size 4MB. Safe to flush as one chunk.
-        // Or strictly follow CHUNK_SIZE.
-        
-        let mut offset = 0;
-        while offset < self.buffer.len() {
-             let end = min(offset + CHUNK_SIZE, self.buffer.len());
-             let chunk = self.buffer[offset..end].to_vec();
-             self.flush_chunk(&chunk)?;
-             offset = end;
-        }
+        // Flush buffer (This was the analysis window)
+        let c = self.buffer.clone();
+        self.flush_chunk(&c)?;
         
         self.buffer.clear();
-        self.state = WriterState::Streaming;
+        self.state = WriterState::Streaming; // Switch to stream
         Ok(())
     }
 }
@@ -573,26 +627,22 @@ impl<W: Write> Write for QresWriter<W> {
         
         match self.state {
             WriterState::Buffering => {
-                // Fill buffer until 64KB
-                let needed = 64 * 1024 - self.buffer.len();
+                // Fill buffer until 4KB (Psychic Window)
+                let needed = 4096 - self.buffer.len();
                 let to_copy = min(needed, buf.len());
                 self.buffer.extend_from_slice(&buf[0..to_copy]);
                 bytes_processed += to_copy;
                 
-                if self.buffer.len() >= 64 * 1024 {
-                    self.perform_race_and_flush()?;
+                if self.buffer.len() >= 4096 {
+                    self.perform_psychic_select_and_flush()?;
                     
-                    // Process remaining bytes in this call via Streaming logic
+                    // Process remaining
                     if bytes_processed < buf.len() {
-                        self.writer.write_all(&[])?; // Just to sync trait? No-op.
-                        // Recurse or Loop? Better loop structure.
-                        // Let's just handle rest here.
                         return self.write(&buf[bytes_processed..]).map(|n| n + bytes_processed);
                     }
                 }
             },
             WriterState::Streaming => {
-                // Standard Streaming
                  while bytes_processed < buf.len() {
                     let space = CHUNK_SIZE - self.buffer.len();
                     let to_copy = min(space, buf.len() - bytes_processed);
@@ -601,17 +651,7 @@ impl<W: Write> Write for QresWriter<W> {
                     bytes_processed += to_copy;
                     
                     if self.buffer.len() == CHUNK_SIZE {
-                        self.flush_chunk(&clone_buffer(&self.buffer))?; // Helper to avoid borrow issues? 
-                        // Actually flush_chunk takes &self, so we can't drain buffer easily.
-                        // Let's modify flush_chunk to NOT take &self buffer but just bytes. Done.
-                        // Wait, previous implem used state buffer.
-                        // Here we use self.buffer for chunking.
-                        
-                        // We need to pass slice to flush_chunk.
-                        // But flush_chunk writes to self.writer.
-                        
-                        // Correct pattern:
-                        let c = self.buffer.clone(); // Copy 4MB? Meh.
+                        let c = self.buffer.clone();
                         self.flush_chunk(&c)?;
                         self.buffer.clear();
                     }
@@ -623,8 +663,8 @@ impl<W: Write> Write for QresWriter<W> {
 
     fn flush(&mut self) -> io::Result<()> {
         if let WriterState::Buffering = self.state {
-            // Flush triggered before 64KB. Race on what we have.
-            self.perform_race_and_flush()?;
+            // Flush triggered early?
+            self.perform_psychic_select_and_flush()?;
         }
         
         if !self.buffer.is_empty() {
