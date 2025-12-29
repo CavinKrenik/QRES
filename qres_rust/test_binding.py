@@ -12,7 +12,7 @@ try:
     # 1. Benchmark Compression
     start = time.time()
     # Explicitly ensure it's bytes
-    compressed = qres_rust.encode_bytes(data)
+    compressed = qres_rust.encode_bytes(data, 1) # Predictor 1 = Linear
     end = time.time()
 
     print(f"Compressed Size: {len(compressed)} bytes")
@@ -20,7 +20,7 @@ try:
     print(f"Compression Speed: {len(data) / (end - start) / 1024 / 1024:.2f} MB/s")
 
     # 2. Verify Lossless Round-Trip
-    restored = qres_rust.decode_bytes(compressed)
+    restored = qres_rust.decode_bytes(compressed, 1)
     assert data == bytes(restored), "CRITICAL: Data mismatch!"
     print("✅ Integrity Check Passed: Lossless confirmed.")
 

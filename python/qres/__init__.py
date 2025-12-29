@@ -13,7 +13,7 @@ except ImportError:
     import qres_rust
     
 # Expose bindings directly for advanced users
-encode_buffer = qres_rust.encode_buffer
+encode_bytes = qres_rust.encode_bytes
 decode_bytes = qres_rust.decode_bytes
 
 class QRESError(Exception):
@@ -27,23 +27,28 @@ class QRES:
     """
     
     @staticmethod
-    def compress(data: Union[bytes, bytearray, np.ndarray]) -> bytes:
+    def compress(data: Union[bytes, bytearray, np.ndarray], predictor_id: int = 1) -> bytes:
         """
         Compress data using QRES v2 (Bit-Packed + Delta).
         Supports: bytes, bytearray, memoryview, numpy.ndarray.
+        Predictor ID: 0=Previous, 1=Linear.
         """
-        # Phase 5 Optimization: Direct Buffer Protocol passing
-        # Rust handles the buffer pointer directly.
         try:
-            return encode_buffer(data)
+            # Phase 9: V3 Streamable API (requires predictor_id)
+            if isinstance(data, (bytes, bytearray)):
+                 return encode_bytes(data, predictor_id)
+            elif isinstance(data, np.ndarray):
+                 return encode_bytes(data.tobytes(), predictor_id)
+            else:
+                 return encode_bytes(memoryview(data).tobytes(), predictor_id)
         except Exception as e:
             # Fallback for unexpected types or non-contiguous buffers
             if isinstance(data, str):
-                return encode_buffer(data.encode('utf-8'))
+                return encode_bytes(data.encode('utf-8'), predictor_id)
             raise QRESError(f"Compression failed: {e}")
 
     @staticmethod
-    def decompress(data: Union[bytes, bytearray]) -> bytes:
+    def decompress(data: Union[bytes, bytearray], predictor_id: int = 1) -> bytes:
         """
         Decompress QRES v2 data.
         """
@@ -51,7 +56,7 @@ class QRES:
              raise TypeError(f"Unsupported type {type(data)}. Expected bytes.")
              
         try:
-            return decode_bytes(data)
+            return decode_bytes(data, predictor_id)
         except Exception as e:
             raise QRESError(f"Decompression failed: {e}")
 
