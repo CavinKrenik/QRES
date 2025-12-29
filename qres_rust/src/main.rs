@@ -22,6 +22,133 @@ struct QresHeader {
     chunk_compressed_sizes: Vec<u64>,
 }
 
+// --- Safety Infrastructure: BitWriter & BitReader ---
+
+struct BitWriter {
+    buffer: Vec<u8>,
+    current_byte: u8,
+    bit_count: u8,
+}
+
+impl BitWriter {
+    fn new() -> Self {
+        BitWriter {
+            buffer: Vec::new(),
+            current_byte: 0,
+            bit_count: 0,
+        }
+    }
+
+    // Write up to 8 bits
+    fn write_bits(&mut self, value: u8, bits: u8) {
+        if bits == 0 { return; }
+        
+        let mut bits_left = bits;
+        let mut value_shift = value;
+
+        while bits_left > 0 {
+            let space_in_byte = 8 - self.bit_count;
+            let bits_to_write = std::cmp::min(bits_left, space_in_byte);
+
+            // Mask the value to keep only the bits we want to write
+            // (Assumes value is right-aligned for the chunk we want)
+            // Actually, usually we write MSB or LSB. Let's stick to LSB filling.
+            // But for 2-bit codes, order matters.
+            // Let's write bits such that later we read them in same order.
+            // If we write 01 (Value 1) with 2 bits.
+            // We put it at the "bottom" of the current stream?
+            // Standard idiom: Fill byte standardly.
+            
+            // Implementation: Fill MSB to LSB or LSB to MSB? 
+            // Let's use LSB to MSB packing for simplicity or MSB to LSB?
+            // MSB to LSB is easier to read in hex dump.
+            // Example: Write 01 (0x1) -> Byte: 01xxxxxx
+            
+            // Let's do MSB-first packing.
+            // current_byte: [xxxx....]
+            
+            let shift = space_in_byte - bits_to_write;
+            // Get the top 'bits_to_write' from 'value_shift' (which assumes value passed is lower-bit aligned? 
+            // No, the caller usually passes 'value' as a u8 where the relevant bits are at the bottom).
+            
+            // To make it simple: iterate bits.
+            for _ in 0..bits_to_write {
+                // Take top bit of remaining value? No, let's take BIT BY BIT for safety if we are unsure,
+                // BUT for speed, let's just mask.
+                
+                // Let's assume 'value' has 'bits' significant bits at the LSB.
+                // We want to write the most significant of those first? 
+                // E.g. write_bits(0b10, 2). We want 1 then 0.
+                
+                let bit_val = (value_shift >> (bits_left - 1)) & 1;
+                self.current_byte |= bit_val << (7 - self.bit_count);
+                self.bit_count += 1;
+                bits_left -= 1;
+                
+                if self.bit_count == 8 {
+                    self.buffer.push(self.current_byte);
+                    self.current_byte = 0;
+                    self.bit_count = 0;
+                }
+            }
+        }
+    }
+    
+    // Explicit 2-bit write helper for speed/clarity
+    fn write_2bits(&mut self, value: u8) {
+        // Optimizes for the common case
+        // value must be 0..3
+        self.write_bits(value, 2);
+    }
+
+    fn flush(&mut self) -> Vec<u8> {
+        if self.bit_count > 0 {
+            self.buffer.push(self.current_byte);
+            self.current_byte = 0;
+            self.bit_count = 0;
+        }
+        std::mem::take(&mut self.buffer)
+    }
+}
+
+struct BitReader<'a> {
+    buffer: &'a [u8],
+    byte_index: usize,
+    bit_offset: u8, // 0..7, MSB first
+}
+
+impl<'a> BitReader<'a> {
+    fn new(buffer: &'a [u8]) -> Self {
+        BitReader {
+            buffer,
+            byte_index: 0,
+            bit_offset: 0,
+        }
+    }
+
+    fn read_bits(&mut self, bits: u8) -> Option<u8> {
+        if bits == 0 { return Some(0); }
+        let mut result = 0u8;
+        for _ in 0..bits {
+            if self.byte_index >= self.buffer.len() {
+                return None;
+            }
+            
+            let bit = (self.buffer[self.byte_index] >> (7 - self.bit_offset)) & 1;
+            result = (result << 1) | bit;
+            
+            self.bit_offset += 1;
+            if self.bit_offset == 8 {
+                self.bit_offset = 0;
+                self.byte_index += 1;
+            }
+        }
+        Some(result)
+    }
+}
+
+// --- v2 Protocol Logic ---
+
 // 1. Delta Encoding: Calculate difference between bytes
 fn delta_encode(data: &[u8]) -> Vec<i8> {
     let mut result = Vec::with_capacity(data.len());
@@ -44,84 +171,79 @@ fn delta_decode(data: &[i8]) -> Vec<u8> {
     result
 }
 
-// 2. Hybrid RLE: The "Senior Dev" Fix
-// Does not compress runs shorter than 4 bytes to avoid expansion.
-// Format:
-// [0xFF] [Value] [Count (u16)] -> Run of 'Value' for 'Count' times
-// [Literal Byte] -> Single literal (if not 0xFF)
-// [0xFF] [0xFF] [0x01] [0x00] -> Escaped 0xFF literal (edge case)
-fn rle_encode(deltas: &[i8]) -> Vec<u8> {
-    let mut result = Vec::with_capacity(deltas.len());
-    if deltas.is_empty() { return result; }
-
-    let mut i = 0;
-    while i < deltas.len() {
-        let current = deltas[i];
-        let mut run_len = 1u16;
-
-        // Look ahead for a run
-        while i + (run_len as usize) < deltas.len() 
-            && deltas[i + run_len as usize] == current 
-            && run_len < u16::MAX 
-        {
-            run_len += 1;
-        }
-
-        // HEURISTIC: Only compress if run saves space (run > 3)
-        // Or if the value is the special marker 0xFF (which must be escaped)
-        let is_marker = current as u8 == 0xFF;
-
-        if run_len > 3 || (is_marker && run_len > 1) {
-            // Write Run
-            result.push(0xFF);
-            result.push(current as u8);
-            result.extend_from_slice(&run_len.to_le_bytes());
-            i += run_len as usize;
-        } else {
-            // Write Literals (Packet of 1)
-            // If it happens to be 0xFF, we MUST encode it as a run of 1 to escape it
-            if is_marker {
-                result.push(0xFF);
-                result.push(0xFF);
-                result.extend_from_slice(&1u16.to_le_bytes());
-                i += 1;
-            } else {
-                result.push(current as u8);
-                i += 1;
+// 2. Bit Packed Encoding (v2)
+// 00: 0
+// 01: +1
+// 10: -1
+// 11: Escape -> next 8 bits = literal
+fn bit_pack_encode(deltas: &[i8]) -> Vec<u8> {
+    let mut writer = BitWriter::new();
+    
+    // Header: Store number of deltas strictly (u32 LE)
+    // This ensures we stop reading exactly when done, ignoring padding.
+    let count = deltas.len() as u32;
+    writer.buffer.extend_from_slice(&count.to_le_bytes()); 
+    // Note: BitWriter writes to buffer. We just pre-filled the buffer.
+    // This is safe because bit state (current_byte) is empty.
+    
+    for &d in deltas {
+        match d {
+            0 => writer.write_2bits(0b00),
+            1 => writer.write_2bits(0b01),
+            -1 => writer.write_2bits(0b10),
+            _ => {
+                writer.write_2bits(0b11); // Escape
+                writer.write_bits(d as u8, 8); // Write full byte
             }
         }
     }
-    result
+    
+    writer.flush()
 }
 
-fn rle_decode(encoded: &[u8]) -> Vec<i8> {
-    let mut result = Vec::new();
-    let mut i = 0;
-    while i < encoded.len() {
-        if encoded[i] == 0xFF {
-            // It's a run (or escaped literal)
-            if i + 3 >= encoded.len() { break; } // Safety check
-            let val = encoded[i+1] as i8;
-            let count = u16::from_le_bytes([encoded[i+2], encoded[i+3]]);
-            for _ in 0..count {
-                result.push(val);
-            }
-            i += 4;
-        } else {
-            // It's a literal
-            result.push(encoded[i] as i8);
-            i += 1;
-        }
+fn bit_pack_decode(encoded: &[u8]) -> Vec<i8> {
+    if encoded.len() < 4 { return Vec::new(); }
+    
+    // Read count
+    let count_bytes: [u8; 4] = encoded[0..4].try_into().unwrap();
+    let count = u32::from_le_bytes(count_bytes) as usize;
+    
+    // Start bit reader after slice
+    let mut reader = BitReader::new(&encoded[4..]);
+    let mut result = Vec::with_capacity(count);
+    
+    for _ in 0..count {
+        // Read 2-bit code
+        let code = match reader.read_bits(2) {
+            Some(c) => c,
+            None => break, // Should not happen if count is correct
+        };
+        
+        let delta = match code {
+            0b00 => 0,
+            0b01 => 1,
+            0b10 => -1,
+            0b11 => {
+                // Escape
+                match reader.read_bits(8) {
+                    Some(lit) => lit as i8,
+                    None => break,
+                }
+            },
+            _ => unreachable!(),
+        };
+        result.push(delta);
     }
+    
     result
 }
 
 fn compress_chunk(chunk: &[u8]) -> io::Result<Vec<u8>> {
     let deltas = delta_encode(chunk);
-    let rle_data = rle_encode(&deltas);
-    // Zlib Stage (Level 6 default is good balance)
+    let packed_data = bit_pack_encode(&deltas);
+    // Zlib Stage
     let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
-    encoder.write_all(&rle_data)?;
+    encoder.write_all(&packed_data)?;
     encoder.finish()
 }
 
@@ -129,7 +251,9 @@ fn decompress_chunk(compressed: &[u8]) -> io::Result<Vec<u8>> {
     let mut decoder = ZlibDecoder::new(compressed);
     let mut decoded = Vec::new();
     decoder.read_to_end(&mut decoded)?;
-    let deltas = rle_decode(&decoded);
+    
+    // In v2, the decoded data is the bit-packed stream
+    let deltas = bit_pack_decode(&decoded);
     Ok(delta_decode(&deltas))
 }
 
@@ -150,7 +274,7 @@ fn compress_file(input_path: &str, output_path: &str) -> io::Result<()> {
         raw_chunks.push(chunk);
     }
 
-    println!("Encoding {} chunks...", raw_chunks.len());
+    println!("Encoding {} chunks (v2 Bit-Packed)...", raw_chunks.len());
 
     // Parallel processing
     let compressed_chunks: Vec<Vec<u8>> = raw_chunks.par_iter()
@@ -161,7 +285,7 @@ fn compress_file(input_path: &str, output_path: &str) -> io::Result<()> {
     let chunk_sizes: Vec<u64> = compressed_chunks.iter().map(|c| c.len() as u64).collect();
 
     let header = QresHeader {
-        version: 1,
+        version: 2, // v2 Alpha
         timestamp: Utc::now().timestamp(),
         original_size,
         compressed_size,
@@ -210,10 +334,11 @@ fn decompress_file(input_path: &str, output_path: &str) -> io::Result<()> {
 
     let mut output = BufWriter::new(File::create(output_path)?);
     
-    println!("Decompressing: {}", header.file_name);
+    println!("Decompressing: {} (v{})", header.file_name, header.version);
 
-    for size in header.chunk_compressed_sizes {
-        let mut compressed_chunk = vec![0u8; size as usize];
+    for (i, size) in header.chunk_compressed_sizes.iter().enumerate() {
+        println!("Reading chunk {} of size {}", i, size);
+        let mut compressed_chunk = vec![0u8; *size as usize];
         reader.read_exact(&mut compressed_chunk)?;
         let decompressed_chunk = decompress_chunk(&compressed_chunk)?;
         output.write_all(&decompressed_chunk)?;
@@ -233,5 +358,55 @@ fn main() {
         "compress" => compress_file(&args[2], &args[3]).expect("Compression failed"),
         "decompress" => decompress_file(&args[2], &args[3]).expect("Decompression failed"),
         _ => eprintln!("Unknown command: {}", args[1]),
+    }
+}
+
+// --- Unit Tests ---
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_bit_writer_reader() {
+        let mut writer = BitWriter::new();
+        // Write 00, 01, 10, 11
+        writer.write_2bits(0b00);
+        writer.write_2bits(0b01);
+        writer.write_2bits(0b10);
+        writer.write_2bits(0b11);
+        
+        let bytes = writer.flush();
+        // Should be 1 byte: 00 01 10 11 -> 00011011 -> 0x1B (27)
+        assert_eq!(bytes.len(), 1);
+        assert_eq!(bytes[0], 0x1B);
+        
+        let mut reader = BitReader::new(&bytes);
+        assert_eq!(reader.read_bits(2), Some(0b00));
+        assert_eq!(reader.read_bits(2), Some(0b01));
+        assert_eq!(reader.read_bits(2), Some(0b10));
+        assert_eq!(reader.read_bits(2), Some(0b11));
+        assert_eq!(reader.read_bits(2), None);
+    }
+
+    #[test]
+    fn test_bit_pack_round_trip() {
+        // Test patterns: 0, +1, -1, +10 (escape)
+        let deltas: Vec<i8> = vec![0, 1, -1, 10, 0, -128];
+        let encoded = bit_pack_encode(&deltas);
+        let decoded = bit_pack_decode(&encoded);
+        
+        assert_eq!(deltas, decoded);
+    }
+
+    #[test]
+    fn test_full_round_trip() {
+        let original_data = vec![10, 11, 12, 11, 11, 50, 51]; 
+        // Deltas: 10, 1, 1, -1, 0, 39, 1
+        // encoded should handle the escapes.
+        
+        let compressed = compress_chunk(&original_data).unwrap();
+        let restored = decompress_chunk(&compressed).unwrap();
+        
+        assert_eq!(original_data, restored);
     }
 }
