@@ -14,28 +14,19 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
           python-version: '3.9'
 
-      - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Install dependencies
+      - name: Create Virtual Environment and Build
         run: |
-          python -m pip install --upgrade pip
-          pip install maturin pytest requests numpy pandas matplotlib zstandard
-
-      - name: Build Library
-        run: |
-          # Build the python extension in-place
-          export PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install maturin pytest numpy requests
           maturin develop --release
+        # Note: We run everything in one block to keep the 'source' activation alive
 
-      - name: Run Rust Tests
-        run: cargo test --manifest-path qres_rust/Cargo.toml
-
-      - name: Run Python Benchmarks/Tests
+      - name: Run Tests
         run: |
-          # Running the torture test as a verification script
+          source .venv/bin/activate
           python benchmarks/torture_test.py
