@@ -24,25 +24,116 @@ pub struct QresHeader {
     pub chunk_compressed_sizes: Vec<u64>, // Empty if streaming
 }
 
-// --- Predictor Logic (v0.5.0) ---
+// --- Predictor Logic (v0.5.0 + v0.6.0 Neural) ---
 #[derive(Clone, Copy)]
-enum PredictorMode { Previous = 0, Linear = 1 }
+enum PredictorMode { Previous = 0, Linear = 1, Neural = 2 }
 impl From<u8> for PredictorMode {
-    fn from(v: u8) -> Self { if v == 1 { PredictorMode::Linear } else { PredictorMode::Previous } }
+    fn from(v: u8) -> Self { 
+        match v {
+            1 => PredictorMode::Linear,
+            2 => PredictorMode::Neural,
+            _ => PredictorMode::Previous,
+        }
+    }
 }
 
-struct PredictorEngine { mode: PredictorMode, p1: u8, p2: u8 }
+// Fixed-sized Neural Network (3 -> 8 -> 1)
+struct NeuralPredictor {
+    w1: [f32; 24], // 3 inputs * 8 hidden
+    b1: [f32; 8],  // 8 hidden bias
+    w2: [f32; 8],  // 8 hidden * 1 output
+    b2: [f32; 1],  // 1 output bias
+    context: [f32; 3], // Rolling window (normalized 0-1)
+}
+
+impl NeuralPredictor {
+    fn new(weights: Option<&[u8]>) -> Self {
+        let mut n = NeuralPredictor {
+            w1: [0.0; 24], b1: [0.0; 8], w2: [0.0; 8], b2: [0.0; 1],
+            context: [0.0; 3],
+        };
+        
+        if let Some(w_bytes) = weights {
+            // Load weights from bytes (assumes f32 LE)
+            // Safety: We assume the byte slice is correct size (164 bytes)
+            if w_bytes.len() >= 164 {
+                unsafe {
+                    std::ptr::copy_nonoverlapping(w_bytes.as_ptr(), n.w1.as_mut_ptr() as *mut u8, 96); // 24 * 4
+                    std::ptr::copy_nonoverlapping(w_bytes.as_ptr().add(96), n.b1.as_mut_ptr() as *mut u8, 32); // 8 * 4
+                    std::ptr::copy_nonoverlapping(w_bytes.as_ptr().add(128), n.w2.as_mut_ptr() as *mut u8, 32); // 8 * 4
+                    std::ptr::copy_nonoverlapping(w_bytes.as_ptr().add(160), n.b2.as_mut_ptr() as *mut u8, 4); // 1 * 4
+                }
+            }
+        }
+        n
+    }
+}
+
+struct PredictorEngine { 
+    mode: PredictorMode, 
+    p1: u8, 
+    p2: u8,
+    neural: NeuralPredictor,
+}
+
 impl PredictorEngine {
-    fn new(mode: PredictorMode) -> Self { PredictorEngine { mode, p1: 0, p2: 0 } }
+    fn new(mode: PredictorMode, weights: Option<&[u8]>) -> Self { 
+        PredictorEngine { 
+            mode, 
+            p1: 0, 
+            p2: 0,
+            neural: NeuralPredictor::new(weights)
+        } 
+    }
+    
     #[inline(always)]
     fn predict(&self) -> u8 {
         match self.mode {
             PredictorMode::Previous => self.p1,
             PredictorMode::Linear => self.p1.wrapping_add(self.p1.wrapping_sub(self.p2)),
+            PredictorMode::Neural => {
+                // Forward Pass
+                let mut hidden = [0.0f32; 8];
+                
+                // Layer 1: Inputs (3) -> Hidden (8)
+                for h in 0..8 {
+                    let mut sum = self.neural.b1[h];
+                    for i in 0..3 {
+                        // W1 is [3][8] flattened -> index = i*8 + h
+                        // Wait, previous training logic: "PyTorch Linear weight is (out_features, in_features)"
+                        // My exporter transposed it to (in, out) -> (3, 8).
+                        // So W1 index [i*8 + h] is correct if data is row-major.
+                        sum += self.neural.context[i] * self.neural.w1[i * 8 + h];
+                    }
+                    // ReLU
+                    hidden[h] = if sum > 0.0 { sum } else { 0.0 };
+                }
+                
+                // Layer 2: Hidden (8) -> Output (1)
+                let mut sum = self.neural.b2[0];
+                for h in 0..8 {
+                    sum += hidden[h] * self.neural.w2[h];
+                }
+                
+                // Denormalize (Output is 0-1)
+                let out = (sum * 255.0).round();
+                if out > 255.0 { 255 } else if out < 0.0 { 0 } else { out as u8 }
+            }
         }
     }
+    
     #[inline(always)]
-    fn update(&mut self, actual: u8) { self.p2 = self.p1; self.p1 = actual; }
+    fn update(&mut self, actual: u8) { 
+        self.p2 = self.p1; 
+        self.p1 = actual; 
+        
+        if let PredictorMode::Neural = self.mode {
+            // Shift Context: [0,1,2] <- new
+            self.neural.context[0] = self.neural.context[1];
+            self.neural.context[1] = self.neural.context[2];
+            self.neural.context[2] = (actual as f32) / 255.0;
+        }
+    }
 }
 
 // --- Bit Packing (v2 Optimized) ---
@@ -97,8 +188,9 @@ impl<'a> BitReader<'a> {
 }
 
 // --- Encoding Logic ---
-fn predictive_encode(data: &[u8], mode: PredictorMode) -> Vec<i8> {
-    let mut predictor = PredictorEngine::new(mode);
+// --- Encoding Logic ---
+fn predictive_encode(data: &[u8], mode: PredictorMode, weights: Option<&[u8]>) -> Vec<i8> {
+    let mut predictor = PredictorEngine::new(mode, weights);
     let mut deltas = Vec::with_capacity(data.len());
     for &actual in data {
         let predicted = predictor.predict();
@@ -108,8 +200,8 @@ fn predictive_encode(data: &[u8], mode: PredictorMode) -> Vec<i8> {
     deltas
 }
 
-fn predictive_decode(deltas: &[i8], mode: PredictorMode) -> Vec<u8> {
-    let mut predictor = PredictorEngine::new(mode);
+fn predictive_decode(deltas: &[i8], mode: PredictorMode, weights: Option<&[u8]>) -> Vec<u8> {
+    let mut predictor = PredictorEngine::new(mode, weights);
     let mut data = Vec::with_capacity(deltas.len());
     for &delta in deltas {
         let predicted = predictor.predict();
@@ -151,24 +243,24 @@ fn bit_pack_decode(encoded: &[u8]) -> Vec<i8> {
     res
 }
 
-pub fn compress_chunk(chunk: &[u8], predictor_id: u8) -> io::Result<Vec<u8>> {
-    // Adaptive Pass-through Check (Simulated for Streaming)
-    // For now, we assume Predictor is forced or optimal.
+pub fn compress_chunk(chunk: &[u8], predictor_id: u8, weights: Option<&[u8]>) -> io::Result<Vec<u8>> {
     let mode = PredictorMode::from(predictor_id);
-    let deltas = predictive_encode(chunk, mode);
+    let deltas = predictive_encode(chunk, mode, weights);
     let packed = bit_pack_encode(&deltas);
     let mut e = ZlibEncoder::new(Vec::new(), Compression::default());
     e.write_all(&packed)?;
     e.finish()
 }
 
-pub fn decompress_chunk(compressed: &[u8], predictor_id: u8) -> io::Result<Vec<u8>> {
+pub fn decompress_chunk(compressed: &[u8], predictor_id: u8, weights: Option<&[u8]>) -> io::Result<Vec<u8>> {
     let mut d = ZlibDecoder::new(compressed);
     let mut dec = Vec::new();
     d.read_to_end(&mut dec)?;
     let deltas = bit_pack_decode(&dec);
-    Ok(predictive_decode(&deltas, PredictorMode::from(predictor_id)))
+    Ok(predictive_decode(&deltas, PredictorMode::from(predictor_id), weights))
 }
+
+// --- Streaming Architecture ---
 
 // --- Streaming Architecture ---
 
@@ -176,15 +268,17 @@ pub struct QresWriter<W: Write> {
     writer: W,
     buffer: Vec<u8>,
     predictor_id: u8,
+    weights: Vec<u8>, // Stored weights for Neural Mode
     header_written: bool,
 }
 
 impl<W: Write> QresWriter<W> {
-    pub fn new(writer: W, predictor_id: u8) -> Self {
+    pub fn new(writer: W, predictor_id: u8, weights: Option<Vec<u8>>) -> Self {
         QresWriter {
             writer,
             buffer: Vec::with_capacity(CHUNK_SIZE),
             predictor_id,
+            weights: weights.unwrap_or_default(),
             header_written: false,
         }
     }
@@ -192,22 +286,29 @@ impl<W: Write> QresWriter<W> {
     fn write_header(&mut self) -> io::Result<()> {
         if self.header_written { return Ok(()); }
         
-        // V3 Header (Streaming)
         let header = QresHeader {
-            version: 5, // v0.5.0
-            flags: 0x01, // Streaming Mode
+            version: 6, // v0.6.0 (Neural)
+            flags: 0x01, 
             predictor_id: self.predictor_id,
             timestamp: Utc::now().timestamp(),
-            original_size: 0, // Unknown
-            compressed_size: 0, // Unknown
+            original_size: 0,
+            compressed_size: 0,
             file_name: "stream".to_string(),
             chunk_compressed_sizes: vec![],
         };
 
         self.writer.write_all(QRES_MAGIC)?;
         let hb = bincode::serialize(&header).map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
-        self.writer.write_all(&(hb.len() as u32).to_le_bytes())?; // LE for header length
+        self.writer.write_all(&(hb.len() as u32).to_le_bytes())?; 
         self.writer.write_all(&hb)?;
+
+        // V3.1: Embed Neural Weights if Neural Mode
+        if self.predictor_id == 2 {
+            // Write length (u32) then bytes
+            self.writer.write_all(&(self.weights.len() as u32).to_le_bytes())?;
+            self.writer.write_all(&self.weights)?;
+        }
+
         self.header_written = true;
         Ok(())
     }
@@ -215,9 +316,9 @@ impl<W: Write> QresWriter<W> {
     fn compress_and_flush_buffer(&mut self) -> io::Result<()> {
         if self.buffer.is_empty() { return Ok(()); }
         
-        let compressed = compress_chunk(&self.buffer, self.predictor_id)?;
+        let weights_ref = if self.predictor_id == 2 { Some(self.weights.as_slice()) } else { None };
+        let compressed = compress_chunk(&self.buffer, self.predictor_id, weights_ref)?;
         
-        // Write Framing: [Size u32] [Body]
         self.writer.write_all(&(compressed.len() as u32).to_le_bytes())?;
         self.writer.write_all(&compressed)?;
         
@@ -229,7 +330,7 @@ impl<W: Write> QresWriter<W> {
 impl<W: Write> Write for QresWriter<W> {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         if !self.header_written { self.write_header()?; }
-        
+        // ... (rest is same)
         let mut bytes_written = 0;
         while bytes_written < buf.len() {
             let space = CHUNK_SIZE - self.buffer.len();
@@ -253,8 +354,9 @@ impl<W: Write> Write for QresWriter<W> {
 
 pub struct QresReader<R: Read> {
     reader: R,
-    buffer: Cursor<Vec<u8>>, // Decoded bytes ready to read
+    buffer: Cursor<Vec<u8>>, 
     header: Option<QresHeader>,
+    weights: Vec<u8>, // Weights loaded from stream
 }
 
 impl<R: Read> QresReader<R> {
@@ -263,6 +365,7 @@ impl<R: Read> QresReader<R> {
             reader,
             buffer: Cursor::new(Vec::new()),
             header: None,
+            weights: Vec::new(),
         }
     }
 
@@ -275,33 +378,46 @@ impl<R: Read> QresReader<R> {
         
         let mut len_b = [0u8; 4];
         self.reader.read_exact(&mut len_b)?;
-        let h_len = u32::from_le_bytes(len_b) as usize; // V3 uses LE
+        let h_len = u32::from_le_bytes(len_b) as usize;
         
         let mut h_buf = vec![0u8; h_len];
         self.reader.read_exact(&mut h_buf)?;
         
         let header: QresHeader = bincode::deserialize(&h_buf).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+        
+        // V3.1: Read Weights if Neural
+        if header.predictor_id == 2 {
+            let mut w_len_b = [0u8; 4];
+            self.reader.read_exact(&mut w_len_b)?;
+            let w_len = u32::from_le_bytes(w_len_b) as usize;
+            
+            let mut w_buf = vec![0u8; w_len];
+            self.reader.read_exact(&mut w_buf)?;
+            self.weights = w_buf;
+        }
+
         self.header = Some(header);
         Ok(())
     }
 
     fn fill_buffer(&mut self) -> io::Result<bool> {
-        // Read Framing: [Size u32]
         let mut size_b = [0u8; 4];
         match self.reader.read_exact(&mut size_b) {
             Ok(_) => {},
-            Err(e) if e.kind() == io::ErrorKind::UnexpectedEof => return Ok(false), // EOF
+            Err(e) if e.kind() == io::ErrorKind::UnexpectedEof => return Ok(false), 
             Err(e) => return Err(e),
         }
         
         let chunk_size = u32::from_le_bytes(size_b) as usize;
-        if chunk_size == 0 { return Ok(false); } // Explicit EOF frame
+        if chunk_size == 0 { return Ok(false); } 
         
         let mut compressed = vec![0u8; chunk_size];
         self.reader.read_exact(&mut compressed)?;
         
         let header = self.header.as_ref().ok_or(io::Error::new(io::ErrorKind::Other, "No Header"))?;
-        let decoded = decompress_chunk(&compressed, header.predictor_id)?;
+        let weights_ref = if header.predictor_id == 2 { Some(self.weights.as_slice()) } else { None };
+        
+        let decoded = decompress_chunk(&compressed, header.predictor_id, weights_ref)?;
         
         self.buffer = Cursor::new(decoded);
         Ok(true)
@@ -324,14 +440,14 @@ impl<R: Read> Read for QresReader<R> {
 
 // --- Python Bindings ---
 #[pyfunction]
-fn encode_bytes<'a>(py: Python<'a>, data: &[u8], predictor_id: u8) -> PyResult<&'a PyBytes> {
-    let compressed = compress_chunk(data, predictor_id).map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(e.to_string()))?;
+fn encode_bytes<'a>(py: Python<'a>, data: &[u8], predictor_id: u8, weights: Option<&[u8]>) -> PyResult<&'a PyBytes> {
+    let compressed = compress_chunk(data, predictor_id, weights).map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(e.to_string()))?;
     Ok(PyBytes::new(py, &compressed))
 }
 
 #[pyfunction]
-fn decode_bytes<'a>(py: Python<'a>, data: &[u8], predictor_id: u8) -> PyResult<&'a PyBytes> {
-    let decompressed = decompress_chunk(data, predictor_id).map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(e.to_string()))?;
+fn decode_bytes<'a>(py: Python<'a>, data: &[u8], predictor_id: u8, weights: Option<&[u8]>) -> PyResult<&'a PyBytes> {
+    let decompressed = decompress_chunk(data, predictor_id, weights).map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(e.to_string()))?;
     Ok(PyBytes::new(py, &decompressed))
 }
 
@@ -352,7 +468,7 @@ mod tests {
         let mut encoded_buffer = Vec::new();
 
         {
-            let mut writer = QresWriter::new(&mut encoded_buffer, 0); // Previous Predictor
+            let mut writer = QresWriter::new(&mut encoded_buffer, 0, None); // Previous Predictor
             writer.write_all(&original_data).unwrap();
             writer.finish().unwrap(); // Force flush
         }
