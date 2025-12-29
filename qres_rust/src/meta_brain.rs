@@ -3,7 +3,7 @@
 
 pub fn predict(mean: f32, var: f32, entropy: f32, zcr: f32) -> (u8, &'static str) {
     if zcr <= 0.4381 {
-        (1, "zcr <= 0.44")
+        (5, "zcr <= 0.44 -> iPEPS")
     } else {
         if entropy <= 7.9447 {
             (4, "zcr > 0.44, entropy <= 7.94")

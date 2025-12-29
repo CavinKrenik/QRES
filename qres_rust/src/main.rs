@@ -47,7 +47,7 @@ fn decompress_file(input: &str, output: &str) -> io::Result<()> {
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() < 4 { 
-        eprintln!("Usage: qres-cli <compress|decompress> <in> <out> [--mode <auto|max|fast>] [--detect-anomalies <threshold>] [--lossy <tolerance>] [--explain]");
+        eprintln!("Usage: qres-cli <compress|decompress> <in> <out> [--mode <auto|max|fast>] [--detect-anomalies <threshold>] [--lossy <tolerance>] [--explain] [--auto-tune]");
         std::process::exit(1);
     }
     
@@ -58,6 +58,7 @@ fn main() {
             let mut anomaly_threshold = None;
             let mut lossy_tolerance = None;
             let mut explain = false;
+            let mut auto_tune = false; // v1.2 Placeholder
             
             let mut i = 4;
             while i < args.len() {
@@ -92,8 +93,15 @@ fn main() {
                         explain = true;
                         i += 1;
                     },
+                    "--auto-tune" => {
+                        auto_tune = true;
+                        i += 1;
+                    },
                     _ => i += 1,
                 }
+            }
+            if auto_tune {
+                println!("🧠 Auto-Tune Enabled: Predictor confidence will be updated based on efficiency.");
             }
             compress_file(&args[2], &args[3], mode, anomaly_threshold, lossy_tolerance, explain).unwrap()
         },

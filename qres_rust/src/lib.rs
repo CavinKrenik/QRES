@@ -27,8 +27,8 @@ pub struct QresHeader {
 }
 
 // --- Predictor Logic ---
-#[derive(Clone, Copy)]
-enum PredictorMode { Previous = 0, Linear = 1, Neural = 2, Lstm = 3, Tensor = 4 }
+#[derive(Clone, Copy, PartialEq)]
+enum PredictorMode { Previous = 0, Linear = 1, Neural = 2, Lstm = 3, Tensor = 4, Ipeps = 5 }
 impl From<u8> for PredictorMode {
     fn from(v: u8) -> Self { 
         match v {
@@ -36,6 +36,7 @@ impl From<u8> for PredictorMode {
             2 => PredictorMode::Neural,
             3 => PredictorMode::Lstm,
             4 => PredictorMode::Tensor,
+            5 => PredictorMode::Ipeps,
             _ => PredictorMode::Previous,
         }
     }
@@ -96,6 +97,17 @@ impl LstmPredictor {
     #[inline(always)] fn tanh(x: f32) -> f32 { x.tanh() }
 }
 
+// Fast, deterministic approximation of Tanh using rational functions
+// Range: [-1.0, 1.0]
+#[inline(always)]
+fn fast_tanh(x: f32) -> f32 {
+    let x2 = x * x;
+    let a = x * (135135.0 + x2 * (17325.0 + x2 * (378.0 + x2)));
+    let b = 135135.0 + x2 * (62370.0 + x2 * (3150.0 + x2 * 28.0));
+    // Clamp to avoid float blowups
+    (a / b).clamp(-1.0, 1.0)
+}
+
 struct TensorPredictor {
     a0: [f32; 16], // 4x4
     a1: [f32; 16], // 4x4
@@ -125,12 +137,38 @@ impl TensorPredictor {
     }
 }
 
+struct IpepsPredictor {
+    w1: [f32; 32], b1: [f32; 8], w2: [f32; 8], b2: [f32; 1],
+    context: [f32; 4],
+}
+impl IpepsPredictor {
+    fn new(weights: Option<&[u8]>) -> Self {
+        let mut n = IpepsPredictor {
+            w1: [0.0; 32], b1: [0.0; 8], w2: [0.0; 8], b2: [0.0; 1],
+            context: [0.0; 4],
+        };
+        if let Some(w_bytes) = weights {
+             if w_bytes.len() == 196 {
+                unsafe {
+                    let mut ptr = w_bytes.as_ptr();
+                    std::ptr::copy_nonoverlapping(ptr, n.w1.as_mut_ptr() as *mut u8, 128); ptr = ptr.add(128);
+                    std::ptr::copy_nonoverlapping(ptr, n.b1.as_mut_ptr() as *mut u8, 32); ptr = ptr.add(32);
+                    std::ptr::copy_nonoverlapping(ptr, n.w2.as_mut_ptr() as *mut u8, 32); ptr = ptr.add(32);
+                    std::ptr::copy_nonoverlapping(ptr, n.b2.as_mut_ptr() as *mut u8, 4);
+                }
+            }
+        }
+        n
+    }
+}
+
 struct PredictorEngine { 
     mode: PredictorMode, 
     p1: u8, p2: u8,
     neural: NeuralPredictor,
     lstm: LstmPredictor,
     tensor: TensorPredictor,
+    ipeps: IpepsPredictor,
 }
 
 impl PredictorEngine {
@@ -140,6 +178,7 @@ impl PredictorEngine {
             neural: if matches!(mode, PredictorMode::Neural) { NeuralPredictor::new(weights) } else { NeuralPredictor::new(None) },
             lstm: if matches!(mode, PredictorMode::Lstm) { LstmPredictor::new(weights) } else { LstmPredictor::new(None) },
              tensor: if matches!(mode, PredictorMode::Tensor) { TensorPredictor::new(weights) } else { TensorPredictor::new(None) },
+             ipeps: if matches!(mode, PredictorMode::Ipeps) { IpepsPredictor::new(weights) } else { IpepsPredictor::new(None) },
         } 
     }
     
@@ -170,6 +209,22 @@ impl PredictorEngine {
                 // y = psi @ C + b
                 let mut sum = self.tensor.b[0];
                 for i in 0..4 { sum += self.tensor.psi[i] * self.tensor.c[i]; }
+                let out = (sum * 255.0).round();
+                if out > 255.0 { 255 } else if out < 0.0 { 0 } else { out as u8 }
+            },
+             PredictorMode::Ipeps => {
+                // IPEPS: Tanh(Vector * W1) * W2
+                // Context: 4 bytes (p1..p4). W1 [4x8]. Hidden [8]. W2 [8x1].
+                let mut hidden = [0.0f32; 8];
+                for h in 0..8 {
+                    let mut sum = self.ipeps.b1[h];
+                    for i in 0..4 { sum += self.ipeps.context[i] * self.ipeps.w1[i * 8 + h]; }
+                    // Fast Tanh (Safe Math Patch)
+                    hidden[h] = fast_tanh(sum);
+                }
+                let mut sum = self.ipeps.b2[0];
+                for h in 0..8 { sum += hidden[h] * self.ipeps.w2[h]; }
+                
                 let out = (sum * 255.0).round();
                 if out > 255.0 { 255 } else if out < 0.0 { 0 } else { out as u8 }
             }
@@ -228,6 +283,12 @@ impl PredictorEngine {
                 }
                 
                 self.tensor.psi = psi_next;
+            },
+            PredictorMode::Ipeps => {
+                 self.ipeps.context[0] = self.ipeps.context[1];
+                 self.ipeps.context[1] = self.ipeps.context[2];
+                 self.ipeps.context[2] = self.ipeps.context[3];
+                 self.ipeps.context[3] = (actual as f32) / 255.0;
             },
             _ => {}
         }
@@ -392,6 +453,7 @@ use rayon::prelude::*;
 // --- Embedded Brains ---
 const LSTM_WEIGHTS: &[u8] = include_bytes!("../assets/lstm.qnn");
 const TENSOR_WEIGHTS: &[u8] = include_bytes!("../assets/tensor.qnn");
+const IPEPS_WEIGHTS: &[u8] = include_bytes!("../assets/ipeps.qnn");
 
 // --- Autonomic Selector ---
 // --- Race Statistics ---
@@ -489,6 +551,9 @@ pub struct QresWriter<W: Write> {
     anomaly_threshold: Option<u8>, // If Set, detect anomalies
     lossy_tolerance: Option<u8>, // If Set, Quantize residuals
 
+    // Online Learning State
+    confidence: [f32; 6], // Index = PredictorID. 1.0 = High, 0.0 = Avoid.
+
     // State
     state: WriterState,
     predictor_id: u8,
@@ -547,6 +612,7 @@ impl<W: Write> QresWriter<W> {
             mode_hint, // 0=Auto
             anomaly_threshold: None,
             lossy_tolerance: None,
+            confidence: [1.0; 6], // Start fully confident
             state: WriterState::Buffering,
             predictor_id: 1, // Default
             weights: Vec::new(),
@@ -600,22 +666,45 @@ impl<W: Write> QresWriter<W> {
         
         let weights_ref = if self.predictor_id >= 2 { Some(self.weights.as_slice()) } else { None };
         
-        // 1. Anomaly Detection (Watchdog)
+        // 1. Compress
+        let compressed = compress_chunk(chunk, self.predictor_id, weights_ref, self.lossy_tolerance)?;
+
+        // 2. Anomaly Detection & Online Learning
+        // Calculate Ratio
+        let ratio = if chunk.len() > 0 { compressed.len() as f32 / chunk.len() as f32 } else { 0.0 };
+        
+        if ratio > 0.85 {
+            // Punishment!
+            if self.predictor_id != 1 { // Don't punish Linear (Safe Harbor)
+                 self.confidence[self.predictor_id as usize] -= 0.2;
+                 if self.confidence[self.predictor_id as usize] < 0.0 { self.confidence[self.predictor_id as usize] = 0.0; }
+                 
+                 eprintln!("[Watchdog] Punishment! ID {} ratio {:.2}. Confidence now {:.2}", self.predictor_id, ratio, self.confidence[self.predictor_id as usize]);
+                 
+                 // Force switch next time
+                 self.buffer.clear(); 
+                 self.state = WriterState::Buffering; // Go back to psychic selection immediately
+            }
+        }
+        
+        // Decay (Forgiveness) - Slowly restore confidence to everything
+        for i in 2..6 {
+            if self.confidence[i] < 1.0 { self.confidence[i] += 0.01; }
+        }
+
         if let Some(threshold) = self.anomaly_threshold {
             let residuals = get_residuals(chunk, self.predictor_id, weights_ref);
             // Check for large errors
             for (i, &r) in residuals.iter().enumerate() {
                  if r.abs() > threshold as i8 {
                      eprintln!("[Watchdog] Anomaly detected at offset +{}: delta={} (Threshold {})", i, r, threshold);
-                     // Optional: Panic or just log? User said "Log... (Optional) Mark". We just log.
                  }
             }
         }
 
-        // 2. Compress
-        let compressed = compress_chunk(chunk, self.predictor_id, weights_ref, self.lossy_tolerance)?;
-        
+        // Chunk Header: [Size u32] [EngineID u8] [Data]
         self.writer.write_all(&(compressed.len() as u32).to_le_bytes())?;
+        self.writer.write_all(&[self.predictor_id])?; // Agile Format
         self.writer.write_all(&compressed)?;
         Ok(())
     }
@@ -630,14 +719,27 @@ impl<W: Write> QresWriter<W> {
              // Auto - Use Psychic
              if self.buffer.len() >= 128 { // Need minimal data
                  let (mean, var, entropy, zcr) = calc_features(&self.buffer);
-                 let (winner, reason) = meta_brain::predict(mean, var, entropy, zcr);
+                 let (mut winner, reason) = meta_brain::predict(mean, var, entropy, zcr);
+                 
+                 // Online Learning Override
+                 // If the Meta-Brain picks a low-confidence engine, downgrade it.
+                 if self.confidence[winner as usize] < 0.5 {
+                     // Try fallback. For now, just Linear.
+                     // In v1.3 we could try 2nd best.
+                     let old_winner = winner;
+                     winner = 1;
+                     self.explain_str = format!("{} (Override: ID {} has low confidence {:.2})", reason, old_winner, self.confidence[old_winner as usize]);
+                 } else {
+                     self.explain_str = reason.to_string();
+                 }
+
                  self.predictor_id = winner;
-                 self.explain_str = reason.to_string();
                  
                  // Load weights
                  match winner {
                      3 => self.weights = LSTM_WEIGHTS.to_vec(),
                      4 => self.weights = TENSOR_WEIGHTS.to_vec(),
+                     5 => self.weights = IPEPS_WEIGHTS.to_vec(),
                      _ => self.weights.clear(),
                  }
              } else {
@@ -774,13 +876,25 @@ impl<R: Read> QresReader<R> {
         let chunk_size = u32::from_le_bytes(size_b) as usize;
         if chunk_size == 0 { return Ok(false); } 
         
+        // Read Engine ID
+        let mut id_b = [0u8; 1];
+        self.reader.read_exact(&mut id_b)?;
+        let chunk_predictor_id = id_b[0];
+
         let mut compressed = vec![0u8; chunk_size];
         self.reader.read_exact(&mut compressed)?;
         
         let header = self.header.as_ref().ok_or(io::Error::new(io::ErrorKind::Other, "No Header"))?;
-        let weights_ref = if header.predictor_id >= 2 { Some(self.weights.as_slice()) } else { None };
         
-        let decoded = decompress_chunk(&compressed, header.predictor_id, weights_ref)?;
+        // Dynamic Weight Resolution based on Chunk ID (Agile)
+        let weights_ref = match chunk_predictor_id {
+            3 => Some(LSTM_WEIGHTS),
+            4 => Some(TENSOR_WEIGHTS),
+            5 => Some(IPEPS_WEIGHTS),
+            _ => None,
+        };
+        
+        let decoded = decompress_chunk(&compressed, chunk_predictor_id, weights_ref)?;
         
         self.buffer = Cursor::new(decoded);
         Ok(true)
