@@ -213,21 +213,99 @@ fn bit_pack_decode(encoded: &[u8]) -> Vec<i8> {
 
 // --- Engine ---
 
+// --- Adaptive Engine (Phase 6) ---
+
+const SUB_BLOCK_SIZE: usize = 16 * 1024; // 16KB sub-blocks for adaptive selection
+
 pub fn compress_chunk(chunk: &[u8]) -> io::Result<Vec<u8>> {
-    let deltas = delta_encode(chunk);
-    let packed = bit_pack_encode(&deltas);
-    // Zlib-ng via flate2 feature
+    let mut inner_buffer = Vec::with_capacity(chunk.len() + 1024); // Reserve slightly more
+
+    // Iterate over 16KB sub-blocks (or remainder)
+    for sub_chunk in chunk.chunks(SUB_BLOCK_SIZE) {
+        // Strategy A: QRES v2 (Bit-Packed Deltas)
+        let deltas = delta_encode(sub_chunk);
+        let packed = bit_pack_encode(&deltas);
+
+        // Strategy B: Raw (Pass-through)
+        // Overhead for either is: 1 byte Tag + 2 bytes Length = 3 bytes
+        
+        // Race: Pick smallest with Bias
+        // Zlib prefers Raw data (LZ77 friendly) over Bit-Packed (High Entropy/Misaligned).
+        // Only choose QRES if it significantly reduces size (e.g. < 85% of original).
+        // If it's borderline (e.g. 99%), keeping it Raw lets Zlib do a better job.
+        
+        // Threshold: 0.85 * 16384 roughly.
+        // We use integer math: packed.len() * 100 < sub_chunk.len() * 85
+        
+        let threshold = (sub_chunk.len() * 85) / 100;
+        
+        if packed.len() < threshold {
+            // Mode 0x01: QRES
+            inner_buffer.push(0x01);
+            let len = packed.len() as u16;
+            inner_buffer.extend_from_slice(&len.to_le_bytes());
+            inner_buffer.extend_from_slice(&packed);
+        } else {
+            // Mode 0x00: Raw
+            inner_buffer.push(0x00);
+            let len = sub_chunk.len() as u16;
+            inner_buffer.extend_from_slice(&len.to_le_bytes());
+            inner_buffer.extend_from_slice(sub_chunk);
+        }
+    }
+
+    // Zlib Stage (Zlib-ng)
     let mut e = ZlibEncoder::new(Vec::new(), Compression::default());
-    e.write_all(&packed)?;
+    e.write_all(&inner_buffer)?;
     e.finish()
 }
 
 pub fn decompress_chunk(compressed: &[u8]) -> io::Result<Vec<u8>> {
+    // 1. Zlib Decompress
     let mut d = ZlibDecoder::new(compressed);
-    let mut dec = Vec::new();
-    d.read_to_end(&mut dec)?;
-    let deltas = bit_pack_decode(&dec);
-    Ok(delta_decode(&deltas))
+    let mut inner = Vec::new();
+    d.read_to_end(&mut inner)?;
+    
+    // 2. Parse Adaptive Stream
+    let mut result = Vec::new(); // Ideally we'd reserve if we knew total size, usually inner.len() * 2 is safe guess
+    let mut cursor = 0;
+
+    while cursor < inner.len() {
+        // Check header availability
+        if cursor + 3 > inner.len() {
+            return Err(io::Error::new(io::ErrorKind::InvalidData, "Truncated block header"));
+        }
+
+        let tag = inner[cursor];
+        let len_bytes: [u8; 2] = inner[cursor+1..cursor+3].try_into().unwrap();
+        let len = u16::from_le_bytes(len_bytes) as usize;
+        cursor += 3;
+
+        // Check body availability
+        if cursor + len > inner.len() {
+            return Err(io::Error::new(io::ErrorKind::InvalidData, "Truncated block body"));
+        }
+
+        let body = &inner[cursor..cursor+len];
+
+        match tag {
+            0x01 => {
+                // QRES Mode
+                let deltas = bit_pack_decode(body);
+                let decoded_bytes = delta_decode(&deltas);
+                result.extend_from_slice(&decoded_bytes);
+            },
+            0x00 => {
+                // Raw Mode
+                result.extend_from_slice(body);
+            },
+            _ => return Err(io::Error::new(io::ErrorKind::InvalidData, "Unknown block tag")),
+        }
+
+        cursor += len;
+    }
+
+    Ok(result)
 }
 
 // --- Zero-Copy Python Bindings ---
