@@ -28,6 +28,8 @@ def plot_singularity():
 
     # Plot 1: Compression Ratio (Left Axis)
     # Ratios (Lower is better).
+    # Plot 1: Compression Ratio (Left Axis)
+    # Ratios (Lower is better).
     lns1 = ax1.plot(chunks, df_a['Ratio'], 'r--', label='Agent A: Ratio (Isolated)', linewidth=2, alpha=0.7)
     lns2 = ax1.plot(chunks, df_b['Ratio'], 'g-', label='Agent B: Ratio (Federated)', linewidth=3)
     
@@ -45,34 +47,38 @@ def plot_singularity():
     
     ax2.set_ylabel('Engine Confidence (0.0 - 1.0)', fontsize=12, color='blue')
     ax2.tick_params(axis='y', labelcolor='blue')
-    ax2.set_ylim(-0.1, 1.1)
+    ax2.set_ylim(-0.1, 1.2) # Give more headroom for annotations
 
     # Title & Annotations
     plt.title('The Singularity: Zero-Shot Adaptation via Hive Mind', fontsize=16, pad=20)
-    plt.suptitle('Benchmark: Drifting Signal (Sine -> Chaos) | 200KB Chunks', fontsize=10, y=0.92, color='gray')
+    plt.suptitle('Benchmark: Drifting Signal (Sine -> Chaos) | 200KB Chunks', fontsize=10, y=0.95, color='gray')
     
     # Annotation: The Singularity
-    ax2.annotate('The Singularity\n(Instant Knowledge)', xy=(0, df_b['ConfIPEPS'].iloc[0]), xytext=(2, 0.4),
-                 arrowprops=dict(facecolor='black', shrink=0.05), fontsize=10, fontweight='bold')
+    # Arrow pointing to Agent B's start
+    ax2.annotate('The Singularity\n(Instant Knowledge)', xy=(0, df_b['ConfIPEPS'].iloc[0]), xytext=(3, 0.5),
+                 arrowprops=dict(facecolor='black', shrink=0.05), fontsize=10, fontweight='bold',
+                 bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="black", alpha=0.8))
                  
     # Annotation: Win Rate
     final_ratio_a = df_a['Ratio'].iloc[-1]
     final_ratio_zstd = 0.55
     improvement = ((final_ratio_zstd - final_ratio_a) / final_ratio_zstd) * 100
-    ax1.text(10, 0.2, f"Target: iPEPS achieves\n{final_ratio_a:.2f} Ratio ({improvement:.0f}% vs Static)", 
-             bbox=dict(facecolor='white', alpha=0.8, edgecolor='green'))
+    ax1.text(10, 0.25, f"Target: iPEPS achieves\n{final_ratio_a:.2f} Ratio ({improvement:.0f}% vs Static)", 
+             bbox=dict(facecolor='white', alpha=0.8, edgecolor='green'), fontsize=10)
 
-    # Legend
-    # Add ZStandard manually to legend handles
+    # Legend - Move outside to avoid crowding
     handles1, labels1 = ax1.get_legend_handles_labels()
-    # We want Zstd to be in legend.
-    # It is added via axhline label.
-    
     lns = handles1 + lns3 + lns4
     labs = [l.get_label() for l in lns]
-    ax1.legend(lns, labs, loc='center right', frameon=True)
     
+    # Place legend above the plot
+    ax1.legend(lns, labs, loc='upper center', bbox_to_anchor=(0.5, -0.15),
+              fancybox=True, shadow=True, ncol=2)
+    
+    # Adjust layout to accommodate external legend
     plt.tight_layout()
+    plt.subplots_adjust(bottom=0.2) # Make room for legend
+    
     plt.savefig('DOCS/zero_shot_adaptation.png', dpi=300)
     print("Generated refined DOCS/zero_shot_adaptation.png")
 
