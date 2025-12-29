@@ -222,14 +222,18 @@ pub fn decompress_chunk(compressed: &[u8]) -> io::Result<Vec<u8>> {
 }
 
 // --- Python Bindings ---
+use pyo3::types::PyBytes;
+
 #[pyfunction]
-pub fn encode_bytes(data: &[u8]) -> PyResult<Vec<u8>> {
-    compress_chunk(data).map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(e.to_string()))
+pub fn encode_bytes<'a>(py: Python<'a>, data: &[u8]) -> PyResult<&'a PyBytes> {
+    let compressed = compress_chunk(data).map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(e.to_string()))?;
+    Ok(PyBytes::new(py, &compressed))
 }
 
 #[pyfunction]
-pub fn decode_bytes(data: &[u8]) -> PyResult<Vec<u8>> {
-    decompress_chunk(data).map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(e.to_string()))
+pub fn decode_bytes<'a>(py: Python<'a>, data: &[u8]) -> PyResult<&'a PyBytes> {
+    let decompressed = decompress_chunk(data).map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(e.to_string()))?;
+    Ok(PyBytes::new(py, &decompressed))
 }
 
 #[pymodule]
