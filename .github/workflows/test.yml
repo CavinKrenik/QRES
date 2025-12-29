@@ -23,7 +23,8 @@ jobs:
           python -m venv .venv
           source .venv/bin/activate
           pip install maturin pytest numpy requests
-          maturin develop --release
+          export CARGO_BUILD_JOBS=1
+          maturin develop --release -v
         # Note: We run everything in one block to keep the 'source' activation alive
 
       - name: Run Tests
