@@ -13,7 +13,9 @@
 ## 🚀 Key Features
 
 *   **🔮 Psychic Selection (Phase 16)**: Instead of "racing" engines (slow), QRES v1.1 uses a **Meta-Learner** (Decision Tree) to analyze features (Entropy, ZCR, Variance) and *predict* the winner instantly.
-*   **🛡️ Anomaly Detection**: Built-in "Watchdog" monitors decompression integrity validation in real-time.
+*   **�️ Neuro-Symbolic Explainability**: QRES doesn't just work; it tells you *why*. Pass `--explain` to see the decision logic (e.g., `zcr > 0.44 -> Linear`).
+*   **📉 Lossy Compression**: Enable "semantic collapse" with `--lossy <tolerance>`. By quantizing prediction residuals, QRES can achieve huge compression ratios for noisy data where 100% precision isn't required (IoT, telemetry).
+*   **�🛡️ Anomaly Detection**: Built-in "Watchdog" monitors decompression integrity validation in real-time.
 *   **⚛️ Hybrid Engine Architecture**:
     *   **Linear (Native)**: Blazing fast delta-encoding for simple data.
     *   **Tensor (MPS)**: Quantum-Inspired Linear Networks for high-speed adaptable streams.
@@ -25,20 +27,29 @@
 
 ## ⚡ CLI Usage
 
-### 1. Auto Mode (Psychic)
+### 1. Auto Mode (Psychic + Explain)
 The default mode. Uses the Meta-Brain to pick the best engine instantly.
 ```bash
-qres-cli compress bio_sensor.dat output.qres
+# Compress and explain Why
+qres-cli compress bio_sensor.dat output.qres --explain
+# Output: 🧠 Neuro-Symbolic Reason: zcr > 0.44, entropy <= 7.1
 ```
 
-### 2. Anomaly Detection
+### 2. Lossy Compression
+Quantize residuals to reduce entropy and increase compression ratio.
+```bash
+# Tolerance 10: Values within +/- 10 are flattened.
+qres-cli compress noisy_sensor.log tiny.qres --lossy 10
+```
+
+### 3. Anomaly Detection
 Enable the Watchdog to log any deviations > threshold during compression.
 ```bash
 # Log if prediction error > 5
 qres-cli compress sensitive_data.bin secured.qres --detect-anomalies 5
 ```
 
-### 3. Manual Modes
+### 4. Manual Modes
 Force a specific engine if you know your data best.
 ```bash
 # Force LSTM (Max Compression)

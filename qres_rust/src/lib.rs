@@ -287,12 +287,37 @@ impl<'a> BitReader<'a> {
 
 // --- Encoding Logic ---
 // --- Encoding Logic ---
-fn predictive_encode(data: &[u8], mode: PredictorMode, weights: Option<&[u8]>) -> Vec<i8> {
+// --- Encoding Logic ---
+fn predictive_encode(data: &[u8], mode: PredictorMode, weights: Option<&[u8]>, lossy: Option<u8>) -> Vec<i8> {
     let mut predictor = PredictorEngine::new(mode, weights);
     let mut deltas = Vec::with_capacity(data.len());
+    
     for &actual in data {
         let predicted = predictor.predict();
-        deltas.push(actual.wrapping_sub(predicted) as i8);
+        
+        let mut delta = actual.wrapping_sub(predicted) as i8;
+        
+        if let Some(tol) = lossy {
+            if tol > 0 {
+                // Quantize Delta
+                // Example: tol=5. delta=12. 
+                // round(12/5)*5 = 2*5 = 10.
+                let t = tol as f32;
+                let d_f = delta as f32;
+                let q = (d_f / t).round() * t;
+                delta = q as i8;
+                
+                // Important: Update the simulated loop with RECONSTRUCTED value
+                // Reconstructed = predicted + quantized_delta
+                let reconstructed = predicted.wrapping_add(delta as u8);
+                // We must update the predictor with what the DECODER sees
+                predictor.update(reconstructed);
+                deltas.push(delta);
+                continue;
+            }
+        }
+        
+        deltas.push(delta);
         predictor.update(actual);
     }
     deltas
@@ -341,9 +366,9 @@ fn bit_pack_decode(encoded: &[u8]) -> Vec<i8> {
     res
 }
 
-pub fn compress_chunk(chunk: &[u8], predictor_id: u8, weights: Option<&[u8]>) -> io::Result<Vec<u8>> {
+pub fn compress_chunk(chunk: &[u8], predictor_id: u8, weights: Option<&[u8]>, lossy: Option<u8>) -> io::Result<Vec<u8>> {
     let mode = PredictorMode::from(predictor_id);
-    let deltas = predictive_encode(chunk, mode, weights);
+    let deltas = predictive_encode(chunk, mode, weights, lossy);
     let packed = bit_pack_encode(&deltas);
     let mut e = ZlibEncoder::new(Vec::new(), Compression::default());
     e.write_all(&packed)?;
@@ -392,8 +417,9 @@ fn qualify_stream(sample: &[u8]) -> (u8, Vec<u8>, RaceStats) {
     let results: Vec<(u8, f64)> = candidates.par_iter().map(|(id, weights, _name)| {
         let start = std::time::Instant::now();
         // Compress sample
+        // Compress sample (lossless for race)
         let weights_ref = if weights.is_empty() { None } else { Some(weights.as_slice()) };
-        let compressed = match compress_chunk(sample, *id, weights_ref) {
+        let compressed = match compress_chunk(sample, *id, weights_ref, None) {
             Ok(c) => c.len(),
             Err(_) => usize::MAX, // Fail
         };
@@ -441,9 +467,10 @@ fn qualify_stream(sample: &[u8]) -> (u8, Vec<u8>, RaceStats) {
 }
 
 // --- Analysis Tools ---
+// --- Analysis Tools ---
 pub fn get_residuals(chunk: &[u8], predictor_id: u8, weights: Option<&[u8]>) -> Vec<i8> {
     let mode = PredictorMode::from(predictor_id);
-    predictive_encode(chunk, mode, weights)
+    predictive_encode(chunk, mode, weights, None)
 }
 
 // --- Streaming Architecture ---
@@ -460,12 +487,14 @@ pub struct QresWriter<W: Write> {
     // Config
     mode_hint: u8, // 0=Auto, 1=Fast(Linear), 3=Max(LSTM)
     anomaly_threshold: Option<u8>, // If Set, detect anomalies
+    lossy_tolerance: Option<u8>, // If Set, Quantize residuals
 
     // State
     state: WriterState,
     predictor_id: u8,
     weights: Vec<u8>,
     header_written: bool,
+    pub explain_str: String, // Neuro-Symbolic Reason
 }
 
 fn calc_features(chunk: &[u8]) -> (f32, f32, f32, f32) {
@@ -517,11 +546,17 @@ impl<W: Write> QresWriter<W> {
             buffer: Vec::with_capacity(4096), // 4KB Buffer for Psychic Predictor
             mode_hint, // 0=Auto
             anomaly_threshold: None,
+            lossy_tolerance: None,
             state: WriterState::Buffering,
             predictor_id: 1, // Default
             weights: Vec::new(),
             header_written: false,
+            explain_str: "Default (Linear initialized)".to_string(),
         }
+    }
+
+    pub fn set_lossy(&mut self, tolerance: u8) {
+        self.lossy_tolerance = Some(tolerance);
     }
 
     pub fn set_anomaly_threshold(&mut self, threshold: u8) {
@@ -578,7 +613,7 @@ impl<W: Write> QresWriter<W> {
         }
 
         // 2. Compress
-        let compressed = compress_chunk(chunk, self.predictor_id, weights_ref)?;
+        let compressed = compress_chunk(chunk, self.predictor_id, weights_ref, self.lossy_tolerance)?;
         
         self.writer.write_all(&(compressed.len() as u32).to_le_bytes())?;
         self.writer.write_all(&compressed)?;
@@ -595,8 +630,9 @@ impl<W: Write> QresWriter<W> {
              // Auto - Use Psychic
              if self.buffer.len() >= 128 { // Need minimal data
                  let (mean, var, entropy, zcr) = calc_features(&self.buffer);
-                 let winner = meta_brain::predict(mean, var, entropy, zcr);
+                 let (winner, reason) = meta_brain::predict(mean, var, entropy, zcr);
                  self.predictor_id = winner;
+                 self.explain_str = reason.to_string();
                  
                  // Load weights
                  match winner {
@@ -606,6 +642,7 @@ impl<W: Write> QresWriter<W> {
                  }
              } else {
                  self.predictor_id = 1; // Default Linear
+                 self.explain_str = "Insufficient buffer for Psychic prediction".to_string();
              }
         }
         
@@ -767,7 +804,7 @@ impl<R: Read> Read for QresReader<R> {
 // --- Python Bindings ---
 #[pyfunction]
 fn encode_bytes<'a>(py: Python<'a>, data: &[u8], predictor_id: u8, weights: Option<&[u8]>) -> PyResult<&'a PyBytes> {
-    let compressed = compress_chunk(data, predictor_id, weights).map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(e.to_string()))?;
+    let compressed = compress_chunk(data, predictor_id, weights, None).map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(e.to_string()))?;
     Ok(PyBytes::new(py, &compressed))
 }
 

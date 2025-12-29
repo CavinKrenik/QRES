@@ -4,7 +4,7 @@ use std::io::{self, BufReader, BufWriter, Read, Write};
 use qres_rust::{QresWriter, QresReader};
 use serde_json;
 
-fn compress_file(input: &str, output: &str, mode_hint: u8, anomaly_threshold: Option<u8>) -> io::Result<()> {
+fn compress_file(input: &str, output: &str, mode_hint: u8, anomaly_threshold: Option<u8>, lossy_tolerance: Option<u8>, explain: bool) -> io::Result<()> {
     let mut reader = BufReader::new(File::open(input)?);
     let writer = BufWriter::new(File::create(output)?);
     
@@ -12,6 +12,9 @@ fn compress_file(input: &str, output: &str, mode_hint: u8, anomaly_threshold: Op
     let mut qres_writer = QresWriter::new(writer, mode_hint);
     if let Some(t) = anomaly_threshold {
         qres_writer.set_anomaly_threshold(t);
+    }
+    if let Some(l) = lossy_tolerance {
+        qres_writer.set_lossy(l);
     }
     
     // Stream
@@ -21,6 +24,10 @@ fn compress_file(input: &str, output: &str, mode_hint: u8, anomaly_threshold: Op
     
     println!("Streamed {} bytes to {} (Mode: {}) in {:.2}s", 
         bytes, output, mode_hint, start.elapsed().as_secs_f64());
+
+    if explain {
+        println!("🧠 Neuro-Symbolic Reason: {}", qres_writer.explain_str);
+    }
     Ok(())
 }
 
@@ -40,7 +47,7 @@ fn decompress_file(input: &str, output: &str) -> io::Result<()> {
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() < 4 { 
-        eprintln!("Usage: qres-cli <compress|decompress> <in> <out> [--mode <auto|max|fast>] [--detect-anomalies <threshold>]");
+        eprintln!("Usage: qres-cli <compress|decompress> <in> <out> [--mode <auto|max|fast>] [--detect-anomalies <threshold>] [--lossy <tolerance>] [--explain]");
         std::process::exit(1);
     }
     
@@ -49,6 +56,8 @@ fn main() {
             // Parse optional flags
             let mut mode = 0;
             let mut anomaly_threshold = None;
+            let mut lossy_tolerance = None;
+            let mut explain = false;
             
             let mut i = 4;
             while i < args.len() {
@@ -71,10 +80,22 @@ fn main() {
                              i += 2;
                          } else { i += 1; }
                     },
+                    "--lossy" => {
+                         if i + 1 < args.len() {
+                             if let Ok(t) = args[i+1].parse::<u8>() {
+                                 lossy_tolerance = Some(t);
+                             }
+                             i += 2;
+                         } else { i += 1; }
+                    },
+                    "--explain" => {
+                        explain = true;
+                        i += 1;
+                    },
                     _ => i += 1,
                 }
             }
-            compress_file(&args[2], &args[3], mode, anomaly_threshold).unwrap()
+            compress_file(&args[2], &args[3], mode, anomaly_threshold, lossy_tolerance, explain).unwrap()
         },
         "decompress" => decompress_file(&args[2], &args[3]).unwrap(),
         _ => eprintln!("Unknown command"),
