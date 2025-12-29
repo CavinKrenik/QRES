@@ -101,6 +101,106 @@ fn main() {
     }
     
     match args[1].as_str() {
+        "swarm" => {
+             // Subcommands: start, stop, status, run-node
+             let subcmd = if args.len() > 2 { args[2].as_str() } else { "start" }; // Default to start? Or help? Let's say help or status. But user usually types `swarm start`. 
+             // Actually, if no subcommand, let's show status.
+             
+             match subcmd {
+                 "start" => {
+                     let mut wan = false;
+                     let mut interval = 600;
+                     let mut i = 3;
+                     while i < args.len() {
+                         match args[i].as_str() {
+                             "--wan" => { wan = true; i += 1; },
+                             "--gossip-interval" => {
+                                 if i + 1 < args.len() {
+                                     interval = args[i+1].parse().unwrap_or(600);
+                                     i += 2;
+                                 } else { i += 1; }
+                             },
+                             _ => i += 1,
+                         }
+                     }
+                     if let Err(e) = qres_rust::daemon::DaemonManager::start(wan, interval) {
+                         eprintln!("Error starting daemon: {}", e);
+                     }
+                 },
+                 "stop" => {
+                     if let Err(e) = qres_rust::daemon::DaemonManager::stop() {
+                         eprintln!("Error stopping daemon: {}", e);
+                     }
+                 },
+                 "status" => {
+                     qres_rust::daemon::DaemonManager::status();
+                 },
+                 "run-node" => {
+                     // Internal Command - Actual Node Process
+                     let mut wan = false;
+                     let mut interval = 600;
+                     let mut i = 3;
+                      while i < args.len() {
+                         match args[i].as_str() {
+                             "--wan" => { wan = true; i += 1; },
+                             "--gossip-interval" => {
+                                 if i + 1 < args.len() {
+                                     interval = args[i+1].parse().unwrap_or(600);
+                                     i += 2;
+                                 } else { i += 1; }
+                             },
+                             _ => i += 1,
+                         }
+                     }
+                     
+                     let brain_path = "qres_brain.json".to_string();
+                     let config = qres_rust::swarm::SwarmConfig { wan, gossip_interval: interval };
+                     
+                     let rt = tokio::runtime::Builder::new_multi_thread()
+                        .enable_all()
+                        .build()
+                        .unwrap();
+                    
+                     println!("Daemon Process Started (Interval: {}s, WAN: {})", interval, wan);
+
+                     rt.block_on(async {
+                        if let Err(e) = qres_rust::swarm::QresSwarm::run_daemon(brain_path, config).await {
+                            eprintln!("Swarm Fatal Error: {}", e);
+                        }
+                     });
+                 },
+                 _ => {
+                     eprintln!("Unknown swarm command: {}. Use start, stop, status.", subcmd);
+                 }
+             }
+        },
+        "api-server" => {
+            // HTTP REST API Server
+            let mut port = 3030;
+            let mut i = 2;
+            while i < args.len() {
+                match args[i].as_str() {
+                    "--port" => {
+                        if i + 1 < args.len() {
+                            port = args[i+1].parse().unwrap_or(3030);
+                            i += 2;
+                        } else { i += 1; }
+                    },
+                    _ => i += 1,
+                }
+            }
+            
+            let rt = tokio::runtime::Builder::new_multi_thread()
+                .enable_all()
+                .build()
+                .unwrap();
+            
+            rt.block_on(async {
+                if let Err(e) = qres_rust::api::run_api_server(port).await {
+                    eprintln!("API Server Error: {}", e);
+                }
+            });
+        },
         "compress" => {
             if args.len() < 4 { eprintln!("Usage: compress <in> <out>"); return; }
             // Parse optional flags

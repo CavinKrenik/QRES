@@ -1,13 +1,20 @@
 # Build Artifacts
-# Build Artifacts
 target/
 qres_rust/target/
+qres-studio/target/
 titan_data/
 results/
 /dist
 *.so
 *.dll
 *.dylib
+
+# GUI / Node
+qres-studio/node_modules/
+qres-studio/ui/node_modules/
+qres-studio/dist/
+*.log
+package-lock.json
 
 # Python
 __pycache__/

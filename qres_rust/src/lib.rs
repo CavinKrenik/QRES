@@ -12,6 +12,12 @@ use pyo3::prelude::*;
 use pyo3::types::PyBytes;
 
 mod meta_brain;
+pub mod swarm;
+pub mod daemon;
+pub mod api;
+pub mod config;
+pub mod stats;
+pub mod analytics;
 
 const CHUNK_SIZE: usize = 64 * 1024; // 64KB for High-Frequency Adaptation Benchmarks
 const QRES_MAGIC: &[u8] = b"QRES";

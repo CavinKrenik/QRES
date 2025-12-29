@@ -1,1 +1,0 @@
-C:\Dev\QRES\qres_rust\target\release\qres_rust.dll: C:\Dev\QRES\qres_rust\assets\ipeps.qnn C:\Dev\QRES\qres_rust\assets\lstm.qnn C:\Dev\QRES\qres_rust\assets\tensor.qnn C:\Dev\QRES\qres_rust\assets\tokenizer.json C:\Dev\QRES\qres_rust\src\lib.rs C:\Dev\QRES\qres_rust\src\meta_brain.rs C:\Dev\QRES\qres_rust\src\semantic.rs
