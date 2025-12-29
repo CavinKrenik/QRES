@@ -18,8 +18,29 @@ QRES is a **Cybernetic Compression System** that not only predicts the best stra
 *   **🧠 Neuro-Symbolic Explainability**: Pass `--explain` to see the decision logic (e.g., `zcr > 0.44 -> Linear`).
 *   **📉 Lossy Compression**: Enable "semantic collapse" with `--lossy <tolerance>`. By quantizing prediction residuals, QRES can achieve huge compression ratios for noisy data where 100% precision isn't required (IoT, telemetry).
 *   **🛡️ Anomaly Detection**: Built-in "Watchdog" monitors decompression integrity validation in real-time.
+*   **🐝 Federated Intelligence (The Hive)**: QRES doesn't just learn alone. Enable the **Brain-Port** to export learned wisdom to a central Hive, allowing other agents to download "instincts" and adapt to new data patterns instantly (Zero-Shot Learning).
 *   **📦 Self-Contained Intelligence**: All AI models and Meta-Brains are **Embedded** directly in the binary.
 *   **🌊 Streaming First**: Constant 4MB RAM usage regardless of file size.
+
+---
+
+## 🐝 The "Hive" Network Effect
+QRES becomes smarter as more people use it.
+
+1.  **Isolate Learning**: Agent A encounters a drifting signal. It struggles, gets punished, learns to switch to **iPEPS**.
+2.  **Federated Sync**: Agent A pushes its "Living Brain" (Confidence Scores) to the Hive.
+3.  **Zero-Shot Adaptation**: Agent B pulls the Global Brain. When Agent B sees the same signal, it uses **iPEPS immediately**—bypassing the learning curve entirely.
+
+### Brain-Port CLI
+The core codec remains secure and offline. Networking is handled via external scripts (`utils/hive_sync.py`).
+
+```bash
+# 1. Export Wisdom
+qres-cli brain-export > local_brain.json
+
+# 2. Import Wisdom
+qres-cli brain-import global_brain.json
+```
 
 ---
 

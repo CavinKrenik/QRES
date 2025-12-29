@@ -29,6 +29,31 @@ pub struct QresHeader {
     pub chunk_compressed_sizes: Vec<u64>, // Empty if streaming
 }
 
+// --- Federated Intelligence (Phase 19) ---
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct LivingBrain {
+    pub confidence: [f32; 6],
+}
+impl LivingBrain {
+    pub fn new() -> Self {
+        LivingBrain { confidence: [1.0; 6] }
+    }
+    
+    pub fn merge(&mut self, other: &LivingBrain, alpha: f32) {
+        for i in 0..6 {
+            self.confidence[i] = self.confidence[i] * (1.0 - alpha) + other.confidence[i] * alpha;
+        }
+    }
+    
+    pub fn to_json(&self) -> String {
+        serde_json::to_string(self).unwrap_or_else(|_| "{}".to_string())
+    }
+    
+    pub fn from_json(json: &str) -> Option<Self> {
+        serde_json::from_str(json).ok()
+    }
+}
+
 // --- Predictor Logic ---
 #[derive(Clone, Copy, PartialEq)]
 enum PredictorMode { Previous = 0, Linear = 1, Neural = 2, Lstm = 3, Tensor = 4, Ipeps = 5 }
@@ -554,8 +579,8 @@ pub struct QresWriter<W: Write> {
     anomaly_threshold: Option<u8>, // If Set, detect anomalies
     lossy_tolerance: Option<u8>, // If Set, Quantize residuals
 
-    // Online Learning State
-    confidence: [f32; 6], // Index = PredictorID. 1.0 = High, 0.0 = Avoid.
+    // Meta-Learning
+    pub living_brain: LivingBrain,
 
     // State
     state: WriterState,
@@ -609,19 +634,28 @@ fn calc_features(chunk: &[u8]) -> (f32, f32, f32, f32) {
 
 impl<W: Write> QresWriter<W> {
     pub fn new(writer: W, mode_hint: u8) -> Self {
+       Self::new_with_brain(writer, mode_hint, LivingBrain::new())
+    }
+
+    pub fn new_with_brain(writer: W, mode_hint: u8, brain: LivingBrain) -> Self {
         QresWriter {
             writer,
-            buffer: Vec::with_capacity(4096), // 4KB Buffer for Psychic Predictor
-            mode_hint, // 0=Auto
+            buffer: Vec::with_capacity(CHUNK_SIZE),
+            header_written: false,
+            mode_hint,
+            predictor_id: 1, // Default to Linear
+            weights: Vec::new(),
+            living_brain: brain,
+            state: WriterState::Buffering,
+            explain_str: String::new(),
             anomaly_threshold: None,
             lossy_tolerance: None,
-            confidence: [1.0; 6], // Start fully confident
-            state: WriterState::Buffering,
-            predictor_id: 1, // Default
-            weights: Vec::new(),
-            header_written: false,
-            explain_str: "Default (Linear initialized)".to_string(),
         }
+    }
+    
+    // ... getter for brain ...
+    pub fn get_brain(&self) -> &LivingBrain {
+        &self.living_brain
     }
 
     pub fn set_lossy(&mut self, tolerance: u8) {
@@ -679,10 +713,10 @@ impl<W: Write> QresWriter<W> {
         if ratio > 0.85 {
             // Punishment!
             if self.predictor_id != 1 { // Don't punish Linear (Safe Harbor)
-                 self.confidence[self.predictor_id as usize] -= 0.2;
-                 if self.confidence[self.predictor_id as usize] < 0.0 { self.confidence[self.predictor_id as usize] = 0.0; }
+                 self.living_brain.confidence[self.predictor_id as usize] -= 0.2;
+                 if self.living_brain.confidence[self.predictor_id as usize] < 0.0 { self.living_brain.confidence[self.predictor_id as usize] = 0.0; }
                  
-                 eprintln!("[Watchdog] Punishment! ID {} ratio {:.2}. Confidence now {:.2}", self.predictor_id, ratio, self.confidence[self.predictor_id as usize]);
+                 // eprintln!("[Watchdog] Punishment! ID {} ratio {:.2}", self.predictor_id, ratio);
                  
                  // Force switch next time
                  self.buffer.clear(); 
@@ -692,7 +726,7 @@ impl<W: Write> QresWriter<W> {
         
         // Decay (Forgiveness) - Slowly restore confidence to everything
         for i in 2..6 {
-            if self.confidence[i] < 1.0 { self.confidence[i] += 0.01; }
+            if self.living_brain.confidence[i] < 1.0 { self.living_brain.confidence[i] += 0.01; }
         }
 
         if let Some(threshold) = self.anomaly_threshold {
@@ -726,12 +760,12 @@ impl<W: Write> QresWriter<W> {
                  
                  // Online Learning Override
                  // If the Meta-Brain picks a low-confidence engine, downgrade it.
-                 if self.confidence[winner as usize] < 0.5 {
+                 if self.living_brain.confidence[winner as usize] < 0.5 {
                      // Try fallback. For now, just Linear.
                      // In v1.3 we could try 2nd best.
                      let old_winner = winner;
                      winner = 1;
-                     self.explain_str = format!("{} (Override: ID {} has low confidence {:.2})", reason, old_winner, self.confidence[old_winner as usize]);
+                     self.explain_str = format!("{} (Override: ID {} has low confidence {:.2})", reason, old_winner, self.living_brain.confidence[old_winner as usize]);
                  } else {
                      self.explain_str = reason.to_string();
                  }

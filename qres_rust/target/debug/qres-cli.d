@@ -1,0 +1,1 @@
+C:\Dev\QRES\qres_rust\target\debug\qres-cli.exe: C:\Dev\QRES\qres_rust\assets\ipeps.qnn C:\Dev\QRES\qres_rust\assets\lstm.qnn C:\Dev\QRES\qres_rust\assets\tensor.qnn C:\Dev\QRES\qres_rust\src\lib.rs C:\Dev\QRES\qres_rust\src\main.rs C:\Dev\QRES\qres_rust\src\meta_brain.rs

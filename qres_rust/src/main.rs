@@ -1,15 +1,23 @@
 use std::env;
-use std::fs::File;
+use std::fs::{self, File};
 use std::io::{self, BufReader, BufWriter, Read, Write};
-use qres_rust::{QresWriter, QresReader};
-use serde_json;
+use qres_rust::{QresWriter, QresReader, LivingBrain};
+
+const DEFAULT_BRAIN_FILE: &str = "qres_brain.json";
 
 fn compress_file(input: &str, output: &str, mode_hint: u8, anomaly_threshold: Option<u8>, lossy_tolerance: Option<u8>, explain: bool) -> io::Result<()> {
     let mut reader = BufReader::new(File::open(input)?);
     let writer = BufWriter::new(File::create(output)?);
     
+    // Load Brain
+    let brain = if let Ok(json) = fs::read_to_string(DEFAULT_BRAIN_FILE) {
+        LivingBrain::from_json(&json).unwrap_or_else(|| LivingBrain::new())
+    } else {
+        LivingBrain::new()
+    };
+
     // QresWriter handles detection internally now
-    let mut qres_writer = QresWriter::new(writer, mode_hint);
+    let mut qres_writer = QresWriter::new_with_brain(writer, mode_hint, brain);
     if let Some(t) = anomaly_threshold {
         qres_writer.set_anomaly_threshold(t);
     }
@@ -21,6 +29,12 @@ fn compress_file(input: &str, output: &str, mode_hint: u8, anomaly_threshold: Op
     let start = std::time::Instant::now();
     let bytes = io::copy(&mut reader, &mut qres_writer)?;
     qres_writer.flush()?; 
+    
+    // Save Brain
+    let new_brain = qres_writer.get_brain();
+    if let Err(e) = fs::write(DEFAULT_BRAIN_FILE, new_brain.to_json()) {
+        eprintln!("Warning: Failed to save brain: {}", e);
+    }
     
     println!("Streamed {} bytes to {} (Mode: {}) in {:.2}s", 
         bytes, output, mode_hint, start.elapsed().as_secs_f64());
@@ -44,21 +58,53 @@ fn decompress_file(input: &str, output: &str) -> io::Result<()> {
     Ok(())
 }
 
+fn brain_export() -> io::Result<()> {
+    if let Ok(json) = fs::read_to_string(DEFAULT_BRAIN_FILE) {
+        println!("{}", json);
+    } else {
+        // If no brain exists, export a default fresh brain
+        println!("{}", LivingBrain::new().to_json());
+    }
+    Ok(())
+}
+
+fn brain_import(file_path: &str) -> io::Result<()> {
+    // Load Local
+    let mut local = if let Ok(json) = fs::read_to_string(DEFAULT_BRAIN_FILE) {
+        LivingBrain::from_json(&json).unwrap_or_else(|| LivingBrain::new())
+    } else {
+        LivingBrain::new()
+    };
+    
+    // Load Import
+    let import_json = fs::read_to_string(file_path)?;
+    if let Some(imported) = LivingBrain::from_json(&import_json) {
+        // Merge: New = 0.9 * Local + 0.1 * Import
+        local.merge(&imported, 0.1);
+        fs::write(DEFAULT_BRAIN_FILE, local.to_json())?;
+        println!("🧠 Brain merged successfully. Wisdom assimilated.");
+    } else {
+        eprintln!("Failed to parse imported brain.");
+    }
+    Ok(())
+}
+
 fn main() {
     let args: Vec<String> = env::args().collect();
-    if args.len() < 4 { 
-        eprintln!("Usage: qres-cli <compress|decompress> <in> <out> [--mode <auto|max|fast>] [--detect-anomalies <threshold>] [--lossy <tolerance>] [--explain] [--auto-tune]");
+    if args.len() < 2 { 
+        eprintln!("Usage: qres-cli <compress|decompress|brain-export|brain-import> ...");
         std::process::exit(1);
     }
     
     match args[1].as_str() {
         "compress" => {
+            if args.len() < 4 { eprintln!("Usage: compress <in> <out>"); return; }
             // Parse optional flags
             let mut mode = 0;
             let mut anomaly_threshold = None;
             let mut lossy_tolerance = None;
             let mut explain = false;
-            let mut auto_tune = false; // v1.2 Placeholder
+            let mut auto_tune = false; 
             
             let mut i = 4;
             while i < args.len() {
@@ -101,11 +147,19 @@ fn main() {
                 }
             }
             if auto_tune {
-                println!("🧠 Auto-Tune Enabled: Predictor confidence will be updated based on efficiency.");
+                println!("🧠 Auto-Tune Enabled.");
             }
             compress_file(&args[2], &args[3], mode, anomaly_threshold, lossy_tolerance, explain).unwrap()
         },
-        "decompress" => decompress_file(&args[2], &args[3]).unwrap(),
+        "decompress" => {
+             if args.len() < 4 { eprintln!("Usage: decompress <in> <out>"); return; }
+             decompress_file(&args[2], &args[3]).unwrap()
+        },
+        "brain-export" => brain_export().unwrap(),
+        "brain-import" => {
+             if args.len() < 3 { eprintln!("Usage: brain-import <file>"); return; }
+             brain_import(&args[2]).unwrap()
+        },
         _ => eprintln!("Unknown command"),
     }
 }
