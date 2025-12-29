@@ -21,7 +21,7 @@ manifest-path = "qres_rust/Cargo.toml"
 # Point to the Python wrapper we moved to root
 python-source = "python"
 module-name = "qres.qres_rust"
-features = ["pyo3/extension-module"]
+features = ["python"]
 
 # Start with a clean slate by ignoring old artifacts
 [tool.maturin.sdist]

@@ -7,10 +7,13 @@ edition = "2021"
 name = "qres_rust"
 crate-type = ["cdylib", "rlib"]
 
+[features]
+default = []
+python = ["dep:pyo3"]
+
 [dependencies]
-# PyO3 with buffer protocol support
-# Note: abi3-py38 allows the wheel to work on Python 3.8+ without rebuilds
-pyo3 = { version = "0.20", features = ["extension-module", "abi3-py38"] }
+# PyO3 with buffer protocol support (Optional for CLI, Required for Python Wheel)
+pyo3 = { version = "0.20", features = ["extension-module", "abi3-py38"], optional = true }
 # Faster zlib backend using zlib-ng
 # Faster zlib backend (switched to default/miniz_oxide to fix Windows build)
 flate2 = { version = "1.0" } 

@@ -5,7 +5,10 @@ use serde::{Serialize, Deserialize};
 use flate2::write::ZlibEncoder;
 use flate2::read::ZlibDecoder;
 use flate2::Compression;
+
+#[cfg(feature = "python")]
 use pyo3::prelude::*;
+#[cfg(feature = "python")]
 use pyo3::types::PyBytes;
 
 mod meta_brain;
@@ -916,23 +919,27 @@ impl<R: Read> Read for QresReader<R> {
 }
 
 // --- Python Bindings ---
+#[cfg(feature = "python")]
 #[pyfunction]
 fn encode_bytes<'a>(py: Python<'a>, data: &[u8], predictor_id: u8, weights: Option<&[u8]>) -> PyResult<&'a PyBytes> {
     let compressed = compress_chunk(data, predictor_id, weights, None).map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(e.to_string()))?;
     Ok(PyBytes::new(py, &compressed))
 }
 
+#[cfg(feature = "python")]
 #[pyfunction]
 fn decode_bytes<'a>(py: Python<'a>, data: &[u8], predictor_id: u8, weights: Option<&[u8]>) -> PyResult<&'a PyBytes> {
     let decompressed = decompress_chunk(data, predictor_id, weights).map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(e.to_string()))?;
     Ok(PyBytes::new(py, &decompressed))
 }
 
+#[cfg(feature = "python")]
 #[pyfunction]
 fn get_residuals_py<'a>(py: Python<'a>, data: &[u8], predictor_id: u8, weights: Option<&[u8]>) -> PyResult<Vec<i8>> {
     Ok(get_residuals(data, predictor_id, weights))
 }
 
+#[cfg(feature = "python")]
 #[pymodule]
 fn qres_rust(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(encode_bytes, m)?)?;
