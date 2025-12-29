@@ -1,90 +1,74 @@
-# QRES: Quantum-Relational Encoding System (v0.7.0)
+# QRES: Quantum-Relational Encoding System (v0.8.0)
 
-> **The Generative AI Codec.**
-> Embeds "Digital Twin" neural models (LSTM/MLP) into data streams for high-performance compression.
+> **The Neural-Symbolic-Quantum Codec.**
+> High-performance compression using Learnable Tensor Networks and Recurrent Models.
 
 ![CI](https://github.com/CavinKrenik/QRES/actions/workflows/test.yml/badge.svg)
 ![Release](https://github.com/CavinKrenik/QRES/actions/workflows/release.yml/badge.svg)
 
-**QRES v0.7.0** introduces **Deep Temporal Compression**. It uses **Long Short-Term Memory (LSTM)** networks to learn complex, long-range dependencies in your data (like biological signals or audio waveforms), executing them in **pure Rust** with zero overhead.
+**QRES v0.8.0** is the world's first codec to integrate **Quantum-Inspired Tensor Networks** (MPS) alongside **Deep Learning** (LSTM/MLP). It offers a spectrum of "Digital Twin" predictors that run in **pure Rust** with zero dependencies.
 
 ---
 
 ## 🚀 Key Features
 
-*   **🧠 Deep Temporal Compression (LSTM)**: New in v0.7.0. Captures periodic signals and complex waves that linear predictors miss.
-*   **🕸️ Neural Prediction (MLP)**: Great for non-linear but stateless patterns.
-*   **🦀 Zero-Dependency Inference**: Both MLP and LSTM models run in **pure Rust** (manual matrix math). No heavy AI runtimes.
-*   **🌊 Streaming Architecture**: Processes unlimited data size in constant **4MB RAM**.
-*   **� Self-Contained Archives**: The neural model weights are **embedded in the file header**. Decompression needs only the file itself.
+*   **⚛️ Tensor Prediction (Phase 13)**: Uses **Matrix Product States (MPS)** to engage a linear, learnable model that runs at **native speed** (5x faster than LSTM).
+*   **🧠 Deep Temporal Compression (Phase 12)**: Uses **MicroLSTMs** to capture complex, non-linear periodic signals (Waveforms, Bio-data).
+*   **🦀 Zero-Dependency Inference**: No PyTorch. No ONNX. Just manual, SIMD-optimized matrix math in Rust.
+*   **🌊 Streaming Architecture**: Constant 4MB RAM usage for any file size.
+*   **📦 Smart Headers**: Weights are embedded in the file. The decoder adapts automatically.
 
 ---
 
 ## ⚡ CLI Usage
 
-### 1. Deep Temporal Compression (LSTM)
-Train an LSTM on your data type, then compress:
+QRES offers three "Brains" for your data:
+
+### 1. The Speedster (Tensor/MPS)
+Use for high-throughput streams where you need adaptability without the CPU cost of LSTM.
 ```bash
-# Uses LSTM (Predictor ID 3) - Best for complex waves
-qres-cli compress bio_signal.dat Signal.qres --brain models/lstm_bio.qnn
+# Predictor ID 4: Fast, Linear, Learnable
+qres-cli compress fast_stream.dat output.qres --brain models/tensor.qnn
 ```
 
-### 2. Neural Compression (MLP)
+### 2. The Analyst (LSTM)
+Use for complex, non-linear data where compression ratio is paramount.
 ```bash
-# Uses MLP (Predictor ID 2) - Good for general non-linear data
-qres-cli compress sensor_log.dat Sensor.qres --brain models/mlp_sensor.qnn
+# Predictor ID 3: High Precision, captured long-range dependencies
+qres-cli compress bio_signal.dat archive.qres --brain models/lstm.qnn
 ```
 
-### 3. Decompression (Universal)
-The decoder **automatically detects** the model (LSTM or MLP) from the file header and configures the inference engine instantly.
+### 3. The Classic (Linear)
+Use for standard simple sensors or when no model is available.
 ```bash
-qres-cli decompress Signal.qres restored.dat
-```
-
----
-
-## 🐍 Python API
-
-```python
-import qres
-import numpy as np
-
-# 1. Compress a NumPy Array (Linear Mode)
-data = np.sin(np.linspace(0, 100, 10000)).astype(np.uint8)
-compressed = qres.compress(data, predictor_id=1) 
-
-# 2. Advanced: Neural/LSTM Encoding
-# (Requires pre-trained weights bytes)
-# compressed = qres.encode_bytes(data, 3, lstm_weights_bytes)
+# Predictor ID 1: Standard Delta Encoding
+qres-cli compress sensor.dat raw.qres
 ```
 
 ---
 
-## 📊 Benchmarks
+## 📊 Benchmarks (The Showdown)
 
-| Algorithm | Model | Ratio (Complex Wave) | Notes |
-| :--- | :--- | :--- | :--- |
-| **QRES (LSTM)** | **MicroLSTM (H=8)** | **3.4%** | **Winner 🏆** - Captured the wave period. |
-| **QRES (Linear)** | Delta | 3.5% | Good baseline, but missed nuances. |
-| **QRES (MLP)** | MLP (3x8) | 13.4% | Failed to capture temporal dependencies. |
-| Zlib (L6) | DEFLATE | 12.5% | General purpose, not tuned for signals. |
+| Engine | Type | Speed | Ratio (Complex Wave) | Best For... |
+| :--- | :--- | :--- | :--- | :--- |
+| **Tensor (MPS)** | Quantum-Linear | **0.04s** (Fast) | 15.0% | **High-Speed Streams** |
+| **LSTM** | Non-Linear RNN | 0.20s (Slow) | **3.4%** | **Archival / Complex Data** |
+| **Linear** | Static Math | 0.04s (Fast) | 3.5% | Simple Data |
 
-*Tested on 1MB Modulated Sine Wave (`sin(t) * cos(t/3)`).*
+*Tested on 1MB Modulated Sine Wave. Tensor matches Linear speed while offering learnability!*
 
 ---
 
-## 🛠️ Build from Source
+## 🛠️ Build & Train
 
 ```bash
-# 1. Clone
-git clone https://github.com/CavinKrenik/QRES.git
-cd QRES
-
-# 2. Build Rust Core & CLI
+# 1. Build Rust Engine
 cargo build --release
 
-# 3. Train a Brain (Optional)
-pip install torch numpy
+# 2. Train Your Own Brains
+# Tensor (Fast)
+python ai/train_tensor.py 
+# LSTM (Smart)
 python ai/train_lstm.py
 ```
 

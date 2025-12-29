@@ -25,6 +25,11 @@ fn compress_file(input: &str, output: &str, brain_path: Option<String>) -> io::R
              let mut w = Vec::new();
              f.read_to_end(&mut w)?;
              (3, Some(w))
+        } else if &magic == b"MPS1" {
+             println!("⚛️ Quantum Tensor Mode Detected!");
+             let mut w = Vec::new();
+             f.read_to_end(&mut w)?;
+             (4, Some(w))
         } else {
              return Err(io::Error::new(io::ErrorKind::InvalidData, "Invalid Brain file (Unknown Magic)"));
         }

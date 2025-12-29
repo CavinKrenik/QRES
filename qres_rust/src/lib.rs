@@ -26,18 +26,20 @@ pub struct QresHeader {
 
 // --- Predictor Logic ---
 #[derive(Clone, Copy)]
-enum PredictorMode { Previous = 0, Linear = 1, Neural = 2, Lstm = 3 }
+enum PredictorMode { Previous = 0, Linear = 1, Neural = 2, Lstm = 3, Tensor = 4 }
 impl From<u8> for PredictorMode {
     fn from(v: u8) -> Self { 
         match v {
             1 => PredictorMode::Linear,
             2 => PredictorMode::Neural,
             3 => PredictorMode::Lstm,
+            4 => PredictorMode::Tensor,
             _ => PredictorMode::Previous,
         }
     }
 }
 
+// Fixed-sized Neural Network (3 -> 8 -> 1)
 struct NeuralPredictor {
     w1: [f32; 24], b1: [f32; 8], w2: [f32; 8], b2: [f32; 1],
     context: [f32; 3],
@@ -49,7 +51,6 @@ impl NeuralPredictor {
             context: [0.0; 3],
         };
         if let Some(w_bytes) = weights {
-             // Valid simple check for Neural (164 bytes)
              if w_bytes.len() == 164 {
                 unsafe {
                     std::ptr::copy_nonoverlapping(w_bytes.as_ptr(), n.w1.as_mut_ptr() as *mut u8, 96);
@@ -63,23 +64,10 @@ impl NeuralPredictor {
     }
 }
 
-// MicroLSTM (1 -> 8 -> 1)
 struct LstmPredictor {
-    // Weights: Input (32, 1), Hidden (32, 8), Biases (32 + 32 -> 64), FC (1, 8), FC Bias (1)
-    // Actually, let's pre-sum biases for efficiency logic if we want, but PyTorch exports separate.
-    // For simplicity, we lay them out as PyTorch exports.
-    w_ih: [f32; 32],
-    w_hh: [f32; 256],
-    b_ih: [f32; 32],
-    b_hh: [f32; 32],
-    w_fc: [f32; 8],
-    b_fc: [f32; 1],
-    
-    // State
-    h: [f32; 8],
-    c: [f32; 8],
+    w_ih: [f32; 32], w_hh: [f32; 256], b_ih: [f32; 32], b_hh: [f32; 32], w_fc: [f32; 8], b_fc: [f32; 1],
+    h: [f32; 8], c: [f32; 8],
 }
-
 impl LstmPredictor {
     fn new(weights: Option<&[u8]>) -> Self {
         let mut n = LstmPredictor {
@@ -87,9 +75,7 @@ impl LstmPredictor {
             w_fc: [0.0; 8], b_fc: [0.0; 1],
             h: [0.0; 8], c: [0.0; 8],
         };
-        
         if let Some(w) = weights {
-            // Expected size: 32*4 + 256*4 + 32*4 + 32*4 + 8*4 + 4 = 128+1024+128+128+32+4 = 1444 bytes.
             if w.len() >= 1444 {
                 unsafe {
                     let mut ptr = w.as_ptr();
@@ -104,12 +90,37 @@ impl LstmPredictor {
         }
         n
     }
+    #[inline(always)] fn sigmoid(x: f32) -> f32 { 1.0 / (1.0 + (-x).exp()) }
+    #[inline(always)] fn tanh(x: f32) -> f32 { x.tanh() }
+}
 
-    #[inline(always)]
-    fn sigmoid(x: f32) -> f32 { 1.0 / (1.0 + (-x).exp()) }
-    
-    #[inline(always)]
-    fn tanh(x: f32) -> f32 { x.tanh() }
+struct TensorPredictor {
+    a0: [f32; 16], // 4x4
+    a1: [f32; 16], // 4x4
+    c:  [f32; 4],  // 4x1
+    b:  [f32; 1],  // 1
+    psi: [f32; 4], // State
+}
+impl TensorPredictor {
+    fn new(weights: Option<&[u8]>) -> Self {
+        let mut n = TensorPredictor {
+            a0: [0.0; 16], a1: [0.0; 16], c: [0.0; 4], b: [0.0; 1],
+            psi: [1.0, 0.0, 0.0, 0.0], // Initial State [1,0,0,0]
+        };
+        if let Some(w) = weights {
+            // Expected size: 16*4 + 16*4 + 4*4 + 4 = 148 bytes
+             if w.len() >= 148 {
+                unsafe {
+                    let mut ptr = w.as_ptr();
+                    std::ptr::copy_nonoverlapping(ptr, n.a0.as_mut_ptr() as *mut u8, 64); ptr = ptr.add(64);
+                    std::ptr::copy_nonoverlapping(ptr, n.a1.as_mut_ptr() as *mut u8, 64); ptr = ptr.add(64);
+                    std::ptr::copy_nonoverlapping(ptr, n.c.as_mut_ptr() as *mut u8, 16); ptr = ptr.add(16);
+                    std::ptr::copy_nonoverlapping(ptr, n.b.as_mut_ptr() as *mut u8, 4);
+                }
+             }
+        }
+        n
+    }
 }
 
 struct PredictorEngine { 
@@ -117,6 +128,7 @@ struct PredictorEngine {
     p1: u8, p2: u8,
     neural: NeuralPredictor,
     lstm: LstmPredictor,
+    tensor: TensorPredictor,
 }
 
 impl PredictorEngine {
@@ -125,6 +137,7 @@ impl PredictorEngine {
             mode, p1: 0, p2: 0,
             neural: if matches!(mode, PredictorMode::Neural) { NeuralPredictor::new(weights) } else { NeuralPredictor::new(None) },
             lstm: if matches!(mode, PredictorMode::Lstm) { LstmPredictor::new(weights) } else { LstmPredictor::new(None) },
+             tensor: if matches!(mode, PredictorMode::Tensor) { TensorPredictor::new(weights) } else { TensorPredictor::new(None) },
         } 
     }
     
@@ -146,16 +159,15 @@ impl PredictorEngine {
                 if out > 255.0 { 255 } else if out < 0.0 { 0 } else { out as u8 }
             },
             PredictorMode::Lstm => {
-                // LSTM Forward (One step prediction) based on CURRENT state (h, c).
-                // Wait, LSTM predicts NEXT x[t+1] using x[t]. But here `predict()` is called BEFORE `update(x[t])`.
-                // So `predict()` uses state derived from x[0]...x[t-1] to predict x[t].
-                // But the very first byte? x[0]. State is 0.
-                // We run the FC layer on current hidden state `h`.
-                // Ideally, h[-1] (init 0) projects to x[0].
-                
                 let mut sum = self.lstm.b_fc[0];
                 for i in 0..8 { sum += self.lstm.h[i] * self.lstm.w_fc[i]; }
-                
+                let out = (sum * 255.0).round();
+                if out > 255.0 { 255 } else if out < 0.0 { 0 } else { out as u8 }
+            },
+            PredictorMode::Tensor => {
+                // y = psi @ C + b
+                let mut sum = self.tensor.b[0];
+                for i in 0..4 { sum += self.tensor.psi[i] * self.tensor.c[i]; }
                 let out = (sum * 255.0).round();
                 if out > 255.0 { 255 } else if out < 0.0 { 0 } else { out as u8 }
             }
@@ -174,38 +186,46 @@ impl PredictorEngine {
                 self.neural.context[2] = (actual as f32) / 255.0;
             },
             PredictorMode::Lstm => {
-                // Run LSTM Cell Step feeding `actual`
                 let x = (actual as f32) / 255.0;
-                
-                // Gates (i, f, g, o) - 8 units each.
-                // gates_raw = W_ih * x + b_ih + W_hh * h + b_hh
-                
                 let mut gates = [0.0f32; 32];
-                
-                // Vectorized multiply (Input part)
-                for i in 0..32 {
-                    gates[i] = self.lstm.w_ih[i] * x + self.lstm.b_ih[i] + self.lstm.b_hh[i];
-                }
-                
-                // Matrix multiply (Hidden part: W_hh [32x8] * h [8x1])
+                for i in 0..32 { gates[i] = self.lstm.w_ih[i] * x + self.lstm.b_ih[i] + self.lstm.b_hh[i]; }
                 for row in 0..32 {
                     let mut sum = 0.0;
-                    for col in 0..8 {
-                        sum += self.lstm.w_hh[row * 8 + col] * self.lstm.h[col];
-                    }
+                    for col in 0..8 { sum += self.lstm.w_hh[row * 8 + col] * self.lstm.h[col]; }
                     gates[row] += sum;
                 }
-                
-                // Apply Activations & Update Cells
                 for i in 0..8 {
-                    let it = LstmPredictor::sigmoid(gates[i]);      // Input Gate
-                    let ft = LstmPredictor::sigmoid(gates[i+8]);    // Forget Gate
-                    let gt = LstmPredictor::tanh(gates[i+16]);      // Cell Gate
-                    let ot = LstmPredictor::sigmoid(gates[i+24]);   // Output Gate
-                    
+                    let it = LstmPredictor::sigmoid(gates[i]);
+                    let ft = LstmPredictor::sigmoid(gates[i+8]);
+                    let gt = LstmPredictor::tanh(gates[i+16]);
+                    let ot = LstmPredictor::sigmoid(gates[i+24]);
                     self.lstm.c[i] = ft * self.lstm.c[i] + it * gt;
                     self.lstm.h[i] = ot * LstmPredictor::tanh(self.lstm.c[i]);
                 }
+            },
+            PredictorMode::Tensor => {
+                // Tensor State Update
+                // psi_new = psi @ A_eff
+                // A_eff = A0 + x * A1
+                
+                let x = (actual as f32) / 255.0;
+                let mut psi_next = [0.0f32; 4];
+                
+                // psi is Row Vector [1, 4]. A_eff is [4, 4].
+                // psi_next[j] = sum(psi[i] * A_eff[i][j])
+                
+                for j in 0..4 {
+                    let mut sum = 0.0;
+                    for i in 0..4 {
+                         // A0 and A1 are flattened row-major. Index = i*4 + j
+                         let idx = i * 4 + j;
+                         let a_eff_val = self.tensor.a0[idx] + x * self.tensor.a1[idx];
+                         sum += self.tensor.psi[i] * a_eff_val;
+                    }
+                    psi_next[j] = sum;
+                }
+                
+                self.tensor.psi = psi_next;
             },
             _ => {}
         }
