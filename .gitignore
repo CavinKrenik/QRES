@@ -12,6 +12,7 @@ results/
 # GUI / Node
 qres-studio/node_modules/
 qres-studio/ui/node_modules/
+qres-studio/ui/dist/
 qres-studio/dist/
 *.log
 package-lock.json

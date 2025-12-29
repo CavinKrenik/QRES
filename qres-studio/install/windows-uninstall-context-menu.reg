@@ -1,0 +1,8 @@
+Windows Registry Editor Version 5.00
+
+; Remove "Compress with QRES" from context menu
+[-HKEY_CLASSES_ROOT\*\shell\QRESCompress]
+
+; Remove .qres file association
+[-HKEY_CLASSES_ROOT\.qres]
+[-HKEY_CLASSES_ROOT\QRES Archive]
