@@ -1,57 +1,44 @@
-# QRES: Quantum-Relational Encoding System (v0.6.0)
+# QRES: Quantum-Relational Encoding System (v0.7.0)
 
-> **The Zero-Overhead Neural Codec.**
-> High-performance streaming compression for time-series and IoT data, powered by AI.
+> **The Generative AI Codec.**
+> Embeds "Digital Twin" neural models (LSTM/MLP) into data streams for high-performance compression.
 
 ![CI](https://github.com/CavinKrenik/QRES/actions/workflows/test.yml/badge.svg)
 ![Release](https://github.com/CavinKrenik/QRES/actions/workflows/release.yml/badge.svg)
 
-**QRES v0.6.0** is a revolutionary hybrid codec. It trains **tiny neural networks** (in Python) to understand your data, then executes them in **pure Rust** (0.0s overhead) to compress data streams in constant memory.
+**QRES v0.7.0** introduces **Deep Temporal Compression**. It uses **Long Short-Term Memory (LSTM)** networks to learn complex, long-range dependencies in your data (like biological signals or audio waveforms), executing them in **pure Rust** with zero overhead.
 
 ---
 
 ## 🚀 Key Features
 
-*   **🧠 Neural Prediction (Phase 10)**: Provide a `brain.qnn` (tiny MLP) to "teach" the compressor your data's patterns. It beats linear algorithms by **~40%**.
-*   **🌊 Streaming Architecture (Phase 9)**: Processes Terabytes of data in constant **4MB RAM**.
-*   **🦀 Pure Rust Inference**: The decoder runs the Neural Network manually (matrix math) in Rust. **No PyTorch/ONNX dependencies required.**
-*   **⚡ Extreme Speed**: Decompresses at **~951 MB/s**.
-*   **🔌 Zero-Copy Python**: Direct NumPy integration avoiding memory overhead.
-
----
-
-## 📦 Installation
-
-```bash
-pip install qres
-```
-
-*Requires Python 3.8+*
+*   **🧠 Deep Temporal Compression (LSTM)**: New in v0.7.0. Captures periodic signals and complex waves that linear predictors miss.
+*   **🕸️ Neural Prediction (MLP)**: Great for non-linear but stateless patterns.
+*   **🦀 Zero-Dependency Inference**: Both MLP and LSTM models run in **pure Rust** (manual matrix math). No heavy AI runtimes.
+*   **🌊 Streaming Architecture**: Processes unlimited data size in constant **4MB RAM**.
+*   **� Self-Contained Archives**: The neural model weights are **embedded in the file header**. Decompression needs only the file itself.
 
 ---
 
 ## ⚡ CLI Usage
 
-QRES comes with a blazing fast CLI tool: `qres-cli`.
-
-### 1. Neural Compression (The "Brain" Mode)
-Train a brain on your data (or use a pretrained one), then compress:
+### 1. Deep Temporal Compression (LSTM)
+Train an LSTM on your data type, then compress:
 ```bash
-# Uses the Neural Network for prediction (Highest Ratio)
-qres-cli compress my_huge_log.dat archive.qres --brain brains/text_v1.qnn
+# Uses LSTM (Predictor ID 3) - Best for complex waves
+qres-cli compress bio_signal.dat Signal.qres --brain models/lstm_bio.qnn
 ```
 
-### 2. Standard Compression (Linear Mode)
-Great for simple waveforms or sensors:
+### 2. Neural Compression (MLP)
 ```bash
-# Uses Linear Prediction (Fastest Speed)
-qres-cli compress sensor_data.bin sensor.qres
+# Uses MLP (Predictor ID 2) - Good for general non-linear data
+qres-cli compress sensor_log.dat Sensor.qres --brain models/mlp_sensor.qnn
 ```
 
 ### 3. Decompression (Universal)
-The decoder **automatically learns** the Neural Network from the file header. You don't need the brain file to decompress!
+The decoder **automatically detects** the model (LSTM or MLP) from the file header and configures the inference engine instantly.
 ```bash
-qres-cli decompress archive.qres restored.dat
+qres-cli decompress Signal.qres restored.dat
 ```
 
 ---
@@ -66,35 +53,23 @@ import numpy as np
 data = np.sin(np.linspace(0, 100, 10000)).astype(np.uint8)
 compressed = qres.compress(data, predictor_id=1) 
 
-# 2. Decompress
-restored = qres.decompress(compressed)
-
-# 3. Neural Mode (Advanced)
-# (Requires pre-trained weights bytes, see ai/train_brain.py)
-# compressed_neural = qres.encode_bytes(data, 2, weights) 
+# 2. Advanced: Neural/LSTM Encoding
+# (Requires pre-trained weights bytes)
+# compressed = qres.encode_bytes(data, 3, lstm_weights_bytes)
 ```
-
----
-
-## 🧠 How It Works (The "Zero-Overhead" Architecture)
-
-1.  **Training (Python)**: You use PyTorch to train a tiny 3-layer MLP on your data type.
-2.  **Export**: The weights are saved to a `.qnn` file (approx 164 bytes).
-3.  **Encoding (Rust)**: QRES embeds these weights into the `.qres` file header.
-4.  **Inference (Rust)**: The `NeuralPredictor` struct executes the math: `ReLU(x @ W1 + b1) @ W2 + b2`. 
-    *   **Result**: AI-level compression ratios with the portability of a standard zip file.
 
 ---
 
 ## 📊 Benchmarks
 
-| Algorithm | Compression Speed | Decompression Speed | Ratio (Mixed Data) |
+| Algorithm | Model | Ratio (Complex Wave) | Notes |
 | :--- | :--- | :--- | :--- |
-| **QRES (Neural)** | **~50 MB/s** | **~950 MB/s** | **~1.2%** |
-| **QRES (Linear)** | **~367 MB/s** | **~951 MB/s** | **~2.1%** |
-| Zlib (L6) | 124 MB/s | 230 MB/s | 12.5% |
+| **QRES (LSTM)** | **MicroLSTM (H=8)** | **3.4%** | **Winner 🏆** - Captured the wave period. |
+| **QRES (Linear)** | Delta | 3.5% | Good baseline, but missed nuances. |
+| **QRES (MLP)** | MLP (3x8) | 13.4% | Failed to capture temporal dependencies. |
+| Zlib (L6) | DEFLATE | 12.5% | General purpose, not tuned for signals. |
 
-*Tested on Ryzen 9 5900X with 10MB Mixed Telemetry Data.*
+*Tested on 1MB Modulated Sine Wave (`sin(t) * cos(t/3)`).*
 
 ---
 
@@ -110,7 +85,7 @@ cargo build --release
 
 # 3. Train a Brain (Optional)
 pip install torch numpy
-python ai/train_brain.py
+python ai/train_lstm.py
 ```
 
 ## License
