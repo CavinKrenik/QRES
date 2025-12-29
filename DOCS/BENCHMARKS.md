@@ -8,7 +8,7 @@ The **Phase 20 Singularity Simulation** demonstrates that a new QRES node ("Agen
 ## The Singularity Chart
 The chart below visualizes the "Singularity Moment" where Agent B downloads the "Global Brain" from the Hive.
 
-![Singularity Proof](../singularity_proof.png)
+![Singularity Proof](zero_shot_adaptation.png)
 
 ### Analysis
 1.  **Agent A (Red)**: Starts with 0.0 confidence in the optimal engine (iPEPS). It encounters significant data drift (Sine -> Chaos) and must slowly learn to adapt via the Punishment/Reward loop.
@@ -25,3 +25,28 @@ The chart below visualizes the "Singularity Moment" where Agent B downloads the 
 
 ## Conclusion
 QRES v1.2.0 successfully implements a **Cybernetic Feedback Loop** that scales across the network. The system gets smarter as more agents contribute.
+
+## Reproducibility
+To reproduce these results on your local machine:
+
+**Hardware Used**:
+- **CPU**: (Simulated on standard x86_64 / arm64)
+- **RAM**: 16GB
+- **OS**: Windows / Linux / MacOS
+
+**Trace Command**:
+```bash
+# 1. Run the Swarm Simulation
+python benchmarks/simulate_swarm.py
+
+# 2. Inspect Trace Files
+# agent_a.csv (Teacher)
+# agent_b.csv (Student)
+cat agent_b.csv
+```
+
+**Metrics Captured**:
+- `ChunkID`: Timestamp
+- `EngineID`: Selected Engine (1=Linear, 5=iPEPS)
+- `Ratio`: Compression Ratio
+- `ConfIPEPS`: Confidence Score (0.0-1.0)
