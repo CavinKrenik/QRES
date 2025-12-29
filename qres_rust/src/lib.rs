@@ -360,21 +360,91 @@ pub fn decompress_chunk(compressed: &[u8], predictor_id: u8, weights: Option<&[u
 
 // --- Streaming Architecture ---
 
+use rayon::prelude::*;
+
+// --- Embedded Brains ---
+const LSTM_WEIGHTS: &[u8] = include_bytes!("models/lstm.qnn");
+const TENSOR_WEIGHTS: &[u8] = include_bytes!("models/tensor.qnn");
+
+// --- Autonomic Selector ---
+fn qualify_stream(sample: &[u8]) -> (u8, Vec<u8>) {
+    // Race Candidates: Linear (1), LSTM (3), Tensor (4)
+    // Structure: (id, weights, name)
+    let candidates = vec![
+        (1, vec![], "Linear"),
+        (3, LSTM_WEIGHTS.to_vec(), "LSTM"),
+        (4, TENSOR_WEIGHTS.to_vec(), "Tensor"),
+    ];
+    
+    // Parallel Race
+    let results: Vec<(u8, f64)> = candidates.par_iter().map(|(id, weights, _name)| {
+        let start = std::time::Instant::now();
+        // Compress sample
+        let weights_ref = if weights.is_empty() { None } else { Some(weights.as_slice()) };
+        let compressed = match compress_chunk(sample, *id, weights_ref) {
+            Ok(c) => c.len(),
+            Err(_) => usize::MAX, // Fail
+        };
+        let duration = start.elapsed().as_micros() as f64;
+        
+        // Score: Size (lower better) + Duration Penalty
+        // Adjust bias: We want compression, but avoid extreme slowness if ratio is similar.
+        // Let's say 1 byte saved is worth 10 microseconds.
+        // Score = Size + (Duration / 10.0)
+        let score = (compressed as f64) + (duration / 20.0); 
+        
+        (*id, score)
+    }).collect();
+    
+    // Pick Winner (Lowest Score)
+    let mut best_id = 1;
+    let mut best_score = f64::MAX;
+    
+    for (id, score) in results {
+        if score < best_score {
+            best_score = score;
+            best_id = id;
+        }
+    }
+    
+    // Return ID and Weights
+    match best_id {
+        3 => (3, LSTM_WEIGHTS.to_vec()),
+        4 => (4, TENSOR_WEIGHTS.to_vec()),
+        _ => (1, vec![]),
+    }
+}
+
+// --- Streaming Architecture ---
+
+enum WriterState {
+    Buffering,
+    Streaming,
+}
+
 pub struct QresWriter<W: Write> {
     writer: W,
     buffer: Vec<u8>,
+    
+    // Config
+    mode_hint: u8, // 0=Auto, 1=Fast(Linear), 3=Max(LSTM)
+    
+    // State
+    state: WriterState,
     predictor_id: u8,
-    weights: Vec<u8>, // Stored weights for Neural Mode
+    weights: Vec<u8>,
     header_written: bool,
 }
 
 impl<W: Write> QresWriter<W> {
-    pub fn new(writer: W, predictor_id: u8, weights: Option<Vec<u8>>) -> Self {
+    pub fn new(writer: W, mode_hint: u8) -> Self {
         QresWriter {
             writer,
-            buffer: Vec::with_capacity(CHUNK_SIZE),
-            predictor_id,
-            weights: weights.unwrap_or_default(),
+            buffer: Vec::with_capacity(64 * 1024), // 64KB Buffer for race
+            mode_hint, // 0=Auto
+            state: WriterState::Buffering,
+            predictor_id: 1, // Default
+            weights: Vec::new(),
             header_written: false,
         }
     }
@@ -382,8 +452,11 @@ impl<W: Write> QresWriter<W> {
     fn write_header(&mut self) -> io::Result<()> {
         if self.header_written { return Ok(()); }
         
+        // If we are forcing a mode (Fast/Max), set it now if not already set by race
+        // Actually race sets it. If skip race, set default.
+        
         let header = QresHeader {
-            version: 6, // v0.6.0 (Neural)
+            version: 8, // v0.8.0 / v0.9.0 / v1.0.0
             flags: 0x01, 
             predictor_id: self.predictor_id,
             timestamp: Utc::now().timestamp(),
@@ -398,9 +471,8 @@ impl<W: Write> QresWriter<W> {
         self.writer.write_all(&(hb.len() as u32).to_le_bytes())?; 
         self.writer.write_all(&hb)?;
 
-        // V3.1: Embed Neural Weights (ID 2 or 3)
-        if self.predictor_id == 2 || self.predictor_id == 3 {
-             // Write length (u32) then bytes
+        // Embed Weights
+        if self.predictor_id >= 2 {
             self.writer.write_all(&(self.weights.len() as u32).to_le_bytes())?;
             self.writer.write_all(&self.weights)?;
         }
@@ -409,45 +481,130 @@ impl<W: Write> QresWriter<W> {
         Ok(())
     }
 
-    fn compress_and_flush_buffer(&mut self) -> io::Result<()> {
-        if self.buffer.is_empty() { return Ok(()); }
+    fn flush_chunk(&mut self, chunk: &[u8]) -> io::Result<()> {
+        if chunk.is_empty() { return Ok(()); }
         
-        // Pass weights only if Neural/LSTM
         let weights_ref = if self.predictor_id >= 2 { Some(self.weights.as_slice()) } else { None };
-        let compressed = compress_chunk(&self.buffer, self.predictor_id, weights_ref)?;
+        let compressed = compress_chunk(chunk, self.predictor_id, weights_ref)?;
         
         self.writer.write_all(&(compressed.len() as u32).to_le_bytes())?;
         self.writer.write_all(&compressed)?;
+        Ok(())
+    }
+
+    fn perform_race_and_flush(&mut self) -> io::Result<()> {
+        // Race Logic
+        if self.mode_hint == 3 {
+             // Force LSTM
+             self.predictor_id = 3;
+             self.weights = LSTM_WEIGHTS.to_vec();
+        } else if self.mode_hint == 1 {
+             // Force Linear
+             self.predictor_id = 1;
+             self.weights = Vec::new();
+        } else {
+             // Auto (0) - RACE!
+             if self.buffer.len() > 1024 { // Only race if we have decent sample
+                 let (winner, w) = qualify_stream(&self.buffer);
+                 self.predictor_id = winner;
+                 self.weights = w;
+             } else {
+                 // Too small, default Linear
+                 self.predictor_id = 1; 
+             }
+        }
+        
+        self.write_header()?;
+        
+        // Flush buffer
+        // Note: buffer might be larger than chunk size? 
+        // Our buffer is 64KB, chunk size 4MB. Safe to flush as one chunk.
+        // Or strictly follow CHUNK_SIZE.
+        
+        let mut offset = 0;
+        while offset < self.buffer.len() {
+             let end = min(offset + CHUNK_SIZE, self.buffer.len());
+             let chunk = self.buffer[offset..end].to_vec();
+             self.flush_chunk(&chunk)?;
+             offset = end;
+        }
         
         self.buffer.clear();
+        self.state = WriterState::Streaming;
         Ok(())
     }
 }
 
 impl<W: Write> Write for QresWriter<W> {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        if !self.header_written { self.write_header()?; }
-        // ... (rest is same)
-        let mut bytes_written = 0;
-        while bytes_written < buf.len() {
-            let space = CHUNK_SIZE - self.buffer.len();
-            let to_copy = min(space, buf.len() - bytes_written);
-            
-            self.buffer.extend_from_slice(&buf[bytes_written..bytes_written+to_copy]);
-            bytes_written += to_copy;
-            
-            if self.buffer.len() == CHUNK_SIZE {
-                self.compress_and_flush_buffer()?;
+        let mut bytes_processed = 0;
+        
+        match self.state {
+            WriterState::Buffering => {
+                // Fill buffer until 64KB
+                let needed = 64 * 1024 - self.buffer.len();
+                let to_copy = min(needed, buf.len());
+                self.buffer.extend_from_slice(&buf[0..to_copy]);
+                bytes_processed += to_copy;
+                
+                if self.buffer.len() >= 64 * 1024 {
+                    self.perform_race_and_flush()?;
+                    
+                    // Process remaining bytes in this call via Streaming logic
+                    if bytes_processed < buf.len() {
+                        self.writer.write_all(&[])?; // Just to sync trait? No-op.
+                        // Recurse or Loop? Better loop structure.
+                        // Let's just handle rest here.
+                        return self.write(&buf[bytes_processed..]).map(|n| n + bytes_processed);
+                    }
+                }
+            },
+            WriterState::Streaming => {
+                // Standard Streaming
+                 while bytes_processed < buf.len() {
+                    let space = CHUNK_SIZE - self.buffer.len();
+                    let to_copy = min(space, buf.len() - bytes_processed);
+                    
+                    self.buffer.extend_from_slice(&buf[bytes_processed..bytes_processed+to_copy]);
+                    bytes_processed += to_copy;
+                    
+                    if self.buffer.len() == CHUNK_SIZE {
+                        self.flush_chunk(&clone_buffer(&self.buffer))?; // Helper to avoid borrow issues? 
+                        // Actually flush_chunk takes &self, so we can't drain buffer easily.
+                        // Let's modify flush_chunk to NOT take &self buffer but just bytes. Done.
+                        // Wait, previous implem used state buffer.
+                        // Here we use self.buffer for chunking.
+                        
+                        // We need to pass slice to flush_chunk.
+                        // But flush_chunk writes to self.writer.
+                        
+                        // Correct pattern:
+                        let c = self.buffer.clone(); // Copy 4MB? Meh.
+                        self.flush_chunk(&c)?;
+                        self.buffer.clear();
+                    }
+                }
             }
         }
-        Ok(bytes_written)
+        Ok(bytes_processed)
     }
 
     fn flush(&mut self) -> io::Result<()> {
-        self.compress_and_flush_buffer()?;
+        if let WriterState::Buffering = self.state {
+            // Flush triggered before 64KB. Race on what we have.
+            self.perform_race_and_flush()?;
+        }
+        
+        if !self.buffer.is_empty() {
+             let c = self.buffer.clone();
+             self.flush_chunk(&c)?;
+             self.buffer.clear();
+        }
         self.writer.flush()
     }
 }
+
+fn clone_buffer(b: &Vec<u8>) -> Vec<u8> { b.clone() }
 
 pub struct QresReader<R: Read> {
     reader: R,
@@ -565,9 +722,9 @@ mod tests {
         let mut encoded_buffer = Vec::new();
 
         {
-            let mut writer = QresWriter::new(&mut encoded_buffer, 0, None); // Previous Predictor
+            let mut writer = QresWriter::new(&mut encoded_buffer, 1); // Mode 1 = Linear (Fast)
             writer.write_all(&original_data).unwrap();
-            writer.finish().unwrap(); // Force flush
+            writer.flush().unwrap(); // Force flush
         }
 
         let mut reader = QresReader::new(io::Cursor::new(&encoded_buffer));
