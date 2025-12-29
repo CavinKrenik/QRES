@@ -141,7 +141,14 @@ pub fn predict(input: &[u8]) -> (u8, &'static str) {
             
             // Simple heuristic to mimic trained transformer:
             let (mean, _, entropy, _) = simple_features(&input_vec);
-            if entropy > 5.0 {
+            
+            // Check for text-likeness using input_vec
+            let printable = input_vec.iter().filter(|&&b| (b >= 32 && b <= 126) || b == 10 || b == 13).count();
+            let text_ratio = printable as f32 / input_vec.len() as f32;
+
+            if text_ratio > 0.8 && entropy > 4.0 {
+                 (7, "Neural Selector (Semantic - Text Detected)")
+            } else if entropy > 5.0 {
                 (6, "Neural Selector (Zstd - High Entropy)")
             } else if mean > 200.0 {
                  (5, "Neural Selector (iPEPS - High Energy)")

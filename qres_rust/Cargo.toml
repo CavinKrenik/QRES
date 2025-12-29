@@ -29,6 +29,8 @@ zstd = "0.13"
 candle-core = "0.9"
 candle-nn = "0.9"
 candle-transformers = "0.9"
+tokenizers = { version = "0.19", default-features = false, features = ["onig"] }
+
 
 [profile.release]
 opt-level = 3

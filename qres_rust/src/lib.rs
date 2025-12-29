@@ -69,8 +69,12 @@ impl LivingBrain {
 }
 
 // --- Predictor Logic ---
+// --- Semantic Engine (Phase 22) ---
+mod semantic;
+
+// --- Predictor Logic ---
 #[derive(Clone, Copy, PartialEq)]
-enum PredictorMode { Previous = 0, Linear = 1, Neural = 2, Lstm = 3, Tensor = 4, Ipeps = 5, Standard = 6 }
+enum PredictorMode { Previous = 0, Linear = 1, Neural = 2, Lstm = 3, Tensor = 4, Ipeps = 5, Standard = 6, Semantic = 7 }
 impl From<u8> for PredictorMode {
     fn from(v: u8) -> Self { 
         match v {
@@ -80,6 +84,7 @@ impl From<u8> for PredictorMode {
             4 => PredictorMode::Tensor,
             5 => PredictorMode::Ipeps,
             6 => PredictorMode::Standard,
+            7 => PredictorMode::Semantic,
             _ => PredictorMode::Previous,
         }
     }
@@ -264,6 +269,7 @@ impl PredictorEngine {
                 self.p2
             },
             PredictorMode::Standard => 0, // Bypass
+            PredictorMode::Semantic => 0, // Bypass
         }
     }
     
@@ -466,7 +472,17 @@ fn bit_pack_decode(encoded: &[u8]) -> Vec<i8> {
 pub fn compress_chunk(chunk: &[u8], predictor_id: u8, weights: Option<&[u8]>, lossy: Option<u8>) -> io::Result<Vec<u8>> {
     if predictor_id == 6 {
         // Standard Mode (Zstd)
-        // Level 3 is a good balance for "Standard" (Safe Harbor)
+        return zstd::bulk::compress(chunk, 3).map_err(|e| io::Error::new(io::ErrorKind::Other, e));
+    }
+    if predictor_id == 7 {
+        // Semantic Mode
+        if let Ok(text) = std::str::from_utf8(chunk) {
+            let tokens = semantic::SemanticEngine::encode(text);
+            if let Ok(bytes) = bincode::serialize(&tokens) {
+                 return zstd::bulk::compress(&bytes, 3).map_err(|e| io::Error::new(io::ErrorKind::Other, e));
+            }
+        }
+        // Fallback to Standard
         return zstd::bulk::compress(chunk, 3).map_err(|e| io::Error::new(io::ErrorKind::Other, e));
     }
     let mode = PredictorMode::from(predictor_id);
@@ -479,8 +495,17 @@ pub fn compress_chunk(chunk: &[u8], predictor_id: u8, weights: Option<&[u8]>, lo
 
 pub fn decompress_chunk(compressed: &[u8], predictor_id: u8, weights: Option<&[u8]>) -> io::Result<Vec<u8>> {
     if predictor_id == 6 {
-        // Standard Mode (Zstd)
         return zstd::stream::decode_all(std::io::Cursor::new(compressed));
+    }
+    if predictor_id == 7 {
+        // Semantic Mode
+        let bytes = zstd::stream::decode_all(std::io::Cursor::new(compressed))?;
+        if let Ok(tokens) = bincode::deserialize::<Vec<u32>>(&bytes) {
+            let text = semantic::SemanticEngine::decode(&tokens);
+            return Ok(text.into_bytes());
+        } else {
+             return Err(io::Error::new(io::ErrorKind::InvalidData, "Failed to deserialize semantic tokens"));
+        }
     }
     let mut d = ZlibDecoder::new(compressed);
     let mut dec = Vec::new();
@@ -512,21 +537,33 @@ pub struct RaceStats {
 }
 
 // --- Autonomic Selector ---
+// --- Autonomic Selector ---
 fn qualify_stream(sample: &[u8]) -> (u8, Vec<u8>, RaceStats) {
+    // Check for Text
+    let mut is_text = false;
+    if !sample.is_empty() {
+        let printable = sample.iter().filter(|&&b| (b >= 32 && b <= 126) || b == 10 || b == 13).count();
+        let ratio = printable as f64 / sample.len() as f64;
+        if ratio > 0.8 { is_text = true; }
+    }
+
     // Race Candidates: Linear (1), LSTM (3), Tensor (4), Standard (6)
     // Structure: (id, weights, name)
-    let candidates = vec![
+    let mut candidates = vec![
         (1, vec![], "Linear"),
         (3, LSTM_WEIGHTS.to_vec(), "LSTM"),
         (4, TENSOR_WEIGHTS.to_vec(), "Tensor"),
         (6, vec![], "Standard"),
     ];
     
+    if is_text {
+        candidates.push((7, vec![], "Semantic"));
+    }
+    
     // Parallel Race
     let results: Vec<(u8, f64)> = candidates.par_iter().map(|(id, weights, _name)| {
         let start = std::time::Instant::now();
         // Compress sample
-        // Compress sample (lossless for race)
         let weights_ref = if weights.is_empty() { None } else { Some(weights.as_slice()) };
         let compressed = match compress_chunk(sample, *id, weights_ref, None) {
             Ok(c) => c.len(),
@@ -534,9 +571,6 @@ fn qualify_stream(sample: &[u8]) -> (u8, Vec<u8>, RaceStats) {
         };
         let duration = start.elapsed().as_micros() as f64;
         
-        // Score: Size (lower better) + Duration Penalty
-        // Adjust bias: We want compression, but avoid extreme slowness if ratio is similar.
-        // Let's say 1 byte saved is worth 20 microseconds.
         let score = (compressed as f64) + (duration / 20.0); 
         
         (*id, score)
@@ -559,9 +593,9 @@ fn qualify_stream(sample: &[u8]) -> (u8, Vec<u8>, RaceStats) {
             3 => stats.lstm_score = score,
             4 => stats.tensor_score = score,
             6 => stats.standard_score = score,
+             // 7 will implicitly compete via best_score
             _ => {},
         }
-        // Force Zstd (Standard) if it's the winner, unless entropy suggests others are much better.
         if score < best_score {
             best_score = score;
             stats.winner_id = id;

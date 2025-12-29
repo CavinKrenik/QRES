@@ -119,6 +119,7 @@ fn main() {
                             mode = match args[i+1].as_str() {
                                 "max" => 3,
                                 "fast" => 1,
+                                "semantic" => 7,
                                 _ => 0,
                             };
                             i += 2;
