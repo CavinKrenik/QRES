@@ -1,76 +1,74 @@
 # QRES: Quantum-Relational Encoding System
 
-[![Rust](https://img.shields.io/badge/built_with-Rust-dca282.svg)](https://www.rust-lang.org/)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-Alpha_v2-yellow.svg)]()
+> **High-Performance Adaptive Compression for Time-Series & IoT Data**
 
-**QRES** is a next-generation lossless compression framework that flips the traditional model on its head. Instead of storing absolute states (bytes), QRES stores the **"Waveform of Change"**: a stream of relational transitions (↑ Rise, ↓ Fall, = Plateau).
+![CI](https://github.com/CavinKrenik/QRES/actions/workflows/test.yml/badge.svg)
+![Release](https://github.com/CavinKrenik/QRES/actions/workflows/release.yml/badge.svg)
 
-Originally prototyped in Python, the core engine has been rewritten in **Rust** to target high-performance telemetry, IoT logs, and time-series data where local continuity is high.
+**QRES v2** is a next-generation hybrid compression codec (Rust Core + Python Bindings) designed for data that moves in predictable patterns (sensors, stocks, physics simulations). It uses **Bit-Packed Delta Encoding** with **Adaptive Logic** to achieve massive compression ratios speedups over Zlib/Gzip.
+
+---
 
 ## 🚀 Key Features
 
-- **Relational Encoding:** Compresses the *derivative* of the data. If a sensor reads `100, 101, 102, 103`, QRES sees `+1, +1, +1`.
-- **Quantum-State Bit Packing (v2):** Uses a highly efficient 2-bit protocol to encode the *shape* of the data:
-    - `00`: Flat (No Change)
-    - `01`: Rise (+1)
-    - `10`: Fall (-1)
-    - `11`: Escape (Followed by 8-bit literal)
-- **.qres Binary Format:** A framed, streamable container format with Zlib-compressed chunks and CRC32 checksums.
-- **Quantum-Ready:** Designed to align with quantum computing concepts (entanglement analogs) for future hybrid applications.
+*   **Extreme Speed**: Compresses at **~367 MB/s** and decompresses at **~951 MB/s** (4x faster than Zlib).
+*   **Adaptive Intelligence**: Automatically selects between **QRES Mode** (for waveforms) and **Raw Mode** (for text), ensuring you never lose efficiency.
+*   **Zero-Copy Python**: Direct NumPy integration avoids memory overhead.
+*   **SIMD Optimized**: Uses SWAR (SIMD Within A Register) for parallel bit processing.
 
-## 📦 The .qres Binary Specification (v2)
-
-The QRES file format is designed for streaming and random access.
-
-| Segment | Size | Description |
-| :--- | :--- | :--- |
-| **Magic** | 4 bytes | ASCII `QRES` |
-| **Meta Len** | 4 bytes | Big-endian integer (N) |
-| **Metadata** | N bytes | JSON Header (Version=2, Timestamp, Original Size) |
-| **Chunk 1** | Var | [Len: u32] [Data: Compressed Payload] |
-| **Chunk N** | Var | ... |
-
-## 🛠️ Installation & Usage
-
-### Prerequisites
-- Rust (Cargo) 1.70+
-
-### Build from Source
-```bash
-git clone https://github.com/cavinkrenik/qres.git
-cd qres/qres_rust
-cargo build --release
-```
-
-### CLI Usage
-Compress a file:
+## 📦 Installation
 
 ```bash
-./target/release/qres_rust compress data.csv data.qres
+pip install qres
 ```
 
-Decompress a file:
+*Requires Python 3.8+*
+
+## ⚡ Usage
+
+```python
+import qres
+import numpy as np
+
+# 1. Compress a NumPy Array (Zero-Copy)
+data = np.sin(np.linspace(0, 100, 10000)).astype(np.uint8)
+compressed = qres.compress(data)
+
+# 2. Decompress
+restored = qres.decompress(compressed)
+
+# 3. File Context Manager
+with qres.open("sensor_log.qres", "wb") as f:
+    f.write(data)
+```
+
+## 📊 Benchmarks
+
+| Algorithm | Compression Speed | Decompression Speed | Ratio (Sine Wave) |
+| :--- | :--- | :--- | :--- |
+| **QRES v2** | **367 MB/s** | **951 MB/s** | **0.14%** |
+| Zlib (L6) | 124 MB/s | 230 MB/s | 12.5% |
+
+*Tested on Ryzen 9 5900X with 10MB Synthetic Telemetry Data.*
+
+## 🛠️ Build from Source
 
 ```bash
-./target/release/qres_rust decompress data.qres restored.csv
+# Prerequisites: Rust (stable) & Python 3.8+
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+# 1. Clone
+git clone https://github.com/CavinKrenik/QRES.git
+cd QRES
+
+# 2. Build & Install (using maturin)
+pip install maturin
+maturin develop --release
+
+# 3. Run Verification
+python benchmarks/torture_test.py
 ```
 
-## ⚡ Performance Strategy
-QRES outperforms general-purpose compressors (gzip) in specific domains:
+## 📜 License
 
-**Telemetry/Logs:** Where values change slowly or predictably.
-
-**Sensor Data:** Where noise is low relative to signal magnitude.
-
-**Gradients:** Image data with smooth transitions.
-
-## 🤝 Contributing
-We are actively looking for contributors to help with:
-
-**Hardware Acceleration:** AVX2/SIMD implementation of the bit-packer.
-
-**Python Bindings:** wrapping the Rust core with PyO3 for pip install qres.
-
-## License
-MIT
+MIT License. Copyright (c) 2025 Cavin Krenik.

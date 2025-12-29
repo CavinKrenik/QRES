@@ -1,0 +1,41 @@
+name: Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install maturin pytest requests numpy pandas matplotlib zstandard
+
+      - name: Build Library
+        run: |
+          # Build the python extension in-place
+          export PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1
+          maturin develop --release
+
+      - name: Run Rust Tests
+        run: cargo test --manifest-path qres_rust/Cargo.toml
+
+      - name: Run Python Benchmarks/Tests
+        run: |
+          # Running the torture test as a verification script
+          python benchmarks/torture_test.py
