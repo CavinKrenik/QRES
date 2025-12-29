@@ -15,6 +15,7 @@ except ImportError:
 # Expose bindings directly for advanced users
 encode_bytes = qres_rust.encode_bytes
 decode_bytes = qres_rust.decode_bytes
+get_residuals = qres_rust.get_residuals_py
 
 class QRESError(Exception):
     """Base exception for QRES errors."""

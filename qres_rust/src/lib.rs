@@ -367,7 +367,17 @@ const LSTM_WEIGHTS: &[u8] = include_bytes!("models/lstm.qnn");
 const TENSOR_WEIGHTS: &[u8] = include_bytes!("models/tensor.qnn");
 
 // --- Autonomic Selector ---
-fn qualify_stream(sample: &[u8]) -> (u8, Vec<u8>) {
+// --- Race Statistics ---
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct RaceStats {
+    pub linear_score: f64,
+    pub lstm_score: f64,
+    pub tensor_score: f64,
+    pub winner_id: u8,
+}
+
+// --- Autonomic Selector ---
+fn qualify_stream(sample: &[u8]) -> (u8, Vec<u8>, RaceStats) {
     // Race Candidates: Linear (1), LSTM (3), Tensor (4)
     // Structure: (id, weights, name)
     let candidates = vec![
@@ -389,30 +399,49 @@ fn qualify_stream(sample: &[u8]) -> (u8, Vec<u8>) {
         
         // Score: Size (lower better) + Duration Penalty
         // Adjust bias: We want compression, but avoid extreme slowness if ratio is similar.
-        // Let's say 1 byte saved is worth 10 microseconds.
-        // Score = Size + (Duration / 10.0)
+        // Let's say 1 byte saved is worth 20 microseconds.
         let score = (compressed as f64) + (duration / 20.0); 
         
         (*id, score)
     }).collect();
     
-    // Pick Winner (Lowest Score)
-    let mut best_id = 1;
+    // Extract scores
+    let mut stats = RaceStats {
+        linear_score: f64::MAX,
+        lstm_score: f64::MAX,
+        tensor_score: f64::MAX,
+        winner_id: 1,
+    };
+    
     let mut best_score = f64::MAX;
     
     for (id, score) in results {
+        match id {
+            1 => stats.linear_score = score,
+            3 => stats.lstm_score = score,
+            4 => stats.tensor_score = score,
+            _ => {},
+        }
         if score < best_score {
             best_score = score;
-            best_id = id;
+            stats.winner_id = id;
         }
     }
     
     // Return ID and Weights
-    match best_id {
-        3 => (3, LSTM_WEIGHTS.to_vec()),
-        4 => (4, TENSOR_WEIGHTS.to_vec()),
-        _ => (1, vec![]),
-    }
+    let weights = match stats.winner_id {
+        3 => LSTM_WEIGHTS.to_vec(),
+        4 => TENSOR_WEIGHTS.to_vec(),
+        _ => vec![],
+    };
+    
+    (stats.winner_id, weights, stats)
+}
+
+// --- Analysis Tools ---
+pub fn get_residuals(chunk: &[u8], predictor_id: u8, weights: Option<&[u8]>) -> Vec<i8> {
+    let mode = PredictorMode::from(predictor_id);
+    predictive_encode(chunk, mode, weights)
 }
 
 // --- Streaming Architecture ---
@@ -433,6 +462,7 @@ pub struct QresWriter<W: Write> {
     state: WriterState,
     predictor_id: u8,
     weights: Vec<u8>,
+    pub race_stats: Option<RaceStats>,
     header_written: bool,
 }
 
@@ -445,6 +475,7 @@ impl<W: Write> QresWriter<W> {
             state: WriterState::Buffering,
             predictor_id: 1, // Default
             weights: Vec::new(),
+            race_stats: None,
             header_written: false,
         }
     }
@@ -505,9 +536,10 @@ impl<W: Write> QresWriter<W> {
         } else {
              // Auto (0) - RACE!
              if self.buffer.len() > 1024 { // Only race if we have decent sample
-                 let (winner, w) = qualify_stream(&self.buffer);
+                 let (winner, w, stats) = qualify_stream(&self.buffer);
                  self.predictor_id = winner;
                  self.weights = w;
+                 self.race_stats = Some(stats);
              } else {
                  // Too small, default Linear
                  self.predictor_id = 1; 
@@ -705,10 +737,16 @@ fn decode_bytes<'a>(py: Python<'a>, data: &[u8], predictor_id: u8, weights: Opti
     Ok(PyBytes::new(py, &decompressed))
 }
 
+#[pyfunction]
+fn get_residuals_py<'a>(py: Python<'a>, data: &[u8], predictor_id: u8, weights: Option<&[u8]>) -> PyResult<Vec<i8>> {
+    Ok(get_residuals(data, predictor_id, weights))
+}
+
 #[pymodule]
 fn qres_rust(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(encode_bytes, m)?)?;
     m.add_function(wrap_pyfunction!(decode_bytes, m)?)?;
+    m.add_function(wrap_pyfunction!(get_residuals_py, m)?)?;
     Ok(())
 }
 
