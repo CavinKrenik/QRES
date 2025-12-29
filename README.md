@@ -1,26 +1,25 @@
-# QRES: Quantum-Relational Encoding System (v1.2.0)
-> *The "Living" Quantum Engine*
+# QRES: Quantum-Relational Encoding System (v1.3.0)
+> *The "Meta-Compressor"*
 
-QRES is a **Cybernetic Compression System** that not only predicts the best strategy but **learns from its own mistakes** in real-time.
+QRES is a **Cybernetic Compression System** that wraps industry standards (Zstd) with a **Social Neural Selector**, giving you safety on standard files and quantum power on chaotic streams.
 
 ![CI](https://github.com/CavinKrenik/QRES/actions/workflows/test.yml/badge.svg)
 ![Release](https://github.com/CavinKrenik/QRES/actions/workflows/release.yml/badge.svg)
+![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-green)
 
-**QRES v1.2.0** represents the convergence of **Classical**, **Neural**, and **Quantum-Inspired** compression. It features a **Psychic Selector** that analyzes the data stream and a **Living Feedback Loop** that adapts to signal changes.
+**QRES v1.3.0 (Phase 21)** represents the move to a **Hybrid Architecture**. It features a **Transformer-based Neural Selector** (`candle-core`) that predicts the best engine (Zstd, Linear, iPEPS, or LSTM) by analyzing the sequence context of every chunk.
 
 ---
 
 ## 🚀 Key Features
 
+*   **🧠 Neural Selector (Transformer)**: Replaces the old Decision Tree with a **Micro-Transformer** (via `candle-core`). It reads the first 256 bytes of a chunk to predict the optimal engine with high accuracy.
+*   **🤝 Hybrid Engine (Zstd Wrapper)**: QRES now includes **Zstandard** (v1.5+) as a first-class citizen. If the data is standard text/binary, QRES simply wraps Zstd. If it's chaotic or drifting, it switches to **iPEPS** or **LSTM**. Best of both worlds.
 *   **🧬 The Living Loop (Online Learning)**: QRES monitors its own compression ratio. If an engine fails to perform (e.g., signal drift), it gets "punished" and the system automatically swaps to a better engine mid-stream.
 *   **⚛️ iPEPS Quantum Engine**: A non-linear Tensor Network (Infinite Projected Entangled Pair States) modeled with **Safe Math** for deterministic, cross-platform behavior. It excels at complex, non-linear signals.
-*   **🤸 Agile File Format**: The stream format is now dynamic (`[Size][EngineID][Data]`), allowing the encoder to switch strategies per-chunk without breaking the decoder.
-*   **🧠 Neuro-Symbolic Explainability**: Pass `--explain` to see the decision logic (e.g., `zcr > 0.44 -> Linear`).
-*   **📉 Lossy Compression**: Enable "semantic collapse" with `--lossy <tolerance>`. By quantizing prediction residuals, QRES can achieve huge compression ratios for noisy data where 100% precision isn't required (IoT, telemetry).
-*   **🛡️ Anomaly Detection**: Built-in "Watchdog" monitors decompression integrity validation in real-time.
-*   **🐝 Federated Intelligence (The Hive)**: QRES doesn't just learn alone. Enable the **Brain-Port** to export learned wisdom to a central Hive, allowing other agents to download "instincts" and adapt to new data patterns instantly (Zero-Shot Learning).
-*   **📦 Self-Contained Intelligence**: All AI models and Meta-Brains are **Embedded** directly in the binary.
-*   **🌊 Streaming First**: Constant 4MB RAM usage regardless of file size.
+*   **🤸 Agile File Format**: The stream format is dynamic (`[Size][EngineID][Data]`), mixing Zstd chunks with Quantum chunks seamlessly.
+*   **📦 Self-Contained Intelligence**: All AI models (Transformer, LSTM) are **Embedded** directly in the binary. No external Python dependencies required for runtime.
+*   **🌊 Streaming First**: Constant RAM usage.
 
 ---
 
@@ -124,5 +123,8 @@ cargo build --release
 ```
 
 ## License
-Copyright (c) 2025 Cavin Krenik. All Rights Reserved.
-Proprietary and confidential.
+Licensed under either of:
+*   Standard (Zstd-Safe): **MIT License**
+*   Enterprise: **Apache License, Version 2.0**
+
+At your option. This "Open-Hive" approach ensures maximum adoption while protecting the "Living" core innovation.

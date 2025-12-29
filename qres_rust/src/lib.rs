@@ -70,7 +70,7 @@ impl LivingBrain {
 
 // --- Predictor Logic ---
 #[derive(Clone, Copy, PartialEq)]
-enum PredictorMode { Previous = 0, Linear = 1, Neural = 2, Lstm = 3, Tensor = 4, Ipeps = 5 }
+enum PredictorMode { Previous = 0, Linear = 1, Neural = 2, Lstm = 3, Tensor = 4, Ipeps = 5, Standard = 6 }
 impl From<u8> for PredictorMode {
     fn from(v: u8) -> Self { 
         match v {
@@ -79,6 +79,7 @@ impl From<u8> for PredictorMode {
             3 => PredictorMode::Lstm,
             4 => PredictorMode::Tensor,
             5 => PredictorMode::Ipeps,
+            6 => PredictorMode::Standard,
             _ => PredictorMode::Previous,
         }
     }
@@ -261,7 +262,8 @@ impl PredictorEngine {
                 // Linear (2*p1 - p2) fails catastrophically on this.
                 // This guarantees the "Online Learning" curve appears in charts.
                 self.p2
-            }
+            },
+            PredictorMode::Standard => 0, // Bypass
         }
     }
     
@@ -462,6 +464,11 @@ fn bit_pack_decode(encoded: &[u8]) -> Vec<i8> {
 }
 
 pub fn compress_chunk(chunk: &[u8], predictor_id: u8, weights: Option<&[u8]>, lossy: Option<u8>) -> io::Result<Vec<u8>> {
+    if predictor_id == 6 {
+        // Standard Mode (Zstd)
+        // Level 3 is a good balance for "Standard" (Safe Harbor)
+        return zstd::bulk::compress(chunk, 3).map_err(|e| io::Error::new(io::ErrorKind::Other, e));
+    }
     let mode = PredictorMode::from(predictor_id);
     let deltas = predictive_encode(chunk, mode, weights, lossy);
     let packed = bit_pack_encode(&deltas);
@@ -471,6 +478,10 @@ pub fn compress_chunk(chunk: &[u8], predictor_id: u8, weights: Option<&[u8]>, lo
 }
 
 pub fn decompress_chunk(compressed: &[u8], predictor_id: u8, weights: Option<&[u8]>) -> io::Result<Vec<u8>> {
+    if predictor_id == 6 {
+        // Standard Mode (Zstd)
+        return zstd::stream::decode_all(std::io::Cursor::new(compressed));
+    }
     let mut d = ZlibDecoder::new(compressed);
     let mut dec = Vec::new();
     d.read_to_end(&mut dec)?;
@@ -496,17 +507,19 @@ pub struct RaceStats {
     pub linear_score: f64,
     pub lstm_score: f64,
     pub tensor_score: f64,
+    pub standard_score: f64,
     pub winner_id: u8,
 }
 
 // --- Autonomic Selector ---
 fn qualify_stream(sample: &[u8]) -> (u8, Vec<u8>, RaceStats) {
-    // Race Candidates: Linear (1), LSTM (3), Tensor (4)
+    // Race Candidates: Linear (1), LSTM (3), Tensor (4), Standard (6)
     // Structure: (id, weights, name)
     let candidates = vec![
         (1, vec![], "Linear"),
         (3, LSTM_WEIGHTS.to_vec(), "LSTM"),
         (4, TENSOR_WEIGHTS.to_vec(), "Tensor"),
+        (6, vec![], "Standard"),
     ];
     
     // Parallel Race
@@ -534,6 +547,7 @@ fn qualify_stream(sample: &[u8]) -> (u8, Vec<u8>, RaceStats) {
         linear_score: f64::MAX,
         lstm_score: f64::MAX,
         tensor_score: f64::MAX,
+        standard_score: f64::MAX,
         winner_id: 1,
     };
     
@@ -544,8 +558,10 @@ fn qualify_stream(sample: &[u8]) -> (u8, Vec<u8>, RaceStats) {
             1 => stats.linear_score = score,
             3 => stats.lstm_score = score,
             4 => stats.tensor_score = score,
+            6 => stats.standard_score = score,
             _ => {},
         }
+        // Force Zstd (Standard) if it's the winner, unless entropy suggests others are much better.
         if score < best_score {
             best_score = score;
             stats.winner_id = id;
@@ -785,8 +801,8 @@ impl<W: Write> QresWriter<W> {
         } else {
              // Auto - Use Psychic
              if self.buffer.len() >= 128 { // Need minimal data
-                 let (mean, var, entropy, zcr) = calc_features(&self.buffer);
-                 let (mut winner, reason) = meta_brain::predict(mean, var, entropy, zcr);
+                 // let (mean, var, entropy, zcr) = calc_features(&self.buffer);
+                 let (mut winner, reason) = meta_brain::predict(&self.buffer);
                  
                  // Online Learning Override
                  // If the Meta-Brain picks a low-confidence engine, downgrade it.

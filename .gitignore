@@ -1,5 +1,9 @@
 # Build Artifacts
-/target
+# Build Artifacts
+target/
+qres_rust/target/
+titan_data/
+results/
 /dist
 *.so
 *.dll
