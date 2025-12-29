@@ -1,0 +1,29 @@
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "qres"
+version = "0.3.0"
+description = "QRES: Quantum-Relational Encoding System for Python"
+requires-python = ">=3.8"
+dependencies = [
+    "numpy", 
+    "pandas",
+]
+readme = "README.md"
+authors = [{name = "Cavin Krenik"}]
+license = {text = "MIT"}
+
+[tool.maturin]
+# Point to the existing Rust Crate
+manifest-path = "qres_rust/Cargo.toml"
+# Point to the Python wrapper we moved to root
+python-source = "python"
+module-name = "qres_rust"
+features = ["pyo3/extension-module"]
+
+# Start with a clean slate by ignoring old artifacts
+[tool.maturin.sdist]
+include = ["qres_rust/**/*", "python/**/*", "README.md", "pyproject.toml"]
+exclude = ["legacy/**/*", "tests/data/**/*"]
