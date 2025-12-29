@@ -9,37 +9,57 @@ permissions:
   contents: write
 
 jobs:
-  build:
-    name: Build on ${{ matrix.os }}
+  build_wheels:
+    name: Build Wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-    
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.9'
-          
       - name: Build Wheels
         uses: PyO3/maturin-action@v1
         with:
           command: build
           args: --release --out dist
           sccache: 'true'
-          
-      - name: Upload Wheels
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: wheels-${{ matrix.os }}
           path: dist
 
+  build_cli:
+    name: Build CLI on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Binary
+        run: cargo build --release --bin qres-cli --manifest-path qres_rust/Cargo.toml
+      - name: Prepare Artifact
+        shell: bash
+        run: |
+          mkdir -p bin
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            cp qres_rust/target/release/qres-cli.exe bin/qres-cli-windows.exe
+          elif [ "${{ matrix.os }}" = "macos-latest" ]; then
+            cp qres_rust/target/release/qres-cli bin/qres-cli-macos
+          else
+            cp qres_rust/target/release/qres-cli bin/qres-cli-linux
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cli-${{ matrix.os }}
+          path: bin/*
+
   release:
     name: Create Release
-    needs: build
+    needs: [build_wheels, build_cli]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
@@ -47,7 +67,11 @@ jobs:
           pattern: wheels-*
           path: dist
           merge-multiple: true
-          
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: cli-*
+          path: dist
+          merge-multiple: true
       - name: Publish to GitHub Release
         uses: softprops/action-gh-release@v1
         with:
