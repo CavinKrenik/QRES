@@ -1054,7 +1054,7 @@ fn decode_bytes<'a>(py: Python<'a>, data: &[u8], predictor_id: u8, weights: Opti
 
 #[cfg(feature = "python")]
 #[pyfunction]
-fn get_residuals_py<'a>(py: Python<'a>, data: &[u8], predictor_id: u8, weights: Option<&[u8]>) -> PyResult<Vec<i8>> {
+fn get_residuals_py<'a>(_py: Python<'a>, data: &[u8], predictor_id: u8, weights: Option<&[u8]>) -> PyResult<Vec<i8>> {
     Ok(get_residuals(data, predictor_id, weights))
 }
 
