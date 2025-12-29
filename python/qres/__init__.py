@@ -5,11 +5,11 @@ import numpy as np
 import io
 
 # Import the Rust extension
-# Maturin makes it available as `qres_rust` alongside this package
+# It is now built as a submodule: qres.qres_rust
 try:
-    import qres_rust
+    from . import qres_rust
 except ImportError:
-    # Fallback for development/local builds if path isn't perfect
+    # Fallback/Debug
     import qres_rust
     
 class QRESError(Exception):
