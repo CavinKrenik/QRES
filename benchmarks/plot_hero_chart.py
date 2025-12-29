@@ -15,6 +15,9 @@ def plot_hero():
         print("❌ Data missing!")
         return
 
+    df_a = pd.read_csv("agent_a.csv")
+    df_b = pd.read_csv("agent_b.csv")
+
     # Data Parsing
     # We need to map Active Confidence
     # Agent A

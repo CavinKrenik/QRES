@@ -28,7 +28,7 @@ QRES is a **Cybernetic Compression System** that not only predicts the best stra
 QRES becomes smarter as more people use it.
 
 ### The Singularity: Zero-Shot Adaptation via Hive Mind
-![Singularity Zero-Shot Adaptation]DOCS/zero_shot_adaptation.png
+![Singularity Zero-Shot Adaptation](DOCS/zero_shot_adaptation.png)
 *Benchmark: Drifting Signal (Sine → Chaos) | 200KB Chunks*
 
 The black arrow highlights the **Singularity Moment** — Agent B imports Hive wisdom and starts with ~0.9–1.0 iPEPS confidence, achieving instant knowledge transfer.
