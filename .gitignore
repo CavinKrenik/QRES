@@ -28,7 +28,7 @@ venv/
 *.qres
 *.bin
 *.log
-*.json
+# *.json
 # *.png (Allowed for documentation)
 *.txt
 
