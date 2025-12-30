@@ -1,4 +1,4 @@
-use std::io::{self};
+use std::io::{self, Read, Write, Seek};
 use std::convert::TryInto;
 use serde::{Serialize, Deserialize};
 use ndarray::Array1; 
@@ -12,7 +12,7 @@ pub mod stats;
 pub mod analytics;
 pub mod config;
 pub mod semantic;
-// pub mod swarm; // Phase 23: Disabled to restore Green Build
+pub mod swarm;
 pub mod daemon;
 
 // --- v3.0 Modules ---
@@ -20,6 +20,46 @@ pub mod ans_coder;
 mod mixer;
 pub use ans_coder::{AnsWriter, AnsReader};
 use mixer::Mixer;
+
+// --- Living Brain (Adaptive Learning) ---
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct LivingBrain {
+    pub version: u8,
+    pub predictors: Vec<String>,
+    pub stats: serde_json::Value,
+    pub confidence: Vec<f32>,
+    pub best_engine_weights: Option<Vec<u8>>,
+}
+
+impl LivingBrain {
+    pub fn new() -> Self {
+        LivingBrain {
+            version: 1,
+            predictors: vec!["lstm".to_string(), "ipeps".to_string()],
+            stats: serde_json::json!({"compressions": 0}),
+            confidence: vec![0.5; 4],
+            best_engine_weights: None,
+        }
+    }
+    
+    pub fn from_json(json: &str) -> Option<Self> {
+        serde_json::from_str(json).ok()
+    }
+    
+    pub fn to_json(&self) -> String {
+        serde_json::to_string(self).unwrap_or("{}".to_string())
+    }
+    
+    pub fn merge(&mut self, other: &LivingBrain, alpha: f32) {
+        for i in 0..self.confidence.len().min(other.confidence.len()) {
+            self.confidence[i] = self.confidence[i] * (1.0 - alpha) + other.confidence[i] * alpha;
+        }
+    }
+}
+
+const CHUNK_SIZE: usize = 64 * 1024; // 64KB
+const QRES_MAGIC: &[u8] = b"QRES";
 
 // --- Header Architecture (V3) ---
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -36,44 +76,37 @@ pub struct QresHeader {
 
 // --- Predictor Logic ---
 
-pub struct LstmPredictor {
-     cell_state: f32,
-     hidden_state: f32,
-     weights: Vec<f32>,
+pub struct SimplePredictor {
+    prev: f32,
+    prev2: f32,
 }
 
-impl LstmPredictor {
+impl SimplePredictor {
     pub fn new(_weights: Option<&[u8]>) -> Self {
-        LstmPredictor {
-            cell_state: 0.0,
-            hidden_state: 0.0,
-            weights: vec![0.5; 4], 
-        }
+        SimplePredictor { prev: 0.0, prev2: 0.0 }
     }
     
-    fn tanh(x: f32) -> f32 { x.tanh() }
-    
-    pub fn predict_next(&self) -> u8 {
-        ((self.hidden_state + 1.0) * 127.5) as u8
+    fn predict_next(&self) -> u8 {
+        // Linear extrapolation: next = 2*prev - prev2
+        let pred = 2.0 * self.prev - self.prev2;
+        pred.clamp(0.0, 255.0) as u8
     }
     
     pub fn update(&mut self, actual: u8) {
-         let x = (actual as f32) / 255.0;
-         self.hidden_state = Self::tanh(self.cell_state * 0.9 + x * 0.1);
-         self.cell_state = self.cell_state * 0.9 + x;
+        self.prev2 = self.prev;
+        self.prev = actual as f32;
     }
 }
 
 // Real Matrix Product State (MPS) Engine
 struct IpepsPredictor {
     psi: Array1<f32>, 
-    context: f32,
 }
 
 impl IpepsPredictor {
     fn new(_weights: Option<&[u8]>) -> Self {
         let psi = Array1::from_vec(vec![1.0, 0.0, 0.0, 0.0]); 
-        IpepsPredictor { psi, context: 0.0 }
+        IpepsPredictor { psi }
     }
     
     fn predict_next(&self) -> u8 {
@@ -104,13 +137,13 @@ impl IpepsPredictor {
 fn predictive_encode_v3(data: &[u8]) -> Vec<u8> {
     // 1. Initialize Engines
     let mut linear = 0u8;
-    let mut lstm = LstmPredictor::new(None); 
+    let mut simple = SimplePredictor::new(None); 
     let mut ipeps = IpepsPredictor::new(None);
     
     // 2. Initialize Mixer
     let mut mixer = Mixer::new();
     
-    // 3. Initialize ANS Backend (New Constriction Logic)
+    // 3. Initialize Range Encoder (Constriction)
     let mut ans = AnsWriter::new();
     
     let mut preds = [0u8; 3];
@@ -118,7 +151,7 @@ fn predictive_encode_v3(data: &[u8]) -> Vec<u8> {
     for &actual in data {
         // A. Predict
         preds[0] = linear;
-        preds[1] = lstm.predict_next();
+        preds[1] = simple.predict_next();
         preds[2] = ipeps.predict_next();
         
         // B. Mix
@@ -127,29 +160,29 @@ fn predictive_encode_v3(data: &[u8]) -> Vec<u8> {
         // C. Calculate Residual
         let residual = actual.wrapping_sub(mixed_prediction) as i8;
         
-        // D. Buffer Residual
+        // D. Encode Residual
         ans.write_residual(residual);
         
         // E. Update
         mixer.update(actual, &preds);
         linear = actual; 
-        lstm.update(actual); 
+        simple.update(actual); 
         ipeps.update_state(actual);
     }
     
-    // F. Encode with ANS (Reverse pass happens inside)
+    // F. Finish (Seal the stream)
     ans.finish()
 }
 
 fn predictive_decode_v3(compressed_words: &[u8], decoded_len: usize) -> Vec<u8> {
     // 1. Initialize Engines
     let mut linear = 0u8;
-    let mut lstm = LstmPredictor::new(None); 
+    let mut simple = SimplePredictor::new(None); 
     let mut ipeps = IpepsPredictor::new(None);
     let mut mixer = Mixer::new();
     
-    // 2. Initialize ANS Reader
-    let mut ans = AnsReader::new(compressed_words, decoded_len);
+    // 2. Initialize Range Decoder
+    let mut ans = AnsReader::new(compressed_words);
     
     let mut out = Vec::with_capacity(decoded_len);
     let mut preds = [0u8; 3];
@@ -157,7 +190,7 @@ fn predictive_decode_v3(compressed_words: &[u8], decoded_len: usize) -> Vec<u8> 
     for _ in 0..decoded_len {
         // A. Predict
         preds[0] = linear;
-        preds[1] = lstm.predict_next();
+        preds[1] = simple.predict_next();
         preds[2] = ipeps.predict_next();
         
         // B. Mix
@@ -173,7 +206,7 @@ fn predictive_decode_v3(compressed_words: &[u8], decoded_len: usize) -> Vec<u8> 
         // E. Update
         mixer.update(actual, &preds);
         linear = actual;
-        lstm.update(actual);
+        simple.update(actual);
         ipeps.update_state(actual);
     }
     
@@ -234,5 +267,68 @@ fn qres_rust(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(encode_bytes, m)?)?;
     m.add_function(wrap_pyfunction!(decode_bytes, m)?)?;
     m.add_function(wrap_pyfunction!(get_residuals_py, m)?)?;
+    Ok(())
+}
+
+// --- Tauri Interface ---
+
+pub fn compress_with_callback<F>(
+    src: &str, 
+    dest: &str, 
+    mut callback: F
+) -> Result<(), Box<dyn std::error::Error>>
+where
+    F: FnMut(f32, f32, &str),
+{
+    use std::fs::File;
+    use std::io::{Read, Write};
+    
+    let mut input = File::open(src)?;
+    let mut output = File::create(dest)?;
+    
+    let mut buffer = vec![0u8; CHUNK_SIZE];
+    let mut total_read = 0u64;
+    let file_size = input.metadata()?.len();
+    
+    // Write header
+    output.write_all(QRES_MAGIC)?;
+    output.write_all(&[3u8])?; // version
+    output.write_all(&[0u8])?; // flags
+    output.write_all(&[0u8])?; // predictor_id
+    output.write_all(&chrono::Utc::now().timestamp().to_le_bytes())?;
+    output.write_all(&file_size.to_le_bytes())?;
+    output.write_all(&(0u64.to_le_bytes()))?; // compressed_size placeholder
+    output.write_all(&(src.len() as u32).to_le_bytes())?;
+    output.write_all(src.as_bytes())?;
+    
+    let mut compressed_size = 0u64;
+    let header_size = QRES_MAGIC.len() + 1 + 1 + 1 + 8 + 8 + 8 + 4 + src.len();
+    
+    loop {
+        let bytes_read = input.read(&mut buffer)?;
+        if bytes_read == 0 {
+            break;
+        }
+        
+        let chunk = &buffer[..bytes_read];
+        let compressed = compress_chunk(chunk, 0, None, None)?;
+        
+        // Write chunk size
+        output.write_all(&(compressed.len() as u32).to_le_bytes())?;
+        output.write_all(&compressed)?;
+        
+        total_read += bytes_read as u64;
+        compressed_size += compressed.len() as u64 + 4;
+        
+        let progress = (total_read as f32 / file_size as f32) * 100.0;
+        let ratio = compressed_size as f32 / total_read as f32;
+        
+        callback(progress, ratio, "predictive");
+    }
+    
+    // Update compressed_size in header
+    output.seek(std::io::SeekFrom::Start((QRES_MAGIC.len() + 1 + 1 + 1 + 8) as u64))?;
+    output.write_all(&compressed_size.to_le_bytes())?;
+    
     Ok(())
 }

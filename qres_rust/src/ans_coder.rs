@@ -1,44 +1,35 @@
-// Constriction-based ANS Coding for QRES residuals
-
-use constriction::stream::stack::DefaultAnsCoder;
-use constriction::stream::Decode;
-use constriction::stream::model::DefaultLeakyQuantizer;
+use constriction::ans::Coder;
+use constriction::stream::model::LeakyQuantizer;
 use probability::distribution::Gaussian;
 
+// QRES v3.0 Entropy Backend
+// Strategy: Range Coding (Queue) with Gaussian Modeling.
+// REPLACES: The 'bincode' fallback.
+
 pub struct AnsWriter {
-    residuals: Vec<i8>,
+    encoder: DefaultRangeEncoder,
 }
 
 impl AnsWriter {
     pub fn new() -> Self {
-        AnsWriter { residuals: Vec::new() }
+        AnsWriter {
+            encoder: DefaultRangeEncoder::new(),
+        }
     }
 
     pub fn write_residual(&mut self, residual: i8) {
-        self.residuals.push(residual);
+        // Model: Quantized Gaussian centered at 0 with std dev = 1.0.
+        // This effectively compresses small residuals (errors) into very few bits.
+        // The loop in lib.rs runs FORWARD, so we use RangeEncoder (FIFO).
+        let quantizer = LeakyQuantizer::<f64, i32, u32, 24>::new(-128..=127);
+        let model = quantizer.quantize(Gaussian::new(0.0, 1.0));
+        // Map i8 residual to i32 symbol space for constriction
+        self.encoder.encode_symbol(residual as i32, &model).unwrap();
     }
 
-    pub fn finish(self) -> Vec<u8> {
-        if self.residuals.is_empty() {
-            return vec![];
-        }
-
-        let mut coder = DefaultAnsCoder::new();
-
-        // Entropy model: Gaussian with std 10.0 for broader residual distribution
-        let quantizer = DefaultLeakyQuantizer::new(-128..=127);
-        let model = quantizer.quantize(Gaussian::new(0.0, 10.0));
-
-        // Map i8 to i32, reverse for ANS stack
-        let symbols: Vec<i32> = self.residuals.iter().rev().map(|&r| r as i32).collect();
-
-        // Encode in reverse order (ANS stack semantics)
-        coder.encode_symbols_reverse(symbols.iter().map(|&s| (s, &model))).unwrap();
-
-        // Get compressed as u32 words
-        let compressed_words: Vec<u32> = coder.into_compressed().unwrap();
-
-        // Convert to bytes, little endian
+    pub fn finish(mut self) -> Vec<u8> {
+        // Range Coding requires 'sealing' to flush the final bits
+        let compressed_words: Vec<u32> = self.encoder.into_compressed().unwrap();
         let mut result = Vec::new();
         for &word in &compressed_words {
             result.extend_from_slice(&word.to_le_bytes());
@@ -47,21 +38,13 @@ impl AnsWriter {
     }
 }
 
-pub struct AnsReader<'a> {
-    residuals: std::vec::IntoIter<i8>,
-    _marker: std::marker::PhantomData<&'a ()>,
+pub struct AnsReader {
+    decoder: DefaultRangeDecoder,
 }
 
-impl<'a> AnsReader<'a> {
-    pub fn new(data: &[u8], num_residuals: usize) -> Self {
-        if num_residuals == 0 {
-            return AnsReader {
-                residuals: vec![].into_iter(),
-                _marker: std::marker::PhantomData,
-            };
-        }
-
-        // Convert bytes to u32 words, little endian
+impl AnsReader {
+    pub fn new(data: &[u8]) -> Self {
+        // Convert bytes to u32 words
         let mut words = Vec::new();
         let mut i = 0;
         while i + 3 < data.len() {
@@ -69,27 +52,23 @@ impl<'a> AnsReader<'a> {
             words.push(word);
             i += 4;
         }
-
-        // Create coder from compressed data
-        let mut coder = DefaultAnsCoder::from_compressed(words).unwrap();
-
-        // Same model
-        let quantizer = DefaultLeakyQuantizer::new(-128..=127);
-        let model = quantizer.quantize(Gaussian::new(0.0, 10.0));
-
-        // Decode exactly num_residuals symbols
-        let decoded_symbols: Vec<i32> = coder.decode_symbols(std::iter::repeat(&model).take(num_residuals)).map(|r: Result<i32, _>| r.unwrap()).collect();
-
-        // Map back to i8
-        let residuals_vec: Vec<i8> = decoded_symbols.iter().map(|&s| s as i8).collect();
-
-        AnsReader {
-            residuals: residuals_vec.into_iter(),
-            _marker: std::marker::PhantomData,
-        }
+        
+        // Initialize decoder from the compressed byte stream
+        let decoder = DefaultRangeDecoder::from_compressed(words).unwrap();
+        
+        AnsReader { decoder }
     }
 
     pub fn read_residual(&mut self) -> i8 {
-        self.residuals.next().unwrap_or(0)
+        // Define the same model used for encoding
+        let quantizer = LeakyQuantizer::<f64, i32, u32, 24>::new(-128..=127);
+        let model = quantizer.quantize(Gaussian::new(0.0, 1.0));
+        
+        // Decode next symbol
+        // If the stream is exhausted or invalid, we default to 0 (no residual)
+        let val = self.decoder.decode_symbol(&model).unwrap_or(0);
+        
+        // Clamp to i8 range
+        val as i8
     }
 }

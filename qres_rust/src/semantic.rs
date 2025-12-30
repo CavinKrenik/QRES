@@ -1,6 +1,5 @@
 use tokenizers::Tokenizer;
 use std::sync::OnceLock;
-use std::io;
 
 // Helper to embed and lazy-load
 static SEMANTIC_TOKENIZER: OnceLock<Tokenizer> = OnceLock::new();
