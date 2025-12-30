@@ -233,15 +233,31 @@ pub fn compress_chunk(
     _weights: Option<&[u8]>,
     _lossy: Option<u8>,
 ) -> io::Result<Vec<u8>> {
+    // Try ANS compression first
     let compressed_body = predictive_encode_v3(chunk);
-
-    // [V3 Format]: [Decompressed_Len (4 bytes)] + [Compressed_Body]
-    // The length prefix is mandatory for the ANS decoder to know when to stop/how many symbols to expect.
-    let mut out = Vec::with_capacity(4 + compressed_body.len());
-    out.extend_from_slice(&(chunk.len() as u32).to_le_bytes());
-    out.extend_from_slice(&compressed_body);
-
-    Ok(out)
+    
+    // [V3 Format]: [Flags (1 byte)] + [Decompressed_Len (4 bytes)] + [Compressed_Body]
+    // Flags: bit 0 = codec (0=ANS, 1=Zstd fallback)
+    
+    // Check if ANS achieved compression
+    if compressed_body.len() < chunk.len() {
+        // ANS succeeded - use it
+        let mut out = Vec::with_capacity(1 + 4 + compressed_body.len());
+        out.push(0x00); // Flag: ANS codec
+        out.extend_from_slice(&(chunk.len() as u32).to_le_bytes());
+        out.extend_from_slice(&compressed_body);
+        Ok(out)
+    } else {
+        // ANS expanded data - fall back to zstd
+        let zstd_compressed = zstd::bulk::compress(chunk, 3)
+            .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+        
+        let mut out = Vec::with_capacity(1 + 4 + zstd_compressed.len());
+        out.push(0x01); // Flag: Zstd fallback
+        out.extend_from_slice(&(chunk.len() as u32).to_le_bytes());
+        out.extend_from_slice(&zstd_compressed);
+        Ok(out)
+    }
 }
 
 pub fn decompress_chunk(
@@ -249,22 +265,39 @@ pub fn decompress_chunk(
     _predictor_id: u8,
     _weights: Option<&[u8]>,
 ) -> io::Result<Vec<u8>> {
-    if compressed.len() < 4 {
+    if compressed.len() < 5 {
         return Err(io::Error::new(
             io::ErrorKind::InvalidData,
             "Chunk too short",
         ));
     }
 
+    // Extract codec flag
+    let codec_flag = compressed[0];
+    
     // Extract Decompressed Length
     let decomp_len = u32::from_le_bytes(
-        compressed[0..4]
+        compressed[1..5]
             .try_into()
             .map_err(|_| io::Error::new(io::ErrorKind::InvalidData, "Invalid Header"))?,
     ) as usize;
 
-    // Decode body
-    Ok(predictive_decode_v3(&compressed[4..], decomp_len))
+    // Decode based on codec
+    match codec_flag {
+        0x00 => {
+            // ANS codec
+            Ok(predictive_decode_v3(&compressed[5..], decomp_len))
+        }
+        0x01 => {
+            // Zstd fallback
+            zstd::bulk::decompress(&compressed[5..], decomp_len)
+                .map_err(|e| io::Error::new(io::ErrorKind::Other, e))
+        }
+        _ => Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!("Unknown codec flag: {:#x}", codec_flag),
+        )),
+    }
 }
 
 // --- Python Wrapper ---
