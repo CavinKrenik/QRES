@@ -61,10 +61,9 @@ lto = "fat"
 codegen-units = 1
 panic = "abort"
 
-# TODO: Re-enable CLI after implementing streaming API for v3.0
-# [[bin]]
-# name = "qres-cli"
-# path = "src/main.rs"
+[[bin]]
+name = "qres-cli"
+path = "src/main.rs"
 
 [[bin]]
 name = "swarm_sim"
