@@ -21,7 +21,7 @@ impl Default for CompressionStats {
         engines.insert("ipeps".to_string(), 0);
         engines.insert("lstm".to_string(), 0);
         engines.insert("linear".to_string(), 0);
-        
+
         CompressionStats {
             total_compressions: 0,
             total_decompressions: 0,
@@ -64,11 +64,11 @@ impl CompressionStats {
         *self.engines_used.entry(engine.to_string()).or_insert(0) += 1;
         self.total_bytes_in += bytes_in;
         self.total_bytes_out += bytes_out;
-        
+
         if self.total_bytes_in > 0 {
             self.avg_ratio = self.total_bytes_out as f64 / self.total_bytes_in as f64;
         }
-        
+
         let _ = self.save();
     }
 

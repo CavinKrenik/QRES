@@ -26,7 +26,7 @@ pub async fn get_stats() -> Result<serde_json::Value, String> {
 }
 
 #[tauri::command]
-pub async fn toggle_swarm(enabled: bool) -> Result<(), String> {
+pub async fn toggle_swarm(_enabled: bool) -> Result<(), String> {
     // Placeholder
     Ok(())
 }

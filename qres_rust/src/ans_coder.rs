@@ -1,5 +1,6 @@
-use constriction::ans::Coder;
 use constriction::stream::model::LeakyQuantizer;
+use constriction::stream::queue::{DefaultRangeDecoder, DefaultRangeEncoder};
+use constriction::stream::{Decode, Encode};
 use probability::distribution::Gaussian;
 
 // QRES v3.0 Entropy Backend
@@ -8,6 +9,12 @@ use probability::distribution::Gaussian;
 
 pub struct AnsWriter {
     encoder: DefaultRangeEncoder,
+}
+
+impl Default for AnsWriter {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl AnsWriter {
@@ -24,14 +31,14 @@ impl AnsWriter {
         let quantizer = LeakyQuantizer::<f64, i32, u32, 24>::new(-128..=127);
         let model = quantizer.quantize(Gaussian::new(0.0, 1.0));
         // Map i8 residual to i32 symbol space for constriction
-        self.encoder.encode_symbol(residual as i32, &model).unwrap();
+        self.encoder.encode_symbol(residual as i32, model).unwrap();
     }
 
-    pub fn finish(mut self) -> Vec<u8> {
+    pub fn finish(self) -> Vec<u8> {
         // Range Coding requires 'sealing' to flush the final bits
         let compressed_words: Vec<u32> = self.encoder.into_compressed().unwrap();
         let mut result = Vec::new();
-        for &word in &compressed_words {
+        for word in &compressed_words {
             result.extend_from_slice(&word.to_le_bytes());
         }
         result
@@ -48,14 +55,14 @@ impl AnsReader {
         let mut words = Vec::new();
         let mut i = 0;
         while i + 3 < data.len() {
-            let word = u32::from_le_bytes([data[i], data[i+1], data[i+2], data[i+3]]);
+            let word = u32::from_le_bytes([data[i], data[i + 1], data[i + 2], data[i + 3]]);
             words.push(word);
             i += 4;
         }
-        
+
         // Initialize decoder from the compressed byte stream
         let decoder = DefaultRangeDecoder::from_compressed(words).unwrap();
-        
+
         AnsReader { decoder }
     }
 
@@ -63,11 +70,11 @@ impl AnsReader {
         // Define the same model used for encoding
         let quantizer = LeakyQuantizer::<f64, i32, u32, 24>::new(-128..=127);
         let model = quantizer.quantize(Gaussian::new(0.0, 1.0));
-        
+
         // Decode next symbol
         // If the stream is exhausted or invalid, we default to 0 (no residual)
         let val = self.decoder.decode_symbol(&model).unwrap_or(0);
-        
+
         // Clamp to i8 range
         val as i8
     }

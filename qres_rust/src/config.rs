@@ -59,14 +59,14 @@ impl Config {
 
     pub fn load() -> Result<Self, Box<dyn std::error::Error>> {
         let path = Self::get_config_path();
-        
+
         if !path.exists() {
             // Create default config
             let config = Config::default();
             config.save()?;
             return Ok(config);
         }
-        
+
         let content = fs::read_to_string(path)?;
         let config: Config = toml::from_str(&content)?;
         Ok(config)

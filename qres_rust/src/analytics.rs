@@ -1,7 +1,7 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
-use chrono::{DateTime, Utc};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BrainSnapshot {
@@ -10,17 +10,9 @@ pub struct BrainSnapshot {
     pub wisdom_level: f32,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct BrainHistory {
     pub snapshots: Vec<BrainSnapshot>,
-}
-
-impl Default for BrainHistory {
-    fn default() -> Self {
-        BrainHistory {
-            snapshots: Vec::new(),
-        }
-    }
 }
 
 impl BrainHistory {
@@ -76,7 +68,8 @@ impl BrainHistory {
         }
 
         let recent = &self.snapshots[self.snapshots.len() - 10.min(self.snapshots.len())..];
-        let avg_wisdom: f32 = recent.iter().map(|s| s.wisdom_level).sum::<f32>() / recent.len() as f32;
+        let avg_wisdom: f32 =
+            recent.iter().map(|s| s.wisdom_level).sum::<f32>() / recent.len() as f32;
 
         if avg_wisdom > 0.9 {
             "expert".to_string()
