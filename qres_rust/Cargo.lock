@@ -3267,6 +3267,7 @@ dependencies = [
  "lazy_static",
  "libp2p",
  "ndarray",
+ "probability",
  "pyo3",
  "rand 0.8.5",
  "rayon",

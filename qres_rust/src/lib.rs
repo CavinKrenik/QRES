@@ -149,7 +149,7 @@ fn predictive_decode_v3(compressed_words: &[u8], decoded_len: usize) -> Vec<u8> 
     let mut mixer = Mixer::new();
     
     // 2. Initialize ANS Reader
-    let mut ans = AnsReader::new(compressed_words);
+    let mut ans = AnsReader::new(compressed_words, decoded_len);
     
     let mut out = Vec::with_capacity(decoded_len);
     let mut preds = [0u8; 3];

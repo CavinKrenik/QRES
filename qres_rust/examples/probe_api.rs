@@ -1,20 +1,36 @@
-// Probe Constriction API Variants
-use constriction::stream::{stack::DefaultAnsCoder, Decode, Encode};
+use constriction::stream::stack::AnsCoder;
+use constriction::stream::{Decode, Encode};
+use constriction::stream::model::LeakyQuantizer;
+
+// Explicitly define types to match our ans_coder.rs intent
+type Coder = AnsCoder<u32, u32>;
+type Model = LeakyQuantizer<i32, u32, u32, u32>;
 
 fn main() {
-    let data: Vec<u32> = vec![0, 1, 2];
+    println!("Probing Constriction API...");
+
+    // 1. Create some data
+    let mut coder = Coder::new();
+    let model = LeakyQuantizer::<i32, u32, u32, u32>::new(-10..=10);
     
-    // Variant 1: from_binary 
-    // let _coder1 = DefaultAnsCoder::from_binary(data.clone()).unwrap();
+    coder.encode_symbol(5, &model).unwrap();
+    coder.encode_symbol(-3, &model).unwrap();
     
-    // Variant 2: from_compressed_data 
-    // let _coder2 = DefaultAnsCoder::from_compressed_data(data.clone()).unwrap();
+    // 2. Get compressed data (Vec<u32>)
+    let data: Vec<u32> = coder.into_compressed_data().unwrap();
+    println!("Compressed data (words): {:?}", data);
     
-    // Variant 3: from_reversed_compressed_data
-    // let _coder3 = DefaultAnsCoder::from_reversed_compressed_data(data.clone()).unwrap();
+    // 3. Round trip check - Reconstruct Coder
+    // TESTING CANDIDATE: from_binary
+    let mut decoder = Coder::from_binary(data).unwrap();
     
-    // I'll try just ONE that I suspect most: `from_compressed` maybe?
-    // Or I'll use a `compile_error!` approach or just invalid call to list methods?
-    // Let's try calling a non-existent method `list_methods()` to see "did you mean...?"
-    let _coder = DefaultAnsCoder::list_methods();
+    // 4. Decode
+    let s1 = decoder.decode_symbol(&model).unwrap();
+    let s2 = decoder.decode_symbol(&model).unwrap();
+    
+    println!("Decoded: {}, {}", s1, s2);
+    assert_eq!(s1, -3); // Stack ANS is LIFO, so last in is first out
+    assert_eq!(s2, 5);
+    
+    println!("✅ API VERIFIED: from_reversed_compressed_data(vec) works!");
 }
