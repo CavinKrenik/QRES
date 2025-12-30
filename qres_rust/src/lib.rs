@@ -488,8 +488,8 @@ pub fn compress_chunk(chunk: &[u8], predictor_id: u8, weights: Option<&[u8]>, lo
                  return zstd::bulk::compress(&bytes, 3).map_err(|e| io::Error::new(io::ErrorKind::Other, e));
             }
         }
-        // Fallback to Standard
-        return zstd::bulk::compress(chunk, 3).map_err(|e| io::Error::new(io::ErrorKind::Other, e));
+        // Fallback: If not UTF-8 or Tokenization fails, return Error to disqualify this engine
+        return Err(io::Error::new(io::ErrorKind::InvalidData, "Semantic Compression Failed"));
     }
     let mode = PredictorMode::from(predictor_id);
     let deltas = predictive_encode(chunk, mode, weights, lossy);
@@ -562,9 +562,11 @@ fn qualify_stream(sample: &[u8]) -> (u8, Vec<u8>, RaceStats) {
         (6, vec![], "Standard"),
     ];
     
-    if is_text {
-        candidates.push((7, vec![], "Semantic"));
-    }
+    // Semantic Mode (7) is currently experimental and may not be lossless (Tokenizer issues)
+    // Disabled for Smart Mode (255) to ensure integrity.
+    // if is_text {
+    //    candidates.push((7, vec![], "Semantic"));
+    // }
     
     // Parallel Race
     let results: Vec<(u8, f64)> = candidates.par_iter().map(|(id, weights, _name)| {
@@ -1084,6 +1086,25 @@ where F: Fn(f32, f32, String)
 #[cfg(feature = "python")]
 #[pyfunction]
 fn encode_bytes<'a>(py: Python<'a>, data: &[u8], predictor_id: u8, weights: Option<&[u8]>) -> PyResult<&'a PyBytes> {
+    if predictor_id == 255 {
+        // Smart Mode: Auto-Detect Best Engine
+        let (winner_id, winner_weights, _) = qualify_stream(data);
+        
+        // Compress using the winner
+        // Note: We use the winner_weights we just found
+        let compressed = compress_chunk(data, winner_id, Some(&winner_weights), None)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(e.to_string()))?;
+            
+        // Serialize: [ID: u8] [WeightsLen: u32] [Weights...] [Body...]
+        let mut result = Vec::with_capacity(1 + 4 + winner_weights.len() + compressed.len());
+        result.push(winner_id);
+        result.extend_from_slice(&(winner_weights.len() as u32).to_le_bytes());
+        result.extend_from_slice(&winner_weights);
+        result.extend_from_slice(&compressed);
+        
+        return Ok(PyBytes::new(py, &result));
+    }
+
     let compressed = compress_chunk(data, predictor_id, weights, None).map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(e.to_string()))?;
     Ok(PyBytes::new(py, &compressed))
 }
@@ -1091,6 +1112,25 @@ fn encode_bytes<'a>(py: Python<'a>, data: &[u8], predictor_id: u8, weights: Opti
 #[cfg(feature = "python")]
 #[pyfunction]
 fn decode_bytes<'a>(py: Python<'a>, data: &[u8], predictor_id: u8, weights: Option<&[u8]>) -> PyResult<&'a PyBytes> {
+    if predictor_id == 255 {
+         // Smart Mode: Self-Describing Format
+         if data.len() < 5 { return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>("Data too short for Smart Mode")); }
+         
+         let actual_id = data[0];
+         let w_len_bytes: [u8; 4] = data[1..5].try_into().map_err(|_| PyErr::new::<pyo3::exceptions::PyValueError, _>("Invalid header"))?;
+         let w_len = u32::from_le_bytes(w_len_bytes) as usize;
+         
+         if data.len() < 5 + w_len { return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>("Data too short for Weights")); }
+         
+         let actual_weights = &data[5..5+w_len];
+         let body = &data[5+w_len..];
+         
+         let decompressed = decompress_chunk(body, actual_id, Some(actual_weights))
+             .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(e.to_string()))?;
+             
+         return Ok(PyBytes::new(py, &decompressed));
+    }
+
     let decompressed = decompress_chunk(data, predictor_id, weights).map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(e.to_string()))?;
     Ok(PyBytes::new(py, &decompressed))
 }
@@ -1098,7 +1138,9 @@ fn decode_bytes<'a>(py: Python<'a>, data: &[u8], predictor_id: u8, weights: Opti
 #[cfg(feature = "python")]
 #[pyfunction]
 fn get_residuals_py<'a>(_py: Python<'a>, data: &[u8], predictor_id: u8, weights: Option<&[u8]>) -> PyResult<Vec<i8>> {
-    Ok(get_residuals(data, predictor_id, weights))
+    // For now, Smart Mode just falls back to Linear (1) for residuals since "Auto" residuals are ambiguous
+    let effective_id = if predictor_id == 255 { 1 } else { predictor_id };
+    Ok(get_residuals(data, effective_id, weights))
 }
 
 #[cfg(feature = "python")]

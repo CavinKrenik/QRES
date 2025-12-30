@@ -28,11 +28,11 @@ class QRES:
     """
     
     @staticmethod
-    def compress(data: Union[bytes, bytearray, np.ndarray], predictor_id: int = 1) -> bytes:
+    def compress(data: Union[bytes, bytearray, np.ndarray], predictor_id: int = 255) -> bytes:
         """
         Compress data using QRES v2 (Bit-Packed + Delta).
         Supports: bytes, bytearray, memoryview, numpy.ndarray.
-        Predictor ID: 0=Previous, 1=Linear.
+        Predictor ID: 0=Previous, 1=Linear ... 255=Smart (Auto-Detect).
         """
         try:
             # Phase 9: V3 Streamable API (requires predictor_id)
@@ -49,7 +49,7 @@ class QRES:
             raise QRESError(f"Compression failed: {e}")
 
     @staticmethod
-    def decompress(data: Union[bytes, bytearray], predictor_id: int = 1) -> bytes:
+    def decompress(data: Union[bytes, bytearray], predictor_id: int = 255) -> bytes:
         """
         Decompress QRES v2 data.
         """
