@@ -1,4 +1,4 @@
-use rayon::prelude::*;
+// use rayon::prelude::*;
 
 // We mix 3 signals: Linear(0), LSTM(1), Tensor(2)
 const NUM_MODELS: usize = 3;

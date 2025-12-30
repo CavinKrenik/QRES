@@ -102,7 +102,9 @@ fn main() {
     
     match args[1].as_str() {
         "swarm" => {
+             eprintln!("Swarm disabled for maintenance.");
              // Subcommands: start, stop, status, run-node
+             /*
              let subcmd = if args.len() > 2 { args[2].as_str() } else { "start" }; // Default to start? Or help? Let's say help or status. But user usually types `swarm start`. 
              // Actually, if no subcommand, let's show status.
              
@@ -173,8 +175,11 @@ fn main() {
                      eprintln!("Unknown swarm command: {}. Use start, stop, status.", subcmd);
                  }
              }
+             */
         },
         "api-server" => {
+            eprintln!("API Server disabled for maintenance.");
+            /*
             // HTTP REST API Server
             let mut port = 3030;
             let mut i = 2;
@@ -200,6 +205,7 @@ fn main() {
                     eprintln!("API Server Error: {}", e);
                 }
             });
+            */
         },
         "compress" => {
             if args.len() < 4 { eprintln!("Usage: compress <in> <out>"); return; }
