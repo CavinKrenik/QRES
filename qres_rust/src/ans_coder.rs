@@ -25,18 +25,12 @@ impl AnsWriter {
 
         let mut coder = DefaultAnsCoder::new();
 
-        // Map i8 to usize: -128..127 -> 0..255
-        let symbols: Vec<usize> = self.residuals.iter().map(|&r| (r as i16 + 128) as usize).collect();
+        // Entropy model: Gaussian with std 10.0 for broader residual distribution
+        let quantizer = DefaultLeakyQuantizer::new(-128..=127);
+        let model = quantizer.quantize(Gaussian::new(0.0, 10.0));
 
-        // Entropy model favoring small residuals (Laplacian-like)
-        let mut probabilities: Vec<f64> = (0..256).map(|i| {
-            let residual = (i as i16) - 128;
-            1.0 / (residual.abs() + 1) as f64
-        }).collect();
-        // Normalize
-        let sum: f64 = probabilities.iter().sum();
-        probabilities.iter_mut().for_each(|p| *p /= sum);
-        let model: ContiguousCategoricalEntropyModel<u32, _, 24> = ContiguousCategoricalEntropyModel::from_floating_point_probabilities_fast(&probabilities, None).unwrap();
+        // Map i8 to i32, reverse for ANS stack
+        let symbols: Vec<i32> = self.residuals.iter().rev().map(|&r| r as i32).collect();
 
         // Encode in reverse order (ANS stack semantics)
         coder.encode_symbols_reverse(symbols.iter().map(|&s| (s, &model))).unwrap();
@@ -80,23 +74,17 @@ impl<'a> AnsReader<'a> {
         let mut coder = DefaultAnsCoder::from_compressed(words).unwrap();
 
         // Same model
-        let mut probabilities: Vec<f64> = (0..256).map(|i| {
-            let residual = (i as i16) - 128;
-            1.0 / (residual.abs() + 1) as f64
-        }).collect();
-        // Normalize
-        let sum: f64 = probabilities.iter().sum();
-        probabilities.iter_mut().for_each(|p| *p /= sum);
-        let model: ContiguousCategoricalEntropyModel<u32, _, 24> = ContiguousCategoricalEntropyModel::from_floating_point_probabilities_fast(&probabilities, None).unwrap();
+        let quantizer = DefaultLeakyQuantizer::new(-128..=127);
+        let model = quantizer.quantize(Gaussian::new(0.0, 10.0));
 
         // Decode exactly num_residuals symbols
-        let decoded_symbols: Vec<usize> = coder.decode_symbols(std::iter::repeat(&model).take(num_residuals)).map(|r: Result<usize, _>| r.unwrap()).collect();
+        let decoded_symbols: Vec<i32> = coder.decode_symbols(std::iter::repeat(&model).take(num_residuals)).map(|r: Result<i32, _>| r.unwrap()).collect();
 
         // Map back to i8
-        let residuals: Vec<i8> = decoded_symbols.iter().map(|&s| ((s as i16) - 128) as i8).collect();
+        let residuals_vec: Vec<i8> = decoded_symbols.iter().map(|&s| s as i8).collect();
 
         AnsReader {
-            residuals: residuals.into_iter(),
+            residuals: residuals_vec.into_iter(),
             _marker: std::marker::PhantomData,
         }
     }
