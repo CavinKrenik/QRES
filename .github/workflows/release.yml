@@ -58,7 +58,7 @@ jobs:
           path: bin/*
 
   release:
-    name: Create Release
+    name: Release v3.0.0 (Singularity)
     needs: [build_wheels, build_cli]
     runs-on: ubuntu-latest
     steps:

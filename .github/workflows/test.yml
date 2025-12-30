@@ -31,6 +31,11 @@ jobs:
         run: |
           source .venv/bin/activate
           python benchmarks/torture_test.py
+      
+      - name: Verify Singularity (Battle Royale)
+        run: |
+          source .venv/bin/activate
+          python benchmarks/battle_royale.py --quick
 
   test-studio:
     name: Test Studio (GUI)

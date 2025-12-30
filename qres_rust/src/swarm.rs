@@ -175,6 +175,16 @@ impl QresSwarm {
                                     println!("🧠 Wisdom received from {}", peer_id);
                                     if let Ok(local_json) = tokio::fs::read_to_string(&brain_path).await {
                                         let mut local_brain = LivingBrain::from_json(&local_json).unwrap_or(LivingBrain::new());
+
+                                        // V3.0: Hot-Swap Weights if Peer is Smarter
+                                        if let Some(remote_w) = &remote_brain.best_engine_weights {
+                                             // Threshold: +0.1 confidence (Index 3 = LSTM in classic mapping, though v3 is mixed, we still track it)
+                                             if remote_brain.confidence[3] > local_brain.confidence[3] + 0.1 {
+                                                  println!("⚡ [Hive] Improved LSTM weights received from peer {}. Hot-swapping.", peer_id);
+                                                  local_brain.update_weights(3, remote_w.clone());
+                                             }
+                                        }
+
                                         local_brain.merge(&remote_brain, 0.05);
                                         let _ = tokio::fs::write(&brain_path, local_brain.to_json()).await;
                                     }
