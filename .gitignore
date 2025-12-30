@@ -15,7 +15,7 @@ qres-studio/ui/node_modules/
 qres-studio/ui/dist/
 qres-studio/dist/
 *.log
-package-lock.json
+
 
 # Python
 __pycache__/
