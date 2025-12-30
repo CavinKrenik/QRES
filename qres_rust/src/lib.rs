@@ -256,10 +256,14 @@ fn predictive_decode_v3(compressed_words: &[u8], decoded_len: usize) -> Vec<u8> 
 
 pub fn compress_chunk(chunk: &[u8], _predictor_id: u8, _weights: Option<&[u8]>, _lossy: Option<u8>) -> io::Result<Vec<u8>> {
     // V3: Ignores predictor_id, uses Mixer.
-    // Also ignores weights (loads internal defaults or could utilize passed weights for LSTM)
-    // Lossy currently ignored in this ANS mix but ANS quantizer is naturally slightly lossy/quantized if configured so.
-    // OurANS Writer assumes lossless residuals though.
-    Ok(predictive_encode_v3(chunk))
+    let compressed_body = predictive_encode_v3(chunk);
+    
+    // [V3 Format]: [Decompressed_Len (4 bytes)] + [Compressed_Body]
+    let mut out = Vec::with_capacity(4 + compressed_body.len());
+    out.extend_from_slice(&(chunk.len() as u32).to_le_bytes());
+    out.extend_from_slice(&compressed_body);
+    
+    Ok(out)
 }
 
 pub fn decompress_chunk(compressed: &[u8], _predictor_id: u8, _weights: Option<&[u8]>) -> io::Result<Vec<u8>> {
@@ -293,14 +297,9 @@ pub fn decompress_chunk(compressed: &[u8], _predictor_id: u8, _weights: Option<&
 #[cfg(feature = "python")]
 #[pyfunction]
 fn encode_bytes<'a>(py: Python<'a>, data: &[u8], _predictor_id: u8, _weights: Option<&[u8]>) -> PyResult<&'a PyBytes> {
+    // compress_chunk now handles the header!
     let compressed = compress_chunk(data, 0, None, None).map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(e.to_string()))?;
-    
-    // Prepend Uncompressed Length (u32) for the decoder
-    let mut out = Vec::with_capacity(4 + compressed.len());
-    out.extend_from_slice(&(data.len() as u32).to_le_bytes());
-    out.extend_from_slice(&compressed);
-    
-    Ok(PyBytes::new(py, &out))
+    Ok(PyBytes::new(py, &compressed))
 }
 
 #[cfg(feature = "python")]
