@@ -1037,6 +1037,49 @@ impl<R: Read> Read for QresReader<R> {
     }
 }
 
+// --- GUI Helper Functions ---
+pub fn compress_with_callback<F>(src: &str, dest: &str, callback: F) -> std::io::Result<()> 
+where F: Fn(f32, f32, String) 
+{
+    use std::fs::File;
+    use std::io::{Read, Write};
+
+    let mut input = File::open(src)?;
+    let output = File::create(dest)?;
+    let total_size = input.metadata()?.len() as f32;
+    let mut writer = QresWriter::new(output, 0); // 0 = Auto/Psychic
+
+    let mut buffer = [0u8; 4096]; // CHUNK_SIZE
+    let mut processed = 0.0;
+
+    loop {
+        let n = input.read(&mut buffer)?;
+        if n == 0 { break; }
+        writer.write_all(&buffer[..n])?;
+        
+        processed += n as f32;
+        let percent = if total_size > 0.0 { (processed / total_size) * 100.0 } else { 0.0 };
+        
+        // Get Stats
+        let brain = writer.get_brain();
+        let best_engine_id = brain.get_best_engine();
+        let engine_name = match best_engine_id {
+            1 => "linear",
+            3 => "lstm",
+            4 => "tensor",
+            5 => "ipeps",
+            6 => "standard",
+            7 => "semantic",
+            _ => "unknown"
+        };
+        
+        callback(percent, 0.0, engine_name.to_string());
+    }
+    writer.flush()?;
+    callback(100.0, 1.0, "done".to_string());
+    Ok(())
+}
+
 // --- Python Bindings ---
 #[cfg(feature = "python")]
 #[pyfunction]

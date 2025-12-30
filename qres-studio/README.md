@@ -1,102 +1,48 @@
-# QRES Studio - GUI Installation & Build Guide
+# QRES Studio
 
-## User Installation (Recommended)
+**QRES Studio** is the official desktop GUI for the Quantum-Relational Encoding System. Built with **Tauri v2** and **Svelte 5**, it provides a beautiful, real-time visualization of the compression process.
 
-### Windows
-1. Download `QRES-Studio-Setup.msi` from [Releases](https://github.com/CavinKrenik/QRES/releases)
-2. Double-click to install
-3. Launch from Start Menu or Desktop shortcut
+![QRES Studio](../DOCS/studio_screenshot_mockup.png)
 
-**Context Menu Integration** (Optional):
-- Right-click any file → "Compress with QRES"
-- Automatically opens QRES Studio with the file
+## ✨ Features
 
-### macOS
-1. Download `QRES-Studio.dmg`
-2. Open DMG and drag to Applications
-3. Launch from Applications folder
+- **Drag-and-Drop Compression**: Simply drop standard files or `.qres` archives to process them.
+- **Real-Time Visualization**: Watch the Neural Selector switch engines (Gold/Zstd, Blue/Linear, Green/iPEPS, Purple/LSTM) in real-time.
+- **Hive Mind Integration**: Control the local swarm daemon directly from the UI. Toggle "Swarm Mode" to share learnings.
+- **Stats Dashboard**: Track total bytes saved and "Hive Wisdom" accumulation.
 
-### Linux
-1. Download `qres-studio.AppImage`
-2. Make executable: `chmod +x qres-studio.AppImage`
-3. Run: `./qres-studio.AppImage`
-
----
-
-## Developer Build (From Source)
+## 🛠️ Development
 
 ### Prerequisites
-- Rust 1.70+ (`rustup`)
-- Node.js 18+ & npm
-- Platform-specific:
-  - **Windows**: Visual Studio Build Tools
-  - **macOS**: Xcode Command Line Tools
-  - **Linux**: `libwebkit2gtk`, `build-essential`
+- **Node.js**: v18+
+- **Rust**: v1.75+
+- **Tauri CLI**: `cargo install tauri-cli`
 
-### Build Steps
-
+### Setup
 ```bash
 cd qres-studio
-
-# Install frontend dependencies
-cd ui && npm install && cd ..
-
-# Development mode (hot reload)
-npm run tauri:dev
-
-# Production build
-npm run tauri:build
+npm install
 ```
 
-### Output Locations
-- **Windows**: `target/release/bundle/msi/QRES Studio_0.1.0_x64_en-US.msi`
-- **macOS**: `target/release/bundle/dmg/QRES Studio_0.1.0_x64.dmg`
-- **Linux**: `target/release/bundle/appimage/qres-studio_0.1.0_amd64.AppImage`
-
-### Bundle Size Optimization
-Target: < 10MB  
-Achieved by:
-- Svelte (lightweight framework)
-- Direct Rust linking (no Electron overhead)
-- --release optimizations
-
----
-
-## Development Notes
-
-### Project Structure
-```
-qres-studio/
-├── src/              # Tauri Rust backend
-│   ├── main.rs       # App entry
-│   └── commands.rs   # Real-time compression commands
-├── ui/src/           # Svelte frontend
-│   ├── App.svelte
-│   ├── DropZone.svelte
-│   └── HiveMind.svelte
-└── Cargo.toml        # Links to ../qres_rust
-```
-
-### Key Features
-- **Direct qres_rust Integration**: No CLI subprocess overhead
-- **Real-time Events**: Window.emit() for live progress
-- **Smart Drop**: Auto-detects .qres vs regular files
-- **Engine Visualization**: Ring color changes with active engine
-
-### Troubleshooting
-
-**Build fails with "qres_rust not found"**:
+### Run Locally (Dev Mode)
+This starts the Svelte web server and the Tauri native window.
 ```bash
-# Ensure you're in the QRES root directory
-cd C:\Dev\QRES
-cargo build --manifest-path qres_rust/Cargo.toml
+npm run tauri dev
 ```
 
-**GUI doesn't start**:
-- Check logs: `~/.qres/*.log`
-- Verify API server isn't already running on port 3030
+## 📦 Build
 
----
+To build the optimized release binary (installers):
 
-## Contributing
-See main [README.md](../README.md) for contribution guidelines.
+```bash
+npm run tauri build
+```
+Artifacts will be in `src-tauri/target/release/bundle/`.
+
+## 🏗️ Architecture
+
+- **Frontend**: Svelte 5 (Vite)
+- **Backend**: Rust (Tauri Host)
+- **Communication**: Tauri IPC (`invoke` / `listen`)
+
+The frontend remains strictly a view layer. All heavy compression logic happens in the Rust backend (`src-tauri/src/lib.rs`), which spawns async tasks to keep the UI smooth.

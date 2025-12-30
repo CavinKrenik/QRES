@@ -31,3 +31,28 @@ jobs:
         run: |
           source .venv/bin/activate
           python benchmarks/torture_test.py
+
+  test-studio:
+    name: Test Studio (GUI)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Install dependencies
+        working-directory: qres-studio
+        run: npm ci
+      - name: Check Svelte
+        working-directory: qres-studio
+        run: npm run check
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Install Tauri CLI Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf
+      - name: Check Rust Backend
+        working-directory: qres-studio/src-tauri
+        run: cargo check
