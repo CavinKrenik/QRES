@@ -17,9 +17,9 @@ pub mod swarm;
 pub mod daemon;
 
 // --- v3.0 Modules ---
-mod ans_coder;
+pub mod ans_coder;
 mod mixer;
-use ans_coder::{AnsWriter, AnsReader};
+pub use ans_coder::{AnsWriter, AnsReader};
 use mixer::Mixer;
 
 const CHUNK_SIZE: usize = 64 * 1024; // 64KB
