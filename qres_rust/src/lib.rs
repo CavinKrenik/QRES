@@ -1,5 +1,6 @@
 use ndarray::Array1;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::convert::TryInto;
 use std::io;
 
@@ -85,6 +86,7 @@ pub struct QresHeader {
 pub struct SimplePredictor {
     prev: f32,
     prev2: f32,
+    context: HashMap<u8, u8>, // Order-1 context: prev -> next
 }
 
 impl SimplePredictor {
@@ -92,14 +94,21 @@ impl SimplePredictor {
         SimplePredictor {
             prev: 0.0,
             prev2: 0.0,
+            context: HashMap::new(),
         }
     }
 
     fn predict_next(&self) -> u8 {
-        self.prev as u8
+        // Use order-1 context if available, else previous value
+        self.context
+            .get(&(self.prev as u8))
+            .copied()
+            .unwrap_or(self.prev as u8)
     }
 
     pub fn update(&mut self, actual: u8) {
+        // Learn order-1 context
+        self.context.insert(self.prev as u8, actual);
         self.prev2 = self.prev;
         self.prev = actual as f32;
     }
@@ -235,10 +244,10 @@ pub fn compress_chunk(
 ) -> io::Result<Vec<u8>> {
     // Try ANS compression first
     let compressed_body = predictive_encode_v3(chunk);
-    
+
     // [V3 Format]: [Flags (1 byte)] + [Decompressed_Len (4 bytes)] + [Compressed_Body]
     // Flags: bit 0 = codec (0=ANS, 1=Zstd fallback)
-    
+
     // Check if ANS achieved compression
     if compressed_body.len() < chunk.len() {
         // ANS succeeded - use it
@@ -249,9 +258,8 @@ pub fn compress_chunk(
         Ok(out)
     } else {
         // ANS expanded data - fall back to zstd
-        let zstd_compressed = zstd::bulk::compress(chunk, 3)
-            .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
-        
+        let zstd_compressed = zstd::bulk::compress(chunk, 3).map_err(io::Error::other)?;
+
         let mut out = Vec::with_capacity(1 + 4 + zstd_compressed.len());
         out.push(0x01); // Flag: Zstd fallback
         out.extend_from_slice(&(chunk.len() as u32).to_le_bytes());
@@ -274,7 +282,7 @@ pub fn decompress_chunk(
 
     // Extract codec flag
     let codec_flag = compressed[0];
-    
+
     // Extract Decompressed Length
     let decomp_len = u32::from_le_bytes(
         compressed[1..5]
@@ -290,8 +298,7 @@ pub fn decompress_chunk(
         }
         0x01 => {
             // Zstd fallback
-            zstd::bulk::decompress(&compressed[5..], decomp_len)
-                .map_err(|e| io::Error::new(io::ErrorKind::Other, e))
+            zstd::bulk::decompress(&compressed[5..], decomp_len).map_err(io::Error::other)
         }
         _ => Err(io::Error::new(
             io::ErrorKind::InvalidData,

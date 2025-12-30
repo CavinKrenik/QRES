@@ -6,6 +6,8 @@ const NUM_MODELS: usize = 3;
 pub struct Mixer {
     pub weights: [f32; NUM_MODELS],
     learning_rate: f32,
+    ar_coeffs: [f32; 2],  // AR(2) coefficients: [phi1, phi2]
+    prev_mixed: [f32; 2], // Previous two mixed predictions
 }
 
 impl Mixer {
@@ -13,15 +15,22 @@ impl Mixer {
         Mixer {
             weights: [0.33, 0.33, 0.34], // Start equal
             learning_rate: 0.005,        // Fast adaptation
+            ar_coeffs: [0.5, 0.3],       // Initial AR coefficients
+            prev_mixed: [128.0, 128.0],  // Start with mid-range
         }
     }
 
     // Combine predictions into one byte
     pub fn mix(&self, preds: &[u8; NUM_MODELS]) -> u8 {
         let mut sum = 0.0;
-        for i in 0..NUM_MODELS {
-            sum += (preds[i] as f32) * self.weights[i];
+        for (i, &pred) in preds.iter().enumerate() {
+            sum += (pred as f32) * self.weights[i];
         }
+
+        // Add AR(2) prediction
+        let ar_pred =
+            self.ar_coeffs[0] * self.prev_mixed[0] + self.ar_coeffs[1] * self.prev_mixed[1];
+        sum += ar_pred * 0.1; // Weight the AR component
 
         // Clamp and Round
         let out = sum.round();
@@ -41,9 +50,18 @@ impl Mixer {
 
         // Calculate current prediction again (forward pass)
         let mut y_hat = 0.0;
-        for i in 0..NUM_MODELS {
-            y_hat += (preds[i] as f32) * self.weights[i];
+        for (i, &pred) in preds.iter().enumerate() {
+            y_hat += (pred as f32) * self.weights[i];
         }
+
+        // Add AR component
+        let ar_pred =
+            self.ar_coeffs[0] * self.prev_mixed[0] + self.ar_coeffs[1] * self.prev_mixed[1];
+        y_hat += ar_pred * 0.1;
+
+        // Update prev_mixed
+        self.prev_mixed[1] = self.prev_mixed[0];
+        self.prev_mixed[0] = y_hat;
 
         // Error
         let _error = y - y_hat;
@@ -51,9 +69,9 @@ impl Mixer {
         // Update weights: w_i = w_i + alpha * error * p_i
         // Normalized update to prevent explosion
         let mut total_w = 0.0;
-        for i in 0..NUM_MODELS {
+        for (i, &pred) in preds.iter().enumerate() {
             // Directional update based on who was right
-            let pred_error = (preds[i] as f32) - y;
+            let pred_error = (pred as f32) - y;
             // If pred_error is small, weight should increase.
             // Simplified rule: Generalized Logistic Weighting
             let accuracy = 1.0 / (1.0 + pred_error.abs());

@@ -185,7 +185,7 @@ impl QresSwarm {
                                 if validate_brain(&remote_brain) {
                                     println!("🧠 Wisdom received from {}", peer_id);
                                     if let Ok(local_json) = tokio::fs::read_to_string(&brain_path).await {
-                                        let mut local_brain = LivingBrain::from_json(&local_json).unwrap_or(LivingBrain::new());
+                                        let mut local_brain = LivingBrain::from_json(&local_json).unwrap_or_default();
 
                                         // V3.0: Hot-Swap Weights if Peer is Smarter
                                         if let Some(_remote_w) = &remote_brain.best_engine_weights {

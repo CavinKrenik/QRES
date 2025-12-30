@@ -39,14 +39,14 @@ impl AnsWriter {
         } else {
             ((self.running_var / (self.count - 1) as f64).sqrt()).max(1e-6)
         };
-        
+
         // Use adaptive Gaussian model
         let quantizer = LeakyQuantizer::<f64, i32, u32, 24>::new(-128..=127);
         let model = quantizer.quantize(Gaussian::new(self.running_mean, std));
-        
+
         // Encode residual
         self.encoder.encode_symbol(residual as i32, model).unwrap();
-        
+
         // Update statistics AFTER encoding (for next symbol)
         // Welford's algorithm for numerical stability
         let res_f = residual as f64;
@@ -64,15 +64,17 @@ impl AnsWriter {
         for word in &compressed_words {
             result.extend_from_slice(&word.to_le_bytes());
         }
-        
+
         // Optional: Log final statistics for debugging
         #[cfg(debug_assertions)]
         if self.count > 0 {
             let final_std = (self.running_var / (self.count - 1) as f64).sqrt();
-            eprintln!("[ANS] Encoded {} residuals: mean={:.2}, std={:.2}", 
-                     self.count, self.running_mean, final_std);
+            eprintln!(
+                "[ANS] Encoded {} residuals: mean={:.2}, std={:.2}",
+                self.count, self.running_mean, final_std
+            );
         }
-        
+
         result
     }
 }
@@ -95,10 +97,10 @@ impl AnsReader {
             words.push(word);
             i += 4;
         }
-        
+
         // Initialize decoder from the compressed byte stream
         let decoder = DefaultRangeDecoder::from_compressed(words).unwrap();
-        
+
         AnsReader {
             decoder,
             running_mean: 0.0,
@@ -114,15 +116,15 @@ impl AnsReader {
         } else {
             ((self.running_var / (self.count - 1) as f64).sqrt()).max(1e-6)
         };
-        
+
         // Use same adaptive Gaussian model as encoder
         let quantizer = LeakyQuantizer::<f64, i32, u32, 24>::new(-128..=127);
         let model = quantizer.quantize(Gaussian::new(self.running_mean, std));
-        
+
         // Decode symbol
         let val = self.decoder.decode_symbol(model).unwrap_or(0);
         let residual = val as i8;
-        
+
         // Update statistics with DECODED residual (symmetric to encoder)
         let res_f = residual as f64;
         self.count += 1;
@@ -130,7 +132,7 @@ impl AnsReader {
         self.running_mean += delta / self.count as f64;
         let delta2 = res_f - self.running_mean;
         self.running_var += delta * delta2;
-        
+
         residual
     }
 }
