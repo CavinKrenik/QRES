@@ -1,4 +1,4 @@
-import qres_rust
+import qres as qres_rust
 import math
 
 print("=" * 60)

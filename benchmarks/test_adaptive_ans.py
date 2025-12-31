@@ -1,4 +1,4 @@
-import qres_rust
+import qres as qres_rust
 
 # Test adaptive ANS compression
 data = b'Hello World! ' * 100

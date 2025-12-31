@@ -4,7 +4,7 @@ import io
 import sys
 import zlib
 import numpy as np
-import qres_rust
+import qres as qres_rust
 
 def generate_repetitive_text(size_mb=2):
     """Dataset A: Repetitive Text (should use adaptive ANS)"""
