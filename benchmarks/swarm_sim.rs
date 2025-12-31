@@ -2,99 +2,108 @@ use std::fs;
 use std::process::{Command, Stdio};
 use std::thread;
 use std::time::Duration;
-
-// This simulation requires the qres-cli binary to be built with --features swarm (feature flag logic might be needed if libp2p is optional, but for now it's standard)
+use std::path::Path;
 
 fn main() {
-    println!("🧪 Starting Swarm Simulation...");
+    println!("[Sim] Starting QRES v4 Hive Simulation (FedProx)...");
 
-    // 1. Setup Brains
-    let brain_a = "brain_node_a.json";
-    let brain_b = "brain_node_b.json";
+    // 1. Locate Python Environment
+    let python_path = "c:\\Dev\\QRES\\.venv\\Scripts\\python.exe";
+    if !Path::new(python_path).exists() {
+        eprintln!("[Error] Python not found at {}", python_path);
+        return;
+    }
 
-    // Reset
-    let _ = fs::remove_file(brain_a);
-    let _ = fs::remove_file(brain_b);
+    // 2. Setup Hive Server
+    println!("[Setup] Spawning Hive Server...");
+    let mut server = Command::new(python_path)
+        .arg("../utils/hive_server.py")
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
+        .spawn()
+        .expect("Failed to start Hive Server");
 
-    // Seed Node A with "Genomic" wisdom (High LSTM confidence)
-    let seed_brain_a = r#"{"confidence": [0.0, 0.0, 0.0, 10.0, 0.0, 0.0]}"#; // ID 3 (LSTM) = 10.0
-    fs::write(brain_a, seed_brain_a).expect("Failed to write brain A");
+    // Compute absolute CLI path
+    // We are running from qres_rust/target/debug/swarm_sim.exe usually
+    // We want qres_rust/target/release/qres-cli.exe
+    let mut cli_path = std::env::current_exe().unwrap(); // .../target/debug/swarm_sim.exe
+    cli_path.pop(); // debug
+    cli_path.pop(); // target
+    cli_path.push("release");
+    cli_path.push("qres-cli.exe");
+    
+    // Explicit check
+    if !cli_path.exists() {
+        // Try current dir fallback if run via cargo run in root might differ (unlikely)
+        // Or assume user built release.
+        println!("[Warning] Release binary not found at {:?}. Trying debug...", cli_path);
+        cli_path.pop();
+        cli_path.pop();
+        cli_path.push("debug");
+        cli_path.push("qres-cli.exe");
+    }
+    
+    let cli_path_str = cli_path.to_str().unwrap();
+    println!("[Setup] Using CLI: {}", cli_path_str);
 
-    // Seed Node B with "Default" (Linear)
-    let seed_brain_b = r#"{"confidence": [10.0, 0.0, 0.0, 0.0, 0.0, 0.0]}"#; // ID 1 (Linear) = 10.0
-    fs::write(brain_b, seed_brain_b).expect("Failed to write brain B");
+    // Wait for startup
+    thread::sleep(Duration::from_secs(2));
 
-    // 2. Spawn Node A (The Teacher)
-    // Note: In a real test we'd need to pass the brain path to the CLI.
-    // Since CLI currently hardcodes "qres_brain.json", we will temporarily create directories to separate them
-    // or we assume the implementation allows path override.
-    // Ideally, we'd update `QresSwarm::run_daemon` to take a path, and CLI to parse it.
-    // For this simulation, let's assume valid implementation allows environment var or CWD change.
-
-    // We will use CWD isolation.
+    // 3. Setup Agents
     let dir_a = "swarm_sim_a";
     let dir_b = "swarm_sim_b";
     let _ = fs::create_dir_all(dir_a);
     let _ = fs::create_dir_all(dir_b);
 
-    fs::copy(brain_a, format!("{}/qres_brain.json", dir_a)).unwrap();
-    fs::copy(brain_b, format!("{}/qres_brain.json", dir_b)).unwrap();
+    // Seed Agent A (Expert - High Confidence in ID 3/Spectral)
+    let brain_a_json = r#"{"confidence": [0.5, 0.5, 0.5, 10.0], "stats": {"compressions": 5000}}"#;
+    fs::write(format!("{}/qres_brain.json", dir_a), brain_a_json).unwrap();
 
-    let exe = std::env::current_exe()
-        .unwrap()
-        .parent()
-        .unwrap() // debug/deps
-        .parent()
-        .unwrap() // debug
-        .parent()
-        .unwrap() // target
-        .join("release")
-        .join("qres-cli.exe");
+    // Seed Agent B (Novice - Default)
+    let brain_b_json = r#"{"confidence": [0.5, 0.5, 0.5, 0.5], "stats": {"compressions": 10}}"#;
+    fs::write(format!("{}/qres_brain.json", dir_b), brain_b_json).unwrap();
 
-    if !exe.exists() {
-        eprintln!(
-            "Binary not found at {:?}. Run usage: cargo run --bin swarm_sim",
-            exe
-        );
-        return;
-    }
-
-    println!("🚀 Spawning Node A (Teacher)...");
-    let mut child_a = Command::new(&exe)
-        .arg("swarm")
+    // 4. Agent A Syncs (Push)
+    println!("[Agent A] Expert Connecting to Hive...");
+    let status_a = Command::new(python_path)
+        .arg("../../utils/hive_sync.py")
         .current_dir(dir_a)
-        .stdout(Stdio::piped())
-        .spawn()
-        .expect("Failed to spawn node A");
+        .env("HIVE_URL", "http://localhost:5000")
+        .env("QRES_CLI", cli_path_str)
+        .output()
+        .expect("Agent A sync failed");
+    
+    println!("Agent A Stdout:\n{}", String::from_utf8_lossy(&status_a.stdout));
+    println!("Agent A Stderr:\n{}", String::from_utf8_lossy(&status_a.stderr));
 
-    println!("🚀 Spawning Node B (Student)...");
-    let mut child_b = Command::new(&exe)
-        .arg("swarm")
+    // 5. Agent B Syncs (Pull/FedProx)
+    println!("[Agent B] Novice Connecting to Hive...");
+    let status_b = Command::new(python_path)
+        .arg("../../utils/hive_sync.py")
         .current_dir(dir_b)
-        .stdout(Stdio::piped())
-        .spawn()
-        .expect("Failed to spawn node B");
+        .env("HIVE_URL", "http://localhost:5000")
+        .env("QRES_CLI", cli_path_str)
+        .output()
+        .expect("Agent B sync failed");
 
-    // 3. Wait for Gossip (60s+ for broadcast + propagation)
-    println!("⏳ Waiting 70s for Wisdom Propagation (Gossip + Merge)...");
-    thread::sleep(Duration::from_secs(70));
+    println!("Agent B Stdout:\n{}", String::from_utf8_lossy(&status_b.stdout));
+    println!("Agent B Stderr:\n{}", String::from_utf8_lossy(&status_b.stderr));
 
-    // 4. Wait and Kill
-    let _ = child_a.wait();
-    let _ = child_b.wait();
-    let _ = child_a.kill();
-    let _ = child_b.kill();
+    // 6. Verification
+    let final_brain_b = fs::read_to_string(format!("{}/qres_brain.json", dir_b)).unwrap();
+    println!("[Verify] Checking Agent B's Brain:\n{}", final_brain_b);
 
-    // 5. Verify Node B
-    let content_b = fs::read_to_string(format!("{}/qres_brain.json", dir_b)).unwrap();
-    println!("Node B Final Brain: {}", content_b);
-
-    // Check if LSTM confidence increased (was 0.0)
-    // Expected: 0.05 * 10.0 = 0.5 minimum.
-    if content_b.contains("\"confidence\":") {
-        // Simple string check or regex
-        println!("✅ Simulation Complete. Manually verify confidence drift.");
+    if final_brain_b.contains("10.0") || final_brain_b.contains("9.") {
+        println!("[SUCCESS] Agent B acquired Expert Knowledge (Zero-Shot)!");
+    } else if final_brain_b.contains("Confidence") { 
+        // Fallback check
+        println!("[Partial] Check values manually.");
     } else {
-        println!("❌ Failed to read brain.");
+        println!("[FAILURE] Agent B did not evolve.");
     }
+
+    // Cleanup
+    let _ = server.kill();
+    let _ = fs::remove_dir_all(dir_a);
+    let _ = fs::remove_dir_all(dir_b);
 }

@@ -31,19 +31,24 @@ def get_global_brain():
         return jsonify({"confidence": [1.0] * 6})
     
     # Federated Averaging (FedAvg)
-    # Sum all vectors element-wise
-    num_engines = 6
+    # Determine dimension from first contribution
+    if not contributions:
+         return jsonify({"confidence": []})
+         
+    num_engines = len(contributions[0]['confidence'])
     totals = [0.0] * num_engines
     count = len(contributions)
     
     for brain in contributions:
-        for i in range(num_engines):
-            totals[i] += brain['confidence'][i]
+        # Handle mismatch if any (truncate or pad?)
+        # For now, assume consistent version. Cap at num_engines.
+        b_conf = brain.get('confidence', [])
+        for i in range(min(len(b_conf), num_engines)):
+            totals[i] += b_conf[i]
             
     # Average
     averaged = [t / count for t in totals]
-    
-    print(f"[Hive] Distributing Global Brain (Avg of {count} agents)")
+    print(f"[Hive] Distributing Global Brain (Avg of {count} agents): {averaged}")
     return jsonify({"confidence": averaged})
 
 @app.route('/reset', methods=['POST'])
@@ -53,5 +58,5 @@ def reset():
     return jsonify({"status": "reset"})
 
 if __name__ == '__main__':
-    print("🐝 Hive Server active on port 5000...")
+    print("[Hive] Hive Server active on port 5000...")
     app.run(port=5000, debug=False)

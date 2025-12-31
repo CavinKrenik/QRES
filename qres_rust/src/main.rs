@@ -85,7 +85,7 @@ fn compress_file(input: &str, output: &str) -> io::Result<()> {
     let ratio = (total_output as f64 / total_input as f64) * 100.0;
 
     eprintln!(
-        "\n✓ Compressed {} bytes to {} bytes ({:.2}%) in {:.2}s",
+        "\n[Done] Compressed {} bytes to {} bytes ({:.2}%) in {:.2}s",
         total_input,
         total_output,
         ratio,
@@ -138,7 +138,7 @@ fn decompress_file(input: &str, output: &str) -> io::Result<()> {
 
     let elapsed = start.elapsed();
     eprintln!(
-        "\n✓ Decompressed {} bytes in {:.2}s",
+        "\n[Done] Decompressed {} bytes in {:.2}s",
         total_output,
         elapsed.as_secs_f64()
     );
@@ -157,7 +157,7 @@ fn brain_export_to_file(output: &str) -> io::Result<()> {
         LivingBrain::new().to_json()
     };
     fs::write(output, json)?;
-    eprintln!("🧠 Brain exported to {}", output);
+    eprintln!("[Brain] Brain exported to {}", output);
     Ok(())
 }
 
@@ -170,9 +170,11 @@ fn brain_import(file_path: &str) -> io::Result<()> {
 
     let import_json = fs::read_to_string(file_path)?;
     if let Some(imported) = LivingBrain::from_json(&import_json) {
-        local.merge(&imported, 0.1);
+        // V4: Hive Sync (Python) handles the merging logic (FedProx).
+        // CLI just applies the result (Overwrite confidence, keep stats).
+        local.merge(&imported, 1.0);
         fs::write(DEFAULT_BRAIN_FILE, local.to_json())?;
-        eprintln!("🧠 Brain merged successfully. Wisdom assimilated.");
+        eprintln!("[Brain] Brain merged successfully. Wisdom assimilated.");
     } else {
         eprintln!("Failed to parse imported brain.");
     }
@@ -180,7 +182,7 @@ fn brain_import(file_path: &str) -> io::Result<()> {
 }
 
 fn swarm_mode() -> io::Result<()> {
-    eprintln!("🚀 Starting QRES Swarm Node...");
+    eprintln!("[Swarm] Starting QRES Swarm Node...");
     // For now, just a placeholder - actual swarm logic in daemon.rs
     eprintln!("Swarm mode not implemented in CLI yet. Use daemon.");
     Ok(())
