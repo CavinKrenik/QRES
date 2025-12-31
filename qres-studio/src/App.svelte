@@ -3,6 +3,7 @@
     import { listen } from "@tauri-apps/api/event";
     import DropZone from "./DropZone.svelte";
     import HiveMind from "./HiveMind.svelte";
+    import LMInsights from "./LMInsights.svelte";
 
     let activeTab = "compress";
     let stats = { total_compressions: 0, bytes_saved: 0 };
@@ -44,13 +45,21 @@
         >
             Hive Mind
         </button>
+        <button
+            class:active={activeTab === "lm"}
+            on:click={() => (activeTab = "lm")}
+        >
+            AI Gen
+        </button>
     </div>
 
     <div class="tab-content">
         {#if activeTab === "compress"}
             <DropZone on:complete={loadStats} />
-        {:else}
+        {:else if activeTab === "hive"}
             <HiveMind />
+        {:else}
+            <LMInsights />
         {/if}
     </div>
 </main>

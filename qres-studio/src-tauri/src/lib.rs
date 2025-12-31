@@ -8,7 +8,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::compress_file,
             commands::get_stats,
-            commands::toggle_swarm
+            commands::toggle_swarm,
+            commands::query_lm
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

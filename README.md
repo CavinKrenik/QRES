@@ -108,8 +108,21 @@ cd qres_rust
 cargo build --release
 
 # Run Swarm Simulation
+# Run Swarm Simulation
 cargo run --bin swarm_sim
+
+# Run QRES Studio (GUI)
+cd qres-studio
+npm install
+npm run tauri dev
 ```
+
+### 🧠 AI Integration (Optional)
+To enable the **AI Gen** features in QRES Studio:
+1. Install [Ollama](https://ollama.com).
+2. Pull a model (e.g., `ollama pull llama3`).
+3. Run `ollama serve`.
+4. Open the **AI Gen** tab in QRES Studio to generate synthetic training data or analyze logs.
 
 ---
 
