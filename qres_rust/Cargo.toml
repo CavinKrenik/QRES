@@ -31,9 +31,9 @@ rayon = "1.8"
 
 # Phase 21: Hybrid Architecture & Neural Selection
 zstd = "0.13"
-candle-core = "0.9"
-candle-nn = "0.9"
-candle-transformers = "0.9"
+candle-core = "0.9.1"
+candle-nn = "0.9.1"
+
 tokenizers = { version = "0.19", default-features = false, features = ["onig"] }
 clap = { version = "4.0", features = ["derive"] }
 

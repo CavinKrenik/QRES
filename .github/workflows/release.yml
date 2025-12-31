@@ -58,7 +58,7 @@ jobs:
           path: bin/*
 
   release:
-    name: Release v3.0.0 (Singularity)
+    name: Release ${{ github.ref_name }}
     needs: [build_wheels, build_cli]
     runs-on: ubuntu-latest
     steps:

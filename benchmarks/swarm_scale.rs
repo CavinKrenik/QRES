@@ -3,7 +3,7 @@ use sysinfo::System;
 use tokio::task::JoinSet;
 
 // Lightweight mock node for testing
-async fn spawn_lightweight_node(id: usize, duration_secs: u64) {
+async fn spawn_lightweight_node(_id: usize, duration_secs: u64) {
     // Simulate a minimal swarm node - just periodic timer
     let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(600));
     let start = Instant::now();

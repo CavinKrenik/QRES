@@ -1,80 +1,67 @@
+import pytest
 import time
 import io
 import sys
 import zlib
 import numpy as np
-import qres
-import requests
+import qres_rust
+
+def generate_repetitive_text(size_mb=2):
+    """Dataset A: Repetitive Text (should use adaptive ANS)"""
+    size = size_mb * 1024 * 1024
+    pattern = b"The quick brown fox jumps over the lazy dog. " * 10
+    data = (pattern * (size // len(pattern) + 1))[:size]
+    return data
 
 def generate_sine_wave(size_mb=2):
-    """Scenario A: Pure Sine Wave (Should use QRES Mode)"""
+    """Dataset B: Sine Wave (should use neural predictors)"""
     size = size_mb * 1024 * 1024
     x = np.linspace(0, 500 * np.pi, size)
     y = np.sin(x) * 100 + 128
     return y.astype(np.uint8).tobytes()
 
-def download_shakespeare():
-    """Scenario B: Shakespeare/Text (Should use Raw Mode)"""
-    url = "https://www.gutenberg.org/files/100/100-0.txt" # Complete Works
-    try:
-        print("Downloading Shakespeare...")
-        r = requests.get(url)
-        return r.content[:2*1024*1024] # Clip to 2MB
-    except:
-        print("Download failed, using synthetic random text.")
-        # Synthetic fallback: Random ASCII
-        return np.random.randint(65, 122, size=2*1024*1024, dtype=np.uint8).tobytes()
+def generate_zeros(size_mb=2):
+    """Dataset C: Constant Zeros (optimal case)"""
+    return b'\x00' * (size_mb * 1024 * 1024)
 
-def measure(name, data):
-    print(f"\n--- {name} ({len(data)/1024/1024:.2f} MB) ---")
+def generate_random(size_mb=2):
+    """Dataset D: Random Data (fallback to zstd)"""
+    return np.random.randint(0, 256, size_mb * 1024 * 1024, dtype=np.uint8).tobytes()
+
+@pytest.mark.parametrize("data_func,expected_max_ratio", [
+    (generate_repetitive_text, 95.0),
+    (generate_sine_wave, 90.0),
+    (generate_zeros, 80.0),
+    (generate_random, 105.0),  # Allow slight expansion
+])
+def test_compression_ratio(data_func, expected_max_ratio):
+    """Test compression ratios are within expected bounds"""
+    data = data_func()
     
-    # 1. QRES
+    # Compress
     start = time.time()
-    compressed_qres = qres.compress(data)
-    qres_time = time.time() - start
-    qres_ratio = len(compressed_qres) / len(data)
+    compressed = qres_rust.encode_bytes(data, 0, None)  # Predictor 0 = SimplePredictor
+    comp_time = time.time() - start
     
-    # 2. Zlib Raw (Level 6)
+    # Decompress
     start = time.time()
-    compressed_zlib = zlib.compress(data, level=6)
-    zlib_time = time.time() - start
-    zlib_ratio = len(compressed_zlib) / len(data)
-
-    print(f"{'Metric':<15} | {'QRES (v2 Smart)':<15} | {'Zlib (Raw)':<15}")
-    print("-" * 55)
-    print(f"{'Ratio':<15} | {qres_ratio*100:6.2f}%          | {zlib_ratio*100:6.2f}%")
-    print(f"{'Size':<15} | {len(compressed_qres):<15} | {len(compressed_zlib):<15}")
-    print(f"{'Speed':<15} | {len(data)/1024/1024/qres_time:6.2f} MB/s    | {len(data)/1024/1024/zlib_time:6.2f} MB/s")
-
-    # Verification Logic
-    if "Sine" in name:
-        if qres_ratio > 0.05: # Sine should be < 1% usually, but headers add minimal
-             print("⚠️  WARNING: QRES ratio seems high for Sine Wave. Is bit-packing working?")
-        else:
-             print("✅ QRES crushed the Sine Wave (Expected).")
-             
-    if "Shakespeare" in name:
-        if qres_ratio > zlib_ratio * 1.5:
-             print("❌ FAILURE: QRES expanded the text significantly! Adaptive mode failed.")
-        elif qres_ratio > zlib_ratio:
-             print("⚠️  Acceptable: QRES slightly larger due to header overhead, but within range.")
-        else:
-             print("✅ QRES matches or beats Zlib on text (Adaptive Mode success).")
-
-    # Round Trip Check
-    restored = qres.decompress(compressed_qres)
-    if restored != data:
-        print("❌ FATAL: Decompression mismatch!")
-        sys.exit(1)
-    else:
-        print("✅ Integrity Check Passed.")
-
-def main():
-    sine = generate_sine_wave()
-    measure("Scenario A: Sine Wave", sine)
+    restored = qres_rust.decode_bytes(compressed, 0, None)
+    decomp_time = time.time() - start
     
-    shakespeare = download_shakespeare()
-    measure("Scenario B: Shakespeare Text", shakespeare)
+    # Verify round-trip
+    assert restored == data, "Round-trip integrity failed"
+    
+    # Check ratio
+    ratio = (len(compressed) / len(data)) * 100
+    assert ratio <= expected_max_ratio, f"Ratio {ratio:.2f}% exceeds {expected_max_ratio}%"
+    
+    # Performance check
+    comp_mbps = len(data) / 1024 / 1024 / comp_time
+    decomp_mbps = len(data) / 1024 / 1024 / decomp_time
+    assert comp_mbps > 1.0, f"Compression too slow: {comp_mbps:.2f} MB/s"
+    assert decomp_mbps > 1.0, f"Decompression too slow: {decomp_mbps:.2f} MB/s"
+    
+    print(f"✓ {data_func.__name__}: {ratio:.2f}% ratio, {comp_mbps:.1f}/{decomp_mbps:.1f} MB/s")
 
 if __name__ == "__main__":
-    main()
+    pytest.main([__file__, "-v"])

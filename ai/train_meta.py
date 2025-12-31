@@ -1,181 +1,118 @@
+# ai/train_meta.py
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader, TensorDataset
 import numpy as np
-import os
-import sys
-from sklearn.tree import DecisionTreeClassifier, export_text
-from sklearn.model_selection import train_test_split
-import qres
 import math
+from safetensors.torch import save_file
 
-# --- 1. CONFIG ---
-SAMPLES_PER_TYPE = 50
-CHUNK_SIZE = 4096  # 4KB Analysis Window
-FULL_SIZE = 64 * 1024 # 64KB for race
+# --- Config matches Rust ---
+EMBED_DIM = 128
+HIDDEN_DIM = 256
+HEADS = 4
+LAYERS = 2
+SEQ_LEN = 256
+CLASSES = 4
+# Class 0: Linear (Arithmetic/Constant)
+# Class 1: iPEPS (Complex periodic/Modulated)
+# Class 2: Zstd (High Entropy/Noise)
+# Class 3: Text (ASCII/Code)
 
-# --- 2. DATA GENERATORS ---
-def gen_sine(size):
-    x = np.linspace(0, 100 * np.pi, size)
-    y = np.sin(x) * 100 + 128
-    return y.astype(np.uint8).tobytes()
+class TransformerBlock(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.ln1 = nn.LayerNorm(EMBED_DIM)
+        self.ln2 = nn.LayerNorm(EMBED_DIM)
+        self.attn = nn.MultiheadAttention(EMBED_DIM, HEADS, batch_first=True)
+        self.ff = nn.Sequential(
+            nn.Linear(EMBED_DIM, HIDDEN_DIM),
+            nn.ReLU(),
+            nn.Linear(HIDDEN_DIM, EMBED_DIM)
+        )
 
-def gen_linear(size):
-    # Ramp
-    return np.arange(size, dtype=np.uint8).tobytes()
+    def forward(self, x):
+        x_norm = self.ln1(x)
+        attn_out, _ = self.attn(x_norm, x_norm, x_norm)
+        x = x + attn_out
+        x_norm = self.ln2(x)
+        return x + self.ff(x_norm)
 
-def gen_noise(size):
-    return np.random.randint(0, 256, size, dtype=np.uint8).tobytes()
+class MetaTransformer(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.embed = nn.Embedding(256, EMBED_DIM)
+        self.blocks = nn.ModuleList([TransformerBlock() for _ in range(LAYERS)])
+        self.head = nn.Linear(EMBED_DIM, CLASSES)
 
-def gen_text(size):
-    # Geometric distribution for ASCII
-    return np.random.geometric(p=0.01, size=size).astype(np.uint8).tobytes() # Rough approx
+    def forward(self, x):
+        x = self.embed(x)
+        for block in self.blocks:
+            x = block(x)
+        x = x.mean(dim=1)
+        return self.head(x)
 
-def gen_sparse(size):
-    return np.zeros(size, dtype=np.uint8).tobytes()
+def generate_structured_data(num_samples=2000):
+    data = []
+    labels = []
 
-# --- 3. FEATURE EXTRACTION ---
-def get_features(data):
-    # First 4KB
-    chunk = np.frombuffer(data[:CHUNK_SIZE], dtype=np.uint8)
-    if len(chunk) < 2: return [0,0,0,0]
-    
-    mean = np.mean(chunk)
-    var = np.var(chunk)
-    
-    # Entropy
-    counts = np.bincount(chunk, minlength=256)
-    probs = counts[counts > 0] / len(chunk)
-    entropy = -np.sum(probs * np.log2(probs))
-    
-    # Zero Crossing Rate (Approx raw changes)
-    diffs = np.diff(chunk.astype(np.int16))
-    zcr = np.sum(np.abs(diffs) > 10) / len(chunk) # Changes > 10
-    
-    return [mean, var, entropy, zcr]
+    print(f"⚗️ Generating {num_samples} structured samples...")
 
-# --- 4. LABELING (THE RACE) ---
-def get_winner(data):
-    # Compress with all 3 engines
-    try:
-        # qres.encode_bytes(bytes, predictor_id, weights)
-        # ID 1 = Linear, 3 = LSTM, 4 = Tensor
-        # Note: Weights must be handled. 
-        # For this training, we use default/empty weights for Linear
-        # For LSTM/Tensor, we hopefully have the weights in the lib or need to pass them?
-        # The python binding expects weights option.
-        # Problem: We don't have easy access to the embedded weights from Python 
-        # unless we extracted them or `qres` exposes them.
-        # HACK: Use ID 1 (Linear) vs ID 0 (Previous) vs Zlib?
-        # Wait, the user wants Linear vs Tensor vs LSTM.
-        # We need the weights.
-        # Let's assume the installed qres package has the latest build where we might not need to pass weights 
-        # IF the python binding had a high level compress function. It does not.
-        # It has `encode_bytes(data, id, weights)`.
-        
-        # ACTUALLY, the Rust `qres` lib has `LSTM_WEIGHTS` embedded. 
-        # But `encode_bytes` takes `weights: Option<&[u8]>`. 
-        # If we pass None, it initializes new (empty) weights which is BAD for LSTM/Tensor.
-        
-        # WORKAROUND: We will read the weights from the file system since we are in the repo.
-        pass
-    except:
-        pass
+    for i in range(num_samples):
+        cls = i % CLASSES
 
-# Load Weights
-def load_weights():
-    base = os.path.dirname(os.path.abspath(__file__))
-    assets = os.path.join(base, "../qres_rust/assets")
-    
-    with open(os.path.join(assets, "lstm.qnn"), "rb") as f:
-        lstm_w = f.read()
-    with open(os.path.join(assets, "tensor.qnn"), "rb") as f:
-        tensor_w = f.read()
-    return lstm_w, tensor_w
+        if cls == 0:  # Linear: Arithmetic progressions or constants
+            start = np.random.randint(0, 256)
+            step = np.random.randint(0, 5)
+            seq = ((np.arange(SEQ_LEN) * step + start) % 256).astype(np.uint8)
 
-lstm_weights, tensor_weights = load_weights()
+        elif cls == 1:  # iPEPS: Complex Modulated Wave (Hard for Delta, learnable for Tensor)
+            t = np.linspace(0, 4 * np.pi, SEQ_LEN)
+            wave = np.sin(t) * np.cos(t * 3.0)
+            seq = (((wave + 1.0) / 2.0 * 255.0).astype(np.uint8))
 
-def race(data):
-    # 1. Linear
-    c1 = qres.encode_bytes(data, 1, None)
-    l1 = len(c1)
-    
-    # 3. LSTM
-    c3 = qres.encode_bytes(data, 3, lstm_weights)
-    l3 = len(c3)
-    
-    # 4. Tensor
-    c4 = qres.encode_bytes(data, 4, tensor_weights)
-    l4 = len(c4)
-    
-    # Winner?
-    scores = {1: l1, 3: l3, 4: l4}
-    winner = min(scores, key=scores.get)
-    return winner
+        elif cls == 2:  # Zstd: Pure Random Noise
+            seq = np.random.randint(0, 256, SEQ_LEN).astype(np.uint8)
 
-# --- 5. MAIN LOOP ---
-print("Generating Data & Racing...")
-X = []
-y = []
+        elif cls == 3:  # Text: ASCII
+            text_source = "def function(x): return x * 2; " * 20
+            text_source = text_source * ((SEQ_LEN // len(text_source)) + 2)  # Loop to ensure length
+            start_idx = np.random.randint(0, len(text_source) - SEQ_LEN)
+            seq = np.array([ord(c) for c in text_source[start_idx : start_idx + SEQ_LEN]], dtype=np.uint8)
 
-generators = [gen_sine, gen_linear, gen_noise, gen_text, gen_sparse]
+        data.append(seq)
+        labels.append(cls)
 
-for gen in generators:
-    for _ in range(SAMPLES_PER_TYPE):
-        data = gen(FULL_SIZE)
-        feats = get_features(data)
-        label = race(data)
-        X.append(feats)
-        y.append(label)
+    return torch.tensor(np.array(data), dtype=torch.long), torch.tensor(np.array(labels), dtype=torch.long)
 
-print(f"Collected {len(X)} samples.")
+def train_and_export():
+    data, labels = generate_structured_data(4000)
 
-# --- 6. TRAINING ---
-clf = DecisionTreeClassifier(max_depth=5, random_state=42)
-clf.fit(X, y)
+    # Batching for efficiency
+    dataset = TensorDataset(data, labels)
+    loader = DataLoader(dataset, batch_size=512, shuffle=True)
 
-accuracy = clf.score(X, y)
-print(f"Model Accuracy: {accuracy:.2f}")
+    model = MetaTransformer()
+    optimizer = optim.Adam(model.parameters(), lr=0.001)
+    criterion = nn.CrossEntropyLoss()
 
-# --- 7. EXPORT TO RUST ---
-# We need to walk the tree and print Rust code
-tree = clf.tree_
-feature_names = ["mean", "var", "entropy", "zcr"]
+    print("🧠 Training MetaTransformer...")
+    for epoch in range(50):
+        epoch_loss = 0.0
+        for batch_data, batch_labels in loader:
+            optimizer.zero_grad()
+            out = model(batch_data)
+            loss = criterion(out, batch_labels)
+            loss.backward()
+            optimizer.step()
+            epoch_loss += loss.item()
+        if epoch % 10 == 0:
+            print(f"Epoch {epoch}: Avg Loss {epoch_loss / len(loader):.4f}")
 
-def tree_to_rust(node, depth, conditions=[]):
-    indent = "    " * depth
-    if tree.children_left[node] == tree.children_right[node]: # Leaf
-        # Class index
-        class_idx = np.argmax(tree.value[node])
-        class_val = clf.classes_[class_idx]
-        
-        # Explainability: Join conditions
-        if not conditions:
-            reason = "Default"
-        else:
-            # Simplification: Take the last 2 important conditions or all?
-            # Let's simple take all for true neuro-symbolic trace.
-            reason = ", ".join(conditions)
-            
-        return f'{indent}({class_val}, "{reason}")\n'
-    else:
-        threshold = tree.threshold[node]
-        feat_idx = tree.feature[node]
-        feat_name = feature_names[feat_idx]
-        
-        cond_left = f"{feat_name} <= {threshold:.2f}"
-        cond_right = f"{feat_name} > {threshold:.2f}"
-        
-        left = tree_to_rust(tree.children_left[node], depth + 1, conditions + [cond_left])
-        right = tree_to_rust(tree.children_right[node], depth + 1, conditions + [cond_right])
-        
-        return f"{indent}if {feat_name} <= {threshold:.4f} {{\n{left}{indent}}} else {{\n{right}{indent}}}\n"
+    print("💾 Exporting to meta_brain.safetensors...")
+    tensors = {k: v for k, v in model.state_dict().items()}
+    save_file(tensors, "qres_rust/assets/meta_brain.safetensors")
+    print("✅ Done.")
 
-rust_code = f"""// Generated by ai/train_meta.py
-// Accuracy: {accuracy:.2f}
-
-pub fn predict(mean: f32, var: f32, entropy: f32, zcr: f32) -> (u8, &'static str) {{
-{tree_to_rust(0, 1)}}}
-"""
-
-with open("qres_rust/src/meta_brain.rs", "w") as f:
-    f.write(rust_code)
-
-print("Generated qres_rust/src/meta_brain.rs")
+if __name__ == "__main__":
+    train_and_export()

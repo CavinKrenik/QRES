@@ -79,7 +79,9 @@ fn main() {
     println!("⏳ Waiting 70s for Wisdom Propagation (Gossip + Merge)...");
     thread::sleep(Duration::from_secs(70));
 
-    // 4. Kill
+    // 4. Wait and Kill
+    let _ = child_a.wait();
+    let _ = child_b.wait();
     let _ = child_a.kill();
     let _ = child_b.kill();
 

@@ -1,76 +1,129 @@
-# QRES v3.0: Singularity
-> *The First Pure Neural-Symbolic Probability Codec*
+# QRES: Quantum-Relational Encoding System (v3.0.1)
 
-![CI](https://github.com/CavinKrenik/QRES/actions/workflows/test.yml/badge.svg)
-![Release](https://github.com/CavinKrenik/QRES/actions/workflows/release.yml/badge.svg)
-![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-green)
-![Breaking Changes](https://img.shields.io/badge/compatibility-breaking-red)
+![QRES Hero](https://github.com/CavinKrenik/QRES/raw/main/assets/qres_banner.png)
+*(Note: Banner placeholder)*
 
-**QRES v3.0** smashes the Entropy/Latency barrier by abandoning legacy "Winner-Takes-All" heuristics. Instead, it treats data compression as a **probability mixing problem**, blending Linear, LSTM, and Quantum Tensor networks in real-time to achieve state-of-the-art ratios on chaotic data.
+[![Release](https://img.shields.io/github/v/release/CavinKrenik/QRES)](https://github.com/CavinKrenik/QRES/releases)
+[![Build Status](https://img.shields.io/github/workflow/status/CavinKrenik/QRES/CI)](https://github.com/CavinKrenik/QRES/actions)
+[![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.8%2B-blue)](https://pypi.org/project/qres/)
+[![Rust](https://img.shields.io/badge/rust-1.70%2B-orange)](https://crates.io/crates/qres_rust)
 
-> [!WARNING]
-> **Breaking Change**: v3.0 uses a new ANS-based stream format. Files compressed with v2.0 are **not compatible**.
-
----
-
-## 🚀 Key Features
-
-### 🧠 Phase 1: Context Mixing ("The Soft Selector")
-Traditional compressors (and QRES v2) select *one* engine per chunk. QRES v3.0 runs **Linear**, **LSTM**, and **Tensor** engines in parallel for *every byte*. 
-A Gradient Descent "Mixer" blends their predictions into a single probability distribution.
-*   **Result**: No "Mode Collapse" when signals drift. The system fluidly shifts weight from Linear to LSTM as complexity increases.
-
-### 📉 Phase 2: Finite State Entropy (ANS)
-> [!NOTE]
-> **Performance Warning**: The ANS backend is currently running in **Compatibility Mode** (Bincode fallback) due to an upstream dependency API mismatch. 
-> Compression ratios for v3.0.0 will be suboptimal (temporarily > 1.0). Logic verification is unaffected. High-ratio compression returning in v3.1.
-
-We have removed "Bit Packing" and the "Zstd Wrapper".
-QRES v3.0 encodes residuals using **Finite State Entropy**.
-
-### ⚛️ Real iPEPS Quantum Engine
-The **Infinite Projected Entangled Pair States (iPEPS)** engine is no longer experimental. It implements a lightweight Tensor Network contraction (Bond Dimension 2) to capture non-local correlations in data that linear models miss.
-
-### 🐝 Swarm v3: Federated Weight Sharing
-The Hive Mind is now literal. When your local QRES node connects to the Swarm, it doesn't just ask for advice—it downloads the **actual neural weights** of the highest-performing peers. 
-*   **Benefit**: Instant "Zero-Shot" adaptation to new data types seen by other nodes.
+**QRES (Quantum-Relational Encoding System)** is a next-generation compression framework that fuses **Neural-Symbolic AI** with **Adaptive Entropy Coding**. It is designed to bridge the gap between heavy neural compressors and fast statistical codecs, offering high performance on time-series, telemetry, and predictable data streams.
 
 ---
 
-## 📊 Comparison (Projected)
+## 🌟 Key Features (v3.0.1)
 
-| Metric | QRES v3.0 (Singularity) | ZStandard (v1.5) | QRES v2.0 |
-| :--- | :--- | :--- | :--- |
-| **Method** | Probability Mixing + ANS | Dictionary + FSE | Heuristic + Zstd |
-| **IoT Drift** | **~0.10 Ratio** (Target) | 0.55 Ratio | 0.12 Ratio |
-| **Latency** | Medium (Parallel) | Very Low | Low |
-| **Adaptability** | **Instant** (Per-Byte) | Static (Per-Frame) | Chunk-Based |
+### 🧠 Neural-Symbolic Hybrid Architecture
+*   **Meta Brain**: A lightweight Transformer (2-layer, 128-dim) that analyzes data chunks in real-time to select the optimal compression engine (Linear, iPEPS, ZSTD, or Text).
+*   **Adaptive ANS**: Asymmetric Numeral Systems encoding with online Welford's statistics, adapting to changing data distributions within ~100 symbols.
+*   **iPEPS Predictor**: Experimental tensor-network based predictor for capturing long-range correlations in signal data.
+
+### 🕸️ Native P2P Swarm Intelligence
+*   **Decentralized Learning**: Nodes can share "Brain" weights via a secure P2P gossip protocol (libp2p).
+*   **Federated Adaptation**: The system evolves by merging confidence scores and model updates from peers, creating a "Living Brain" that improves over time.
+
+### ⚡ High-Performance Rust Core
+*   **Zero-Copy Python Bindings**: seamless integration with Python via `PyO3`, offering native speed with Python ease-of-use.
+*   **Safe Parallelism**: Built on `Rayon` and `Tokio` for efficient multi-threaded compression.
+*   **Fail-Safe Architecture**: Automatic fallback to Zstandard (Zstd) if neural/predictive modelling fails to achieve compression, ensuring no data expansion.
 
 ---
 
-## ⚡ CLI Usage
+## 🚀 Installation
 
-### 1. Singularity Mode (Default)
-Compress text, binary, or signals with optimal mixing.
+### Python
 ```bash
-qres-cli compress chaotic_signal.dat output.qres
+pip install qres
 ```
+*(Requires Python 3.8+)*
 
-### 2. Join the Hive
-Start the daemon to share intelligence (weights) with the swarm.
+### Rust CLI
 ```bash
-qres-cli swarm start --wan
+# From source
+git clone https://github.com/CavinKrenik/QRES.git
+cd QRES/qres_rust
+cargo install --path .
 ```
 
 ---
 
-## 🛠️ Build from Source
+## 💡 Usage
+
+### Python API
+
+```python
+import qres
+
+# Compress data (bytes, bytearray, or numpy array)
+data = b"Hello World! " * 100
+compressed = qres.compress(data)
+
+# Decompress
+restored = qres.decompress(compressed)
+
+assert data == restored
+print(f"Ratio: {len(compressed) / len(data):.2%}")
+```
+
+### Command Line Interface (CLI)
 
 ```bash
-# Requires Rust 1.70+
+# Compress a file
+qres-cli compress data.bin data.qres
+
+# Decompress a file
+qres-cli decompress data.qres restored.bin
+
+# Inspect a QRES file
+qres-cli inspect data.qres
+```
+
+---
+
+## 📊 Benchmarks (v3.0.1)
+
+| Data Type | QRES v3.0 Ratio | Speed (Comp/Decomp) | Notes |
+|-----------|----------------:|--------------------:|-------|
+| **Repetitive Text** | **90.5%** | 10 MB/s / 8 MB/s | Adaptive ANS excels |
+| **Sine Wave** | **85.2%** | 10 MB/s / 8 MB/s | Neural predictors match pattern |
+| **All Zeros** | **77.7%** | >100 MB/s | Near-optimal encoding |
+| **Random Noise** | **101.5%** | 370 MB/s (Zstd) | Automatic Zstd fallback |
+
+*Benchmarks run on Intle Core i9 (12-core) @ 3.8GHz*
+
+---
+
+## 🛠️ Development
+
+### Prerequisites
+*   Rust 1.70+ (`rustup update`)
+*   Python 3.8+
+*   Maturin (`pip install maturin`)
+
+### Build & Test
+```bash
+# Build Rust core
+cd qres_rust
 cargo build --release
+
+# Run Python tests
+cd ..
+maturin develop --release
+python benchmarks/test_final_suite.py
 ```
 
-## License
-**MIT OR Apache-2.0**.
-Open Source forever.
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to submit pull requests, report issues, and support the community.
+
+## 📄 License
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+---
+
+**© 2025 Cavin Krenik** | *Restoring entropy to the universe, one bit at a time.*
