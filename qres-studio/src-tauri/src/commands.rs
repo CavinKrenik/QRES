@@ -82,8 +82,8 @@ pub async fn decompress_file(window: Window, src: String, dest: String) -> Resul
     // Read compressed file
     let compressed = fs::read(&src).map_err(|e| e.to_string())?;
     
-    // Decompress using qres_rust
-    let decompressed = qres_rust::decode_bytes(&compressed, 0, None)
+    // Decompress using qres_rust public API
+    let decompressed = qres_rust::decompress_chunk(&compressed, 0, None)
         .map_err(|e| format!("Decompression failed: {}", e))?;
     
     // Write decompressed data
