@@ -1,4 +1,4 @@
-use std::collections::{HashMap, VecDeque};
+use std::collections::VecDeque;
 
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*; // SIMD
@@ -17,6 +17,12 @@ pub trait Predictor {
 pub struct SimplePredictor {
     prev: u8,
     context: [u8; 256],
+}
+
+impl Default for SimplePredictor {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl SimplePredictor {
@@ -54,6 +60,12 @@ pub struct GraphPredictor {
     edges: [usize; 8], // Fixed edges [1, 2, 3, 4, 8, 16, 32, 0]
     history: VecDeque<u8>,
     learning_rate: f32,
+}
+
+impl Default for GraphPredictor {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl GraphPredictor {
@@ -95,11 +107,10 @@ impl Predictor for GraphPredictor {
         let mut inputs = [0.0f32; 8];
         let hist_len = self.history.len();
 
-        for i in 0..7 {
-            // predictable branch (const 7)
+        for (i, input) in inputs.iter_mut().enumerate().take(7) {
             let lag = self.edges[i];
             if lag <= hist_len {
-                inputs[i] = self.history[hist_len - lag] as f32;
+                *input = self.history[hist_len - lag] as f32;
             }
         }
 
@@ -138,10 +149,10 @@ impl Predictor for GraphPredictor {
         // 1. Gather inputs again
         let mut inputs = [0.0f32; 8];
         let hist_len = self.history.len();
-        for i in 0..7 {
+        for (i, input) in inputs.iter_mut().enumerate().take(7) {
             let lag = self.edges[i];
             if lag <= hist_len {
-                inputs[i] = self.history[hist_len - lag] as f32;
+                *input = self.history[hist_len - lag] as f32;
             }
         }
         let input_simd = unsafe { _mm256_loadu_ps(inputs.as_ptr()) };
@@ -207,6 +218,12 @@ pub struct LzMatchPredictor {
     hash_mask: usize,
 }
 
+impl Default for LzMatchPredictor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl LzMatchPredictor {
     pub fn new() -> Self {
         // 16-bit hash (64K entries) fits in L2 cache
@@ -245,10 +262,11 @@ impl Predictor for LzMatchPredictor {
 
         let match_pos = self.table[h];
 
-        if match_pos > 0 && match_pos + 4 < self.history.len() {
-            if &self.history[match_pos..match_pos + 4] == ctx {
-                return self.history[match_pos + 4];
-            }
+        if match_pos > 0
+            && match_pos + 4 < self.history.len()
+            && &self.history[match_pos..match_pos + 4] == ctx
+        {
+            return self.history[match_pos + 4];
         }
 
         self.history[self.pos - 1]

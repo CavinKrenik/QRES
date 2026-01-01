@@ -63,7 +63,7 @@ impl AnsWriter {
 
         // 2. Encode Symbols (Fast Loop)
         for &res in &self.buffer {
-            self.encoder.encode_symbol(res as i32, &model).unwrap();
+            self.encoder.encode_symbol(res as i32, model).unwrap();
         }
 
         // 3. Batch Stats Update (SIMD-Friendly Optimization)

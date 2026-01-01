@@ -1,5 +1,5 @@
 use rustfft::{num_complex::Complex, FftPlanner};
-use std::sync::Arc;
+
 
 // QRES v4.1 Enhanced Spectral Predictor
 // Improvements:
@@ -150,10 +150,8 @@ impl SpectralPredictor {
             // Harmonics
             for harmonic in 2..=3 {
                 let h_idx = fundamental_idx * harmonic;
-                if h_idx < self.window_size / 2 {
-                    if input[h_idx].norm_sqr() > threshold {
-                        add_comp(h_idx, &input, &mut components);
-                    }
+                if h_idx < self.window_size / 2 && input[h_idx].norm_sqr() > threshold {
+                    add_comp(h_idx, &input, &mut components);
                 }
             }
         }
