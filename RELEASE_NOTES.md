@@ -1,5 +1,18 @@
 # QRES Release Notes
 
+## v5.0.5 - "Singularity Patch" (January 2026)
+
+**Release Date:** January 1, 2026
+**Codename:** Singularity Patch
+
+### 🐛 Fixes & Improvements
+*   **Build Integrity**: Resolved all `clippy` lints and formatting issues for clean CI builds.
+*   **Zombie Processes**: Fixed potential zombie process creation in `swarm_sim` benchmark.
+*   **API Compatibility**: Updated `probe_api` example to match `constriction` crate changes.
+*   **Stability**: Addressed potential `panic` in spectral predictor loop.
+
+---
+
 ## v5.0.0 - "Quantum Leap" (January 2026)
 
 **Release Date:** January 1, 2026

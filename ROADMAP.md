@@ -449,9 +449,9 @@
 
 ## 📅 Timeline
 
-**Week 1-2**: Phase 1.1-1.2 (Hive validation, predictor tuning)
-**Week 3-4**: Phase 1.3-1.4 (Speed opts, benchmark expansion)
-**Week 5-8**: Phase 2.1-2.2 (Swarm robustness, neural upgrades)
+**Week 1**: Phase 1.1-1.3 (Completed: Optimizations, Validation)
+**Week 2**: Phase 1.4 (Benchmark expansion)
+**Week 3-6**: Phase 2 (Swarm robustness, neural upgrades)
 **Week 9-12**: Phase 2.3-2.4 (Hybrid extensions, speed leap)
 **Month 2-3**: Phase 3 (Lossy, publication, ecosystem)
 

@@ -1,4 +1,4 @@
-﻿# QRES v5.0: The Singularity Engine
+﻿# QRES v5.0.5: The Singularity Engine
 
 *(Dedicated to the pursuit of the Singularity)*
 
