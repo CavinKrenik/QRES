@@ -1,8 +1,11 @@
 <script lang="ts">
     import { invoke } from "@tauri-apps/api/core";
     import { onMount } from "svelte";
+    import { writable } from "svelte/store";
 
-    let swarmEnabled = false;
+    // Persistent swarm state
+    const swarmEnabled = writable(false);
+
     let swarmStatus = "Offline";
     let stats = {
         bytes_saved: 0,
@@ -14,23 +17,47 @@
     async function loadData() {
         try {
             stats = await invoke("get_stats");
+
+            // Load swarm status
+            const enabled = (await invoke("get_swarm_status")) as boolean;
+            swarmEnabled.set(enabled);
+            swarmStatus = enabled ? "Connected" : "Offline";
         } catch (e) {
             console.error("Failed to load data:", e);
         }
     }
 
     async function handleSwarmToggle() {
+        const enabled = $swarmEnabled;
         try {
-            const result = await invoke("toggle_swarm", {
-                enabled: swarmEnabled,
-            });
-            swarmStatus = swarmEnabled ? "Connected" : "Offline";
+            const result = (await invoke("toggle_swarm", {
+                enabled,
+            })) as string;
+            swarmStatus = enabled ? "Connected" : "Offline";
             console.log(result);
+
+            if (enabled) {
+                showNotification(
+                    "🐝 Swarm Network Enabled",
+                    "Now sharing learnings with the collective!",
+                );
+            } else {
+                showNotification(
+                    "⚪ Swarm Network Disabled",
+                    "Operating in isolated mode",
+                );
+            }
         } catch (e) {
             console.error("Swarm toggle failed:", e);
-            swarmEnabled = false;
+            swarmEnabled.set(false);
             swarmStatus = "Offline";
+            alert("Failed to toggle swarm: " + e);
         }
+    }
+
+    function showNotification(title: string, message: string) {
+        // Simple notification - could be enhanced with Tauri notifications
+        console.log(`${title}: ${message}`);
     }
 
     onMount(() => {
@@ -46,25 +73,51 @@
         (sum, [, count]) => sum + count,
         0,
     );
+
+    // React to swarm toggle changes
+    $: if ($swarmEnabled !== undefined) {
+        handleSwarmToggle();
+    }
 </script>
 
 <div class="hive-container">
     <div class="hive-header">
         <h2>🐝 Hive Mind</h2>
         <div class="swarm-toggle">
-            <label>
+            <label class="toggle-label">
                 <input
                     type="checkbox"
-                    bind:checked={swarmEnabled}
-                    on:change={handleSwarmToggle}
+                    bind:checked={$swarmEnabled}
+                    class="toggle-input"
                 />
-                <span>Swarm Network</span>
+                <span class="toggle-slider"></span>
+                <span class="toggle-text">Swarm Network</span>
             </label>
-            <span class="status" class:connected={swarmEnabled}>
-                {swarmEnabled ? "🟢" : "⚪"}
+            <span class="status" class:connected={$swarmEnabled}>
+                {$swarmEnabled ? "🟢" : "⚪"}
                 {swarmStatus}
             </span>
         </div>
+    </div>
+
+    <div class="collective-banner" class:active={$swarmEnabled}>
+        {#if $swarmEnabled}
+            <div class="banner-content">
+                <span class="banner-icon">🌐</span>
+                <div class="banner-text">
+                    <strong>Collective Learning Active</strong>
+                    <small>Sharing knowledge with the swarm</small>
+                </div>
+            </div>
+        {:else}
+            <div class="banner-content inactive">
+                <span class="banner-icon">💤</span>
+                <div class="banner-text">
+                    <strong>Isolated Mode</strong>
+                    <small>Enable swarm to share learnings</small>
+                </div>
+            </div>
+        {/if}
     </div>
 
     <div class="stats-grid">
@@ -133,7 +186,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 2rem;
+        margin-bottom: 1.5rem;
     }
 
     h2 {
@@ -148,17 +201,53 @@
         gap: 1rem;
     }
 
-    .swarm-toggle label {
+    .toggle-label {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.75rem;
         cursor: pointer;
+        user-select: none;
     }
 
-    .swarm-toggle input[type="checkbox"] {
+    .toggle-input {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .toggle-slider {
+        position: relative;
+        width: 50px;
+        height: 26px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 26px;
+        transition: background 0.3s;
+    }
+
+    .toggle-slider::before {
+        content: "";
+        position: absolute;
         width: 20px;
         height: 20px;
-        cursor: pointer;
+        left: 3px;
+        top: 3px;
+        background: white;
+        border-radius: 50%;
+        transition: transform 0.3s;
+    }
+
+    .toggle-input:checked + .toggle-slider {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+
+    .toggle-input:checked + .toggle-slider::before {
+        transform: translateX(24px);
+    }
+
+    .toggle-text {
+        font-size: 0.95rem;
+        color: #e0e7ff;
     }
 
     .status {
@@ -167,11 +256,57 @@
         border-radius: 20px;
         font-size: 0.9rem;
         color: #94a3b8;
+        transition: all 0.3s;
     }
 
     .status.connected {
         color: #10b981;
         background: rgba(16, 185, 129, 0.1);
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+    }
+
+    .collective-banner {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 1rem 1.5rem;
+        margin-bottom: 2rem;
+        transition: all 0.3s;
+    }
+
+    .collective-banner.active {
+        background: linear-gradient(
+            135deg,
+            rgba(16, 185, 129, 0.1) 0%,
+            rgba(5, 150, 105, 0.1) 100%
+        );
+        border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    .banner-content {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .banner-content.inactive {
+        opacity: 0.6;
+    }
+
+    .banner-icon {
+        font-size: 2rem;
+    }
+
+    .banner-text strong {
+        display: block;
+        font-size: 1rem;
+        color: #e0e7ff;
+        margin-bottom: 0.25rem;
+    }
+
+    .banner-text small {
+        font-size: 0.85rem;
+        color: #94a3b8;
     }
 
     .stats-grid {

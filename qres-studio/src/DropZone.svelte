@@ -1,7 +1,7 @@
 <script lang="ts">
     import { invoke } from "@tauri-apps/api/core";
     import { listen } from "@tauri-apps/api/event";
-    import { save } from "@tauri-apps/plugin-dialog";
+    import { save, open } from "@tauri-apps/plugin-dialog";
     import { createEventDispatcher } from "svelte";
 
     const dispatch = createEventDispatcher();
@@ -11,7 +11,8 @@
     let progress = 0;
     let currentRatio = 0;
     let activeEngine = "zstd";
-    let chartData: number[] = [];
+    let currentFile = "";
+    let isTrainable = false;
 
     const engineColors: Record<string, string> = {
         zstd: "#fbbf24", // Gold
@@ -24,17 +25,32 @@
         percent: number;
         current_ratio: number;
         active_engine: string;
+        file?: string;
     }
 
     async function handleDrop(e: DragEvent) {
         e.preventDefault();
         isDragging = false;
 
-        const files = e.dataTransfer?.files;
-        if (!files || files.length === 0) return;
+        const items = e.dataTransfer?.items;
+        if (!items || items.length === 0) return;
 
-        const file = files[0] as any;
-        await processFile(file.path || file.name);
+        // Handle first item (file or folder)
+        const item = items[0];
+
+        if (item.kind === "file") {
+            const entry = await item.getAsFileSystemHandle();
+            if (!entry) return;
+
+            // @ts-ignore - FileSystemHandle types
+            if (entry.kind === "directory") {
+                await processFolder(entry);
+            } else {
+                // @ts-ignore
+                const file = await entry.getFile();
+                await processFile(file.path || file.name);
+            }
+        }
     }
 
     async function processFile(filePath: string) {
@@ -52,7 +68,10 @@
                 if (!destPath) return;
 
                 isProcessing = true;
-                chartData = [];
+                currentFile =
+                    filePath.split("\\").pop() ||
+                    filePath.split("/").pop() ||
+                    "";
 
                 const unlisten = await listen<{
                     percent: number;
@@ -77,32 +96,103 @@
                 if (!destPath) return;
 
                 isProcessing = true;
-                chartData = [];
+                currentFile = fileName || "";
 
-                // Listen for compression progress
                 const unlisten = await listen<CompressionProgressPayload>(
                     "compression-progress",
                     (event) => {
                         progress = event.payload.percent;
                         currentRatio = event.payload.current_ratio;
                         activeEngine = event.payload.active_engine;
-                        chartData = [...chartData, currentRatio];
+                        if (event.payload.file) {
+                            currentFile = event.payload.file;
+                        }
                     },
                 );
 
-                await invoke("compress_file", {
+                const result = (await invoke("compress_file", {
                     src: filePath,
                     dest: destPath,
-                });
+                })) as any;
+
                 unlisten();
+
+                // Check if trainable
+                if (result.is_trainable) {
+                    isTrainable = true;
+                    if (
+                        confirm(
+                            "This is a data file! Would you like to train the meta-brain on it?",
+                        )
+                    ) {
+                        await trainOnFile(filePath);
+                    }
+                }
             }
 
             isProcessing = false;
             progress = 0;
+            isTrainable = false;
             dispatch("complete");
         } catch (error) {
             console.error("Error processing file:", error);
             isProcessing = false;
+            alert("Error: " + error);
+        }
+    }
+
+    async function processFolder(dirHandle: any) {
+        try {
+            const destPath = await open({
+                directory: true,
+                title: "Select destination folder for compressed files",
+            });
+
+            if (!destPath) return;
+
+            isProcessing = true;
+            currentFile = "Processing folder...";
+
+            const unlisten = await listen<CompressionProgressPayload>(
+                "compression-progress",
+                (event) => {
+                    progress = event.payload.percent;
+                    currentRatio = event.payload.current_ratio;
+                    activeEngine = event.payload.active_engine;
+                    if (event.payload.file) {
+                        currentFile = event.payload.file;
+                    }
+                },
+            );
+
+            // Get folder path from handle
+            // @ts-ignore
+            const folderPath = dirHandle.name; // This is simplified - actual implementation would need proper path resolution
+
+            await invoke("compress_file", {
+                src: folderPath,
+                dest: destPath,
+            });
+
+            unlisten();
+            isProcessing = false;
+            progress = 0;
+            dispatch("complete");
+        } catch (error) {
+            console.error("Error processing folder:", error);
+            isProcessing = false;
+            alert("Error: " + error);
+        }
+    }
+
+    async function trainOnFile(filePath: string) {
+        try {
+            const result = (await invoke("train_on_file", {
+                filePath,
+            })) as string;
+            alert("Training complete!\n" + result);
+        } catch (error) {
+            alert("Training failed: " + error);
         }
     }
 
@@ -154,12 +244,15 @@
                     <div class="ratio">
                         Ratio: {currentRatio ? currentRatio.toFixed(2) : "..."}
                     </div>
+                    {#if currentFile}
+                        <div class="file-name">{currentFile}</div>
+                    {/if}
                 </div>
             {:else}
                 <div class="drop-prompt">
                     <div class="icon">📦</div>
-                    <p>Drop file here</p>
-                    <small>any file to compress</small>
+                    <p>Drop file or folder here</p>
+                    <small>compress any file/folder</small>
                 </div>
             {/if}
         </div>
@@ -267,5 +360,15 @@
     .ratio {
         font-size: 0.9rem;
         color: #94a3b8;
+    }
+
+    .file-name {
+        font-size: 0.75rem;
+        color: #64748b;
+        margin-top: 0.5rem;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 </style>
