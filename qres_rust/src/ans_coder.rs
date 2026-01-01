@@ -50,6 +50,8 @@ impl AnsWriter {
         }
 
         // 1. Calculate Statistics & Create Model (Once per batch)
+        // Note: We use the stats from the START of the batch to encode the whole batch.
+        // This effectively delays stats updates by BATCH_SIZE bytes, which is fine for "Lazy" ANS.
         let std = if self.count == 0 {
             32.0 // Initial guess
         } else {
@@ -59,20 +61,50 @@ impl AnsWriter {
         let quantizer = LeakyQuantizer::<f64, i32, u32, 24>::new(-128..=127);
         let model = quantizer.quantize(Gaussian::new(self.running_mean, std));
 
-        // 2. Encode and Update Stats Loop
+        // 2. Encode Symbols (Fast Loop)
         for &res in &self.buffer {
-            // Encode
             self.encoder.encode_symbol(res as i32, &model).unwrap();
-
-            // Quick Welford Update
-            self.count += 1;
-            let val = res as f64;
-            let delta = val - self.running_mean;
-            self.running_mean += delta / self.count as f64;
-            // running_var += delta * (val - new_mean)
-            self.running_var += delta * (val - self.running_mean);
         }
 
+        // 3. Batch Stats Update (SIMD-Friendly Optimization)
+        // Instead of serial Welford updates, we compute batch stats and merge.
+        // This allows autovectorization of the sum/sq_sum.
+        
+        let batch_count = self.buffer.len();
+        let batch_count_f = batch_count as f64;
+        
+        // Calculate Batch Mean and Variance (Two-Pass for stability or naive One-Pass)
+        // Using naive sum for small batches (128) is stable enough and fast.
+        let sum: f64 = self.buffer.iter().map(|&x| x as f64).sum();
+        let batch_mean = sum / batch_count_f;
+        
+        // Calculate M2 for batch: sum((x - mean)^2)
+        let batch_m2: f64 = self.buffer.iter()
+            .map(|&x| {
+                let diff = (x as f64) - batch_mean;
+                diff * diff
+            })
+            .sum();
+
+        // 4. Merge Batch Stats into Global Stats
+        // Formula: M2_combined = M2_a + M2_b + (delta^2 * n_a * n_b) / n_combined
+        if self.count == 0 {
+            self.running_mean = batch_mean;
+            self.running_var = batch_m2;
+        } else {
+            let total_count = (self.count + batch_count) as f64;
+            let delta = batch_mean - self.running_mean;
+            
+            let new_m2 = self.running_var + batch_m2 + 
+                        (delta * delta * (self.count as f64) * batch_count_f) / total_count;
+            
+            let new_mean = self.running_mean + (delta * batch_count_f) / total_count;
+            
+            self.running_var = new_m2;
+            self.running_mean = new_mean;
+        }
+        
+        self.count += batch_count;
         self.buffer.clear();
     }
 
@@ -150,21 +182,44 @@ impl AnsReader {
         let quantizer = LeakyQuantizer::<f64, i32, u32, 24>::new(-128..=127);
         let model = quantizer.quantize(Gaussian::new(self.running_mean, std));
 
-        // 2. Batch Decode (64 symbols)
-        // Note: It's safe to over-decode because we rely on the caller (lib.rs)
-        // to stop demanding symbols when it has enough. Over-decoded symbols (0s)
-        // sit in the buffer unused.
+        // 2. Batch Decode (128 symbols)
         for _ in 0..BATCH_SIZE {
             let val = self.decoder.decode_symbol(&model).unwrap_or(0);
-            let res = val as i8;
-            self.buffer.push(res);
-
-            // Update stats immediately to match encoder
-            self.count += 1;
-            let val_f = res as f64;
-            let delta = val_f - self.running_mean;
-            self.running_mean += delta / self.count as f64;
-            self.running_var += delta * (val_f - self.running_mean);
+            self.buffer.push(val as i8);
         }
+
+        // 3. Batch Stats Update (Must match AnsWriter exactly!)
+        let batch_count = self.buffer.len();
+        let batch_count_f = batch_count as f64;
+        
+        let sum: f64 = self.buffer.iter().map(|&x| x as f64).sum();
+        let batch_mean = sum / batch_count_f;
+        
+        // Calculate M2 for batch
+        let batch_m2: f64 = self.buffer.iter()
+            .map(|&x| {
+                let diff = (x as f64) - batch_mean;
+                diff * diff
+            })
+            .sum();
+
+        // 4. Merge Batch Stats
+        if self.count == 0 {
+            self.running_mean = batch_mean;
+            self.running_var = batch_m2;
+        } else {
+            let total_count = (self.count + batch_count) as f64;
+            let delta = batch_mean - self.running_mean;
+            
+            let new_m2 = self.running_var + batch_m2 + 
+                        (delta * delta * (self.count as f64) * batch_count_f) / total_count;
+            
+            let new_mean = self.running_mean + (delta * batch_count_f) / total_count;
+            
+            self.running_var = new_m2;
+            self.running_mean = new_mean;
+        }
+        
+        self.count += batch_count;
     }
 }

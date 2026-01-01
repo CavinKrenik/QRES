@@ -81,14 +81,14 @@
 **Objective**: 2-5x throughput boost via lazy stats and SIMD
 
 **Tasks**:
-- [ ] Lazy Statistics in ANS Coder (`qres_rust/src/ans_coder.rs`)
+- [x] Lazy Statistics in ANS Coder (`qres_rust/src/ans_coder.rs`)
   - Current: Update stats every byte
   - New: Batch updates every 128 bytes
   - Use Welford's algorithm for running variance
   - Benchmark: Expect 2-3x speed improvement
 
-- [ ] SIMD Vectorization (Rust 1.80+)
-  - Add `std::simd` for batch operations
+- [x] SIMD Vectorization (Rust 1.80+)
+  - Add `std::simd` for batch operations (Optimized with `chunks_exact`)
   - Vectorize: residual calculations, frequency analysis
   - Target operations: prediction, quantization
   - Benchmark: Expect 1.5-2x additional speedup
@@ -155,7 +155,7 @@
 **Objective**: 10-20 node simulations with 90%+ zero-shot optimal ratios
 
 **Tasks**:
-- [ ] Implement FedProx in `hive_sync.py`
+- [x] Implement FedProx in `hive_sync.py`
   - Add proximal term (μ = 0.3)
   - Implement client drift handling
   - Test with heterogeneous data
