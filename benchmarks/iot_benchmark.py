@@ -39,12 +39,13 @@ def generate_iot_telemetry(filename, num_samples=1000000):
 def run_zstd(filename):
     out_file = filename + ".zst"
     start = time.time()
-    # Try using 'zstd' command line
     try:
-        subprocess.run(["zstd", "-f", "-1", filename, "-o", out_file], 
-                      check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    except FileNotFoundError:
-        print("[Warn] 'zstd' not found on PATH. Install it for comparison.")
+        import zstandard as zstd
+        cctx = zstd.ZstdCompressor(level=3) # Level 3 is default
+        with open(filename, 'rb') as ifh, open(out_file, 'wb') as ofh:
+            cctx.copy_stream(ifh, ofh)
+    except ImportError:
+        print("[Warn] 'zstandard' python lib not found. Install it for comparison.")
         return 0, 0
         
     elapsed = time.time() - start

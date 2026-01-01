@@ -85,8 +85,82 @@ def generate_structured_data(num_samples=2000):
 
     return torch.tensor(np.array(data), dtype=torch.long), torch.tensor(np.array(labels), dtype=torch.long)
 
+import argparse
+import os
+
+def entropy(chunk):
+    counts = np.bincount(chunk, minlength=256)
+    probs = counts[counts > 0] / len(chunk)
+    return -np.sum(probs * np.log2(probs))
+
+def oracle_label_chunk(chunk):
+    # Heuristic Oracle: Determine best engine based on statistical properties
+    # 0: Linear, 1: iPEPS (Periodic), 2: Zstd (Random), 3: Text
+    
+    ent = entropy(chunk)
+    
+    # 1. Check for Text (Class 3)
+    # Heuristic: mostly ASCII printable
+    printable = np.sum((chunk >= 32) & (chunk <= 126))
+    if printable / len(chunk) > 0.9:
+        return 3 # Text
+        
+    # 2. Check for Low Entropy (Class 0 - Linear)
+    if ent < 4.0:
+        return 0 # Linear
+        
+    # 3. Check for Periodicity (Class 1 - iPEPS)
+    # Simple check: strong auto-correlation at small lags?
+    # FFT is better but expensive. Let's use simple diff check.
+    # If 2nd derivative is small, it's smooth/periodic-ish.
+    diff2 = np.diff(chunk, n=2)
+    if np.mean(np.abs(diff2)) < 20: 
+        return 1 # Periodic/Smooth
+        
+    # 4. Default to Zstd (Class 2 - High Entropy)
+    return 2
+
+def load_file_and_label(filepath, block_size=SEQ_LEN):
+    print(f"📂 Loading {filepath}...")
+    try:
+        with open(filepath, "rb") as f:
+            raw = f.read()
+    except Exception as e:
+        print(f"Error reading file: {e}")
+        return generate_structured_data(1000) # Fallback
+
+    data = []
+    labels = []
+    
+    # Process chunks of file
+    count = 0
+    limit = 10000 # Max chunks to avoid OOM
+    
+    for i in range(0, len(raw) - block_size, block_size):
+        if count >= limit: break
+        
+        chunk = np.frombuffer(raw[i:i+block_size], dtype=np.uint8)
+        label = oracle_label_chunk(chunk)
+        
+        data.append(chunk)
+        labels.append(label)
+        count += 1
+        
+    if count == 0:
+        return generate_structured_data(100) # Fallback for small files
+
+    print(f"🏷️  Generated {count} labeled samples from file.")
+    return torch.tensor(np.array(data), dtype=torch.long), torch.tensor(np.array(labels), dtype=torch.long)
+
 def train_and_export():
-    data, labels = generate_structured_data(4000)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--data_file", type=str, help="Path to data file for training")
+    args = parser.parse_args()
+
+    if args.data_file and os.path.exists(args.data_file):
+        data, labels = load_file_and_label(args.data_file)
+    else:
+        data, labels = generate_structured_data(4000)
 
     # Batching for efficiency
     dataset = TensorDataset(data, labels)
@@ -97,7 +171,7 @@ def train_and_export():
     criterion = nn.CrossEntropyLoss()
 
     print("🧠 Training MetaTransformer...")
-    for epoch in range(50):
+    for epoch in range(10): # Reduced epochs for responsiveness
         epoch_loss = 0.0
         for batch_data, batch_labels in loader:
             optimizer.zero_grad()
@@ -106,13 +180,16 @@ def train_and_export():
             loss.backward()
             optimizer.step()
             epoch_loss += loss.item()
-        if epoch % 10 == 0:
-            print(f"Epoch {epoch}: Avg Loss {epoch_loss / len(loader):.4f}")
+        
+        # Simple progress output
+        print(f"Epoch {epoch+1}/10: Loss {epoch_loss / len(loader):.4f}")
 
     print("💾 Exporting to meta_brain.safetensors...")
     tensors = {k: v for k, v in model.state_dict().items()}
+    # Ensure directory exists
+    os.makedirs("qres_rust/assets", exist_ok=True)
     save_file(tensors, "qres_rust/assets/meta_brain.safetensors")
-    print("✅ Done.")
+    print("✅ Training Complete.")
 
 if __name__ == "__main__":
     train_and_export()

@@ -14,6 +14,20 @@ pub struct SpectralPredictor {
     planner: FftPlanner<f32>,
     // Adaptive threshold
     signal_strength_history: Vec<f32>,
+    // Cached model for extrapolation
+    cached_model: Option<SpectralModel>,
+    steps_since_update: usize,
+}
+
+struct SpectralModel {
+    dc: f32,
+    components: Vec<FreqComponent>,
+}
+
+struct FreqComponent {
+    amplitude: f32,
+    frequency: f32,
+    phase: f32,
 }
 
 impl SpectralPredictor {
@@ -23,6 +37,8 @@ impl SpectralPredictor {
             buffer: Vec::with_capacity(window_size),
             planner: FftPlanner::new(),
             signal_strength_history: Vec::with_capacity(10),
+            cached_model: None,
+            steps_since_update: 0,
         }
     }
 
@@ -31,6 +47,7 @@ impl SpectralPredictor {
             self.buffer.remove(0);
         }
         self.buffer.push(val as f32);
+        self.steps_since_update += 1;
     }
 
     pub fn predict(&mut self) -> u8 {
@@ -38,6 +55,36 @@ impl SpectralPredictor {
             return 128; // Not enough data
         }
 
+        // Lazy Update Strategy:
+        // Only re-calculate FFT every 64 steps (reduces overhead by 64x)
+        // For sine waves, frequency doesn't change rapidly.
+        if self.cached_model.is_none() || self.steps_since_update >= 64 {
+            self.recalc_model();
+            self.steps_since_update = 0;
+        }
+
+        if let Some(model) = &self.cached_model {
+            let mut pred_val = 0.0;
+            
+            // Project forward
+            // t = window_size (end of window) + steps_since_last_fft
+            // Phase is relative to window start (t=0)
+            let t = (self.window_size + self.steps_since_update) as f32;
+            
+            for comp in &model.components {
+                let angle = (2.0 * std::f32::consts::PI * comp.frequency * t / (self.window_size as f32)) + comp.phase;
+                pred_val += comp.amplitude * angle.cos();
+            }
+            
+            let result = model.dc + pred_val;
+            return result.clamp(0.0, 255.0) as u8;
+        }
+
+        // Fallback
+        *self.buffer.last().unwrap_or(&128.0) as u8
+    }
+
+    fn recalc_model(&mut self) {
         // 1. Prepare FFT Input
         let mut input: Vec<Complex<f32>> = self.buffer.iter()
             .map(|&val| Complex::new(val, 0.0))
@@ -47,14 +94,13 @@ impl SpectralPredictor {
         let fft = self.planner.plan_fft_forward(self.window_size);
         fft.process(&mut input);
 
-        // 3. Find Dominant Frequencies (fundamental + harmonics)
-        let mut frequencies = Vec::new();
+        // 3. Find Dominant Frequencies
+        let mut components = Vec::new();
         
-        // Find fundamental (strongest frequency)
         let mut max_mag = 0.0;
         let mut fundamental_idx = 0;
         
-        // Only search first half (Nyquist)
+        // Search Nyquist
         for i in 1..(self.window_size / 2) {
             let mag = input[i].norm_sqr();
             if mag > max_mag {
@@ -63,66 +109,46 @@ impl SpectralPredictor {
             }
         }
         
-        // Calculate adaptive threshold (10% of max)
         let threshold = max_mag * 0.1;
-        
-        // Track signal strength for adaptive behavior
         self.signal_strength_history.push(max_mag);
         if self.signal_strength_history.len() > 10 {
             self.signal_strength_history.remove(0);
         }
         
-        // Add fundamental
-        if max_mag > 100.0 { // Minimum threshold
-            frequencies.push((fundamental_idx, input[fundamental_idx]));
+        if max_mag > 100.0 {
+            // Helper to add component
+            let add_comp = |idx: usize, bins: &[Complex<f32>], out: &mut Vec<FreqComponent>| {
+                let bin = bins[idx];
+                out.push(FreqComponent {
+                    amplitude: bin.norm() / (self.window_size as f32) * 2.0,
+                    frequency: idx as f32,
+                    phase: bin.arg(),
+                });
+            };
+
+            add_comp(fundamental_idx, &input, &mut components);
             
-            // Look for harmonics (2x, 3x fundamental frequency)
+            // Harmonics
             for harmonic in 2..=3 {
-                let harmonic_idx = fundamental_idx * harmonic;
-                if harmonic_idx < self.window_size / 2 {
-                    let harmonic_mag = input[harmonic_idx].norm_sqr();
-                    if harmonic_mag > threshold {
-                        frequencies.push((harmonic_idx, input[harmonic_idx]));
+                let h_idx = fundamental_idx * harmonic;
+                if h_idx < self.window_size / 2 {
+                    if input[h_idx].norm_sqr() > threshold {
+                        add_comp(h_idx, &input, &mut components);
                     }
                 }
             }
         }
 
-        // 4. Predict using all detected frequencies
-        if !frequencies.is_empty() {
-            let dc = input[0].re / (self.window_size as f32);
-            let mut pred_val = 0.0;
-            
-            for (freq_idx, bin) in frequencies {
-                let ampl = bin.norm() / (self.window_size as f32) * 2.0;
-                let phase = bin.arg();
-                let freq = freq_idx as f32;
-                
-                // Project forward by 1 step
-                let t = self.window_size as f32;
-                let angle = (2.0 * std::f32::consts::PI * freq * t / (self.window_size as f32)) + phase;
-                pred_val += ampl * angle.cos();
-            }
-            
-            // Combine DC offset and predicted AC component
-            let result = dc + pred_val;
-            return result.clamp(0.0, 255.0) as u8;
-        }
-
-        // Fallback: Use last value
-        *self.buffer.last().unwrap() as u8
+        let dc = input[0].re / (self.window_size as f32);
+        self.cached_model = Some(SpectralModel { dc, components });
     }
-    
+
     /// Returns confidence in prediction (0.0 to 1.0)
     pub fn confidence(&self) -> f32 {
         if self.signal_strength_history.is_empty() {
             return 0.0;
         }
-        
-        let avg_strength: f32 = self.signal_strength_history.iter().sum::<f32>() 
-                                / self.signal_strength_history.len() as f32;
-        
-        // Normalize to 0-1 range (assuming max strength ~1M)
-        (avg_strength / 1_000_000.0).min(1.0)
+        let avg: f32 = self.signal_strength_history.iter().sum::<f32>() / self.signal_strength_history.len() as f32;
+        (avg / 1_000_000.0).min(1.0)
     }
 }
