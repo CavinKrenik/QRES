@@ -1,3 +1,4 @@
+#![allow(clippy::zombie_processes)]
 use std::fs;
 use std::path::Path;
 use std::process::{Command, Stdio};
