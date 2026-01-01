@@ -1,5 +1,5 @@
 use libp2p::{
-    gossipsub, mdns, identity, noise, tcp, yamux,
+    gossipsub, mdns, identity, identify, noise, tcp, yamux,
     swarm::{NetworkBehaviour, SwarmEvent},
     PeerId, Transport, SwarmBuilder,
 };
@@ -20,13 +20,14 @@ const BRAIN_TOPIC: &str = "qres-brain-sync";
 pub struct QresBehavior {
     pub gossipsub: gossipsub::Behaviour,
     pub mdns: mdns::tokio::Behaviour,
+    pub identify: identify::Behaviour,
 }
 
-pub async fn start_p2p_node() -> Result<(), Box<dyn std::error::Error>> {
+pub async fn start_p2p_node(brain_path: String) -> Result<(), Box<dyn std::error::Error>> {
     // 1. Identity
     let id_keys = identity::Keypair::generate_ed25519();
     let peer_id = PeerId::from(id_keys.public());
-    println!("[Swarm] Local Peer ID: {}", peer_id);
+    eprintln!("[Swarm] Local Peer ID: {}", peer_id);
 
     // 2. Build Swarm using modern Builder API
     let mut swarm = SwarmBuilder::with_existing_identity(id_keys)
@@ -45,7 +46,7 @@ pub async fn start_p2p_node() -> Result<(), Box<dyn std::error::Error>> {
             };
             let gossipsub_config = gossipsub::ConfigBuilder::default()
                 .heartbeat_interval(Duration::from_secs(1))
-                .validation_mode(gossipsub::ValidationMode::Strict)
+                .validation_mode(gossipsub::ValidationMode::Permissive)
                 .message_id_fn(message_id_fn)
                 .build()
                 .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
@@ -64,7 +65,13 @@ pub async fn start_p2p_node() -> Result<(), Box<dyn std::error::Error>> {
                 PeerId::from(key.public())
             )?;
 
-            Ok(QresBehavior { gossipsub, mdns })
+            // Identify
+            let identify = identify::Behaviour::new(identify::Config::new(
+                "qres/1.0.0".to_string(),
+                key.public(),
+            ));
+
+            Ok(QresBehavior { gossipsub, mdns, identify })
         })?
         .build();
 
@@ -72,7 +79,7 @@ pub async fn start_p2p_node() -> Result<(), Box<dyn std::error::Error>> {
 
     // 6. Loop
     let mut interval = tokio::time::interval(Duration::from_secs(10));
-    let brain_file = "qres_brain.json";
+    let brain_file = &brain_path;
 
     loop {
         tokio::select! {
@@ -83,7 +90,7 @@ pub async fn start_p2p_node() -> Result<(), Box<dyn std::error::Error>> {
                     if let Err(e) = swarm.behaviour_mut().gossipsub.publish(topic, content.as_bytes()) {
                          eprintln!("[Swarm] Publish error: {:?}", e);
                     } else {
-                         // println!("[Swarm] Broadcasted local wisdom.");
+                         eprintln!("[Swarm] Broadcasted local wisdom.");
                     }
                 }
             }
@@ -91,22 +98,26 @@ pub async fn start_p2p_node() -> Result<(), Box<dyn std::error::Error>> {
             // Swarm Events
             event = swarm.select_next_some() => match event {
                 SwarmEvent::NewListenAddr { address, .. } => {
-                    println!("[Swarm] Listening on {:?}", address);
+                    eprintln!("[Swarm] Listening on {:?}", address);
+                }
+                SwarmEvent::ConnectionEstablished { peer_id, .. } => {
+                     eprintln!("[Swarm] Connected to {:?}", peer_id);
                 }
                 SwarmEvent::Behaviour(QresBehaviorEvent::Mdns(mdns::Event::Discovered(list))) => {
-                    for (peer_id, _multiaddr) in list {
-                        println!("[Swarm] mDNS Discovered: {:?}", peer_id);
+                    for (peer_id, multiaddr) in list {
+                        eprintln!("[Swarm] mDNS Discovered: {:?}", peer_id);
                         swarm.behaviour_mut().gossipsub.add_explicit_peer(&peer_id);
+                        let _ = swarm.dial(multiaddr);
                     }
                 }
                 SwarmEvent::Behaviour(QresBehaviorEvent::Mdns(mdns::Event::Expired(list))) => {
                     for (peer_id, _multiaddr) in list {
-                        println!("[Swarm] mDNS Expired: {:?}", peer_id);
+                        eprintln!("[Swarm] mDNS Expired: {:?}", peer_id);
                         swarm.behaviour_mut().gossipsub.remove_explicit_peer(&peer_id);
                     }
                 }
-                SwarmEvent::Behaviour(QresBehaviorEvent::Gossipsub(gossipsub::Event::Message { propagation_source, message_id: _, message })) => {
-                    // println!("[Swarm] Received Brain update/from: {:?}", propagation_source);
+                SwarmEvent::Behaviour(QresBehaviorEvent::Gossipsub(gossipsub::Event::Message { propagation_source: _, message_id: _, message })) => {
+                    eprintln!("[Swarm] Received Merge Candidate");
                     if let Ok(json) = String::from_utf8(message.data) {
                         if let Some(remote_brain) = LivingBrain::from_json(&json) {
                             // Merge
@@ -117,7 +128,7 @@ pub async fn start_p2p_node() -> Result<(), Box<dyn std::error::Error>> {
                                     // Let's use weighted average with 0.1 alpha
                                     local_brain.merge(&remote_brain, 0.1);
                                     let _ = fs::write(brain_file, local_brain.to_json());
-                                    // println!("[Swarm] Assimilated knowledge from peer.");
+                                    eprintln!("[Swarm] Assimilated knowledge from peer.");
                                 }
                             }
                         }

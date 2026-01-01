@@ -14,18 +14,28 @@
 - [x] **Behavior**: Define `SwarmBehavior` (Gossipsub + mDNS).
 
 ### Phase 3.2: Decentralized Logic
-- [ ] **Weight Exchange**: Broadcast `LivingBrain` confidence scores periodically.
-- [ ] **Aggregation**: Compute FedProx update locally from received gossip messages.
-- [ ] **CLI Integration**: Add `qres-cli swarm` command.
+- [x] **Weight Exchange**: Broadcast `LivingBrain` confidence scores periodically.
+- [x] **Aggregation**: Compute FedProx update locally from received gossip messages.
+- [x] **CLI Integration**: Add `qres-cli swarm` command.
 
 ---
 
 ## 🛠️ Implementation Log
 
 ### Step 1: Dependencies
-*Status*: Pending
-*Plan*: Add `libp2p` to `qres_rust`.
+*Status*: ✅ Done
+*Details*: Added `libp2p` stack.
 
 ### Step 2: Swarm Behavior
-*Status*: Pending
-*Plan*: Create `src/swarm_p2p.rs`.
+*Status*: ✅ Done
+*Details*:
+- Implemented `QresBehavior` with Gossipsub, mDNS, and Identify.
+- Successful peer discovery & logic exchange verified in `benchmarks/test_p2p.py`.
+
+### Step 3: Decentralized Sync
+*Status*: ✅ Done
+*Details*:
+- CLI accepts `--brain` path.
+- Nodes exchange JSON brain states via `qres-brain-sync` topic.
+- Local `LivingBrain` merges remote states (FedProx-lite).
+- Validation script confirmed brain evolution.
