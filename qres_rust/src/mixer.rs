@@ -29,7 +29,7 @@ impl Mixer {
     pub fn new() -> Self {
         // Initial weights: Uniform for 5 models (0.2 each)
         // Pad with zeros for 8 lanes
-        let weights = _mm256_set_ps(0.0, 0.0, 0.05, 0.05, 0.05, 0.05, 0.1, 0.2, 0.5);
+        let weights = unsafe { _mm256_set_ps(0.0, 0.05, 0.05, 0.05, 0.05, 0.1, 0.2, 0.5) };
 
         Mixer {
             weights,
@@ -52,13 +52,13 @@ impl Mixer {
         for i in 0..NUM_MODELS {
             p_arr[i] = preds[i] as f32;
         }
-        let p_simd = _mm256_loadu_ps(p_arr.as_ptr());
+        let p_simd = unsafe { _mm256_loadu_ps(p_arr.as_ptr()) };
 
         // Dot Product: weights * preds
-        let weighted = _mm256_mul_ps(self.weights, p_simd);
-        let h1 = _mm256_hadd_ps(weighted, weighted);
-        let h2 = _mm256_hadd_ps(h1, h1);
-        let ensemble_sum = _mm256_cvtss_f32(h2);
+        let weighted = unsafe { _mm256_mul_ps(self.weights, p_simd) };
+        let h1 = unsafe { _mm256_hadd_ps(weighted, weighted) };
+        let h2 = unsafe { _mm256_hadd_ps(h1, h1) };
+        let ensemble_sum = unsafe { _mm256_cvtss_f32(h2) };
 
         // 2. Calculate AR(2) Prediction (Scalar)
         // x_t = phi1*x_{t-1} + phi2*x_{t-2}
@@ -91,11 +91,13 @@ impl Mixer {
             for j in 0..NUM_MODELS {
                 p_arr[j] = preds[j] as f32;
             }
-            let p_simd = Simd::from_array(p_arr);
+            let p_simd = unsafe { _mm256_loadu_ps(p_arr.as_ptr()) };
 
             // Dot Product: weights * preds
-            let weighted = self.weights * p_simd;
-            let ensemble_sum = weighted.reduce_sum();
+            let weighted = unsafe { _mm256_mul_ps(self.weights, p_simd) };
+            let h1 = unsafe { _mm256_hadd_ps(weighted, weighted) };
+            let h2 = unsafe { _mm256_hadd_ps(h1, h1) };
+            let ensemble_sum = unsafe { _mm256_cvtss_f32(h2) };
 
             // 2. Calculate AR(2) Prediction (Scalar, per byte? For batch, perhaps average or something, but for simplicity, use same AR for all)
             let ar_pred = self.ar_coeffs[0] * self.history[0] + self.ar_coeffs[1] * self.history[1];
@@ -131,34 +133,34 @@ impl Mixer {
         for i in 0..NUM_MODELS {
             p_arr[i] = preds[i] as f32;
         }
-        let p_simd = _mm256_loadu_ps(p_arr.as_ptr());
-        let y_simd = _mm256_set1_ps(y);
+        let p_simd = unsafe { _mm256_loadu_ps(p_arr.as_ptr()) };
+        let y_simd = unsafe { _mm256_set1_ps(y) };
 
         // Error = |pred - y|
-        let diff = _mm256_sub_ps(p_simd, y_simd);
-        let error = _mm256_abs_ps(diff);
+        let diff = unsafe { _mm256_sub_ps(p_simd, y_simd) };
+        let error = unsafe { _mm256_max_ps(diff, _mm256_sub_ps(_mm256_setzero_ps(), diff)) };
 
         // Weight Update: w = w * (1 - lr * err_norm)
-        let err_norm = _mm256_div_ps(error, _mm256_set1_ps(255.0));
-        let err_norm = _mm256_min_ps(_mm256_max_ps(err_norm, _mm256_set1_ps(0.0)), _mm256_set1_ps(1.0));
-        let factor = _mm256_sub_ps(_mm256_set1_ps(1.0), _mm256_mul_ps(_mm256_set1_ps(self.learning_rate), err_norm));
+        let err_norm = unsafe { _mm256_div_ps(error, _mm256_set1_ps(255.0)) };
+        let err_norm = unsafe { _mm256_min_ps(_mm256_max_ps(err_norm, _mm256_set1_ps(0.0)), _mm256_set1_ps(1.0)) };
+        let factor = unsafe { _mm256_sub_ps(_mm256_set1_ps(1.0), _mm256_mul_ps(_mm256_set1_ps(self.learning_rate), err_norm)) };
         
-        self.weights = _mm256_mul_ps(self.weights, factor);
+        self.weights = unsafe { _mm256_mul_ps(self.weights, factor) };
 
         // Regeneration (prevent death)
-        self.weights = _mm256_add_ps(self.weights, _mm256_set1_ps(0.001));
+        self.weights = unsafe { _mm256_add_ps(self.weights, _mm256_set1_ps(0.001)) };
 
         // Verify/Mask padded lanes (indices 5,6,7 should stay 0 or irrelevant, but regeneration adds 0.001)
         // Let's create a mask.
-        let mask = _mm256_set_ps(0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0);
-        self.weights = _mm256_mul_ps(self.weights, mask);
+        let mask = unsafe { _mm256_set_ps(0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0) };
+        self.weights = unsafe { _mm256_mul_ps(self.weights, mask) };
 
         // Normalize
-        let h1 = _mm256_hadd_ps(self.weights, self.weights);
-        let h2 = _mm256_hadd_ps(h1, h1);
-        let sum_w = _mm256_cvtss_f32(h2);
+        let h1 = unsafe { _mm256_hadd_ps(self.weights, self.weights) };
+        let h2 = unsafe { _mm256_hadd_ps(h1, h1) };
+        let sum_w = unsafe { _mm256_cvtss_f32(h2) };
         if sum_w > 0.0001 {
-             self.weights = _mm256_div_ps(self.weights, _mm256_set1_ps(sum_w));
+             self.weights = unsafe { _mm256_div_ps(self.weights, _mm256_set1_ps(sum_w)) };
         }
 
         // --- C. Update AR(2) Coefficients (Scalar LMS) ---
@@ -196,30 +198,33 @@ impl Mixer {
             for j in 0..NUM_MODELS {
                 p_arr[j] = preds[j] as f32;
             }
-            let p_simd = Simd::from_array(p_arr);
-            let y_simd = Simd::splat(y);
+            let p_simd = unsafe { _mm256_loadu_ps(p_arr.as_ptr()) };
+            let y_simd = unsafe { _mm256_set1_ps(y) };
 
             // Error = |pred - y|
-            let diff = p_simd - y_simd;
-            let error = diff.abs();
+            let diff = unsafe { _mm256_sub_ps(p_simd, y_simd) };
+            let error = unsafe { _mm256_max_ps(diff, _mm256_sub_ps(_mm256_setzero_ps(), diff)) };
 
             // Weight Update: w = w * (1 - lr * err_norm)
-            let err_norm = (error / Simd::splat(255.0)).simd_clamp(Simd::splat(0.0), Simd::splat(1.0));
-            let factor = Simd::splat(1.0) - (Simd::splat(self.learning_rate) * err_norm);
+            let err_norm = unsafe { _mm256_div_ps(error, _mm256_set1_ps(255.0)) };
+            let err_norm = unsafe { _mm256_min_ps(_mm256_max_ps(err_norm, _mm256_set1_ps(0.0)), _mm256_set1_ps(1.0)) };
+            let factor = unsafe { _mm256_sub_ps(_mm256_set1_ps(1.0), _mm256_mul_ps(_mm256_set1_ps(self.learning_rate), err_norm)) };
             
-            self.weights = self.weights * factor;
+            self.weights = unsafe { _mm256_mul_ps(self.weights, factor) };
 
             // Regeneration (prevent death)
-            self.weights += Simd::splat(0.001);
+            self.weights = unsafe { _mm256_add_ps(self.weights, _mm256_set1_ps(0.001)) };
 
             // Mask padded lanes
-            let mask = Simd::from_array([1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0]);
-            self.weights = self.weights * mask;
+            let mask = unsafe { _mm256_set_ps(0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0) };
+            self.weights = unsafe { _mm256_mul_ps(self.weights, mask) };
 
             // Normalize
-            let sum_w = self.weights.reduce_sum();
+            let h1 = unsafe { _mm256_hadd_ps(self.weights, self.weights) };
+            let h2 = unsafe { _mm256_hadd_ps(h1, h1) };
+            let sum_w = unsafe { _mm256_cvtss_f32(h2) };
             if sum_w > 0.0001 {
-                 self.weights = self.weights / Simd::splat(sum_w);
+                 self.weights = unsafe { _mm256_div_ps(self.weights, _mm256_set1_ps(sum_w)) };
             }
 
             // --- C. Update AR(2) Coefficients (Scalar LMS) ---

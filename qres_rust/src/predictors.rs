@@ -55,7 +55,7 @@ impl GraphPredictor {
     pub fn new() -> Self {
         // Tuned lags for telemetry/logs
         let edges = [1, 2, 3, 4, 8, 16, 32, 0]; // 0 is dummy padding
-        let weights = _mm256_set_ps(0.0, 0.05, 0.05, 0.05, 0.05, 0.1, 0.2, 0.5);
+        let weights = unsafe { _mm256_set_ps(0.0, 0.05, 0.05, 0.05, 0.05, 0.1, 0.2, 0.5) };
 
         GraphPredictor {
             weights,
@@ -81,13 +81,13 @@ impl Predictor for GraphPredictor {
             }
         }
         
-        let input_simd = _mm256_loadu_ps(inputs.as_ptr());
+        let input_simd = unsafe { _mm256_loadu_ps(inputs.as_ptr()) };
 
         // 2. SIMD Dot Product
-        let product = _mm256_mul_ps(self.weights, input_simd);
-        let h1 = _mm256_hadd_ps(product, product);
-        let h2 = _mm256_hadd_ps(h1, h1);
-        let sum = _mm256_cvtss_f32(h2);
+        let product = unsafe { _mm256_mul_ps(self.weights, input_simd) };
+        let h1 = unsafe { _mm256_hadd_ps(product, product) };
+        let h2 = unsafe { _mm256_hadd_ps(h1, h1) };
+        let sum = unsafe { _mm256_cvtss_f32(h2) };
 
         sum.clamp(0.0, 255.0) as u8
     }
@@ -105,25 +105,25 @@ impl Predictor for GraphPredictor {
                 inputs[i] = self.history[hist_len - lag] as f32;
             }
         }
-        let input_simd = _mm256_loadu_ps(inputs.as_ptr());
+        let input_simd = unsafe { _mm256_loadu_ps(inputs.as_ptr()) };
 
         // 2. SIMD Weight Update (LMS)
         // w_new = w + lr * err * input_norm
         // input_norm = input / 255.0
-        let lr_simd = _mm256_set1_ps(self.learning_rate);
-        let err_simd = _mm256_set1_ps(err);
-        let norm_factor = _mm256_set1_ps(1.0 / 255.0);
+        let lr_simd = unsafe { _mm256_set1_ps(self.learning_rate) };
+        let err_simd = unsafe { _mm256_set1_ps(err) };
+        let norm_factor = unsafe { _mm256_set1_ps(1.0 / 255.0) };
 
-        let delta = _mm256_mul_ps(lr_simd, _mm256_mul_ps(err_simd, _mm256_mul_ps(input_simd, norm_factor)));
-        self.weights = _mm256_add_ps(self.weights, delta);
+        let delta = unsafe { _mm256_mul_ps(lr_simd, _mm256_mul_ps(err_simd, _mm256_mul_ps(input_simd, norm_factor))) };
+        self.weights = unsafe { _mm256_add_ps(self.weights, delta) };
 
         // Stability Clamp (Prevent Exploding Gradients in Graph)
         let mut w_arr = [0.0f32; 8];
-        _mm256_storeu_ps(w_arr.as_mut_ptr(), self.weights);
+        unsafe { _mm256_storeu_ps(w_arr.as_mut_ptr(), self.weights) };
         for w in &mut w_arr {
             *w = w.clamp(-5.0, 5.0);
         }
-        self.weights = _mm256_loadu_ps(w_arr.as_ptr());
+        self.weights = unsafe { _mm256_loadu_ps(w_arr.as_ptr()) };
 
         // Update history
         self.history.push_back(actual);
@@ -131,7 +131,6 @@ impl Predictor for GraphPredictor {
             self.history.pop_front();
         }
     }
-}
 }
 
 // --- Task A: LzMatchPredictor (LZ77 Simulation) ---
@@ -172,6 +171,7 @@ impl LzMatchPredictor {
         // let mut h = 0xcf1bbcdcb7a56463u64; // Approx
         // We'll stick to the shift-xor for speed in inner loop.
     }
+}
 
 impl Predictor for LzMatchPredictor {
     fn predict_next(&self) -> u8 {
@@ -224,5 +224,4 @@ impl Predictor for LzMatchPredictor {
             self.table[h] = start; // Overwrite with most recent
         }
     }
-}
 }
