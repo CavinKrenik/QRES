@@ -119,8 +119,8 @@ impl SpectralPredictor {
         let mut fundamental_idx = 0;
 
         // Search Nyquist
-        for i in 1..(self.window_size / 2) {
-            let mag = input[i].norm_sqr();
+        for (i, bin) in input.iter().enumerate().take(self.window_size / 2).skip(1) {
+            let mag = bin.norm_sqr();
             if mag > max_mag {
                 max_mag = mag;
                 fundamental_idx = i;
