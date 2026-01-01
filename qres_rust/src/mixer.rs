@@ -22,10 +22,10 @@ pub struct Mixer {
     learning_rate: f32,
 
     // AR(2) Components (Recursive IIR - Scalar)
-    ar_coeffs: [f32; 2],  // [phi1, phi2]
-    history: [f32; 2],     // [x_{t-1}, x_{t-2}]
+    ar_coeffs: [f32; 2], // [phi1, phi2]
+    history: [f32; 2],   // [x_{t-1}, x_{t-2}]
     ar_learning_rate: f32,
-    
+
     // Variance Tracking
     running_mean: f32,
     running_var: f32,
@@ -42,11 +42,11 @@ impl Mixer {
         Mixer {
             weights,
             learning_rate: 0.01,
-            ar_coeffs: [0.7, -0.2], 
+            ar_coeffs: [0.7, -0.2],
             history: [128.0, 128.0],
             ar_learning_rate: 0.05,
             running_mean: 128.0,
-            running_var: 1000.0, 
+            running_var: 1000.0,
             count: 0,
         }
     }
@@ -57,20 +57,20 @@ impl Mixer {
         // _mm256_set_ps args are e7, e6, e5, e4, e3, e2, e1, e0 (Little Endian? Careful with order)
         // set_ps(e7...e0) -> [e0, e1, ..., e7] in memory usually
         // Actually set_ps puts first arg in high bits.
-        // Let's just use explicit array: [0.5, 0.2, 0.1, 0.05, 0.05, 0.05, 0.05, 0.0] 
+        // Let's just use explicit array: [0.5, 0.2, 0.1, 0.05, 0.05, 0.05, 0.05, 0.0]
         // Index 0..4 are models.
         // Model 0 (Linear) gets 0.5? No, let's look at previous _mm256_set_ps(0.0... 0.5).
         // The previous code had 0.5 at the end (e0). So index 0.
-        // models: 5. 
-        
+        // models: 5.
+
         Mixer {
-            weights: [0.5, 0.2, 0.1, 0.05, 0.05, 0.05, 0.05, 0.0], 
+            weights: [0.5, 0.2, 0.1, 0.05, 0.05, 0.05, 0.05, 0.0],
             learning_rate: 0.01,
-            ar_coeffs: [0.7, -0.2], 
+            ar_coeffs: [0.7, -0.2],
             history: [128.0, 128.0],
             ar_learning_rate: 0.05,
             running_mean: 128.0,
-            running_var: 1000.0, 
+            running_var: 1000.0,
             count: 0,
         }
     }
@@ -84,14 +84,20 @@ impl Mixer {
 
         // 3. Dynamic Selection
         let std = (self.running_var / (self.count.max(1) as f32)).sqrt();
-        
+
         let prediction = if std < 45.0 {
             0.8 * ar_pred + 0.2 * ensemble_sum
         } else {
             ensemble_sum
         };
 
-        if prediction > 255.0 { 255 } else if prediction < 0.0 { 0 } else { prediction.round() as u8 }
+        if prediction > 255.0 {
+            255
+        } else if prediction < 0.0 {
+            0
+        } else {
+            prediction.round() as u8
+        }
     }
 
     #[cfg(target_arch = "x86_64")]
@@ -134,11 +140,11 @@ impl Mixer {
         // C. Update AR(2)
         let ar_est = self.ar_coeffs[0] * self.history[0] + self.ar_coeffs[1] * self.history[1];
         let ar_error = y - ar_est;
-        const NORM: f32 = 1.0 / 10000.0; 
-        
+        const NORM: f32 = 1.0 / 10000.0;
+
         self.ar_coeffs[0] += self.ar_learning_rate * ar_error * self.history[0] * NORM;
         self.ar_coeffs[1] += self.ar_learning_rate * ar_error * self.history[1] * NORM;
-        
+
         self.ar_coeffs[0] = self.ar_coeffs[0].clamp(-1.9, 1.9);
         self.ar_coeffs[1] = self.ar_coeffs[1].clamp(-0.99, 0.99);
 
@@ -159,9 +165,19 @@ impl Mixer {
         let error = unsafe { _mm256_max_ps(diff, _mm256_sub_ps(_mm256_setzero_ps(), diff)) };
 
         let err_norm = unsafe { _mm256_div_ps(error, _mm256_set1_ps(255.0)) };
-        let err_norm = unsafe { _mm256_min_ps(_mm256_max_ps(err_norm, _mm256_set1_ps(0.0)), _mm256_set1_ps(1.0)) };
-        let factor = unsafe { _mm256_sub_ps(_mm256_set1_ps(1.0), _mm256_mul_ps(_mm256_set1_ps(self.learning_rate), err_norm)) };
-        
+        let err_norm = unsafe {
+            _mm256_min_ps(
+                _mm256_max_ps(err_norm, _mm256_set1_ps(0.0)),
+                _mm256_set1_ps(1.0),
+            )
+        };
+        let factor = unsafe {
+            _mm256_sub_ps(
+                _mm256_set1_ps(1.0),
+                _mm256_mul_ps(_mm256_set1_ps(self.learning_rate), err_norm),
+            )
+        };
+
         self.weights = unsafe { _mm256_mul_ps(self.weights, factor) };
         self.weights = unsafe { _mm256_add_ps(self.weights, _mm256_set1_ps(0.001)) };
 
@@ -172,7 +188,7 @@ impl Mixer {
         let h2 = unsafe { _mm256_hadd_ps(h1, h1) };
         let sum_w = unsafe { _mm256_cvtss_f32(h2) };
         if sum_w > 0.0001 {
-             self.weights = unsafe { _mm256_div_ps(self.weights, _mm256_set1_ps(sum_w)) };
+            self.weights = unsafe { _mm256_div_ps(self.weights, _mm256_set1_ps(sum_w)) };
         }
     }
 
@@ -184,7 +200,7 @@ impl Mixer {
             let err = (p_val - y).abs();
             let err_norm = (err / 255.0).clamp(0.0, 1.0);
             let factor = 1.0 - (self.learning_rate * err_norm);
-            
+
             self.weights[i] *= factor;
             self.weights[i] += 0.001; // Regen
             sum_w += self.weights[i];

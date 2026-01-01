@@ -19,12 +19,12 @@ pub mod swarm;
 // --- v3.0/v4.0 Modules ---
 pub mod ans_coder;
 mod mixer;
-pub mod spectral;
-pub mod predictors; // Task 6
+pub mod predictors;
+pub mod spectral; // Task 6
 pub use ans_coder::{AnsReader, AnsWriter};
 use mixer::Mixer;
-use spectral::SpectralPredictor;
-use predictors::{Predictor, SimplePredictor, GraphPredictor, LzMatchPredictor}; // Added Predictor
+use predictors::{GraphPredictor, LzMatchPredictor, Predictor, SimplePredictor};
+use spectral::SpectralPredictor; // Added Predictor
 
 // --- Living Brain (Adaptive Learning) ---
 
@@ -85,7 +85,6 @@ pub struct QresHeader {
     pub chunk_compressed_sizes: Vec<u32>,
 }
 
-
 // --- V4 Encoding Logic ---
 
 fn calculate_sample_entropy(data: &[u8]) -> f32 {
@@ -124,7 +123,7 @@ fn predictive_encode_v4(data: &[u8], lossy: Option<u8>) -> Vec<u8> {
 
     // 3. Initialize Range Encoder (Lazy ANS)
     let mut ans = AnsWriter::new();
-    
+
     // Prepare quantization factor
     let q_factor = lossy.unwrap_or(1).max(1) as i8;
 
@@ -143,7 +142,7 @@ fn predictive_encode_v4(data: &[u8], lossy: Option<u8>) -> Vec<u8> {
 
         // C. Calculate Residual
         let base_residual = actual.wrapping_sub(mixed_prediction) as i8;
-        
+
         // --- Rate-Distortion Optimization (RDO) ---
         // If lossy, quantize residual to reduce entropy.
         let residual = if q_factor > 1 {
@@ -160,7 +159,7 @@ fn predictive_encode_v4(data: &[u8], lossy: Option<u8>) -> Vec<u8> {
         // to prevent drift (encoder/decoder desync).
         // Recalculate actual from prediction + quantized residual.
         let reconstructed = mixed_prediction.wrapping_add(residual as u8);
-        
+
         mixer.update(reconstructed, &preds);
         linear = reconstructed;
         simple.update(reconstructed);
@@ -228,24 +227,24 @@ pub fn compress_chunk(
 
     // 1. Smart Fallback Pre-scan
     if chunk.len() > 512 {
-         let entropy = calculate_sample_entropy(chunk);
-         if entropy > HIGH_ENTROPY_THRESHOLD {
-             let zstd_compressed = zstd::bulk::compress(chunk, 3).map_err(io::Error::other)?;
-             
-             if zstd_compressed.len() < chunk.len() {
-                 let mut out = Vec::with_capacity(1 + 4 + zstd_compressed.len());
-                 out.push(0x01); // Flag: Zstd
-                 out.extend_from_slice(&(chunk.len() as u32).to_le_bytes());
-                 out.extend_from_slice(&zstd_compressed);
-                 return Ok(out);
-             } else {
-                 let mut out = Vec::with_capacity(1 + 4 + zstd_compressed.len());
-                 out.push(0x01); 
-                 out.extend_from_slice(&(chunk.len() as u32).to_le_bytes());
-                 out.extend_from_slice(&zstd_compressed);
-                 return Ok(out);
-             }
-         }
+        let entropy = calculate_sample_entropy(chunk);
+        if entropy > HIGH_ENTROPY_THRESHOLD {
+            let zstd_compressed = zstd::bulk::compress(chunk, 3).map_err(io::Error::other)?;
+
+            if zstd_compressed.len() < chunk.len() {
+                let mut out = Vec::with_capacity(1 + 4 + zstd_compressed.len());
+                out.push(0x01); // Flag: Zstd
+                out.extend_from_slice(&(chunk.len() as u32).to_le_bytes());
+                out.extend_from_slice(&zstd_compressed);
+                return Ok(out);
+            } else {
+                let mut out = Vec::with_capacity(1 + 4 + zstd_compressed.len());
+                out.push(0x01);
+                out.extend_from_slice(&(chunk.len() as u32).to_le_bytes());
+                out.extend_from_slice(&zstd_compressed);
+                return Ok(out);
+            }
+        }
     }
 
     // 2. Try ANS (Neural/Predictive) Compression
@@ -372,12 +371,12 @@ where
     let file_size = input.metadata()?.len();
 
     output.write_all(QRES_MAGIC)?;
-    output.write_all(&[4u8])?; 
-    output.write_all(&[0u8])?; 
-    output.write_all(&[0u8])?; 
+    output.write_all(&[4u8])?;
+    output.write_all(&[0u8])?;
+    output.write_all(&[0u8])?;
     output.write_all(&chrono::Utc::now().timestamp().to_le_bytes())?;
     output.write_all(&file_size.to_le_bytes())?;
-    output.write_all(&(0u64.to_le_bytes()))?; 
+    output.write_all(&(0u64.to_le_bytes()))?;
     output.write_all(&(src.len() as u32).to_le_bytes())?;
     output.write_all(src.as_bytes())?;
 

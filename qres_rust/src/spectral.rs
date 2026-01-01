@@ -1,4 +1,4 @@
-use rustfft::{FftPlanner, num_complex::Complex};
+use rustfft::{num_complex::Complex, FftPlanner};
 use std::sync::Arc;
 
 // QRES v4.1 Enhanced Spectral Predictor
@@ -71,24 +71,30 @@ impl SpectralPredictor {
 
         if let Some(model) = &self.cached_model {
             let mut pred_val = 0.0;
-            
+
             // Project forward
             // t = window_size (end of window) + steps_since_last_fft
             // Phase is relative to window start (t=0)
             let t = (self.window_size + self.steps_since_update) as f32;
-            
+
             for comp in &model.components {
-                let angle = (2.0 * std::f32::consts::PI * comp.frequency * t / (self.window_size as f32)) + comp.phase;
+                let angle = (2.0 * std::f32::consts::PI * comp.frequency * t
+                    / (self.window_size as f32))
+                    + comp.phase;
                 pred_val += comp.amplitude * angle.cos();
             }
-            
+
             let result = model.dc + pred_val;
             return result.clamp(0.0, 255.0) as u8;
         }
 
         // Fallback: Use most recent value
         // Cursor points to oldest, so cursor-1 (modulo size) is newest
-        let last_idx = if self.cursor == 0 { self.window_size - 1 } else { self.cursor - 1 };
+        let last_idx = if self.cursor == 0 {
+            self.window_size - 1
+        } else {
+            self.cursor - 1
+        };
         self.buffer[last_idx] as u8
     }
 
@@ -109,10 +115,10 @@ impl SpectralPredictor {
 
         // 3. Find Dominant Frequencies
         let mut components = Vec::new();
-        
+
         let mut max_mag = 0.0;
         let mut fundamental_idx = 0;
-        
+
         // Search Nyquist
         for i in 1..(self.window_size / 2) {
             let mag = input[i].norm_sqr();
@@ -121,13 +127,13 @@ impl SpectralPredictor {
                 fundamental_idx = i;
             }
         }
-        
+
         let threshold = max_mag * 0.1;
         self.signal_strength_history.push(max_mag);
         if self.signal_strength_history.len() > 10 {
             self.signal_strength_history.remove(0);
         }
-        
+
         if max_mag > 100.0 {
             // Helper to add component
             let add_comp = |idx: usize, bins: &[Complex<f32>], out: &mut Vec<FreqComponent>| {
@@ -140,7 +146,7 @@ impl SpectralPredictor {
             };
 
             add_comp(fundamental_idx, &input, &mut components);
-            
+
             // Harmonics
             for harmonic in 2..=3 {
                 let h_idx = fundamental_idx * harmonic;

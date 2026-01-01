@@ -16,7 +16,7 @@ pub trait Predictor {
 // --- Simple Predictor (Text/Code) ---
 pub struct SimplePredictor {
     prev: u8,
-    context: [u8; 256], 
+    context: [u8; 256],
 }
 
 impl SimplePredictor {
@@ -50,8 +50,8 @@ type GraphWeights = [f32; 8];
 
 pub struct GraphPredictor {
     // Weights are aligned for SIMD (__m256 for x86_64)
-    weights: GraphWeights, 
-    edges: [usize; 8],        // Fixed edges [1, 2, 3, 4, 8, 16, 32, 0]
+    weights: GraphWeights,
+    edges: [usize; 8], // Fixed edges [1, 2, 3, 4, 8, 16, 32, 0]
     history: VecDeque<u8>,
     learning_rate: f32,
 }
@@ -95,13 +95,14 @@ impl Predictor for GraphPredictor {
         let mut inputs = [0.0f32; 8];
         let hist_len = self.history.len();
 
-        for i in 0..7 { // predictable branch (const 7)
+        for i in 0..7 {
+            // predictable branch (const 7)
             let lag = self.edges[i];
             if lag <= hist_len {
                 inputs[i] = self.history[hist_len - lag] as f32;
             }
         }
-        
+
         let input_simd = unsafe { _mm256_loadu_ps(inputs.as_ptr()) };
 
         // 2. SIMD Dot Product
@@ -117,7 +118,7 @@ impl Predictor for GraphPredictor {
     fn predict_next(&self) -> u8 {
         let mut sum = 0.0;
         let hist_len = self.history.len();
-        
+
         for i in 0..7 {
             let lag = self.edges[i];
             if lag <= hist_len {
@@ -125,7 +126,7 @@ impl Predictor for GraphPredictor {
                 sum += self.weights[i] * input;
             }
         }
-        
+
         sum.clamp(0.0, 255.0) as u8
     }
 
@@ -133,7 +134,7 @@ impl Predictor for GraphPredictor {
     fn update(&mut self, actual: u8) {
         let pred = self.predict_next() as f32;
         let err = actual as f32 - pred;
-        
+
         // 1. Gather inputs again
         let mut inputs = [0.0f32; 8];
         let hist_len = self.history.len();
@@ -150,7 +151,12 @@ impl Predictor for GraphPredictor {
         let err_simd = unsafe { _mm256_set1_ps(err) };
         let norm_factor = unsafe { _mm256_set1_ps(1.0 / 255.0) };
 
-        let delta = unsafe { _mm256_mul_ps(lr_simd, _mm256_mul_ps(err_simd, _mm256_mul_ps(input_simd, norm_factor))) };
+        let delta = unsafe {
+            _mm256_mul_ps(
+                lr_simd,
+                _mm256_mul_ps(err_simd, _mm256_mul_ps(input_simd, norm_factor)),
+            )
+        };
         self.weights = unsafe { _mm256_add_ps(self.weights, delta) };
 
         // Stability Clamp
@@ -172,9 +178,9 @@ impl Predictor for GraphPredictor {
     fn update(&mut self, actual: u8) {
         let pred = self.predict_next() as f32;
         let err = actual as f32 - pred;
-        
+
         let hist_len = self.history.len();
-        
+
         for i in 0..7 {
             let lag = self.edges[i];
             if lag <= hist_len {
@@ -195,7 +201,7 @@ impl Predictor for GraphPredictor {
 // --- Task A: LzMatchPredictor (LZ77 Simulation) ---
 pub struct LzMatchPredictor {
     // Hash table: maps 4-byte hash -> absolute position in stream
-    table: Vec<usize>, 
+    table: Vec<usize>,
     history: Vec<u8>,
     pos: usize,
     hash_mask: usize,
@@ -204,9 +210,9 @@ pub struct LzMatchPredictor {
 impl LzMatchPredictor {
     pub fn new() -> Self {
         // 16-bit hash (64K entries) fits in L2 cache
-        let hash_bits = 16; 
+        let hash_bits = 16;
         let hash_size = 1 << hash_bits;
-        
+
         LzMatchPredictor {
             table: vec![0; hash_size],
             history: Vec::with_capacity(65536), // Window size
@@ -217,42 +223,46 @@ impl LzMatchPredictor {
 
     #[inline(always)]
     fn hash(data: &[u8]) -> usize {
-        if data.len() < 4 { return 0; }
-        ((data[0] as usize) << 12) ^ 
-        ((data[1] as usize) << 8) ^ 
-        ((data[2] as usize) << 4) ^ 
-        (data[3] as usize)
+        if data.len() < 4 {
+            return 0;
+        }
+        ((data[0] as usize) << 12)
+            ^ ((data[1] as usize) << 8)
+            ^ ((data[2] as usize) << 4)
+            ^ (data[3] as usize)
     }
 }
 
 impl Predictor for LzMatchPredictor {
     fn predict_next(&self) -> u8 {
-        if self.pos < 4 { return 0; }
-        
+        if self.pos < 4 {
+            return 0;
+        }
+
         let start = self.pos - 4;
         let ctx = &self.history[start..self.pos];
         let h = Self::hash(ctx) & self.hash_mask;
-        
+
         let match_pos = self.table[h];
-        
+
         if match_pos > 0 && match_pos + 4 < self.history.len() {
-             if &self.history[match_pos..match_pos+4] == ctx {
-                 return self.history[match_pos + 4];
-             }
+            if &self.history[match_pos..match_pos + 4] == ctx {
+                return self.history[match_pos + 4];
+            }
         }
-        
+
         self.history[self.pos - 1]
     }
 
     fn update(&mut self, actual: u8) {
         self.history.push(actual);
         self.pos += 1;
-        
+
         if self.pos > 4 {
-            let start = self.pos - 5; 
-            let ctx = &self.history[start..self.pos-1];
+            let start = self.pos - 5;
+            let ctx = &self.history[start..self.pos - 1];
             let h = Self::hash(ctx) & self.hash_mask;
-            self.table[h] = start; 
+            self.table[h] = start;
         }
     }
 }

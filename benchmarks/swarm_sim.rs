@@ -1,8 +1,8 @@
 use std::fs;
+use std::path::Path;
 use std::process::{Command, Stdio};
 use std::thread;
 use std::time::Duration;
-use std::path::Path;
 
 fn main() {
     println!("[Sim] Starting QRES v4 Hive Simulation (FedProx)...");
@@ -31,18 +31,21 @@ fn main() {
     cli_path.pop(); // target
     cli_path.push("release");
     cli_path.push("qres-cli.exe");
-    
+
     // Explicit check
     if !cli_path.exists() {
         // Try current dir fallback if run via cargo run in root might differ (unlikely)
         // Or assume user built release.
-        println!("[Warning] Release binary not found at {:?}. Trying debug...", cli_path);
+        println!(
+            "[Warning] Release binary not found at {:?}. Trying debug...",
+            cli_path
+        );
         cli_path.pop();
         cli_path.pop();
         cli_path.push("debug");
         cli_path.push("qres-cli.exe");
     }
-    
+
     let cli_path_str = cli_path.to_str().unwrap();
     println!("[Setup] Using CLI: {}", cli_path_str);
 
@@ -72,9 +75,15 @@ fn main() {
         .env("QRES_CLI", cli_path_str)
         .output()
         .expect("Agent A sync failed");
-    
-    println!("Agent A Stdout:\n{}", String::from_utf8_lossy(&status_a.stdout));
-    println!("Agent A Stderr:\n{}", String::from_utf8_lossy(&status_a.stderr));
+
+    println!(
+        "Agent A Stdout:\n{}",
+        String::from_utf8_lossy(&status_a.stdout)
+    );
+    println!(
+        "Agent A Stderr:\n{}",
+        String::from_utf8_lossy(&status_a.stderr)
+    );
 
     // 5. Agent B Syncs (Pull/FedProx)
     println!("[Agent B] Novice Connecting to Hive...");
@@ -86,8 +95,14 @@ fn main() {
         .output()
         .expect("Agent B sync failed");
 
-    println!("Agent B Stdout:\n{}", String::from_utf8_lossy(&status_b.stdout));
-    println!("Agent B Stderr:\n{}", String::from_utf8_lossy(&status_b.stderr));
+    println!(
+        "Agent B Stdout:\n{}",
+        String::from_utf8_lossy(&status_b.stdout)
+    );
+    println!(
+        "Agent B Stderr:\n{}",
+        String::from_utf8_lossy(&status_b.stderr)
+    );
 
     // 6. Verification
     let final_brain_b = fs::read_to_string(format!("{}/qres_brain.json", dir_b)).unwrap();
@@ -95,7 +110,7 @@ fn main() {
 
     if final_brain_b.contains("10.0") || final_brain_b.contains("9.") {
         println!("[SUCCESS] Agent B acquired Expert Knowledge (Zero-Shot)!");
-    } else if final_brain_b.contains("Confidence") { 
+    } else if final_brain_b.contains("Confidence") {
         // Fallback check
         println!("[Partial] Check values manually.");
     } else {

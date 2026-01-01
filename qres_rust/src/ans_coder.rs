@@ -69,17 +69,19 @@ impl AnsWriter {
         // 3. Batch Stats Update (SIMD-Friendly Optimization)
         // Instead of serial Welford updates, we compute batch stats and merge.
         // This allows autovectorization of the sum/sq_sum.
-        
+
         let batch_count = self.buffer.len();
         let batch_count_f = batch_count as f64;
-        
+
         // Calculate Batch Mean and Variance (Two-Pass for stability or naive One-Pass)
         // Using naive sum for small batches (128) is stable enough and fast.
         let sum: f64 = self.buffer.iter().map(|&x| x as f64).sum();
         let batch_mean = sum / batch_count_f;
-        
+
         // Calculate M2 for batch: sum((x - mean)^2)
-        let batch_m2: f64 = self.buffer.iter()
+        let batch_m2: f64 = self
+            .buffer
+            .iter()
             .map(|&x| {
                 let diff = (x as f64) - batch_mean;
                 diff * diff
@@ -94,16 +96,17 @@ impl AnsWriter {
         } else {
             let total_count = (self.count + batch_count) as f64;
             let delta = batch_mean - self.running_mean;
-            
-            let new_m2 = self.running_var + batch_m2 + 
-                        (delta * delta * (self.count as f64) * batch_count_f) / total_count;
-            
+
+            let new_m2 = self.running_var
+                + batch_m2
+                + (delta * delta * (self.count as f64) * batch_count_f) / total_count;
+
             let new_mean = self.running_mean + (delta * batch_count_f) / total_count;
-            
+
             self.running_var = new_m2;
             self.running_mean = new_mean;
         }
-        
+
         self.count += batch_count;
         self.buffer.clear();
     }
@@ -191,12 +194,14 @@ impl AnsReader {
         // 3. Batch Stats Update (Must match AnsWriter exactly!)
         let batch_count = self.buffer.len();
         let batch_count_f = batch_count as f64;
-        
+
         let sum: f64 = self.buffer.iter().map(|&x| x as f64).sum();
         let batch_mean = sum / batch_count_f;
-        
+
         // Calculate M2 for batch
-        let batch_m2: f64 = self.buffer.iter()
+        let batch_m2: f64 = self
+            .buffer
+            .iter()
             .map(|&x| {
                 let diff = (x as f64) - batch_mean;
                 diff * diff
@@ -210,16 +215,17 @@ impl AnsReader {
         } else {
             let total_count = (self.count + batch_count) as f64;
             let delta = batch_mean - self.running_mean;
-            
-            let new_m2 = self.running_var + batch_m2 + 
-                        (delta * delta * (self.count as f64) * batch_count_f) / total_count;
-            
+
+            let new_m2 = self.running_var
+                + batch_m2
+                + (delta * delta * (self.count as f64) * batch_count_f) / total_count;
+
             let new_mean = self.running_mean + (delta * batch_count_f) / total_count;
-            
+
             self.running_var = new_m2;
             self.running_mean = new_mean;
         }
-        
+
         self.count += batch_count;
     }
 }
