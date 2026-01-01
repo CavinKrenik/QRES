@@ -17,7 +17,7 @@ fn main() {
     coder.encode_symbol(-3, &model).unwrap();
 
     // 2. Get compressed data (Vec<u32>)
-    let data: Vec<u32> = coder.into_compressed_data().unwrap();
+    let data: Vec<u32> = coder.into_compressed().unwrap();
     println!("Compressed data (words): {:?}", data);
 
     // 3. Round trip check - Reconstruct Coder
