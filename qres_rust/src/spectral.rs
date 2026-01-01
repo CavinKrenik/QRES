@@ -11,6 +11,8 @@ use std::sync::Arc;
 pub struct SpectralPredictor {
     window_size: usize,
     buffer: Vec<f32>,
+    cursor: usize,
+    count: usize,
     planner: FftPlanner<f32>,
     // Adaptive threshold
     signal_strength_history: Vec<f32>,
@@ -34,7 +36,9 @@ impl SpectralPredictor {
     pub fn new(window_size: usize) -> Self {
         SpectralPredictor {
             window_size,
-            buffer: Vec::with_capacity(window_size),
+            buffer: vec![0.0; window_size], // Pre-allocated zeroed
+            cursor: 0,
+            count: 0,
             planner: FftPlanner::new(),
             signal_strength_history: Vec::with_capacity(10),
             cached_model: None,
@@ -43,15 +47,17 @@ impl SpectralPredictor {
     }
 
     pub fn update(&mut self, val: u8) {
-        if self.buffer.len() >= self.window_size {
-            self.buffer.remove(0);
+        // Circular buffer update: O(1)
+        self.buffer[self.cursor] = val as f32;
+        self.cursor = (self.cursor + 1) % self.window_size;
+        if self.count < self.window_size {
+            self.count += 1;
         }
-        self.buffer.push(val as f32);
         self.steps_since_update += 1;
     }
 
     pub fn predict(&mut self) -> u8 {
-        if self.buffer.len() < self.window_size {
+        if self.count < self.window_size {
             return 128; // Not enough data
         }
 
@@ -80,14 +86,21 @@ impl SpectralPredictor {
             return result.clamp(0.0, 255.0) as u8;
         }
 
-        // Fallback
-        *self.buffer.last().unwrap_or(&128.0) as u8
+        // Fallback: Use most recent value
+        // Cursor points to oldest, so cursor-1 (modulo size) is newest
+        let last_idx = if self.cursor == 0 { self.window_size - 1 } else { self.cursor - 1 };
+        self.buffer[last_idx] as u8
     }
 
     fn recalc_model(&mut self) {
-        // 1. Prepare FFT Input
-        let mut input: Vec<Complex<f32>> = self.buffer.iter()
-            .map(|&val| Complex::new(val, 0.0))
+        // 1. Prepare FFT Input (Unroll circular buffer)
+        // Order: Oldest -> Newest
+        // Start reading from self.cursor (oldest)
+        let mut input: Vec<Complex<f32>> = (0..self.window_size)
+            .map(|i| {
+                let idx = (self.cursor + i) % self.window_size;
+                Complex::new(self.buffer[idx], 0.0)
+            })
             .collect();
 
         // 2. Perform FFT
