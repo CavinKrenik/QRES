@@ -1,6 +1,5 @@
 use rustfft::{num_complex::Complex, FftPlanner};
 
-
 // QRES v4.1 Enhanced Spectral Predictor
 // Improvements:
 // - Larger window (2048) for better frequency resolution
