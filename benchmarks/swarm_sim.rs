@@ -119,6 +119,7 @@ fn main() {
 
     // Cleanup
     let _ = server.kill();
+    let _ = server.wait(); // Prevent zombie process
     let _ = fs::remove_dir_all(dir_a);
     let _ = fs::remove_dir_all(dir_b);
 }
