@@ -1,6 +1,6 @@
 [package]
 name = "qres_rust"
-version = "5.0.2"
+version = "5.0.3"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 
