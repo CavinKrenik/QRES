@@ -1,7 +1,7 @@
 <script lang="ts">
     import { invoke } from "@tauri-apps/api/core";
     import { listen } from "@tauri-apps/api/event";
-    import { open, save } from "@tauri-apps/plugin-dialog";
+    import { save } from "@tauri-apps/plugin-dialog";
     import { createEventDispatcher } from "svelte";
 
     const dispatch = createEventDispatcher();
@@ -26,7 +26,6 @@
         active_engine: string;
     }
 
-    // DragEvent is built-in
     async function handleDrop(e: DragEvent) {
         e.preventDefault();
         isDragging = false;
@@ -34,9 +33,7 @@
         const files = e.dataTransfer?.files;
         if (!files || files.length === 0) return;
 
-        const file = files[0] as any; // Cast to any to access path property if not standard
-        // In Tauri environment, File object often has path property
-        // But for strict TS, we might need to cast or extend interface
+        const file = files[0] as any;
         await processFile(file.path || file.name);
     }
 
@@ -48,30 +45,31 @@
 
             if (isQresFile) {
                 // Decompress mode
-                destPath = await open({
-                    directory: true,
-                    title: "Select destination folder",
+                destPath = await save({
+                    defaultPath: filePath.replace(".qres", ""),
+                    title: "Save decompressed file",
                 });
                 if (!destPath) return;
 
                 isProcessing = true;
                 chartData = [];
 
-                const unlisten = await listen<CompressionProgressPayload>(
-                    "compression-progress",
-                    (event) => {
-                        progress = event.payload.percent;
-                    },
-                );
+                const unlisten = await listen<{
+                    percent: number;
+                    status: string;
+                }>("decompression-progress", (event) => {
+                    progress = event.payload.percent;
+                });
 
-                // await invoke("decompress_file", ...);
-                alert("Decompression not yet linked in Clean Slate protocol.");
-                isProcessing = false;
+                await invoke("decompress_file", {
+                    src: filePath,
+                    dest: destPath,
+                });
                 unlisten();
-                return;
             } else {
                 // Compress mode
-                const fileName = filePath.split("\\").pop();
+                const fileName =
+                    filePath.split("\\").pop() || filePath.split("/").pop();
                 destPath = await save({
                     defaultPath: (fileName || "archive") + ".qres",
                     title: "Save compressed file",
@@ -181,8 +179,9 @@
 
     .drop-zone {
         position: relative;
-        width: 400px;
-        height: 400px;
+        width: min(400px, 80vw);
+        height: min(400px, 60vh);
+        aspect-ratio: 1;
         display: flex;
         align-items: center;
         justify-content: center;

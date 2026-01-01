@@ -2,217 +2,244 @@
     import { invoke } from "@tauri-apps/api/core";
     import { onMount } from "svelte";
 
-    interface Stats {
-        bytes_saved: number;
-        total_compressions: number;
-        engines_used: Record<string, number>;
-        avg_ratio?: number;
-    }
-
     let swarmEnabled = false;
-    let stats: Stats = {
+    let swarmStatus = "Offline";
+    let stats = {
         bytes_saved: 0,
         total_compressions: 0,
-        engines_used: {},
         avg_ratio: 0,
+        engines_used: {} as Record<string, number>,
     };
-    let wisdom = 0;
-
-    async function toggleSwarm() {
-        try {
-            await invoke("toggle_swarm", { enabled: !swarmEnabled });
-            swarmEnabled = !swarmEnabled;
-        } catch (e) {
-            console.error("Failed to toggle swarm:", e);
-        }
-    }
 
     async function loadData() {
         try {
             stats = await invoke("get_stats");
-            // Calculate wisdom from stats
-            const total = Object.values(stats.engines_used || {}).reduce(
-                (a, b) => a + b,
-                0,
-            );
-            wisdom = total > 0 ? (stats.avg_ratio || 0.5) * 100 : 0;
         } catch (e) {
             console.error("Failed to load data:", e);
         }
     }
 
+    async function handleSwarmToggle() {
+        try {
+            const result = await invoke("toggle_swarm", {
+                enabled: swarmEnabled,
+            });
+            swarmStatus = swarmEnabled ? "Connected" : "Offline";
+            console.log(result);
+        } catch (e) {
+            console.error("Swarm toggle failed:", e);
+            swarmEnabled = false;
+            swarmStatus = "Offline";
+        }
+    }
+
     onMount(() => {
         loadData();
-        setInterval(loadData, 5000);
+        const interval = setInterval(loadData, 5000);
+        return () => clearInterval(interval);
     });
+
+    $: hiveWisdom =
+        stats.avg_ratio > 0 ? ((1 - stats.avg_ratio) * 100).toFixed(1) : "0.0";
+    $: engineEntries = Object.entries(stats.engines_used);
+    $: totalEngineUses = engineEntries.reduce(
+        (sum, [, count]) => sum + count,
+        0,
+    );
 </script>
 
 <div class="hive-container">
+    <div class="hive-header">
+        <h2>🐝 Hive Mind</h2>
+        <div class="swarm-toggle">
+            <label>
+                <input
+                    type="checkbox"
+                    bind:checked={swarmEnabled}
+                    on:change={handleSwarmToggle}
+                />
+                <span>Swarm Network</span>
+            </label>
+            <span class="status" class:connected={swarmEnabled}>
+                {swarmEnabled ? "🟢" : "⚪"}
+                {swarmStatus}
+            </span>
+        </div>
+    </div>
+
     <div class="stats-grid">
         <div class="stat-card">
-            <div class="stat-value">
-                {((stats.bytes_saved || 0) / 1024 / 1024).toFixed(1)}MB
-            </div>
             <div class="stat-label">Bytes Saved Today</div>
+            <div class="stat-value">
+                {(stats.bytes_saved / 1024 / 1024).toFixed(1)}MB
+            </div>
         </div>
 
-        <div class="stat-card">
-            <div class="stat-value">{wisdom.toFixed(0)}%</div>
+        <div class="stat-card highlight">
             <div class="stat-label">Hive Wisdom</div>
+            <div class="stat-value">{hiveWisdom}%</div>
+            <div class="stat-subtitle">Compression Efficiency</div>
         </div>
 
         <div class="stat-card">
-            <div class="stat-value">{stats.total_compressions || 0}</div>
             <div class="stat-label">Total Compressions</div>
+            <div class="stat-value">{stats.total_compressions}</div>
         </div>
     </div>
 
-    <div class="swarm-control">
-        <h3>Swarm Network</h3>
-        <label class="toggle">
-            <input
-                type="checkbox"
-                checked={swarmEnabled}
-                on:change={toggleSwarm}
-            />
-            <span class="slider"></span>
-        </label>
-        <p class="swarm-status">
-            {swarmEnabled ? "🟢 Connected to Hive" : "⚪ Offline"}
-        </p>
-    </div>
-
-    <div class="engine-breakdown">
+    <div class="engine-usage">
         <h3>Engine Usage</h3>
-        <div class="engines">
-            {#each Object.entries(stats.engines_used || {}) as [engine, count]}
-                <div class="engine-bar">
-                    <span class="engine-name">{engine}</span>
-                    <div class="bar">
-                        <div
-                            class="fill"
-                            style="width: {(count / stats.total_compressions) *
-                                100 || 0}%"
-                        ></div>
+        {#if engineEntries.length > 0}
+            <div class="engine-bars">
+                {#each engineEntries as [engine, count]}
+                    {@const percentage =
+                        totalEngineUses > 0
+                            ? (count / totalEngineUses) * 100
+                            : 0}
+                    <div class="engine-bar">
+                        <div class="engine-info">
+                            <span class="engine-name"
+                                >{engine.toUpperCase()}</span
+                            >
+                            <span class="engine-count"
+                                >{count} uses ({percentage.toFixed(1)}%)</span
+                            >
+                        </div>
+                        <div class="bar-container">
+                            <div
+                                class="bar-fill"
+                                style="width: {percentage}%"
+                            ></div>
+                        </div>
                     </div>
-                    <span class="engine-count">{count}</span>
-                </div>
-            {/each}
-        </div>
+                {/each}
+            </div>
+        {:else}
+            <p class="no-data">
+                No compression data yet. Start compressing files!
+            </p>
+        {/if}
     </div>
 </div>
 
 <style>
     .hive-container {
         padding: 2rem;
-        max-width: 1000px;
+        max-width: 1200px;
         margin: 0 auto;
     }
 
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1.5rem;
+    .hive-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         margin-bottom: 2rem;
     }
 
-    .stat-card {
-        background: rgba(15, 23, 42, 0.6);
-        border: 1px solid rgba(99, 102, 241, 0.2);
-        border-radius: 12px;
-        padding: 1.5rem;
-        text-align: center;
+    h2 {
+        margin: 0;
+        font-size: 1.8rem;
+        color: #a0c0ff;
     }
 
-    .stat-value {
-        font-size: 2.5rem;
-        font-weight: 700;
-        background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
-        background-clip: text;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 0.5rem;
-    }
-
-    .stat-label {
-        color: #94a3b8;
-        font-size: 0.9rem;
-    }
-
-    .swarm-control {
-        background: rgba(15, 23, 42, 0.6);
-        border: 1px solid rgba(99, 102, 241, 0.2);
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 2rem;
+    .swarm-toggle {
         display: flex;
         align-items: center;
         gap: 1rem;
     }
 
-    .swarm-control h3 {
-        margin: 0;
-        flex: 1;
-    }
-
-    .toggle {
-        position: relative;
-        display: inline-block;
-        width: 60px;
-        height: 34px;
-    }
-
-    .toggle input {
-        opacity: 0;
-        width: 0;
-        height: 0;
-    }
-
-    .slider {
-        position: absolute;
+    .swarm-toggle label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
         cursor: pointer;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: #334155;
-        transition: 0.4s;
-        border-radius: 34px;
     }
 
-    .slider:before {
-        position: absolute;
-        content: "";
-        height: 26px;
-        width: 26px;
-        left: 4px;
-        bottom: 4px;
-        background-color: white;
-        transition: 0.4s;
-        border-radius: 50%;
+    .swarm-toggle input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
     }
 
-    input:checked + .slider {
-        background-color: #818cf8;
-    }
-
-    input:checked + .slider:before {
-        transform: translateX(26px);
-    }
-
-    .swarm-status {
-        margin: 0;
-        color: #94a3b8;
+    .status {
+        padding: 0.5rem 1rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 20px;
         font-size: 0.9rem;
+        color: #94a3b8;
     }
 
-    .engine-breakdown {
-        background: rgba(15, 23, 42, 0.6);
-        border: 1px solid rgba(99, 102, 241, 0.2);
+    .status.connected {
+        color: #10b981;
+        background: rgba(16, 185, 129, 0.1);
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 12px;
+        padding: 1.5rem;
+        transition:
+            transform 0.2s,
+            box-shadow 0.2s;
     }
 
-    .engines {
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .stat-card.highlight {
+        background: linear-gradient(
+            135deg,
+            rgba(99, 102, 241, 0.1) 0%,
+            rgba(192, 132, 252, 0.1) 100%
+        );
+        border-color: rgba(99, 102, 241, 0.3);
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        color: #94a3b8;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #e0e7ff;
+    }
+
+    .stat-subtitle {
+        font-size: 0.75rem;
+        color: #64748b;
+        margin-top: 0.25rem;
+    }
+
+    .engine-usage {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 1.5rem;
+    }
+
+    h3 {
+        margin-top: 0;
+        margin-bottom: 1.5rem;
+        font-size: 1.2rem;
+        color: #a0c0ff;
+    }
+
+    .engine-bars {
         display: flex;
         flex-direction: column;
         gap: 1rem;
@@ -220,35 +247,43 @@
 
     .engine-bar {
         display: flex;
-        align-items: center;
-        gap: 1rem;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .engine-info {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.9rem;
     }
 
     .engine-name {
-        width: 80px;
-        text-transform: uppercase;
-        font-size: 0.85rem;
-        color: #94a3b8;
-    }
-
-    .bar {
-        flex: 1;
-        height: 24px;
-        background: rgba(51, 65, 85, 0.5);
-        border-radius: 12px;
-        overflow: hidden;
-    }
-
-    .fill {
-        height: 100%;
-        background: linear-gradient(90deg, #818cf8 0%, #c084fc 100%);
-        transition: width 0.5s;
+        font-weight: 600;
+        color: #e0e7ff;
     }
 
     .engine-count {
-        width: 40px;
-        text-align: right;
         color: #94a3b8;
-        font-size: 0.9rem;
+    }
+
+    .bar-container {
+        height: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #818cf8 0%, #c084fc 100%);
+        border-radius: 4px;
+        transition: width 0.3s ease;
+    }
+
+    .no-data {
+        text-align: center;
+        color: #64748b;
+        padding: 2rem;
+        font-style: italic;
     }
 </style>

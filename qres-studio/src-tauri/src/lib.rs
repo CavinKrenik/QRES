@@ -9,10 +9,7 @@ pub fn run() {
             commands::compress_file,
             commands::decompress_file,
             commands::get_stats,
-            commands::toggle_swarm,
-            commands::query_lm,
-            commands::run_training,
-            commands::save_ai_data
+            commands::toggle_swarm
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
