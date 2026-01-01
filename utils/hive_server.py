@@ -22,7 +22,9 @@ global_state = {
     "weights": None,          # Current global weights
     "round": 0,               # FL Round
     "total_samples": 0,       # Total samples seen
-    "min_clients": 1          # Min clients to update
+    "min_clients": 1,         # Min clients to update
+    "metrics_history": [],    # Track convergence over time
+    "active_clients": set()   # Track unique participant IDs
 }
 
 def load_state():
@@ -31,6 +33,9 @@ def load_state():
         try:
             with open(STATE_FILE, 'r') as f:
                 data = json.load(f)
+                # Filter out sets/complex types before update
+                if "active_clients" in data:
+                    data["active_clients"] = set(data["active_clients"])
                 global_state.update(data)
                 # Ensure weights are list if loaded
                 if global_state["weights"] and isinstance(global_state["weights"], list):
@@ -44,6 +49,8 @@ def save_state():
     save_data = global_state.copy()
     if isinstance(save_data["weights"], np.ndarray):
         save_data["weights"] = save_data["weights"].tolist()
+    if isinstance(save_data["active_clients"], set):
+        save_data["active_clients"] = list(save_data["active_clients"])
     
     with open(STATE_FILE, 'w') as f:
         json.dump(save_data, f)
@@ -71,13 +78,17 @@ def contribute():
     # Validate dimensions
     weights = np.array(data['confidence'], dtype=np.float32)
     samples = data.get('samples', 1) 
+    client_id = data.get('client_id', 'anon')
+    
+    global_state["active_clients"].add(client_id)
     
     pending_contributions.append({
         "weights": weights,
-        "samples": samples
+        "samples": samples,
+        "client_id": client_id
     })
     
-    print(f"[Hive] Contribution from {data.get('client_id', 'anon')} (n={samples}). Pending: {len(pending_contributions)}")
+    print(f"[Hive] Contribution from {client_id} (n={samples}). Pending: {len(pending_contributions)}")
     
     # Aggregation Trigger (FedProx-ish)
     # If we have enough updates, aggregate immediately for this demo
@@ -109,9 +120,13 @@ def aggregate_updates():
     total_samples_round = sum(c["samples"] for c in pending_contributions)
     weighted_sum = np.zeros_like(global_state["weights"])
     
+    # Track variance for metrics
+    stacked_weights = []
+    
     for c in pending_contributions:
         # Match dimensions if needed (safety)
         w = c["weights"]
+        stacked_weights.append(w)
         if w.shape != weighted_sum.shape:
              # Basic versioning/truncation logic
              common_len = min(len(w), len(weighted_sum))
@@ -119,38 +134,62 @@ def aggregate_updates():
         else:
             weighted_sum += w * c["samples"]
             
+    # Calculate Round Variance (Convergence Metric)
+    # High variance = agents disagree (divergence)
+    # Low variance = consensus
+    if len(stacked_weights) > 1:
+        # Clean shapes
+        min_len = min(len(w) for w in stacked_weights)
+        clean_stack = [w[:min_len] for w in stacked_weights]
+        round_variance = np.var(clean_stack, axis=0).mean()
+    else:
+        round_variance = 0.0
+
     # 3. Mixing with previous global (Momentum/Stability)
-    # New Global = alpha * Old + (1-alpha) * Avg_New
-    # For now, pure FedAvg of aggregated updates:
     aggregated_update = weighted_sum / max(1, total_samples_round)
     
-    # Simple update: Moving average to prevent drift
     if global_state["total_samples"] == 0:
         global_state["weights"] = aggregated_update
     else:
         # FedProx: Proximal term simulation via heavy momentum
-        # Trust the global history more than short bursts
         alpha = 0.7 
         global_state["weights"] = (alpha * global_state["weights"]) + ((1 - alpha) * aggregated_update)
 
     global_state["total_samples"] += total_samples_round
     global_state["round"] += 1
     
+    # Record Metrics
+    metric_entry = {
+        "round": global_state["round"],
+        "clients": len(pending_contributions),
+        "total_samples": global_state["total_samples"],
+        "variance": float(round_variance),
+        "weights_mean": float(np.mean(global_state["weights"]))
+    }
+    global_state["metrics_history"].append(metric_entry)
+    
     # Clear buffer
     pending_contributions.clear()
     save_state()
     
-    print(f"[Hive] Aggregated Round {global_state['round']}. Weights: {np.round(global_state['weights'], 3)}")
+    print(f"[Hive] Aggregated Round {global_state['round']}. Var: {round_variance:.4f}")
 
 @app.route('/global_brain', methods=['GET'])
 def get_global_brain():
     if global_state["weights"] is None:
-        # Default neutral weights if nothing exists yet
         return jsonify({"confidence": [1.0] * 4, "round": 0})
         
     return jsonify({
         "confidence": global_state["weights"].tolist(),
         "round": global_state["round"]
+    })
+
+@app.route('/metrics', methods=['GET'])
+def get_metrics():
+    return jsonify({
+        "history": global_state["metrics_history"],
+        "active_clients": len(global_state["active_clients"]),
+        "current_round": global_state["round"]
     })
 
 @app.route('/reset', methods=['POST'])
@@ -160,7 +199,9 @@ def reset():
         "weights": None,
         "round": 0,
         "total_samples": 0,
-        "min_clients": 1
+        "min_clients": 1,
+        "metrics_history": [],
+        "active_clients": set()
     }
     if os.path.exists(STATE_FILE):
         os.remove(STATE_FILE)
