@@ -75,7 +75,8 @@ def run_qres(filename):
 
 def main():
     test_file = "iot_telemetry.dat"
-    generate_iot_telemetry(test_file)
+    # Increase to 10M samples (approx 20MB) to reduce impact of CLI startup overhead
+    generate_iot_telemetry(test_file, num_samples=10000000)
     orig_size = os.path.getsize(test_file)
     
     print("\n--- Benchmarking ---")

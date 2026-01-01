@@ -7,28 +7,25 @@ use std::collections::VecDeque;
 
 // --- Simple Predictor (Text/Code) ---
 pub struct SimplePredictor {
-    prev: f32,
-    context: HashMap<u8, u8>, 
+    prev: u8,
+    context: [u8; 256], 
 }
 
 impl SimplePredictor {
     pub fn new() -> Self {
         SimplePredictor {
-            prev: 0.0,
-            context: HashMap::new(),
+            prev: 0,
+            context: [0; 256],
         }
     }
 
     pub fn predict_next(&self) -> u8 {
-        self.context
-            .get(&(self.prev as u8))
-            .copied()
-            .unwrap_or(self.prev as u8)
+        self.context[self.prev as usize]
     }
 
     pub fn update(&mut self, actual: u8) {
-        self.context.insert(self.prev as u8, actual);
-        self.prev = actual as f32;
+        self.context[self.prev as usize] = actual;
+        self.prev = actual;
     }
 }
 

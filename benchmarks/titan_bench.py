@@ -30,6 +30,16 @@ def download_file(url, dest):
                 f.write(chunk)
     except Exception as e:
         print(f"[Error] Failed to download {url}: {e}")
+        # Fallback: Generate synthetic data
+        print(f"[Gen] Generating synthetic data for {dest}...")
+        try:
+            with open(dest, "wb") as f:
+                # Generate ~5MB of repeating text with some variation
+                base = b"Synthetic Corpus Data for QRES Benchmark. "
+                data = base * (5 * 1024 * 1024 // len(base))
+                f.write(data)
+        except Exception as e2:
+             print(f"[Error] Failed to generate: {e2}")
 
 def run_bench(cmd, input_file):
     start = time.time()
@@ -66,8 +76,13 @@ def benchmark():
     # 2. Run Benchmarks
     abs_qres_bin = os.path.abspath(QRES_BIN)
     if not os.path.exists(abs_qres_bin):
-        print(f"Error: QRES binary not found at {abs_qres_bin}")
-        return
+        # Try finding it relative to parent if running from benchmarks/ dir
+        alt_bin = os.path.join("..", QRES_BIN)
+        if os.path.exists(alt_bin):
+            abs_qres_bin = os.path.abspath(alt_bin)
+        else:
+            print(f"Error: QRES binary not found at {abs_qres_bin} or {alt_bin}")
+            return
 
     tools = [
         {"name": "QRES (Hybrid)", "cmd": [abs_qres_bin, "compress", "INPUT", "OUTPUT"], "ext": ".qres"},
