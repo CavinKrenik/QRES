@@ -161,7 +161,8 @@ impl SpectralPredictor {
         if self.signal_strength_history.is_empty() {
             return 0.0;
         }
-        let avg: f32 = self.signal_strength_history.iter().sum::<f32>() / self.signal_strength_history.len() as f32;
+        let avg: f32 = self.signal_strength_history.iter().sum::<f32>()
+            / self.signal_strength_history.len() as f32;
         (avg / 1_000_000.0).min(1.0)
     }
 }

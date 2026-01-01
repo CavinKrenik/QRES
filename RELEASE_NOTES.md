@@ -1,5 +1,28 @@
 # QRES Release Notes
 
+## v5.0.0 - "Quantum Leap" (January 2026)
+
+**Release Date:** January 1, 2026
+**Codename:** Quantum Leap
+
+### 🚀 Major Features
+
+#### 🧠 Advanced Mixing Architectures
+*   **Order-N Logistic Mixer**: Scalable context mixing with `O(N)` SIMD-accelerated weights.
+*   **Vectorized Predictors**: AVX2/SSE4.1 optimizations for `Mixer` and `GraphPredictor`.
+*   **LzMatchPredictor**: New dictionary-based prediction for repetitive text/binary patterns.
+
+#### ⚡ Performance & Intelligence
+*   **Smart Pre-Pass**: Intelligent header analysis for optimal engine selection.
+*   **Native P2P Swarm**: Full Rust `libp2p` implementation replacing Python server.
+*   **SIMD Acceleration**: Significant throughput improvements across all backends.
+
+#### 🔧 Core Improvements
+*   **v5.0 Core**: Unification of Python and Rust versioning.
+*   **Enhanced Stability**: Robust error handling and adaptive fallback mechanisms.
+
+---
+
 ## v4.2.0 - "Collective Intelligence" (January 2026)
 
 **Release Date:** January 1, 2026  
