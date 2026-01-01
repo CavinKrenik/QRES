@@ -39,7 +39,8 @@
         const item = items[0];
 
         if (item.kind === "file") {
-            const entry = await item.getAsFileSystemHandle();
+            // @ts-ignore - Experimental API not in standard types yet
+            const entry = await (item as any).getAsFileSystemHandle();
             if (!entry) return;
 
             // @ts-ignore - FileSystemHandle types
