@@ -74,3 +74,10 @@ path = "../benchmarks/swarm_sim.rs"
 [[bin]]
 name = "swarm_scale"
 path = "../benchmarks/swarm_scale.rs"
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[[bench]]
+name = "criterion_suite"
+harness = false

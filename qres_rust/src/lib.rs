@@ -116,7 +116,7 @@ fn predictive_encode_v4(data: &[u8], lossy: Option<u8>) -> Vec<u8> {
     let mut linear = 0u8;
     let mut simple = SimplePredictor::new();
     let mut graph = GraphPredictor::new();
-    let mut spectral = SpectralPredictor::new(64);
+    let mut spectral = SpectralPredictor::new(2048);
 
     // 2. Initialize V4 Mixer (Hybrid AR2 + Ensemble)
     let mut mixer = Mixer::new();
@@ -175,7 +175,7 @@ fn predictive_decode_v4(compressed_words: &[u8], decoded_len: usize) -> Vec<u8> 
     let mut linear = 0u8;
     let mut simple = SimplePredictor::new();
     let mut graph = GraphPredictor::new();
-    let mut spectral = SpectralPredictor::new(64);
+    let mut spectral = SpectralPredictor::new(2048);
     let mut mixer = Mixer::new();
 
     // 2. Initialize Range Decoder

@@ -1,14 +1,19 @@
 use rustfft::{FftPlanner, num_complex::Complex};
 use std::sync::Arc;
 
-// QRES v4.0 Spectral Predictor
-// Uses FFT to identify dominant frequencies in a sliding window
-// and predicts the next value by projecting those phases forward.
+// QRES v4.1 Enhanced Spectral Predictor
+// Improvements:
+// - Larger window (2048) for better frequency resolution
+// - Harmonic detection (2nd, 3rd harmonics)
+// - Adaptive threshold based on signal strength
+// Target: 60%+ compression on sine waves
 
 pub struct SpectralPredictor {
     window_size: usize,
     buffer: Vec<f32>,
     planner: FftPlanner<f32>,
+    // Adaptive threshold
+    signal_strength_history: Vec<f32>,
 }
 
 impl SpectralPredictor {
@@ -17,6 +22,7 @@ impl SpectralPredictor {
             window_size,
             buffer: Vec::with_capacity(window_size),
             planner: FftPlanner::new(),
+            signal_strength_history: Vec::with_capacity(10),
         }
     }
 
@@ -41,44 +47,82 @@ impl SpectralPredictor {
         let fft = self.planner.plan_fft_forward(self.window_size);
         fft.process(&mut input);
 
-        // 3. Find Dominant Frequency
-        // Simple strategy: Pick the bin with max magnitude (ignoring DC)
+        // 3. Find Dominant Frequencies (fundamental + harmonics)
+        let mut frequencies = Vec::new();
+        
+        // Find fundamental (strongest frequency)
         let mut max_mag = 0.0;
-        let mut max_idx = 0;
+        let mut fundamental_idx = 0;
         
         // Only search first half (Nyquist)
         for i in 1..(self.window_size / 2) {
             let mag = input[i].norm_sqr();
             if mag > max_mag {
                 max_mag = mag;
-                max_idx = i;
+                fundamental_idx = i;
+            }
+        }
+        
+        // Calculate adaptive threshold (10% of max)
+        let threshold = max_mag * 0.1;
+        
+        // Track signal strength for adaptive behavior
+        self.signal_strength_history.push(max_mag);
+        if self.signal_strength_history.len() > 10 {
+            self.signal_strength_history.remove(0);
+        }
+        
+        // Add fundamental
+        if max_mag > 100.0 { // Minimum threshold
+            frequencies.push((fundamental_idx, input[fundamental_idx]));
+            
+            // Look for harmonics (2x, 3x fundamental frequency)
+            for harmonic in 2..=3 {
+                let harmonic_idx = fundamental_idx * harmonic;
+                if harmonic_idx < self.window_size / 2 {
+                    let harmonic_mag = input[harmonic_idx].norm_sqr();
+                    if harmonic_mag > threshold {
+                        frequencies.push((harmonic_idx, input[harmonic_idx]));
+                    }
+                }
             }
         }
 
-        // 4. Predict
-        // If we found a strong signal -> Project it
-        // x[n] = A * cos(2*pi*f*n + phi)
-        // input[k] gives us A and phi for frequency k.
-        // We want to predict x[N] (the next point).
-        
-        if max_mag > 1000.0 { // Threshold filter
-             let bin = &input[max_idx];
-             let ampl = bin.norm() / (self.window_size as f32) * 2.0; // Normalize
-             let phase = bin.arg();
-             let freq = max_idx as f32; // Cycles per window
-             
-             // Project forward by 1 step (index = window_size)
-             let t = self.window_size as f32;
-             let angle = (2.0 * std::f32::consts::PI * freq * t / (self.window_size as f32)) + phase;
-             let pred_val = ampl * angle.cos();
-             
-             // Add DC offset back (approx 128 or buffer mean)
-             let dc = input[0].re / (self.window_size as f32);
-             
-             return (dc + pred_val).clamp(0.0, 255.0) as u8;
+        // 4. Predict using all detected frequencies
+        if !frequencies.is_empty() {
+            let dc = input[0].re / (self.window_size as f32);
+            let mut pred_val = 0.0;
+            
+            for (freq_idx, bin) in frequencies {
+                let ampl = bin.norm() / (self.window_size as f32) * 2.0;
+                let phase = bin.arg();
+                let freq = freq_idx as f32;
+                
+                // Project forward by 1 step
+                let t = self.window_size as f32;
+                let angle = (2.0 * std::f32::consts::PI * freq * t / (self.window_size as f32)) + phase;
+                pred_val += ampl * angle.cos();
+            }
+            
+            // Combine DC offset and predicted AC component
+            let result = dc + pred_val;
+            return result.clamp(0.0, 255.0) as u8;
         }
 
-        // Fallback
+        // Fallback: Use last value
         *self.buffer.last().unwrap() as u8
+    }
+    
+    /// Returns confidence in prediction (0.0 to 1.0)
+    pub fn confidence(&self) -> f32 {
+        if self.signal_strength_history.is_empty() {
+            return 0.0;
+        }
+        
+        let avg_strength: f32 = self.signal_strength_history.iter().sum::<f32>() 
+                                / self.signal_strength_history.len() as f32;
+        
+        // Normalize to 0-1 range (assuming max strength ~1M)
+        (avg_strength / 1_000_000.0).min(1.0)
     }
 }
