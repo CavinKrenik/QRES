@@ -21,7 +21,7 @@ mod mixer;
 pub mod predictors;
 pub mod spectral; // Task 6
 pub use ans_coder::{AnsReader, AnsWriter};
-use mixer::Mixer;
+use mixer::{Mixer, NUM_MODELS};
 use predictors::{GraphPredictor, LzMatchPredictor, Predictor, SimplePredictor};
 use spectral::SpectralPredictor; // Added Predictor
 
@@ -33,6 +33,7 @@ pub struct LivingBrain {
     pub predictors: Vec<String>,
     pub stats: serde_json::Value,
     pub confidence: Vec<f32>,
+    pub global_confidence: Option<Vec<f32>>, // Phase 2: FedProx Anchor
     pub best_engine_weights: Option<Vec<u8>>,
 }
 
@@ -46,9 +47,10 @@ impl LivingBrain {
     pub fn new() -> Self {
         LivingBrain {
             version: 1,
-            predictors: vec!["lstm".to_string(), "graph".to_string()], // Updated ipeps->graph
+            predictors: vec!["lstm".to_string(), "graph".to_string()],
             stats: serde_json::json!({"compressions": 0}),
-            confidence: vec![0.5; 4],
+            confidence: vec![0.5; NUM_MODELS.max(4)], // Ensure enough space
+            global_confidence: None,
             best_engine_weights: None,
         }
     }
@@ -64,6 +66,10 @@ impl LivingBrain {
     pub fn merge(&mut self, other: &LivingBrain, alpha: f32) {
         for i in 0..self.confidence.len().min(other.confidence.len()) {
             self.confidence[i] = self.confidence[i] * (1.0 - alpha) + other.confidence[i] * alpha;
+        }
+        // Always derive global anchor from the imported brain (truth)
+        if other.global_confidence.is_some() {
+            self.global_confidence = other.global_confidence.clone();
         }
     }
 }
@@ -109,7 +115,7 @@ fn calculate_sample_entropy(data: &[u8]) -> f32 {
     entropy
 }
 
-fn predictive_encode_v4(data: &[u8], lossy: Option<u8>) -> Vec<u8> {
+fn predictive_encode_v4(data: &[u8], lossy: Option<u8>, weights: Option<&[u8]>) -> Vec<u8> {
     // 1. Initialize Engines
     let mut linear = 0u8;
     let mut simple = SimplePredictor::new();
@@ -117,8 +123,30 @@ fn predictive_encode_v4(data: &[u8], lossy: Option<u8>) -> Vec<u8> {
     let mut spectral = SpectralPredictor::new(2048);
     let mut lz_match = LzMatchPredictor::new(); // Added
 
-    // 2. Initialize V4 Mixer (Hybrid AR2 + Ensemble)
-    let mut mixer = Mixer::new();
+    // 2. Initialize V4 Mixer (Hybrid AR2 + Ensemble + FedProx)
+    let (init_w, global_w) = if let Some(w_bytes) = weights {
+        // Cast bytes to f32 slice assuming native endianness
+        // Safety: We assume the caller passes a valid byte representation of [f32; N]
+        let f32_count = w_bytes.len() / 4;
+        if f32_count > 0 {
+            let ptr = w_bytes.as_ptr() as *const f32;
+            let slice = unsafe { std::slice::from_raw_parts(ptr, f32_count) };
+
+            if f32_count >= 2 * NUM_MODELS {
+                (Some(&slice[0..NUM_MODELS]), Some(&slice[NUM_MODELS..2 * NUM_MODELS]))
+            } else if f32_count >= NUM_MODELS {
+                (Some(&slice[0..NUM_MODELS]), None)
+            } else {
+                (None, None)
+            }
+        } else {
+            (None, None)
+        }
+    } else {
+        (None, None)
+    };
+
+    let mut mixer = Mixer::new(init_w, global_w);
 
     // 3. Initialize Range Encoder (Lazy ANS)
     let mut ans = AnsWriter::new();
@@ -171,14 +199,36 @@ fn predictive_encode_v4(data: &[u8], lossy: Option<u8>) -> Vec<u8> {
     ans.finish()
 }
 
-fn predictive_decode_v4(compressed_words: &[u8], decoded_len: usize) -> Vec<u8> {
+fn predictive_decode_v4(compressed_words: &[u8], decoded_len: usize, weights: Option<&[u8]>) -> Vec<u8> {
     // 1. Initialize Engines
     let mut linear = 0u8;
     let mut simple = SimplePredictor::new();
     let mut graph = GraphPredictor::new();
     let mut spectral = SpectralPredictor::new(2048);
     let mut lz_match = LzMatchPredictor::new(); // Added
-    let mut mixer = Mixer::new();
+
+    // Setup Mixer weights
+    let (init_w, global_w) = if let Some(w_bytes) = weights {
+        let f32_count = w_bytes.len() / 4;
+        if f32_count > 0 {
+            let ptr = w_bytes.as_ptr() as *const f32;
+            let slice = unsafe { std::slice::from_raw_parts(ptr, f32_count) };
+
+            if f32_count >= 2 * NUM_MODELS {
+                (Some(&slice[0..NUM_MODELS]), Some(&slice[NUM_MODELS..2 * NUM_MODELS]))
+            } else if f32_count >= NUM_MODELS {
+                (Some(&slice[0..NUM_MODELS]), None)
+            } else {
+                (None, None)
+            }
+        } else {
+            (None, None)
+        }
+    } else {
+        (None, None)
+    };
+
+    let mut mixer = Mixer::new(init_w, global_w);
 
     // 2. Initialize Range Decoder
     let mut ans = AnsReader::new(compressed_words);
@@ -247,7 +297,7 @@ pub fn compress_chunk(
     }
 
     // 2. Try ANS (Neural/Predictive) Compression
-    let compressed_body = predictive_encode_v4(chunk, _lossy);
+    let compressed_body = predictive_encode_v4(chunk, _lossy, _weights);
 
     if compressed_body.len() < chunk.len() {
         let mut out = Vec::with_capacity(1 + 4 + compressed_body.len());
@@ -288,7 +338,7 @@ pub fn decompress_chunk(
     match codec_flag {
         0x00 => {
             // ANS codec (V4)
-            Ok(predictive_decode_v4(&compressed[5..], decomp_len))
+            Ok(predictive_decode_v4(&compressed[5..], decomp_len, _weights))
         }
         0x01 => {
             // Zstd fallback

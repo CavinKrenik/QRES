@@ -80,8 +80,10 @@ def fed_prox_merge(local_brain, global_brain):
             val = (1.0 - mu) * l + mu * g
             merged_conf.append(val)
             
+            
     # Update local brain structure
     local_brain["confidence"] = merged_conf
+    local_brain["global_confidence"] = global_conf # Persistence for continuous FedProx
     return local_brain
 
 def sync():

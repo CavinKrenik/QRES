@@ -48,6 +48,27 @@ fn compress_file(input: &str, output: &str) -> io::Result<()> {
     let mut input_file = File::open(input)?;
     let mut output_file = File::create(output)?;
 
+    // Load Living Brain for Initialization
+    let brain = if let Ok(json) = fs::read_to_string(DEFAULT_BRAIN_FILE) {
+        LivingBrain::from_json(&json).unwrap_or_default()
+    } else {
+        LivingBrain::default()
+    };
+
+    // Prepare weights buffer (Init + Global)
+    let mut w_bytes = Vec::with_capacity(80);
+    // 1. Initial Weights
+    for &f in &brain.confidence {
+        w_bytes.extend_from_slice(&f.to_le_bytes());
+    }
+    // 2. Global Weights (FedProx)
+    if let Some(g) = &brain.global_confidence {
+        for &f in g {
+            w_bytes.extend_from_slice(&f.to_le_bytes());
+        }
+    }
+    let weights_arg = if w_bytes.is_empty() { None } else { Some(w_bytes.as_slice()) };
+
     let mut buffer = vec![0u8; CHUNK_SIZE];
     let mut total_input = 0u64;
     let mut total_output = 0u64;
@@ -60,7 +81,7 @@ fn compress_file(input: &str, output: &str) -> io::Result<()> {
         }
 
         let chunk = &buffer[..bytes_read];
-        let compressed = compress_chunk(chunk, 0, None, None)?;
+        let compressed = compress_chunk(chunk, 0, weights_arg, None)?;
 
         // Write chunk size (4 bytes) + compressed data
         output_file.write_all(&(compressed.len() as u32).to_le_bytes())?;

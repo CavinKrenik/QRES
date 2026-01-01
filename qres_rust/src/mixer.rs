@@ -35,14 +35,40 @@ pub struct Mixer {
     // Lock-on Detection
     current_winner: usize,
     win_streak: usize,
+
+    // Phase 2: FedProx
+    global_weights: Option<WeightStorage>,
 }
 
 impl Mixer {
     #[cfg(target_arch = "x86_64")]
-    pub fn new() -> Self {
-        // Initial weights: Uniform for 5 models (0.2 each)
-        // Pad with zeros for 8 lanes
-        let weights = unsafe { _mm256_set_ps(0.0, 0.05, 0.05, 0.05, 0.05, 0.1, 0.2, 0.5) };
+    pub fn new(init: Option<&[f32]>, global: Option<&[f32]>) -> Self {
+        // Helper to load into AVX
+        let load_simd = |data: &[f32]| -> __m256 {
+            let mut arr = [0.0f32; 8];
+            for (i, &v) in data.iter().take(8).enumerate() {
+                arr[i] = v;
+            }
+            unsafe { _mm256_loadu_ps(arr.as_ptr()) } 
+        };
+
+        // Defaults: 0.05, 0.05, 0.05, 0.1, 0.2, 0.5 (padded)
+        // Note: The previous default loop was 0.0, 0.05... etc.
+        // Let's stick to explicit default array if None.
+        // Previous: [0.0, 0.05, 0.05, 0.05, 0.05, 0.1, 0.2, 0.5] (reversed in set_ps?)
+        // _mm256_set_ps(e7, e6, e5, e4, e3, e2, e1, e0)
+        // e0 is index 0.
+        // models: linear, simple, graph, spectral, lz_match.
+        // Let's rely on standard array initialization.
+
+        let default_w = [0.5, 0.2, 0.1, 0.05, 0.05, 0.0, 0.0, 0.0]; // Linear..LzMatch..Pad
+        let weights = if let Some(w) = init {
+            load_simd(w)
+        } else {
+            load_simd(&default_w)
+        };
+
+        let global_weights = global.map(load_simd);
 
         Mixer {
             weights,
@@ -56,14 +82,31 @@ impl Mixer {
             count: 0,
             current_winner: 0,
             win_streak: 0,
+            global_weights,
         }
     }
 
     #[cfg(not(target_arch = "x86_64"))]
-    pub fn new() -> Self {
-        // Initial weights matching SIMD layout
+    pub fn new(init: Option<&[f32]>, global: Option<&[f32]>) -> Self {
+        let load_scalar = |data: &[f32]| -> [f32; 8] {
+            let mut arr = [0.0; 8];
+            for (i, &v) in data.iter().take(8).enumerate() {
+                arr[i] = v;
+            }
+            arr
+        };
+
+        let default_w = [0.5, 0.2, 0.1, 0.05, 0.05, 0.05, 0.05, 0.0];
+        let weights = if let Some(w) = init {
+            load_scalar(w)
+        } else {
+            default_w
+        };
+
+        let global_weights = global.map(load_scalar);
+
         Mixer {
-            weights: [0.5, 0.2, 0.1, 0.05, 0.05, 0.05, 0.05, 0.0],
+            weights,
             learning_rate: 0.01,
             ar_coeffs: [0.7, -0.2],
             history: [128.0, 128.0],
@@ -74,6 +117,7 @@ impl Mixer {
             count: 0,
             current_winner: 0,
             win_streak: 0,
+            global_weights,
         }
     }
 
@@ -227,6 +271,15 @@ impl Mixer {
         };
 
         self.weights = unsafe { _mm256_mul_ps(self.weights, factor) };
+        
+        // FedProx: Pull towards global weights if present
+        if let Some(global) = self.global_weights {
+            let mu = 0.001; // Continuous proximal pull
+            let diff_g = unsafe { _mm256_sub_ps(global, self.weights) };
+            let correction = unsafe { _mm256_mul_ps(diff_g, _mm256_set1_ps(mu)) };
+            self.weights = unsafe { _mm256_add_ps(self.weights, correction) };
+        }
+
         self.weights = unsafe { _mm256_add_ps(self.weights, _mm256_set1_ps(0.001)) };
 
         let mask = unsafe { _mm256_set_ps(0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0) };
@@ -250,6 +303,13 @@ impl Mixer {
             let factor = 1.0 - (self.learning_rate * err_norm);
 
             self.weights[i] *= factor;
+            
+            // FedProx
+            if let Some(global) = self.global_weights {
+                let mu = 0.001;
+                self.weights[i] += mu * (global[i] - self.weights[i]);
+            }
+
             self.weights[i] += 0.001; // Regen
             sum_w += self.weights[i];
         }
