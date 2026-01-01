@@ -24,7 +24,7 @@ pub mod predictors; // Task 6
 pub use ans_coder::{AnsReader, AnsWriter};
 use mixer::Mixer;
 use spectral::SpectralPredictor;
-use predictors::{SimplePredictor, GraphPredictor}; // Replaces IpepsPredictor
+use predictors::{Predictor, SimplePredictor, GraphPredictor, LzMatchPredictor}; // Added Predictor
 
 // --- Living Brain (Adaptive Learning) ---
 
@@ -117,6 +117,7 @@ fn predictive_encode_v4(data: &[u8], lossy: Option<u8>) -> Vec<u8> {
     let mut simple = SimplePredictor::new();
     let mut graph = GraphPredictor::new();
     let mut spectral = SpectralPredictor::new(2048);
+    let mut lz_match = LzMatchPredictor::new(); // Added
 
     // 2. Initialize V4 Mixer (Hybrid AR2 + Ensemble)
     let mut mixer = Mixer::new();
@@ -127,7 +128,7 @@ fn predictive_encode_v4(data: &[u8], lossy: Option<u8>) -> Vec<u8> {
     // Prepare quantization factor
     let q_factor = lossy.unwrap_or(1).max(1) as i8;
 
-    let mut preds = [0u8; 4];
+    let mut preds = [0u8; 5]; // Updated to 5
 
     for &actual in data {
         // A. Predict
@@ -135,6 +136,7 @@ fn predictive_encode_v4(data: &[u8], lossy: Option<u8>) -> Vec<u8> {
         preds[1] = simple.predict_next();
         preds[2] = graph.predict_next();
         preds[3] = spectral.predict();
+        preds[4] = lz_match.predict_next(); // Added
 
         // B. Mix (V4: Dynamic AR2 Switching happens inside mix())
         let mixed_prediction = mixer.mix(&preds);
@@ -164,6 +166,7 @@ fn predictive_encode_v4(data: &[u8], lossy: Option<u8>) -> Vec<u8> {
         simple.update(reconstructed);
         graph.update(reconstructed);
         spectral.update(reconstructed);
+        lz_match.update(reconstructed); // Added
     }
 
     // F. Finish (Seal the stream)
@@ -176,13 +179,14 @@ fn predictive_decode_v4(compressed_words: &[u8], decoded_len: usize) -> Vec<u8> 
     let mut simple = SimplePredictor::new();
     let mut graph = GraphPredictor::new();
     let mut spectral = SpectralPredictor::new(2048);
+    let mut lz_match = LzMatchPredictor::new(); // Added
     let mut mixer = Mixer::new();
 
     // 2. Initialize Range Decoder
     let mut ans = AnsReader::new(compressed_words);
 
     let mut out = Vec::with_capacity(decoded_len);
-    let mut preds = [0u8; 4];
+    let mut preds = [0u8; 5]; // Updated to 5
 
     for _ in 0..decoded_len {
         // A. Predict
@@ -190,6 +194,7 @@ fn predictive_decode_v4(compressed_words: &[u8], decoded_len: usize) -> Vec<u8> 
         preds[1] = simple.predict_next();
         preds[2] = graph.predict_next();
         preds[3] = spectral.predict();
+        preds[4] = lz_match.predict_next(); // Added
 
         // B. Mix
         let mixed_prediction = mixer.mix(&preds);
@@ -207,6 +212,7 @@ fn predictive_decode_v4(compressed_words: &[u8], decoded_len: usize) -> Vec<u8> 
         simple.update(actual);
         graph.update(actual);
         spectral.update(actual);
+        lz_match.update(actual); // Added
     }
 
     out
