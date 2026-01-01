@@ -124,6 +124,25 @@ fn decompress_file(input: &str, output: &str) -> io::Result<()> {
     let mut input_file = File::open(input)?;
     let mut output_file = File::create(output)?;
 
+    // Load Living Brain for Initialization (Must match Encoder!)
+    let brain = if let Ok(json) = fs::read_to_string(DEFAULT_BRAIN_FILE) {
+        LivingBrain::from_json(&json).unwrap_or_default()
+    } else {
+        LivingBrain::default()
+    };
+
+    // Prepare weights buffer
+    let mut w_bytes = Vec::with_capacity(80);
+    for &f in &brain.confidence {
+        w_bytes.extend_from_slice(&f.to_le_bytes());
+    }
+    if let Some(g) = &brain.global_confidence {
+        for &f in g {
+            w_bytes.extend_from_slice(&f.to_le_bytes());
+        }
+    }
+    let weights_arg = if w_bytes.is_empty() { None } else { Some(w_bytes.as_slice()) };
+
     let mut total_output = 0u64;
     let start = std::time::Instant::now();
 
@@ -143,7 +162,7 @@ fn decompress_file(input: &str, output: &str) -> io::Result<()> {
         input_file.read_exact(&mut compressed)?;
 
         // Decompress
-        let decompressed = decompress_chunk(&compressed, 0, None)?;
+        let decompressed = decompress_chunk(&compressed, 0, weights_arg)?;
         output_file.write_all(&decompressed)?;
 
         total_output += decompressed.len() as u64;
@@ -203,9 +222,17 @@ fn brain_import(file_path: &str) -> io::Result<()> {
 }
 
 fn swarm_mode() -> io::Result<()> {
-    eprintln!("[Swarm] Starting QRES Swarm Node...");
-    // For now, just a placeholder - actual swarm logic in daemon.rs
-    eprintln!("Swarm mode not implemented in CLI yet. Use daemon.");
+    eprintln!("[Swarm] Starting QRES P2P Swarm Node (libp2p)...");
+    
+    // Create Tokio Runtime for async swarm
+    let rt = tokio::runtime::Runtime::new().map_err(io::Error::other)?;
+    
+    rt.block_on(async {
+        if let Err(e) = qres_rust::swarm_p2p::start_p2p_node().await {
+            eprintln!("Swarm crashed: {}", e);
+        }
+    });
+
     Ok(())
 }
 

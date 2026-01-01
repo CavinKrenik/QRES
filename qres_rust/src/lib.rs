@@ -14,6 +14,7 @@ pub mod daemon;
 pub mod semantic;
 pub mod stats;
 pub mod swarm;
+pub mod swarm_p2p;
 
 // --- v3.0/v4.0 Modules ---
 pub mod ans_coder;
