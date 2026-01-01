@@ -45,6 +45,9 @@ enum Commands {
         /// Path to brain file
         #[arg(long, default_value = "qres_brain.json")]
         brain: String,
+        /// API Port
+        #[arg(long, default_value = "8080")]
+        port: u16,
     },
 }
 
@@ -225,15 +228,16 @@ fn brain_import(file_path: &str) -> io::Result<()> {
     Ok(())
 }
 
-fn swarm_mode(brain: String) -> io::Result<()> {
+fn swarm_mode(brain: String, port: u16) -> io::Result<()> {
     eprintln!("[Swarm] Starting QRES P2P Swarm Node (libp2p)...");
     eprintln!("[Swarm] Brain File: {}", brain);
+    eprintln!("[Swarm] API Port: {}", port);
     
     // Create Tokio Runtime for async swarm
     let rt = tokio::runtime::Runtime::new().map_err(io::Error::other)?;
     
     rt.block_on(async {
-        if let Err(e) = qres_rust::swarm_p2p::start_p2p_node(brain).await {
+        if let Err(e) = qres_rust::swarm_p2p::start_p2p_node(brain, port).await {
             eprintln!("Swarm crashed: {}", e);
         }
     });
@@ -249,7 +253,7 @@ fn main() {
         Commands::Decompress { input, output } => decompress_file(&input, &output),
         Commands::ExportBrain { output } => brain_export_to_file(&output),
         Commands::ImportBrain { input } => brain_import(&input),
-        Commands::Swarm { brain } => swarm_mode(brain),
+        Commands::Swarm { brain, port } => swarm_mode(brain, port),
     };
 
     if let Err(e) = result {

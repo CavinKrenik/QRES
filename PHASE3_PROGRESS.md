@@ -18,6 +18,12 @@
 - [x] **Aggregation**: Compute FedProx update locally from received gossip messages.
 - [x] **CLI Integration**: Add `qres-cli swarm` command.
 
+### Phase 3.3: Swarm REST API (Observability)
+- [x] **State Management**: Share `peers` and `brain` via `Arc<RwLock<AppState>>`.
+- [x] **API Server**: Implement Axum server on separate Tokio task.
+- [x] **Endpoints**: `GET /status` (peer info), `GET /brain` (current weights).
+- [ ] **Resilience**: Handle graceful shutdown and error recovery.
+
 ---
 
 ## 🛠️ Implementation Log
@@ -39,3 +45,10 @@
 - Nodes exchange JSON brain states via `qres-brain-sync` topic.
 - Local `LivingBrain` merges remote states (FedProx-lite).
 - Validation script confirmed brain evolution.
+
+### Step 4: REST API
+*Status*: ✅ Done
+*Details*:
+- Implemented `start_p2p_node` with native `axum` server integration.
+- Endpoints `/status` and `/brain` return live JSON data.
+- State shared via `Arc<RwLock>` between Swarm Event Loop and HTTP Server.
