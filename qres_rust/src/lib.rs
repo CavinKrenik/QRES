@@ -17,7 +17,8 @@ pub mod swarm;
 
 // --- v3.0/v4.0 Modules ---
 pub mod ans_coder;
-mod mixer;
+pub mod meta_brain;
+pub mod mixer;
 pub mod predictors;
 pub mod spectral; // Task 6
 pub use ans_coder::{AnsReader, AnsWriter};
@@ -272,23 +273,17 @@ pub fn compress_chunk(
     _weights: Option<&[u8]>,
     _lossy: Option<u8>,
 ) -> io::Result<Vec<u8>> {
-    const HIGH_ENTROPY_THRESHOLD: f32 = 7.5; // Max is 8.0.
+    const HIGH_ENTROPY_THRESHOLD: f32 = 7.5;
 
     // 1. Smart Fallback Pre-scan
     if chunk.len() > 512 {
         let entropy = calculate_sample_entropy(chunk);
         if entropy > HIGH_ENTROPY_THRESHOLD {
+            // Zstd Fallback logic
             let zstd_compressed = zstd::bulk::compress(chunk, 3).map_err(io::Error::other)?;
-
             if zstd_compressed.len() < chunk.len() {
-                let mut out = Vec::with_capacity(1 + 4 + zstd_compressed.len());
+                let mut out = Vec::with_capacity(5 + zstd_compressed.len());
                 out.push(0x01); // Flag: Zstd
-                out.extend_from_slice(&(chunk.len() as u32).to_le_bytes());
-                out.extend_from_slice(&zstd_compressed);
-                return Ok(out);
-            } else {
-                let mut out = Vec::with_capacity(1 + 4 + zstd_compressed.len());
-                out.push(0x01);
                 out.extend_from_slice(&(chunk.len() as u32).to_le_bytes());
                 out.extend_from_slice(&zstd_compressed);
                 return Ok(out);
@@ -296,19 +291,59 @@ pub fn compress_chunk(
         }
     }
 
-    // 2. Try ANS (Neural/Predictive) Compression
-    let compressed_body = predictive_encode_v4(chunk, _lossy, _weights);
+    // 2. Prepare Weights (Neural vs Static)
+    let mut effective_weights = Vec::new();
+    let mut is_neural = false;
+    let mut stored_init_weights = Vec::new();
 
+    // A. Init Weights
+    if let Some(nw) = crate::meta_brain::predict_init_weights(chunk) {
+        is_neural = true;
+        for f in nw {
+            let b = f.to_le_bytes();
+            stored_init_weights.extend_from_slice(&b);
+            effective_weights.extend_from_slice(&b);
+        }
+    } else {
+        // Fallback to LivingBrain init
+        if let Some(w) = _weights {
+            let take = w.len().min(20); // 5 float32s * 4
+            effective_weights.extend_from_slice(&w[0..take]);
+        }
+    }
+
+    // B. Global Weights (FedProx) - Append if present
+    if let Some(w) = _weights {
+        if w.len() >= 40 {
+            effective_weights.extend_from_slice(&w[20..40]);
+        }
+    }
+
+    let w_arg = if effective_weights.is_empty() { None } else { Some(effective_weights.as_slice()) };
+
+    // 3. Encode
+    let compressed_body = predictive_encode_v4(chunk, _lossy, w_arg);
+
+    // 4. Wrap
     if compressed_body.len() < chunk.len() {
-        let mut out = Vec::with_capacity(1 + 4 + compressed_body.len());
-        out.push(0x00); // Flag: ANS codec
+        let flag = if is_neural { 0x02 } else { 0x00 };
+        let mut out = Vec::with_capacity(1 + 4 + stored_init_weights.len() + compressed_body.len());
+        
+        out.push(flag);
         out.extend_from_slice(&(chunk.len() as u32).to_le_bytes());
+        
+        if is_neural {
+            // Flag 0x02 stores 20 bytes of init weights
+            out.extend_from_slice(&stored_init_weights);
+        }
+        
         out.extend_from_slice(&compressed_body);
         Ok(out)
     } else {
+        // Zstd Fallback
         let zstd_compressed = zstd::bulk::compress(chunk, 3).map_err(io::Error::other)?;
         let mut out = Vec::with_capacity(1 + 4 + zstd_compressed.len());
-        out.push(0x01); // Flag: Zstd fallback
+        out.push(0x01);
         out.extend_from_slice(&(chunk.len() as u32).to_le_bytes());
         out.extend_from_slice(&zstd_compressed);
         Ok(out)
@@ -343,6 +378,29 @@ pub fn decompress_chunk(
         0x01 => {
             // Zstd fallback
             zstd::bulk::decompress(&compressed[5..], decomp_len).map_err(io::Error::other)
+        }
+        0x02 => {
+            // ANS codec with Neural Init (V5)
+            if compressed.len() < 25 {
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    "Chunk too short for Neural Header",
+                ));
+            }
+            let init_w_bytes = &compressed[5..25]; // 5 floats * 4 bytes
+            
+            // Reconstruct effective weights: [Neural Init] + [Global from Args]
+            let mut w_vec = Vec::with_capacity(40);
+            w_vec.extend_from_slice(init_w_bytes);
+            
+            if let Some(w) = _weights {
+                if w.len() >= 40 {
+                    w_vec.extend_from_slice(&w[20..40]);
+                }
+            }
+            
+            let w_arg = if w_vec.is_empty() { None } else { Some(w_vec.as_slice()) };
+            Ok(predictive_decode_v4(&compressed[25..], decomp_len, w_arg))
         }
         _ => Err(io::Error::new(
             io::ErrorKind::InvalidData,

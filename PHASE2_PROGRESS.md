@@ -13,20 +13,25 @@
 - [ ] **Heterogeneous Test**: Simulate agents with non-IID data (text vs binary specialists).
 
 ### Phase 2.2: Neural Upgrades
-- [ ] **Meta-Brain Architecture**: Design simple MLP in Rust (`common/neural.rs`?).
-- [ ] **Training Pipeline**: `ai/train_meta_v2.py` to learn from benchmark data.
-- [ ] **Inference**: Integrate neural inference into `compress_chunk`.
+- [x] **Meta-Brain Architecture**: Design simple MLP in Rust (`common/neural.rs`?).
+- [x] **Training Pipeline**: `ai/train_meta_v2.py` to learn from benchmark data.
+- [x] **Inference**: Integrate neural inference into `compress_chunk`.
 
 ---
 
 ## 🛠️ Implementation Log
 
 ### Step 1: FedProx Mixer Support
-*Status*: Pending
-*Plan*:
-1. Modify `Mixer` struct to hold `global_weights`.
-2. Update `Mixer::update_weights`: Add `+ μ * (w - w_global)` to error/gradient.
-3. Update `qres-cli` to load global weights from brain JSON.
+*Status*: ✅ Done
+*Details*:
+- `Mixer` modified to accept `global_weights`.
+- `update_weights` pulls towards global with `mu=0.001`.
+- `qres-cli` passes brain weights to encoder/decoder.
 
-### Step 2: Meta-Brain
-*Status*: Pending
+### Step 2: Meta-Brain v2 (Neural Init)
+*Status*: ✅ Done
+*Details*:
+- **Architecture**: 4-16-8-5 MLP (Entropy/Mean/Var/AC1 -> Weights).
+- **Training**: `ai/train_meta_v2.py` uses scikit-learn on `collect_data` output.
+- **Protocol**: V5 Format Flag `0x02` stores predicted initial weights (20 bytes).
+- **Results**: Integrated and validated. PoC working.
