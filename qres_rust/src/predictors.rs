@@ -1,6 +1,7 @@
 use std::collections::{HashMap, VecDeque};
-use std::arch::x86_64::*; // SIMD
 
+#[cfg(target_arch = "x86_64")]
+use std::arch::x86_64::*; // SIMD
 
 // QRES v5.0 Predictor Trait
 pub trait Predictor {
@@ -42,16 +43,21 @@ impl Predictor for SimplePredictor {
 // Replaces the experimental iPEPS model with a concrete DAG-based learner.
 // Captures dependencies at specific lag intervals (edges).
 
-// --- Graph Predictor (SIMD Optimized) ---
+#[cfg(target_arch = "x86_64")]
+type GraphWeights = __m256;
+#[cfg(not(target_arch = "x86_64"))]
+type GraphWeights = [f32; 8];
+
 pub struct GraphPredictor {
     // Weights are aligned for SIMD (__m256 for x86_64)
-    weights: __m256, 
+    weights: GraphWeights, 
     edges: [usize; 8],        // Fixed edges [1, 2, 3, 4, 8, 16, 32, 0]
     history: VecDeque<u8>,
     learning_rate: f32,
 }
 
 impl GraphPredictor {
+    #[cfg(target_arch = "x86_64")]
     pub fn new() -> Self {
         // Tuned lags for telemetry/logs
         let edges = [1, 2, 3, 4, 8, 16, 32, 0]; // 0 is dummy padding
@@ -64,9 +70,26 @@ impl GraphPredictor {
             learning_rate: 0.015,
         }
     }
+
+    #[cfg(not(target_arch = "x86_64"))]
+    pub fn new() -> Self {
+        let edges = [1, 2, 3, 4, 8, 16, 32, 0];
+        // Scalar equivalent of _mm256_set_ps(0.0, 0.05, ... , 0.5)
+        // Note: set_ps(e7, e6... e0). e7 is highest index 7. e0 is index 0.
+        // So index 0 is 0.5.
+        let weights = [0.5, 0.2, 0.1, 0.05, 0.05, 0.05, 0.05, 0.0];
+
+        GraphPredictor {
+            weights,
+            edges,
+            history: VecDeque::from(vec![0; 40]),
+            learning_rate: 0.015,
+        }
+    }
 }
 
 impl Predictor for GraphPredictor {
+    #[cfg(target_arch = "x86_64")]
     fn predict_next(&self) -> u8 {
         // 1. Gather inputs
         let mut inputs = [0.0f32; 8];
@@ -74,8 +97,6 @@ impl Predictor for GraphPredictor {
 
         for i in 0..7 { // predictable branch (const 7)
             let lag = self.edges[i];
-            // history back is newest. index 0 is oldest.
-            // history[len - 1] is t-1
             if lag <= hist_len {
                 inputs[i] = self.history[hist_len - lag] as f32;
             }
@@ -92,11 +113,28 @@ impl Predictor for GraphPredictor {
         sum.clamp(0.0, 255.0) as u8
     }
 
+    #[cfg(not(target_arch = "x86_64"))]
+    fn predict_next(&self) -> u8 {
+        let mut sum = 0.0;
+        let hist_len = self.history.len();
+        
+        for i in 0..7 {
+            let lag = self.edges[i];
+            if lag <= hist_len {
+                let input = self.history[hist_len - lag] as f32;
+                sum += self.weights[i] * input;
+            }
+        }
+        
+        sum.clamp(0.0, 255.0) as u8
+    }
+
+    #[cfg(target_arch = "x86_64")]
     fn update(&mut self, actual: u8) {
         let pred = self.predict_next() as f32;
         let err = actual as f32 - pred;
         
-        // 1. Gather inputs again (redundant but clean for ownership)
+        // 1. Gather inputs again
         let mut inputs = [0.0f32; 8];
         let hist_len = self.history.len();
         for i in 0..7 {
@@ -108,8 +146,6 @@ impl Predictor for GraphPredictor {
         let input_simd = unsafe { _mm256_loadu_ps(inputs.as_ptr()) };
 
         // 2. SIMD Weight Update (LMS)
-        // w_new = w + lr * err * input_norm
-        // input_norm = input / 255.0
         let lr_simd = unsafe { _mm256_set1_ps(self.learning_rate) };
         let err_simd = unsafe { _mm256_set1_ps(err) };
         let norm_factor = unsafe { _mm256_set1_ps(1.0 / 255.0) };
@@ -117,7 +153,7 @@ impl Predictor for GraphPredictor {
         let delta = unsafe { _mm256_mul_ps(lr_simd, _mm256_mul_ps(err_simd, _mm256_mul_ps(input_simd, norm_factor))) };
         self.weights = unsafe { _mm256_add_ps(self.weights, delta) };
 
-        // Stability Clamp (Prevent Exploding Gradients in Graph)
+        // Stability Clamp
         let mut w_arr = [0.0f32; 8];
         unsafe { _mm256_storeu_ps(w_arr.as_mut_ptr(), self.weights) };
         for w in &mut w_arr {
@@ -126,6 +162,29 @@ impl Predictor for GraphPredictor {
         self.weights = unsafe { _mm256_loadu_ps(w_arr.as_ptr()) };
 
         // Update history
+        self.history.push_back(actual);
+        if self.history.len() > 40 {
+            self.history.pop_front();
+        }
+    }
+
+    #[cfg(not(target_arch = "x86_64"))]
+    fn update(&mut self, actual: u8) {
+        let pred = self.predict_next() as f32;
+        let err = actual as f32 - pred;
+        
+        let hist_len = self.history.len();
+        
+        for i in 0..7 {
+            let lag = self.edges[i];
+            if lag <= hist_len {
+                let input = self.history[hist_len - lag] as f32;
+                let delta = self.learning_rate * err * (input / 255.0);
+                self.weights[i] += delta;
+                self.weights[i] = self.weights[i].clamp(-5.0, 5.0);
+            }
+        }
+
         self.history.push_back(actual);
         if self.history.len() > 40 {
             self.history.pop_front();
@@ -158,18 +217,11 @@ impl LzMatchPredictor {
 
     #[inline(always)]
     fn hash(data: &[u8]) -> usize {
-        // Simple hash: (b1 << 12 ^ b2 << 8 ^ b3 << 4 ^ b4)
-        // Or multiplicative. Let's use a standard fast rolling-like hash.
-        // FXZ hash style:
         if data.len() < 4 { return 0; }
         ((data[0] as usize) << 12) ^ 
         ((data[1] as usize) << 8) ^ 
         ((data[2] as usize) << 4) ^ 
         (data[3] as usize)
-        // Note: Using a better hash helps collisions, but this is fast.
-        // Let's use a slightly better mixer:
-        // let mut h = 0xcf1bbcdcb7a56463u64; // Approx
-        // We'll stick to the shift-xor for speed in inner loop.
     }
 }
 
@@ -177,51 +229,30 @@ impl Predictor for LzMatchPredictor {
     fn predict_next(&self) -> u8 {
         if self.pos < 4 { return 0; }
         
-        // 1. Hash last 3 bytes + 'current implied' (LZ lookahead usually needs current byte... wait)
-        // Prediction happens BEFORE we see x_t.
-        // We predict x_t based on x_{t-1}, x_{t-2}, ...
-        // So we look up the context `data[t-4..t]` (length 4 bytes prior to current).
-        // Let's use context length 4.
-        
         let start = self.pos - 4;
         let ctx = &self.history[start..self.pos];
         let h = Self::hash(ctx) & self.hash_mask;
         
-        // 2. Lookup match
         let match_pos = self.table[h];
         
-        // 3. Verify match (optional, but good for accuracy)
-        // We need `history[match_pos..match_pos+4] == ctx`
-        // If match_pos is valid and not too close to current (avoid self-ref overlap mess for now, though LZ allowed)
         if match_pos > 0 && match_pos + 4 < self.history.len() {
-             // Check if context actually matches (avoids hash collisions)
              if &self.history[match_pos..match_pos+4] == ctx {
-                 // Predict the byte *after* the match
                  return self.history[match_pos + 4];
              }
         }
         
-        // Fallback: No match found, use simple 0 or let mixer handle it (Mixer will weight this down if it's constant)
-        // But usually LZ returns 'literal' if no match. Here we must return a byte prediction.
-        // We return the last byte (RLE) as a safe fallback? 
-        // Or 0? Let's return self.history[self.pos-1] (order-1)
         self.history[self.pos - 1]
     }
 
     fn update(&mut self, actual: u8) {
-        // 1. Add to history
         self.history.push(actual);
         self.pos += 1;
         
-        // 2. Update Hash Table with PREVIOUS sequence
-        // We want to record the occurrence of `history[t-4..t]` so future lookups find it.
-        // We update the hash for the sequence ending at `pos - 1`.
-        // Sequence: history[pos-5 .. pos-1] (length 4) -> maps to start index (pos-5)
         if self.pos > 4 {
-            let start = self.pos - 5; // The sequence that just finished
+            let start = self.pos - 5; 
             let ctx = &self.history[start..self.pos-1];
             let h = Self::hash(ctx) & self.hash_mask;
-            self.table[h] = start; // Overwrite with most recent
+            self.table[h] = start; 
         }
     }
 }
