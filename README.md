@@ -1,10 +1,8 @@
 # QRES: The Hive-Optimized Neural Compressor (v4.0.1)
 
-![QRES Hero](https://github.com/CavinKrenik/QRES/raw/main/assets/qres_banner.png)
 *(Dedicated to the pursuit of the Singularity)*
 
 [![Release](https://img.shields.io/github/v/release/CavinKrenik/QRES)](https://github.com/CavinKrenik/QRES/releases)
-[![Build Status](https://img.shields.io/github/workflow/status/CavinKrenik/QRES/CI)](https://github.com/CavinKrenik/QRES/actions)
 [![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.8%2B-blue)](https://pypi.org/project/qres/)
 [![Rust](https://img.shields.io/badge/rust-1.70%2B-orange)](https://crates.io/crates/qres_rust)
