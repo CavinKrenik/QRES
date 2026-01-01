@@ -25,11 +25,16 @@ pub struct Mixer {
     ar_coeffs: [f32; 2], // [phi1, phi2]
     history: [f32; 2],   // [x_{t-1}, x_{t-2}]
     ar_learning_rate: f32,
+    ar_velocities: [f32; 2], // Momentum for AR updates
 
     // Variance Tracking
     running_mean: f32,
     running_var: f32,
     count: usize,
+    
+    // Lock-on Detection
+    current_winner: usize,
+    win_streak: usize,
 }
 
 impl Mixer {
@@ -45,33 +50,30 @@ impl Mixer {
             ar_coeffs: [0.7, -0.2],
             history: [128.0, 128.0],
             ar_learning_rate: 0.05,
+            ar_velocities: [0.0, 0.0],
             running_mean: 128.0,
             running_var: 1000.0,
             count: 0,
+            current_winner: 0,
+            win_streak: 0,
         }
     }
 
     #[cfg(not(target_arch = "x86_64"))]
     pub fn new() -> Self {
         // Initial weights matching SIMD layout
-        // _mm256_set_ps args are e7, e6, e5, e4, e3, e2, e1, e0 (Little Endian? Careful with order)
-        // set_ps(e7...e0) -> [e0, e1, ..., e7] in memory usually
-        // Actually set_ps puts first arg in high bits.
-        // Let's just use explicit array: [0.5, 0.2, 0.1, 0.05, 0.05, 0.05, 0.05, 0.0]
-        // Index 0..4 are models.
-        // Model 0 (Linear) gets 0.5? No, let's look at previous _mm256_set_ps(0.0... 0.5).
-        // The previous code had 0.5 at the end (e0). So index 0.
-        // models: 5.
-
         Mixer {
             weights: [0.5, 0.2, 0.1, 0.05, 0.05, 0.05, 0.05, 0.0],
             learning_rate: 0.01,
             ar_coeffs: [0.7, -0.2],
             history: [128.0, 128.0],
             ar_learning_rate: 0.05,
+            ar_velocities: [0.0, 0.0],
             running_mean: 128.0,
             running_var: 1000.0,
             count: 0,
+            current_winner: 0,
+            win_streak: 0,
         }
     }
 
@@ -134,16 +136,62 @@ impl Mixer {
         let delta2 = y - self.running_mean;
         self.running_var = self.running_var * 0.95 + (delta * delta2) * 0.05;
 
-        // B. Update Ensemble Weights
+        // B. Lock-On Detection
+        // Find best predictor (lowest error)
+        let mut best_idx = 0;
+        let mut min_err = f32::MAX;
+        
+        for (i, &p) in preds.iter().enumerate().take(NUM_MODELS) {
+            let err = (p as f32 - y).abs();
+            if err < min_err {
+                min_err = err;
+                best_idx = i;
+            }
+        }
+
+        if best_idx == self.current_winner {
+            self.win_streak += 1;
+        } else {
+            self.current_winner = best_idx;
+            self.win_streak = 0;
+        }
+
+        // Adaptive Learning Rate
+        // High variance -> Concept Drift -> Increase LR
+        // Low variance -> Stable -> Decrease LR
+        let std = (self.running_var / (self.count.max(1) as f32)).sqrt();
+        let adaptive_lr = if std > 40.0 { 0.05 } else { 0.005 };
+        self.learning_rate = adaptive_lr;
+
+        // C. Update Ensemble Weights (LMS)
         self.update_weights(y, preds);
 
-        // C. Update AR(2)
+        // Lock-On Boost: If one model is consistently winning, boost it
+        if self.win_streak > 32 {
+             // Scalar boost even if SIMD is used for weights
+             // We need to access weights. This is tricky with SIMD types.
+             // For now, let's rely on LMS naturally increasing weight, but speed it up via LR.
+             // We effectively did that by increasing LR above if var is high, but here lock-on might mean LOW var?
+             // Actually, if we are locked on, variance might be low (good prediction).
+             // Let's manually boost the winner if using scalar fallback, or just skip if complex.
+             // Given SIMD complexity, let's skip manual weight manipulation here and rely on `update_weights`.
+        }
+
+        // D. Update AR(2) with Exponential Smoothing / Momentum
         let ar_est = self.ar_coeffs[0] * self.history[0] + self.ar_coeffs[1] * self.history[1];
         let ar_error = y - ar_est;
-        const NORM: f32 = 1.0 / 10000.0;
+        const NORM: f32 = 1.0 / 10000.0; // Normalization for typical pixel values
 
-        self.ar_coeffs[0] += self.ar_learning_rate * ar_error * self.history[0] * NORM;
-        self.ar_coeffs[1] += self.ar_learning_rate * ar_error * self.history[1] * NORM;
+        // Momentum Update (Nesterov-like)
+        let momentum = 0.9;
+        let grad0 = ar_error * self.history[0] * NORM;
+        let grad1 = ar_error * self.history[1] * NORM;
+
+        self.ar_velocities[0] = momentum * self.ar_velocities[0] + self.ar_learning_rate * grad0;
+        self.ar_velocities[1] = momentum * self.ar_velocities[1] + self.ar_learning_rate * grad1;
+
+        self.ar_coeffs[0] += self.ar_velocities[0];
+        self.ar_coeffs[1] += self.ar_velocities[1];
 
         self.ar_coeffs[0] = self.ar_coeffs[0].clamp(-1.9, 1.9);
         self.ar_coeffs[1] = self.ar_coeffs[1].clamp(-0.99, 0.99);

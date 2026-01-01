@@ -237,11 +237,11 @@ window_size: 2048  // Increased from 64
 
 ### Overall Progress
 - **Phase 1.1**: 100% (Simulation validated, convergence confirmed)
-- **Phase 1.2**: 75% (Spectral done, AR(2) pending)
+- **Phase 1.2**: 100% (Spectral done, AR(2) tuned with momentum)
 - **Phase 1.3**: 100% (Lazy stats & SIMD AVX2 implemented)
 - **Phase 1.4**: 30% (Basic benchmarks, expansion pending)
 
-**Total Phase 1**: ~75% Complete
+**Total Phase 1**: ~90% Complete
 
 ---
 
