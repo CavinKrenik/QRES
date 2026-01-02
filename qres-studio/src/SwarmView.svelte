@@ -6,7 +6,7 @@
     let canvas: HTMLCanvasElement;
     let ctx: CanvasRenderingContext2D;
     let animationId: number;
-    let interval: number;
+    let interval: ReturnType<typeof setInterval>;
 
     const NODE_RADIUS = 20;
     const CENTER_X = 400;

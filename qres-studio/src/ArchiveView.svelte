@@ -3,7 +3,8 @@
     import { invoke } from "@tauri-apps/api/core";
 
     export let manifest: any;
-    export let archivePath: string;
+    // Archive path for future use (external reference)
+    export const archivePath: string = "";
 
     const dispatch = createEventDispatcher();
     let selectedFiles: Set<string> = new Set();

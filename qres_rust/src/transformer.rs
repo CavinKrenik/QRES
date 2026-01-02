@@ -27,11 +27,19 @@ impl TransformerPredictor {
         // L1 distance between patch at p1 and patch at p2 (length 4)
         let mut dist = 0;
         // Manual unroll for speed
-        dist += (self.history[p1 & self.buffer_mask] as i32 - self.history[p2 & self.buffer_mask] as i32).abs();
-        dist += (self.history[(p1 + 1) & self.buffer_mask] as i32 - self.history[(p2 + 1) & self.buffer_mask] as i32).abs();
-        dist += (self.history[(p1 + 2) & self.buffer_mask] as i32 - self.history[(p2 + 2) & self.buffer_mask] as i32).abs();
-        dist += (self.history[(p1 + 3) & self.buffer_mask] as i32 - self.history[(p2 + 3) & self.buffer_mask] as i32).abs();
-        
+        dist += (self.history[p1 & self.buffer_mask] as i32
+            - self.history[p2 & self.buffer_mask] as i32)
+            .abs();
+        dist += (self.history[(p1 + 1) & self.buffer_mask] as i32
+            - self.history[(p2 + 1) & self.buffer_mask] as i32)
+            .abs();
+        dist += (self.history[(p1 + 2) & self.buffer_mask] as i32
+            - self.history[(p2 + 2) & self.buffer_mask] as i32)
+            .abs();
+        dist += (self.history[(p1 + 3) & self.buffer_mask] as i32
+            - self.history[(p2 + 3) & self.buffer_mask] as i32)
+            .abs();
+
         dist as u32
     }
 }
@@ -56,7 +64,7 @@ impl Predictor for TransformerPredictor {
             let key_start = key_pos_end.wrapping_sub(4);
 
             let dist = self.similarity(query_start, key_start);
-            
+
             // "Temp" determines sharpness of attention.
             // dist=0 -> weight=1.0
             // dist=10 -> weight ~ 0.1

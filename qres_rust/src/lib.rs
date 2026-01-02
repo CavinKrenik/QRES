@@ -34,9 +34,9 @@ pub use ans_coder::{AnsReader, AnsWriter};
 use mixer::{Mixer, NUM_MODELS};
 use predictors::{GraphPredictor, LzMatchPredictor, Predictor, SimplePredictor};
 use spectral::SpectralPredictor; // Added Predictor
-pub mod transformer;
 #[cfg(feature = "gpu")]
 pub mod gpu;
+pub mod transformer;
 use transformer::TransformerPredictor;
 
 // --- Living Brain (Adaptive Learning) ---
@@ -61,7 +61,11 @@ impl LivingBrain {
     pub fn new() -> Self {
         LivingBrain {
             version: 1,
-            predictors: vec!["lstm".to_string(), "graph".to_string(), "transformer".to_string()],
+            predictors: vec![
+                "lstm".to_string(),
+                "graph".to_string(),
+                "transformer".to_string(),
+            ],
             stats: serde_json::json!({"compressions": 0}),
             confidence: vec![0.5; NUM_MODELS.max(4)], // Ensure enough space
             global_confidence: None,
@@ -181,7 +185,7 @@ fn predictive_encode_v4(data: &[u8], lossy: Option<u8>, weights: Option<&[u8]>) 
         preds[1] = simple.predict_next();
         preds[2] = graph.predict_next();
         preds[3] = spectral.predict();
-        preds[4] = lz_match.predict_next(); 
+        preds[4] = lz_match.predict_next();
         preds[5] = transformer.predict_next();
 
         // B. Mix (V4: Dynamic AR2 Switching happens inside mix())
@@ -212,7 +216,7 @@ fn predictive_encode_v4(data: &[u8], lossy: Option<u8>, weights: Option<&[u8]>) 
         simple.update(reconstructed);
         graph.update(reconstructed);
         spectral.update(reconstructed);
-        lz_match.update(reconstructed); 
+        lz_match.update(reconstructed);
         transformer.update(reconstructed);
     }
 
@@ -231,7 +235,7 @@ fn predictive_decode_v4(
     let mut graph = GraphPredictor::new();
     let mut spectral = SpectralPredictor::new(2048);
 
-    let mut lz_match = LzMatchPredictor::new(); 
+    let mut lz_match = LzMatchPredictor::new();
     let mut transformer = TransformerPredictor::new();
 
     // Setup Mixer weights
