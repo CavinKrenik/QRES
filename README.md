@@ -2,7 +2,7 @@
 
 [![Latest Release](https://img.shields.io/github/v/tag/CavinKrenik/QRES?include_prereleases&style=flat-square&color=blue&label=release)](https://github.com/CavinKrenik/QRES/releases)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/CavinKrenik/QRES/test.yml?style=flat-square)](https://github.com/CavinKrenik/QRES/actions)
-[![License](https://img.shields.io/github/badge/license-Apache--2.0-green?style=flat-square)](LICENSE)
+[![License](https://img.shields.io/badge/license-Apache--2.0-green?style=flat-square)](LICENSE)
 
 **QRES (Quantum-Relational Encoding System)** is a next-generation compression platform designed for the "Singularity Era" of data. It moves beyond static algorithms like Deflate or Zstd by using **Neural-Symbolic Telepathy**—a hybrid approach where an autonomous "Living Brain" dynamically selects the optimal compression strategy for every micro-chunk of data.
 
