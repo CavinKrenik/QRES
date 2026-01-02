@@ -1,8 +1,8 @@
 /// QRES Archive Container Format
-/// 
+///
 /// This module implements a true "archiver" format similar to WinZip/7-Zip,
 /// as opposed to simply compressing files individually.
-/// 
+///
 /// Format Structure:
 /// ```
 /// [QRAR Magic: 4 bytes] "QRAR" (QRES Archive)
@@ -12,7 +12,6 @@
 /// [Manifest JSON: variable]
 /// [Compressed Stream: variable]
 /// ```
-
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
@@ -103,7 +102,7 @@ impl Default for ArchiveOptions {
 }
 
 /// Create a solid archive from a directory
-/// 
+///
 /// Instead of compressing each file individually, this concatenates all files
 /// into a single stream and compresses them together. This allows the compression
 /// engine to learn patterns across files (e.g., shared headers in C files).
@@ -211,7 +210,7 @@ pub fn create_archive<P: AsRef<Path>>(
     // Write header
     output.write_all(ARCHIVE_MAGIC)?;
     output.write_all(&[ARCHIVE_VERSION])?;
-    
+
     let flags = if options.solid { 0x01 } else { 0x00 };
     output.write_all(&[flags])?;
 
@@ -299,13 +298,13 @@ pub fn extract_archive<P: AsRef<Path>>(
 
     // Decompress solid stream
     let mut decompressed_stream = Vec::new();
-    
+
     if is_solid {
         // Read and decompress all chunks
         loop {
             let mut chunk_len_bytes = [0u8; 4];
             match reader.read_exact(&mut chunk_len_bytes) {
-                Ok(_) => {},
+                Ok(_) => {}
                 Err(e) if e.kind() == io::ErrorKind::UnexpectedEof => break,
                 Err(e) => return Err(e),
             }

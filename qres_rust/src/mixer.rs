@@ -147,18 +147,18 @@ impl Mixer {
     }
 
     /// Logistic Mixing - Neural-style probability-based mixing
-    /// 
+    ///
     /// Instead of linearly averaging predictions, this computes the probability
     /// that the next byte is >= threshold, using sigmoid activation.
     /// This is more accurate for modeling probability distributions.
     pub fn logistic_mix(&self, preds: &[u8; NUM_MODELS]) -> u8 {
         // Convert predictions to probabilities using sigmoid
         let weighted_prob = self.compute_logistic_prob(preds);
-        
+
         // AR(2) contribution
         let ar_pred = self.ar_coeffs[0] * self.history[0] + self.ar_coeffs[1] * self.history[1];
         let ar_prob = sigmoid(ar_pred / 255.0);
-        
+
         // Dynamic blending based on variance
         let std = (self.running_var / (self.count.max(1) as f32)).sqrt();
         let final_prob = if std < 45.0 {
@@ -166,14 +166,14 @@ impl Mixer {
         } else {
             weighted_prob
         };
-        
+
         // Convert probability back to byte value
         (final_prob * 255.0).clamp(0.0, 255.0).round() as u8
     }
 
     fn compute_logistic_prob(&self, preds: &[u8; NUM_MODELS]) -> f32 {
         let weights = self.extract_weights();
-        
+
         let mut logit = 0.0;
         for i in 0..NUM_MODELS.min(weights.len()) {
             // Convert byte to probability
@@ -181,11 +181,11 @@ impl Mixer {
             // Apply weight and sigmoid
             logit += weights[i] * sigmoid(p);
         }
-        
+
         // Normalize
         sigmoid(logit)
     }
-    
+
     /// Extract weights as array (handles both SIMD and scalar)
     #[cfg(target_arch = "x86_64")]
     fn extract_weights(&self) -> Vec<f32> {
@@ -193,7 +193,7 @@ impl Mixer {
         unsafe { _mm256_storeu_ps(arr.as_mut_ptr(), self.weights) };
         arr.to_vec()
     }
-    
+
     #[cfg(not(target_arch = "x86_64"))]
     fn extract_weights(&self) -> Vec<f32> {
         self.weights.to_vec()
