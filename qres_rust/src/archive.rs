@@ -4,7 +4,7 @@
 /// as opposed to simply compressing files individually.
 ///
 /// Format Structure:
-/// ```
+/// ```text
 /// [QRAR Magic: 4 bytes] "QRAR" (QRES Archive)
 /// [Version: 1 byte] 0x01
 /// [Flags: 1 byte] (bit 0: solid compression, bit 1: encrypted)
