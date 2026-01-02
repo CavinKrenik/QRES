@@ -71,7 +71,6 @@ impl Default for ArchiveManifest {
 }
 
 impl ArchiveManifest {
-
     pub fn add_file(&mut self, entry: FileEntry) {
         self.total_size += entry.original_size;
         self.files.push(entry);
