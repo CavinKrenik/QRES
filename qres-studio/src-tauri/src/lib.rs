@@ -16,6 +16,7 @@ pub fn run() {
             commands::get_stats,
             commands::toggle_swarm,
             commands::get_swarm_status,
+            commands::get_swarm_peers,
             commands::train_on_file
         ])
         .run(tauri::generate_context!())

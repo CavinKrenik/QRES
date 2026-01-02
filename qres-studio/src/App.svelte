@@ -2,6 +2,7 @@
     import { invoke } from "@tauri-apps/api/core";
     import DropZone from "./DropZone.svelte";
     import HiveMind from "./HiveMind.svelte";
+    import SwarmView from "./SwarmView.svelte";
 
     let activeTab = "compress";
     let stats = { total_compressions: 0, bytes_saved: 0 };
@@ -41,15 +42,23 @@
             class:active={activeTab === "hive"}
             on:click={() => (activeTab = "hive")}
         >
-            Hive Mind
+            Hive Mainnet
+        </button>
+        <button
+            class:active={activeTab === "visual"}
+            on:click={() => (activeTab = "visual")}
+        >
+            Swarm Topology
         </button>
     </div>
 
     <div class="tab-content">
         {#if activeTab === "compress"}
             <DropZone on:complete={loadStats} />
-        {:else}
+        {:else if activeTab === "hive"}
             <HiveMind />
+        {:else}
+            <SwarmView />
         {/if}
     </div>
 </main>

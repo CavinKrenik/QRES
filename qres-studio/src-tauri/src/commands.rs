@@ -464,6 +464,49 @@ pub async fn train_on_file(file_path: String) -> Result<String, String> {
     Ok(stdout.to_string())
 }
 
+
+#[derive(Serialize)]
+pub struct PeerInfo {
+    id: String,
+    latency_ms: u32,
+    role: String,
+    throughput_mbps: f32,
+    location: String,
+}
+
+#[tauri::command]
+pub async fn get_swarm_peers(_app: AppHandle) -> Result<Vec<PeerInfo>, String> {
+    // Phase 5.1: Simulate Swarm State for GUI Visualization
+    // In v6.0 this will hook into the actual libp2p Kademlia DHT
+    use rand::Rng;
+    let mut rng = rand::thread_rng();
+    
+    let locations = ["US-East", "EU-West", "Asia-South", "SA-East", "US-West"];
+    let mut peers = Vec::new();
+    
+    // Always include "Self"
+    peers.push(PeerInfo {
+        id: "Local-Node-001".to_string(),
+        latency_ms: 0,
+        role: "Validator".to_string(),
+        throughput_mbps: 0.0,
+        location: "Local".to_string()
+    });
+
+    let count = rng.gen_range(3..8);
+    for i in 0..count {
+        peers.push(PeerInfo {
+            id: format!("Peer-{:03}", rng.gen_range(1..999)),
+            latency_ms: rng.gen_range(10..150),
+            role: if rng.gen_bool(0.2) { "Anchor" } else { "Worker" }.to_string(),
+            throughput_mbps: rng.gen_range(50.0..500.0),
+            location: locations[rng.gen_range(0..locations.len())].to_string(),
+        });
+    }
+    
+    Ok(peers)
+}
+
 async fn sync_with_swarm(app: &AppHandle) -> Result<(), String> {
     // Run hive_sync.py subprocess
     let python = if cfg!(windows) { "python" } else { "python3" };
