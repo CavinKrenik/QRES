@@ -17,6 +17,15 @@ Decompresses a QRES v5 stream.
 - **weights**: Must match the weights used during compression (if any).
 - **Returns**: The original raw bytes.
 
+### `SemanticPredictor` (Experimental v6.0)
+Located in `qres.llm_predictor`. Uses local LLMs to estimate entropy for text/code blocks.
+
+```python
+from qres.llm_predictor import SemanticPredictor
+llm = SemanticPredictor("models/codellama-7b.gguf")
+perplexity = llm.predict_block("def main():")
+```
+
 ## Training
 
 ### `train_model(file_pattern: str, chunk_size: int = 65536) -> bytes`
