@@ -34,6 +34,8 @@ pub use ans_coder::{AnsReader, AnsWriter};
 use mixer::{Mixer, NUM_MODELS};
 use predictors::{GraphPredictor, LzMatchPredictor, Predictor, SimplePredictor};
 use spectral::SpectralPredictor; // Added Predictor
+pub mod transformer;
+use transformer::TransformerPredictor;
 
 // --- Living Brain (Adaptive Learning) ---
 
@@ -57,7 +59,7 @@ impl LivingBrain {
     pub fn new() -> Self {
         LivingBrain {
             version: 1,
-            predictors: vec!["lstm".to_string(), "graph".to_string()],
+            predictors: vec!["lstm".to_string(), "graph".to_string(), "transformer".to_string()],
             stats: serde_json::json!({"compressions": 0}),
             confidence: vec![0.5; NUM_MODELS.max(4)], // Ensure enough space
             global_confidence: None,
@@ -131,7 +133,9 @@ fn predictive_encode_v4(data: &[u8], lossy: Option<u8>, weights: Option<&[u8]>) 
     let mut simple = SimplePredictor::new();
     let mut graph = GraphPredictor::new();
     let mut spectral = SpectralPredictor::new(2048);
-    let mut lz_match = LzMatchPredictor::new(); // Added
+
+    let mut lz_match = LzMatchPredictor::new();
+    let mut transformer = TransformerPredictor::new();
 
     // 2. Initialize V4 Mixer (Hybrid AR2 + Ensemble + FedProx)
     let (init_w, global_w) = if let Some(w_bytes) = weights {
@@ -167,7 +171,7 @@ fn predictive_encode_v4(data: &[u8], lossy: Option<u8>, weights: Option<&[u8]>) 
     // Prepare quantization factor
     let q_factor = lossy.unwrap_or(1).max(1) as i8;
 
-    let mut preds = [0u8; 5]; // Updated to 5
+    let mut preds = [0u8; 6]; // Updated to 6
 
     for &actual in data {
         // A. Predict
@@ -175,7 +179,8 @@ fn predictive_encode_v4(data: &[u8], lossy: Option<u8>, weights: Option<&[u8]>) 
         preds[1] = simple.predict_next();
         preds[2] = graph.predict_next();
         preds[3] = spectral.predict();
-        preds[4] = lz_match.predict_next(); // Added
+        preds[4] = lz_match.predict_next(); 
+        preds[5] = transformer.predict_next();
 
         // B. Mix (V4: Dynamic AR2 Switching happens inside mix())
         let mixed_prediction = mixer.mix(&preds);
@@ -205,7 +210,8 @@ fn predictive_encode_v4(data: &[u8], lossy: Option<u8>, weights: Option<&[u8]>) 
         simple.update(reconstructed);
         graph.update(reconstructed);
         spectral.update(reconstructed);
-        lz_match.update(reconstructed); // Added
+        lz_match.update(reconstructed); 
+        transformer.update(reconstructed);
     }
 
     // F. Finish (Seal the stream)
@@ -222,7 +228,9 @@ fn predictive_decode_v4(
     let mut simple = SimplePredictor::new();
     let mut graph = GraphPredictor::new();
     let mut spectral = SpectralPredictor::new(2048);
-    let mut lz_match = LzMatchPredictor::new(); // Added
+
+    let mut lz_match = LzMatchPredictor::new(); 
+    let mut transformer = TransformerPredictor::new();
 
     // Setup Mixer weights
     let (init_w, global_w) = if let Some(w_bytes) = weights {
@@ -254,7 +262,7 @@ fn predictive_decode_v4(
     let mut ans = AnsReader::new(compressed_words);
 
     let mut out = Vec::with_capacity(decoded_len);
-    let mut preds = [0u8; 5]; // Updated to 5
+    let mut preds = [0u8; 6]; // Updated to 6
 
     for _ in 0..decoded_len {
         // A. Predict
@@ -262,7 +270,8 @@ fn predictive_decode_v4(
         preds[1] = simple.predict_next();
         preds[2] = graph.predict_next();
         preds[3] = spectral.predict();
-        preds[4] = lz_match.predict_next(); // Added
+        preds[4] = lz_match.predict_next();
+        preds[5] = transformer.predict_next();
 
         // B. Mix
         let mixed_prediction = mixer.mix(&preds);
@@ -280,7 +289,8 @@ fn predictive_decode_v4(
         simple.update(actual);
         graph.update(actual);
         spectral.update(actual);
-        lz_match.update(actual); // Added
+        lz_match.update(actual);
+        transformer.update(actual);
     }
 
     out

@@ -7,7 +7,7 @@
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
 
-pub const NUM_MODELS: usize = 5;
+pub const NUM_MODELS: usize = 6;
 
 // Define storage type based on architecture
 #[cfg(target_arch = "x86_64")]
@@ -61,7 +61,7 @@ impl Mixer {
         // models: linear, simple, graph, spectral, lz_match.
         // Let's rely on standard array initialization.
 
-        let default_w = [0.5, 0.2, 0.1, 0.05, 0.05, 0.0, 0.0, 0.0]; // Linear..LzMatch..Pad
+        let default_w = [0.4, 0.2, 0.1, 0.1, 0.1, 0.1, 0.0, 0.0]; // Linear..Transformer..Pad
         let weights = if let Some(w) = init {
             load_simd(w)
         } else {
@@ -96,7 +96,7 @@ impl Mixer {
             arr
         };
 
-        let default_w = [0.5, 0.2, 0.1, 0.05, 0.05, 0.05, 0.05, 0.0];
+        let default_w = [0.4, 0.2, 0.1, 0.1, 0.1, 0.1, 0.0, 0.0];
         let weights = if let Some(w) = init {
             load_scalar(w)
         } else {
@@ -335,7 +335,7 @@ impl Mixer {
 
         self.weights = unsafe { _mm256_add_ps(self.weights, _mm256_set1_ps(0.001)) };
 
-        let mask = unsafe { _mm256_set_ps(0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0) };
+        let mask = unsafe { _mm256_set_ps(0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0) };
         self.weights = unsafe { _mm256_mul_ps(self.weights, mask) };
 
         let h1 = unsafe { _mm256_hadd_ps(self.weights, self.weights) };
