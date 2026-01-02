@@ -14,7 +14,7 @@ pub mod analytics;
 pub mod config;
 #[cfg(feature = "swarm")]
 pub mod daemon;
-pub mod semantic;
+// pub mod semantic; // Disabled: requires tokenizers crate
 #[cfg(feature = "swarm")]
 pub mod stats;
 #[cfg(feature = "swarm")]
@@ -35,6 +35,8 @@ use mixer::{Mixer, NUM_MODELS};
 use predictors::{GraphPredictor, LzMatchPredictor, Predictor, SimplePredictor};
 use spectral::SpectralPredictor; // Added Predictor
 pub mod transformer;
+#[cfg(feature = "gpu")]
+pub mod gpu;
 use transformer::TransformerPredictor;
 
 // --- Living Brain (Adaptive Learning) ---
