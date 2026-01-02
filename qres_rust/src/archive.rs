@@ -16,7 +16,7 @@ use crate::dedup::{DedupEngine, DedupReference}; // Import Dedup
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
-use std::io::{self, Read, Write, BufReader}; // Added BufReader
+use std::io::{self, BufReader, Read, Write}; // Added BufReader
 use std::path::Path;
 
 const ARCHIVE_MAGIC: &[u8] = b"QRAR";
@@ -124,30 +124,57 @@ pub fn create_archive<P: AsRef<Path>>(
     let output_path = output_path.as_ref();
 
     if !source_dir.is_dir() {
-        return Err(io::Error::new(io::ErrorKind::InvalidInput, "Source must be a directory"));
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "Source must be a directory",
+        ));
     }
 
     let mut manifest = ArchiveManifest::new();
     let mut solid_stream = Vec::new();
     let mut current_offset = 0u64;
 
-    for entry in walkdir::WalkDir::new(source_dir).into_iter().filter_map(|e| e.ok()) {
-        if !entry.file_type().is_file() { continue; }
+    for entry in walkdir::WalkDir::new(source_dir)
+        .into_iter()
+        .filter_map(|e| e.ok())
+    {
+        if !entry.file_type().is_file() {
+            continue;
+        }
         let file_path = entry.path();
-        let relative_path = file_path.strip_prefix(source_dir).unwrap().to_string_lossy().to_string();
+        let relative_path = file_path
+            .strip_prefix(source_dir)
+            .unwrap()
+            .to_string_lossy()
+            .to_string();
         let file_data = fs::read(file_path)?;
         let file_size = file_data.len() as u64;
 
         let hash = if options.compute_hashes {
             Some(blake3::hash(&file_data).to_hex().to_string())
-        } else { None };
+        } else {
+            None
+        };
 
         let permissions = if options.preserve_permissions {
-            #[cfg(unix)] { use std::os::unix::fs::PermissionsExt; Some(fs::metadata(file_path)?.permissions().mode()) }
-            #[cfg(not(unix))] { None }
-        } else { None };
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+                Some(fs::metadata(file_path)?.permissions().mode())
+            }
+            #[cfg(not(unix))]
+            {
+                None
+            }
+        } else {
+            None
+        };
 
-        let modified = fs::metadata(file_path)?.modified()?.duration_since(std::time::UNIX_EPOCH).unwrap().as_secs() as i64;
+        let modified = fs::metadata(file_path)?
+            .modified()?
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64;
 
         manifest.add_file(FileEntry {
             path: relative_path,
@@ -167,7 +194,10 @@ pub fn create_archive<P: AsRef<Path>>(
     let compressed_stream = if options.solid {
         compress_solid_stream_dedup(&solid_stream)?
     } else {
-        return Err(io::Error::new(io::ErrorKind::Unsupported, "Non-solid archives not yet implemented"));
+        return Err(io::Error::new(
+            io::ErrorKind::Unsupported,
+            "Non-solid archives not yet implemented",
+        ));
     };
 
     // Step 3: Write File
@@ -195,27 +225,31 @@ fn compress_solid_stream_dedup(data: &[u8]) -> io::Result<Vec<u8>> {
     // 2. Process Result References
     // DedupResult contains references and a list of unique data blocks (in order of creation)
     // We map unique chunks by their ID (index in unique_data)
-    
+
     for ref_chunk in result.references {
         match ref_chunk {
-            DedupReference::New { hash: _, chunk_id, size: _ } => {
+            DedupReference::New {
+                hash: _,
+                chunk_id,
+                size: _,
+            } => {
                 // Get the data for this new chunk
                 let chunk_data = &result.unique_data[chunk_id as usize];
-                
+
                 // Compress normally (Flag 0x00 or 0x02 via compress_chunk)
                 let compressed = crate::compress_chunk(chunk_data, 0, None, None)?;
-                
+
                 // Write [Len: 4][Compressed Data]
                 // Note: compress_chunk includes its own internal flag byte at the start
                 output.extend_from_slice(&(compressed.len() as u32).to_le_bytes());
                 output.extend_from_slice(&compressed);
-            },
+            }
             DedupReference::Existing { hash, size } => {
                 // Write Reference Chunk (Flag 0x03)
                 // Layout: [Flag: 0x03][Hash: 8 bytes][Size: 4 bytes]
                 // Total length: 13 bytes
                 let len: u32 = 13;
-                
+
                 output.extend_from_slice(&len.to_le_bytes());
                 output.push(0x03); // FLAG_REF
                 output.extend_from_slice(&hash.to_le_bytes());
@@ -239,7 +273,9 @@ pub fn extract_archive<P: AsRef<Path>>(
     // [Skip Header Validation for brevity - verify Magic, Version, Flags...]
     let mut header_buf = [0u8; 6];
     reader.read_exact(&mut header_buf)?;
-    if &header_buf[0..4] != ARCHIVE_MAGIC { return Err(io::Error::other("Invalid Magic")); }
+    if &header_buf[0..4] != ARCHIVE_MAGIC {
+        return Err(io::Error::other("Invalid Magic"));
+    }
 
     // Read Manifest
     let mut man_len_bytes = [0u8; 4];
@@ -257,7 +293,7 @@ pub fn extract_archive<P: AsRef<Path>>(
     loop {
         let mut chunk_len_bytes = [0u8; 4];
         match reader.read_exact(&mut chunk_len_bytes) {
-            Ok(_) => {},
+            Ok(_) => {}
             Err(e) if e.kind() == io::ErrorKind::UnexpectedEof => break,
             Err(e) => return Err(e),
         }
@@ -268,25 +304,29 @@ pub fn extract_archive<P: AsRef<Path>>(
         // Check Flag (first byte of chunk_data)
         if chunk_data[0] == 0x03 {
             // HANDLE REFERENCE [Flag:1][Hash:8][Size:4]
-            if chunk_len < 13 { return Err(io::Error::other("Ref chunk too short")); }
-            
+            if chunk_len < 13 {
+                return Err(io::Error::other("Ref chunk too short"));
+            }
+
             let mut hash_bytes = [0u8; 8];
             hash_bytes.copy_from_slice(&chunk_data[1..9]);
             let hash = u64::from_le_bytes(hash_bytes);
-            
+
             if let Some(cached_data) = chunk_cache.get(&hash) {
                 decompressed_stream.extend_from_slice(cached_data);
             } else {
-                return Err(io::Error::other("Data corruption: Reference to unknown chunk"));
+                return Err(io::Error::other(
+                    "Data corruption: Reference to unknown chunk",
+                ));
             }
         } else {
             // HANDLE NORMAL CHUNK (0x00, 0x01, 0x02)
             let decoded = crate::decompress_chunk(&chunk_data, 0, None)?;
-            
+
             // Calculate hash of plaintext to populate cache
             let hash = crate::dedup::xxhash64(&decoded);
             chunk_cache.insert(hash, decoded.clone());
-            
+
             decompressed_stream.extend_from_slice(&decoded);
         }
     }
@@ -295,12 +335,16 @@ pub fn extract_archive<P: AsRef<Path>>(
     fs::create_dir_all(output_dir)?;
     for file_entry in &manifest.files {
         let file_path = output_dir.join(&file_entry.path);
-        if let Some(p) = file_path.parent() { fs::create_dir_all(p)?; }
-        
+        if let Some(p) = file_path.parent() {
+            fs::create_dir_all(p)?;
+        }
+
         let start = file_entry.stream_offset as usize;
         let end = start + file_entry.stream_length as usize;
-        if end > decompressed_stream.len() { return Err(io::Error::other("Stream truncated")); }
-        
+        if end > decompressed_stream.len() {
+            return Err(io::Error::other("Stream truncated"));
+        }
+
         fs::write(&file_path, &decompressed_stream[start..end])?;
     }
 
