@@ -11,19 +11,24 @@ By maintaining a high-confidence model of the data generation process (the "Sing
 ## 2. Architecture
 
 ### 2.1 The "Living Brain"
-The brain consists of an ensemble of specialized predictors:
-1.  **Linear:** Fast, simple arithmetic extrapolation.
-2.  **Simple:** Context-based frequency tracking.
-3.  **Graph:** 2nd-order Markov chains for text and code.
-4.  **Spectral:** FFT-based periodicity detection for signal data.
-5.  **LSTM:** (Optional) Deep pattern recognition for complex sequences.
+The brain consists of an ensemble of specialized predictors managed by an **Autonomic Mixer**:
+1.  **Linear & Simple:** Fast arithmetic extrapolation and context counting.
+2.  **Graph:** 2nd-order Markov chains for structured text/code.
+3.  **Spectral:** FFT-based periodicity detection for signal data.
+4.  **LSTM:** Deep pattern recognition.
 
-A Meta-Controller (the "Ego") dynamically weights these predictors based on their recent success/failure, effectively routing the data through the most capable sub-module for that specific micro-chunk.
+**The Mixer (Momentum AR(2)):**
+Instead of a simple average, the Mixer uses a localized Auto-Regressive process with Momentum. It tracks the "Surprise" (residual energy) of each predictor over a sliding window.
+- **Weights:** $W_t = \beta W_{t-1} + (1-\beta) \nabla L$, where $L$ is the loss function of the predictor.
+- **Momentum:** High-performing models act as "Anchors", preventing rapid oscillation when entropy spikes transiently.
+- **SIMD Acceleration:** The mixing dot-product is vectorized using AVX2 (x86_64) or NEON (ARM), allowing parallel evaluation of 8+ weights per cycle.
 
-### 2.2 Swarm Learning
-QRES instances are not isolated. They form a distributed Hive Mind using `libp2p`.
-- **Epiphanies:** When a node discovers a weight configuration that yields exceptional compression for a specific data type, it broadcasts these "Epiphany Weights" to the swarm.
-- **Immunity:** If a node encounters data that causes model drift (poor compression), it warns the swarm, preventing others from falling into the same local minimum.
+### 2.2 Swarm Learning (P2P)
+Nodes form a **Kademlia DHT** network using `libp2p`.
+- **GossipSub:** We use the GossipSub v1.1 protocol to disseminate "Epiphanies".
+    - *Topic:* `qres/v1/epiphany/{model_type}`
+    - *Payload:* The quantized weight tensor of a converged model.
+- **Privacy:** Only model weights are shared. The training data (files) never leaves the local node.
 
 ### 2.3 Deduplication (The Memory)
 The v5.1 architecture adds a long-term memory via Content-Defined Chunking (CDC).

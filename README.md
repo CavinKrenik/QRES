@@ -39,6 +39,12 @@ Comparisons performed on the `IoT-Drift` and `Shakespeare` corpora.
 
 *QRES achieves higher compression density by sacrificing raw throughput for cognitive adaptation.*
 
+## 💻 Requirements
+
+- **CPU:** x86_64 with **AVX2** support, or ARM64 with **NEON**. The neural mixer relies heavily on SIMD vectorization.
+- **OS:** Linux (Kernel 5.4+), macOS (12+), Windows 10+.
+- **Software:** Rust 1.75+ (for building from source), Python 3.8+ (for API).
+
 ## 🛠️ Quick Start
 
 ### 1. The CLI (Rust)
