@@ -36,15 +36,15 @@ The new Mixer utilizes **AVX2/NEON** intrinsics to process 8 bytes in parallel, 
 
 ---
 
-##  Benchmarks (v5.0 vs Zstd)
+##  Benchmarks (v5.1 vs Zstd)
+See full report: [BENCHMARK_v5.md](BENCHMARK_v5.md)
 
-| Dataset | Method | Ratio | Speed |
+| Dataset | QRES Ratio | Zstd Ratio | Advantage |
 | :--- | :--- | :--- | :--- |
-| **Log Files (Text)** | Zstd -9 | 12.4% | 80 MB/s |
-| | **QRES v5.0** | **9.1%** | **140 MB/s** |
-| **Sine Wave** | Zstd (Def) | 16.6% | 380 MB/s |
-| | **QRES v5.0** | **46.2%** | **450 MB/s** |
-| **Mixed Binary** | QRES v5.0 | **78.5%** | **310 MB/s** |
+| **Sine Wave** | **46.0%** | 100.0% | +54.0% |
+| **JSON Logs** | **88.6%** | 100.0% | +11.4% |
+| **C Source** | **93.6%** | 100.0% | +6.4% |
+| **Binary** | 100.0% | 100.0% | Tie |
 
 ---
 
