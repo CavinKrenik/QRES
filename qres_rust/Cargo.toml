@@ -39,6 +39,10 @@ zstd = "0.13"
 candle-core = "0.9.1"
 candle-nn = "0.9.1"
 
+# Archive Format
+walkdir = "2.5"
+blake3 = "1.5"
+
 tokenizers = { version = "0.19", default-features = false, features = ["onig"] }
 clap = { version = "4.0", features = ["derive"] }
 

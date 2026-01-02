@@ -3,7 +3,6 @@ use qres_rust;
 use std::process::Command;
 use std::fs;
 use std::path::{Path, PathBuf};
-use walkdir::WalkDir;
 use tokio::sync::Mutex;
 use std::sync::Arc;
 
@@ -156,57 +155,59 @@ async fn compress_folder(
     src: String,
     dest_folder: String,
 ) -> Result<serde_json::Value, String> {
+    use qres_rust::archive::{create_archive, ArchiveOptions};
+    
     let src_path = Path::new(&src);
-    let dest_path = Path::new(&dest_folder);
+    let folder_name = src_path.file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("archive");
     
-    // Create destination folder
-    fs::create_dir_all(dest_path).map_err(|e| e.to_string())?;
+    // Create archive with .qrar extension
+    let archive_path = Path::new(&dest_folder).join(format!("{}.qrar", folder_name));
     
-    let mut total_files = 0;
-    let mut compressed_files = 0;
+    // Emit initial progress
+    window.emit("compression-progress", serde_json::json!({
+        "percent": 0,
+        "status": "scanning",
+        "message": "Scanning directory..."
+    })).unwrap_or(());
     
-    // Walk directory and compress each file
-    for entry in WalkDir::new(src_path).into_iter().filter_map(|e| e.ok()) {
-        if entry.file_type().is_file() {
-            total_files += 1;
-            
-            let file_path = entry.path();
-            let relative_path = file_path.strip_prefix(src_path).unwrap();
-            let dest_file = dest_path.join(relative_path).with_extension("qres");
-            
-            // Create parent directories
-            if let Some(parent) = dest_file.parent() {
-                fs::create_dir_all(parent).ok();
-            }
-            
-            // Compress file
-            match qres_rust::compress_with_callback(
-                &file_path.to_string_lossy(),
-                &dest_file.to_string_lossy(),
-                |progress, ratio, engine| {
-                    window.emit("compression-progress", serde_json::json!({
-                        "percent": progress,
-                        "current_ratio": ratio,
-                        "active_engine": engine,
-                        "file": relative_path.to_string_lossy()
-                    })).unwrap_or(());
-                },
-            ) {
-                Ok(_) => compressed_files += 1,
-                Err(e) => eprintln!("Failed to compress {}: {}", file_path.display(), e),
-            }
-        }
-    }
+    // Create archive with default options (solid compression enabled)
+    let options = ArchiveOptions::default();
+    
+    let manifest = create_archive(src.as_str(), archive_path.to_str().unwrap(), options)
+        .map_err(|e| format!("Archive creation failed: {}", e))?;
+    
+    // Emit completion
+    window.emit("compression-progress", serde_json::json!({
+        "percent": 100,
+        "status": "complete",
+        "files": manifest.files.len(),
+        "total_size": manifest.total_size
+    })).unwrap_or(());
     
     // Update stats
     let mut stats = load_stats(&app);
-    stats.total_compressions += compressed_files;
+    stats.total_compressions += manifest.files.len() as u32;
+    
+    // Calculate compression ratio
+    if let Ok(metadata) = fs::metadata(&archive_path) {
+        let compressed_size = metadata.len();
+        let bytes_saved = manifest.total_size.saturating_sub(compressed_size);
+        let ratio = compressed_size as f64 / manifest.total_size as f64;
+        
+        stats.bytes_saved += bytes_saved;
+        stats.avg_ratio = (stats.avg_ratio * (stats.total_compressions - manifest.files.len() as u32) as f64 
+                          + ratio * manifest.files.len() as f64) / stats.total_compressions as f64;
+    }
+    
     save_stats(&app, &stats)?;
     
     Ok(serde_json::json!({
         "status": "complete",
-        "total_files": total_files,
-        "compressed_files": compressed_files
+        "total_files": manifest.files.len(),
+        "total_size": manifest.total_size,
+        "archive_path": archive_path.to_string_lossy()
     }))
 }
 
@@ -216,18 +217,201 @@ pub async fn decompress_file(
     src: String,
     dest: String,
 ) -> Result<String, String> {
-    let compressed = fs::read(&src).map_err(|e| e.to_string())?;
-    let decompressed = qres_rust::decompress_chunk(&compressed, 0, None)
-        .map_err(|e| format!("Decompression failed: {}", e))?;
+    use std::io::{Read, BufReader, Write, BufWriter};
+    use std::fs::File;
     
-    fs::write(&dest, decompressed).map_err(|e| e.to_string())?;
+    // 1. Open streams (Buffered for performance)
+    let f_in = File::open(&src).map_err(|e| format!("Failed to open source: {}", e))?;
+    let mut reader = BufReader::new(f_in);
+    let f_out = File::create(&dest).map_err(|e| format!("Failed to create destination: {}", e))?;
+    let mut writer = BufWriter::new(f_out);
     
+    // 2. Validate QRES Magic Header
+    let mut magic = [0u8; 4];
+    reader.read_exact(&mut magic).map_err(|_| "Not a QRES file (too short)".to_string())?;
+    if &magic != b"QRES" {
+        return Err(format!("Invalid file signature. Expected 'QRES', got {:?}", 
+                          String::from_utf8_lossy(&magic)));
+    }
+    
+    // 3. Parse Static Header
+    // [Version:1][Flags:1][PredID:1][Time:8][OrigSize:8][CompSize:8] = 27 bytes
+    let mut header_static = [0u8; 27];
+    reader.read_exact(&mut header_static).map_err(|e| format!("Invalid header: {}", e))?;
+    
+    let _version = header_static[0];
+    let _flags = header_static[1];
+    let _pred_id = header_static[2];
+    let original_size = u64::from_le_bytes(header_static[11..19].try_into().unwrap());
+    let compressed_size = u64::from_le_bytes(header_static[19..27].try_into().unwrap());
+    
+    // 4. Read Filename Length and Skip Filename
+    let mut name_len_bytes = [0u8; 4];
+    reader.read_exact(&mut name_len_bytes).map_err(|e| format!("Failed to read filename length: {}", e))?;
+    let name_len = u32::from_le_bytes(name_len_bytes) as usize;
+    
+    // Validate filename length (prevent DOS attacks)
+    if name_len > 4096 {
+        return Err(format!("Filename length too large: {} bytes", name_len));
+    }
+    
+    // Skip filename
+    let mut name_buf = vec![0u8; name_len];
+    reader.read_exact(&mut name_buf).map_err(|e| format!("Failed to read filename: {}", e))?;
+    
+    // 5. Stream Chunks
+    let mut total_written = 0u64;
+    let mut chunk_count = 0;
+    
+    loop {
+        // Try to read chunk length (4 bytes)
+        let mut chunk_len_bytes = [0u8; 4];
+        match reader.read_exact(&mut chunk_len_bytes) {
+            Ok(_) => {},
+            Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => {
+                // Normal EOF - we've read all chunks
+                break;
+            },
+            Err(e) => return Err(format!("Error reading chunk header: {}", e)),
+        }
+        
+        let chunk_len = u32::from_le_bytes(chunk_len_bytes) as usize;
+        
+        // Sanity check: prevent malicious files from requesting massive allocations
+        if chunk_len > 10 * 1024 * 1024 {  // 10MB max per compressed chunk
+            return Err(format!("Chunk size too large: {} bytes", chunk_len));
+        }
+        
+        // Read the compressed chunk data
+        let mut chunk_data = vec![0u8; chunk_len];
+        reader.read_exact(&mut chunk_data).map_err(|e| {
+            format!("Failed to read chunk {} (expected {} bytes): {}", chunk_count, chunk_len, e)
+        })?;
+        
+        // Decompress chunk
+        let decoded = qres_rust::decompress_chunk(&chunk_data, 0, None)
+            .map_err(|e| format!("Chunk {} decompression failed: {}", chunk_count, e))?;
+        
+        // Write decompressed data
+        writer.write_all(&decoded).map_err(|e| format!("Write failed: {}", e))?;
+        
+        total_written += decoded.len() as u64;
+        chunk_count += 1;
+        
+        // Emit progress (based on original file size)
+        let progress = if original_size > 0 {
+            ((total_written as f64 / original_size as f64) * 100.0).min(100.0) as u32
+        } else {
+            50  // Unknown size, show generic progress
+        };
+        
+        window.emit("decompression-progress", serde_json::json!({
+            "percent": progress,
+            "status": "extracting",
+            "bytes_written": total_written,
+            "chunk": chunk_count
+        })).unwrap_or(());
+    }
+    
+    // Flush writer
+    writer.flush().map_err(|e| format!("Failed to flush output: {}", e))?;
+    drop(writer);
+    
+    // Final progress
     window.emit("decompression-progress", serde_json::json!({
         "percent": 100,
-        "status": "complete"
+        "status": "complete",
+        "total_bytes": total_written,
+        "chunks": chunk_count
     })).unwrap_or(());
     
-    Ok("Complete".to_string())
+    // Verify size matches (if header specified it)
+    if original_size > 0 && total_written != original_size {
+        eprintln!("Warning: Size mismatch. Expected {} bytes, got {}", original_size, total_written);
+    }
+    
+    Ok(format!("Decompressed {} bytes in {} chunks", total_written, chunk_count))
+}
+
+#[tauri::command]
+pub async fn browse_archive(archive_path: String) -> Result<serde_json::Value, String> {
+    use qres_rust::archive::read_manifest;
+    
+    let manifest = read_manifest(archive_path.as_str())
+        .map_err(|e| format!("Failed to read archive: {}", e))?;
+    
+    // Convert manifest to JSON-friendly format
+    let files: Vec<serde_json::Value> = manifest.files.iter().map(|f| {
+        serde_json::json!({
+            "path": f.path,
+            "size": f.original_size,
+            "modified": f.modified,
+            "hash": f.hash
+        })
+    }).collect();
+    
+    Ok(serde_json::json!({
+        "total_size": manifest.total_size,
+        "compression_method": manifest.compression_method,
+        "files": files,
+        "file_count": files.len()
+    }))
+}
+
+#[tauri::command]
+pub async fn extract_archive(
+    window: Window,
+    archive_path: String,
+    output_dir: String,
+) -> Result<String, String> {
+    use qres_rust::archive::extract_archive;
+    
+    window.emit("extraction-progress", serde_json::json!({
+        "percent": 0,
+        "status": "extracting"
+    })).unwrap_or(());
+    
+    let manifest = extract_archive(archive_path.as_str(), output_dir.as_str())
+        .map_err(|e| format!("Extraction failed: {}", e))?;
+    
+    window.emit("extraction-progress", serde_json::json!({
+        "percent": 100,
+        "status": "complete",
+        "files": manifest.files.len()
+    })).unwrap_or(());
+    
+    Ok(format!("Extracted {} files", manifest.files.len()))
+}
+
+#[tauri::command]
+pub async fn extract_archive_file(
+    archive_path: String,
+    file_path: String,
+    output_path: String,
+) -> Result<String, String> {
+    use qres_rust::archive::extract_archive;
+    
+    // For now, we extract the whole archive to a temp dir and copy the file
+    // In the future, we can optimize this to extract only the requested file
+    let temp_dir = std::env::temp_dir().join(format!("qres_extract_{}", 
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs()));
+    
+    fs::create_dir_all(&temp_dir).map_err(|e| e.to_string())?;
+    
+    let _manifest = extract_archive(archive_path.as_str(), temp_dir.to_str().unwrap())
+        .map_err(|e| format!("Extraction failed: {}", e))?;
+    
+    // Copy the requested file
+    let source = temp_dir.join(&file_path);
+    fs::copy(&source, &output_path).map_err(|e| format!("Failed to copy file: {}", e))?;
+    
+    // Clean up temp dir
+    fs::remove_dir_all(&temp_dir).ok();
+    
+    Ok(format!("Extracted {}", file_path))
 }
 
 #[tauri::command]

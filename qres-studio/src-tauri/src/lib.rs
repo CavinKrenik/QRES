@@ -10,6 +10,9 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::compress_file,
             commands::decompress_file,
+            commands::browse_archive,
+            commands::extract_archive,
+            commands::extract_archive_file,
             commands::get_stats,
             commands::toggle_swarm,
             commands::get_swarm_status,
