@@ -80,6 +80,35 @@ def gen_text(filename, size_mb=1):
             sentence = " ".join([random.choice(vocab) for _ in range(10)]) + ". "
             f.write(sentence)
 
+def gen_xml_data(filename, size_mb=1):
+    print(f"[Gen] XML Data -> {filename}")
+    with open(filename, 'w') as f:
+        f.write("<?xml version=\"1.0\"?>\n<root>\n")
+        while f.tell() < size_mb * 1024 * 1024:
+            f.write(f"  <record id=\"{random.randint(0,99999)}\">\n")
+            f.write(f"    <data>{random.random()}</data>\n")
+            f.write(f"    <description>Sample XML entry for benchmark</description>\n")
+            f.write("  </record>\n")
+        f.write("</root>")
+
+def gen_source_code(filename, size_mb=1):
+    print(f"[Gen] C-like Code -> {filename}")
+    keywords = ["if", "while", "for", "return", "int", "void", "float", "struct"]
+    with open(filename, 'w') as f:
+        while f.tell() < size_mb * 1024 * 1024:
+            f.write(f"{random.choice(keywords)} function_{random.randint(0,100)}() {{\n")
+            for _ in range(random.randint(2, 10)):
+                f.write(f"    int x = {random.randint(0,100)};\n")
+            f.write("}\n")
+
+def gen_exe_data(filename, size_mb=1):
+    print(f"[Gen] Mock Executable -> {filename}")
+    header = b"\x4D\x5A\x90\x00" * 16 # PE Header pattern
+    with open(filename, 'wb') as f:
+        while f.tell() < size_mb * 1024 * 1024:
+            f.write(header)
+            f.write(os.urandom(4096))
+
 # --- Benchmarking Core ---
 
 def get_bin_path():
@@ -114,7 +143,10 @@ def benchmark():
         ("logs_1mb.json", gen_json_logs, 1),
         ("data_1mb.csv", gen_csv_data, 1),
         ("random_1mb.bin", gen_random, 1),
-        ("text_1mb.txt", gen_text, 1)
+        ("text_1mb.txt", gen_text, 1),
+        ("data_1mb.xml", gen_xml_data, 1),
+        ("source_1mb.c", gen_source_code, 1),
+        ("app_1mb.exe", gen_exe_data, 1)
     ]
     
     # Generate if missing
