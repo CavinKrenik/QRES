@@ -96,6 +96,9 @@ import qres
 compressed = qres.encode_bytes(data, level=5)
 `
 
+### Browser (WASM)
+See [docs/WASM_GUIDE.md](docs/WASM_GUIDE.md) for running QRES client-side.
+
 ---
 
 ##  Contributing

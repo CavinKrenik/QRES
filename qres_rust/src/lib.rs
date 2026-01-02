@@ -10,10 +10,13 @@ use pyo3::types::PyBytes;
 
 pub mod analytics;
 pub mod config;
+#[cfg(feature = "swarm")]
 pub mod daemon;
 pub mod semantic;
 pub mod stats;
+#[cfg(feature = "swarm")]
 pub mod swarm;
+#[cfg(feature = "swarm")]
 pub mod swarm_p2p;
 
 // --- v3.0/v4.0 Modules ---
@@ -515,6 +518,25 @@ where
         (QRES_MAGIC.len() + 1 + 1 + 1 + 8) as u64,
     ))?;
     output.write_all(&compressed_size.to_le_bytes())?;
-
+    
     Ok(())
+}
+
+// --- WASM Interface ---
+#[cfg(target_arch = "wasm32")]
+pub mod wasm {
+    use wasm_bindgen::prelude::*;
+    use crate::{compress_chunk, decompress_chunk};
+    
+    #[wasm_bindgen]
+    pub fn compress(data: &[u8]) -> Result<Vec<u8>, JsValue> {
+        compress_chunk(data, 0, None, None)
+            .map_err(|e| JsValue::from_str(&e.to_string()))
+    }
+    
+    #[wasm_bindgen]
+    pub fn decompress(data: &[u8]) -> Result<Vec<u8>, JsValue> {
+        decompress_chunk(data, 0, None)
+            .map_err(|e| JsValue::from_str(&e.to_string()))
+    }
 }

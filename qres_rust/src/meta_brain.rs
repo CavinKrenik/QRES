@@ -1,6 +1,4 @@
 use serde::Deserialize;
-use std::fs;
-use std::path::Path;
 use lazy_static::lazy_static;
 
 const NUM_INPUTS: usize = 4;
@@ -24,14 +22,10 @@ pub struct MetaBrain {
 
 impl MetaBrain {
     pub fn new() -> Option<Self> {
-        let path = "assets/meta_brain_v2.json";
-        if Path::new(path).exists() {
-            let json = fs::read_to_string(path).ok()?;
-            let weights: MetaBrainWeights = serde_json::from_str(&json).ok()?;
-            Some(MetaBrain { weights })
-        } else {
-            None
-        }
+        // Embed weights for portability (and WASM support)
+        let json = include_str!("../assets/meta_brain_v2.json");
+        let weights: MetaBrainWeights = serde_json::from_str(json).ok()?;
+        Some(MetaBrain { weights })
     }
 
     fn dense(input: &[f32], weights: &[Vec<f32>], bias: &[f32]) -> Vec<f32> {
