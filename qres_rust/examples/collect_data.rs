@@ -1,6 +1,5 @@
-use std::fs::{self, File};
+use std::fs::File;
 use std::io::{Read, Write};
-use std::path::Path;
 
 // Import internal modules from the library
 // Note: We need to use the crate name "qres_rust"
@@ -77,7 +76,7 @@ fn process_file(path: &str, output: &mut File) -> std::io::Result<()> {
             continue;
         }
 
-        let features = calculate_features(&chunk[0..1024]); // Features on header only? Or full chunk?
+        let _features = calculate_features(&chunk[0..1024]); // Features on header only? Or full chunk?
                                                             // Real-time: we only want to scan header. Let's say 512 bytes.
         let features_header = calculate_features(&chunk[0..512.min(chunk.len())]);
 

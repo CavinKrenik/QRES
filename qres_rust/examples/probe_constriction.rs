@@ -36,7 +36,7 @@ fn main() {
 
     // Decompression
     println!("Decoding...");
-    let mut reader = AnsReader::new(&compressed, data.len());
+    let mut reader = AnsReader::new(&compressed);
     for (i, &expected) in data.iter().enumerate() {
         let actual = reader.read_residual();
         if actual != expected {
