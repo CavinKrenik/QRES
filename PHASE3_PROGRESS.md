@@ -22,7 +22,7 @@
 - [x] **State Management**: Share `peers` and `brain` via `Arc<RwLock<AppState>>`.
 - [x] **API Server**: Implement Axum server on separate Tokio task.
 - [x] **Endpoints**: `GET /status` (peer info), `GET /brain` (current weights).
-- [ ] **Resilience**: Handle graceful shutdown and error recovery.
+- [x] **Resilience**: Handle graceful shutdown and error recovery (Native LibP2P/Tokio).
 
 ---
 

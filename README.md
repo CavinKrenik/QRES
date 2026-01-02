@@ -70,13 +70,24 @@ npm run tauri dev
 ##  Usage
 
 ### CLI
-`ash
+```bash
 # Compress with visualizer
-qres-cli compress input.dat output.qres --visualize
+qres-cli compress -i input.dat -o output.qres --visualize
 
-# Join the P2P Swarm
-qres-cli swarm --topic "global-brain"
-`
+# Decompress a file
+qres-cli decompress -i output.qres -o restored.dat
+```
+
+### 🐝 Swarm Mode (P2P)
+Run a decentralized node to sync compression intelligence with other peers.
+```bash
+qres-cli swarm --brain ./my_brain.json --port 8080
+```
+- **Discovery**: Automatically finds peers on the local network via mDNS.
+- **Sync**: Periodically broadcasts and merges brain weights using FedProx-lite.
+- **API**: Exposes a REST API for monitoring.
+  - `GET /status`: Peer connectivity stats.
+  - `GET /brain`: Current neural confidence scores.
 
 ### Python API
 `python
