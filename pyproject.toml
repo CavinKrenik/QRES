@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "qres"
-version = "5.0.5"
+version = "5.1.0"
 description = "QRES: Quantum-Relational Encoding System for Python"
 requires-python = ">=3.8"
 dependencies = [
