@@ -1,0 +1,30 @@
+name: Lint & Quality
+
+on:
+  push:
+    branches: [ "main", "dev" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  lint:
+    name: Rust Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Check Formatting
+        run: cargo fmt --all -- --check
+        working-directory: ./qres_rust
+
+      - name: Run Clippy
+        run: cargo clippy -- -D warnings
+        working-directory: ./qres_rust

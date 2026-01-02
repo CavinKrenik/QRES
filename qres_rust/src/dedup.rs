@@ -287,7 +287,7 @@ pub struct DedupStats {
 }
 
 /// Fast XXHash64 implementation for chunk hashing
-fn xxhash64(data: &[u8]) -> u64 {
+pub fn xxhash64(data: &[u8]) -> u64 {
     const PRIME1: u64 = 0x9E3779B185EBCA87;
     const PRIME2: u64 = 0xC2B2AE3D27D4EB4F;
     const PRIME3: u64 = 0x165667B19E3779F9;
