@@ -29,4 +29,5 @@ qres_rust = { path = "../../qres_rust", default-features = false }
 tokio = { version = "1", features = ["full"] }
 walkdir = "2"
 lazy_static = "1.4"
+rand = "0.8"
 

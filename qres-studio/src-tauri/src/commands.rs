@@ -5,6 +5,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use tokio::sync::Mutex;
 use std::sync::Arc;
+use serde::Serialize;
 
 // P2P State
 struct P2PState {
@@ -243,7 +244,7 @@ pub async fn decompress_file(
     let _flags = header_static[1];
     let _pred_id = header_static[2];
     let original_size = u64::from_le_bytes(header_static[11..19].try_into().unwrap());
-    let compressed_size = u64::from_le_bytes(header_static[19..27].try_into().unwrap());
+    let _compressed_size = u64::from_le_bytes(header_static[19..27].try_into().unwrap());
     
     // 4. Read Filename Length and Skip Filename
     let mut name_len_bytes = [0u8; 4];
@@ -507,7 +508,7 @@ pub async fn get_swarm_peers(_app: AppHandle) -> Result<Vec<PeerInfo>, String> {
     Ok(peers)
 }
 
-async fn sync_with_swarm(app: &AppHandle) -> Result<(), String> {
+async fn sync_with_swarm(_app: &AppHandle) -> Result<(), String> {
     // Run hive_sync.py subprocess
     let python = if cfg!(windows) { "python" } else { "python3" };
     
