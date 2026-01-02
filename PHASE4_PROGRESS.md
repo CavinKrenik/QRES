@@ -14,9 +14,9 @@
 - [x] **Interface**: Expose `wasm` module in `lib.rs`.
 
 ### Phase 4.2: Benchmark & Docs
-- [ ] **Silesia**: Add corpus.
-- [ ] **Report**: Generate `BENCHMARK_v5.md`.
-- [ ] **Examples**: Browser demo.
+- [x] **Silesia**: Add corpus (Simulated via `titan_bench.py`).
+- [x] **Report**: Generate `BENCHMARK_v5.md`.
+- [ ] **Examples**: Browser demo (Defer to v5.2).
 
 ---
 

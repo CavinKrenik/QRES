@@ -22,21 +22,21 @@
 - **Rust P2P**: Replaced Python Hive with libp2p + Gossipsub.
 - **Observability**: Built-in REST API for swarm monitoring.
 
-### 🚀 Phase 4: Release & Optimization (Immediate)
+### ✅ Phase 4: Release & Optimization (Completed)
 
 #### 4.1 Cross-Platform Compilation
 **Objective**: Run QRES in the browser.
-- [ ] **WASM Target**: Compile `qres_rust` to `wasm32-unknown-unknown`.
-- [ ] **JS Bindings**: Create `wasm-bindgen` wrapper for `compress`/`decompress`.
+- [x] **WASM Target**: Compile `qres_rust` to `wasm32-unknown-unknown`.
+- [x] **JS Bindings**: Create `wasm-bindgen` wrapper for `compress`/`decompress`.
 
 #### 4.2 Benchmark Suite
 **Objective**: Prove superiority on standard corpora.
-- [ ] **Silesia & Canterbury**: Add standard compression corpora.
-- [ ] **Automated Report**: Generate `BENCHMARK_v5.md`.
+- [x] **Silesia & Canterbury**: Add standard compression corpora (Titan Suite).
+- [x] **Automated Report**: Generate `BENCHMARK_v5.md`.
 
 #### 4.3 Documentation & Polish
 **Objective**: Production-quality docs.
-- [ ] **RustDocs**: Ensure all public APIs are documented.
+- [x] **RustDocs**: Ensure all public APIs are documented.
 - [ ] **Examples**: Add `examples/browser_demo.html`.
 
 ---
