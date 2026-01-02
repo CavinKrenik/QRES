@@ -1,7 +1,14 @@
-# QRES v5.1.0 "Singularity" Release Notes
+# QRES Release Notes
 
-**Date:** January 1, 2026
-**Codename:** Singularity
+---
+
+# QRES v6.0 Alpha "Antigravity" Release Notes
+
+**Date:** January 2, 2026  
+**Status:** Experimental (Opt-In Features)  
+
+
+## 🚀 New Experimental Features
 
 ## 🌟 Highlights
 
