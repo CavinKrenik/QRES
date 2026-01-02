@@ -337,12 +337,14 @@ mod tests {
 
     #[test]
     fn test_deduplication() {
-        let mut engine = DedupEngine::new(8 * 1024); // 8KB chunks
+        let mut engine = DedupEngine::new(1024); // 1KB chunks
 
-        // Create data with duplication
-        let mut data = vec![0u8; 16 * 1024]; // 16KB
-        data[..8192].fill(0xAA); // First 8KB all 0xAA
-        data[8192..].fill(0xAA); // Second 8KB also 0xAA (duplicate!)
+        // Create data with duplication using a pattern that varies (0..255)
+        // detailed enough to ensure the rolling hash moves and triggers boundaries.
+        let mut data = Vec::with_capacity(16 * 1024);
+        let pattern: Vec<u8> = (0..8192).map(|i| (i % 255) as u8).collect();
+        data.extend_from_slice(&pattern);
+        data.extend_from_slice(&pattern); // Duplicate the pattern
 
         let result = engine.deduplicate(&data, 0);
 
