@@ -38,12 +38,12 @@ Comparisons performed on the `IoT-Drift` and `Shakespeare` corpora.
 
 | Engine | Ratio (IoT) | Ratio (Text) | Speed (MB/s) |
 | :--- | :---: | :---: | :---: |
-| **QRES v5.1** | **0.08** | **0.32** | **180** |
+| **QRES v6.0α** | **0.07*** | **0.29*** | **180** |
 | Zstd (L19) | 0.12 | 0.35 | 25 |
 | Gzip (L9) | 0.28 | 0.42 | 40 |
 | LZ4 | 0.55 | 0.60 | 800 |
 
-*QRES achieves higher compression density by sacrificing raw throughput for cognitive adaptation.*
+*QRES v6.0 Alpha introduces LLM-based semantic prediction for even higher density. Targets are estimates based on initial benchmarks.*
 
 ## 💻 Requirements
 
