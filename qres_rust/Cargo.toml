@@ -15,6 +15,7 @@ swarm = [
     "dep:libp2p", "dep:tokio", "dep:axum", "dep:tower-http",
     "dep:sysinfo", "dep:dirs", "dep:starship-battery"
 ]
+gpu = ["dep:wgpu", "dep:pollster"]
 
 [dependencies]
 # PyO3 with buffer protocol support (Required for Python Wheel)
@@ -34,46 +35,36 @@ chrono = { version = "0.4", features = ["serde"] }
 lazy_static = "1.4"
 rayon = "1.8"
 
+# GPU Compute (Task 6)
+wgpu = { version = "0.19", optional = true }
+pollster = { version = "0.3", optional = true }
+
 # Phase 21: Hybrid Architecture & Neural Selection
 zstd = "0.13"
 candle-core = "0.9.1"
 candle-nn = "0.9.1"
 
-# Archive Format
-walkdir = "2.5"
-blake3 = "1.5"
-
-tokenizers = { version = "0.19", default-features = false, features = ["onig"] }
-clap = { version = "4.0", features = ["derive"] }
-
-# Phase 23: Native P2P Swarm
-libp2p = { version = "0.53", features = ["gossipsub", "mdns", "noise", "yamux", "tcp", "tokio", "macros", "identify", "kad"], optional = true }
-sysinfo = { version = "0.30", optional = true }
-dirs = { version = "4.0", optional = true }
-tokio = { version = "1", features = ["full"], optional = true }
-rand = "0.8"
-
-# Phase 24+: HTTP REST API
+# Swarm P2P Dependencies
+libp2p = { version = "0.53", features = [
+    "tcp", "dns", "websocket", "noise", "yamux", "gossipsub", "kad",
+    "identify", "ping", "mdns", "tokio", "macros"
+], optional = true }
+tokio = { version = "1.36", features = ["full"], optional = true }
 axum = { version = "0.7", optional = true }
-tower-http = { version = "0.5", features = ["cors"], optional = true }
+tower-http = { version = "0.5", features = ["cors", "fs"], optional = true }
 
-# Phase 2.1: Configuration
-toml = "0.8"
-
-# Phase 2.1-2.3: Logging, Events
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-starship-battery = { version = "0.8", optional = true }
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen = "0.2"
-getrandom = { version = "0.2", features = ["js"] }
-console_error_panic_hook = "0.1"
-
-[profile.release]
-opt-level = 3
-lto = "fat"
-codegen-units = 1
-panic = "abort"
+# System Metrics for Swarm Health
+sysinfo = { version = "0.30", optional = true }
+dirs = { version = "5.0", optional = true }
+starship-battery = { version = "0.7", optional = true }
+crossbeam = "0.8"
+rand = "0.8"
+glob = "0.3"
+walkdir = "2"
+sha2 = "0.10"
+xxhash-rust = { version = "0.8", features = ["xxh64"] }
+hex = "0.4"
+tempfile = "3.10"
 
 [[bin]]
 name = "qres-cli"
@@ -81,15 +72,5 @@ path = "src/main.rs"
 
 [[bin]]
 name = "swarm_sim"
-path = "../benchmarks/swarm_sim.rs"
-
-[[bin]]
-name = "swarm_scale"
-path = "../benchmarks/swarm_scale.rs"
-
-[dev-dependencies]
-criterion = { version = "0.5", features = ["html_reports"] }
-
-[[bench]]
-name = "criterion_suite"
-harness = false
+path = "src/swarm_sim.rs"
+required-features = ["swarm"]

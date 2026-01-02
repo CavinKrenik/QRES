@@ -85,12 +85,20 @@ A beautiful, GPU-accelerated interface for desktop users.
 ## 📚 Documentation
 
 Detailed documentation has been consolidated into the `docs/` directory:
-
+- **Python API:** `pip install qres` (Coming to PyPI). See [API Reference](docs/API_REFERENCE.md).
 - [**Whitepaper**](docs/WHITEPAPER.md): The theory behind Neural-Symbolic Compression.
 - [**Benchmarks**](docs/benchmarks/BENCHMARK_v5.md): Extensive performance analysis.
 - [**P2P Guides**](docs/guides/P2P_IMPLEMENTATION.md): Setting up your own Swarm.
 - [**Roadmap**](docs/ROADMAP.md): Future plans for Version 6.0 and beyond.
 - [**Contributing**](docs/CONTRIBUTING.md): Join the Hive.
+
+## 🔬 Research & Citations
+QRES evolves by implementing cutting-edge compression theory.
+- **LLM Compression:** Inspired by *Delétang et al. (2024)*.
+- **Linear Attention:** Adapted from *Katharopoulos et al. (2020)*.
+- **Swarm FedProx:** Based on *Li et al. (2018)*.
+
+See [RESEARCH_NOTES.md](docs/RESEARCH_NOTES.md) for detailed bibliography and implementation strategies.
 
 ---
 
