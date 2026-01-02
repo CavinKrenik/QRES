@@ -25,6 +25,7 @@ pub mod swarm_p2p;
 // --- v3.0/v4.0 Modules ---
 pub mod ans_coder;
 pub mod archive; // Archive container format
+pub mod dedup; // Content-Defined Chunking & Deduplication
 pub mod meta_brain;
 pub mod mixer;
 pub mod predictors;

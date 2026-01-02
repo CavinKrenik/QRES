@@ -1,4 +1,4 @@
-﻿# QRES v5.0.5: The Singularity Engine
+﻿# QRES v5.1: The Singularity Engine
 
 *(Dedicated to the pursuit of the Singularity)*
 
@@ -8,7 +8,14 @@
 
 **QRES (Quantum-Relational Encoding System)** is a cognitive compression framework. It treats compression not as a statistical problem, but as an **intelligence problem**.
 
-**New in v5.0 (Singularity Update):**
+**New in v5.1 (Archive Edition):**
+* **🗜️ True Archiving**: WinZip/7-Zip-style container format with solid compression
+* **🔍 Global Deduplication**: Content-Defined Chunking detects duplicates across the entire archive
+* **🧠 Logistic Mixing**: Neural-style probability mixing for better predictions
+* **✅ Critical Fixes**: Resolved decompression crashes and memory exhaustion issues
+* **📦 Manifest System**: Browse archives without extraction, verify integrity with Blake3
+
+**v5.0 (Singularity Update):**
 * **Context Engine**: LzMatchPredictor brings LZ77-style string matching, crushing Zstd on text/code.
 * **SIMD Acceleration**: 128-bit Vectorized Mixing for >500MB/s throughput.
 * **True P2P**: Decentralized libp2p swarm (removed Python server dependency).
@@ -94,7 +101,41 @@ qres-cli swarm --brain ./my_brain.json --port 8080
 import qres
 # Encode with automatic content detection
 compressed = qres.encode_bytes(data, level=5)
-`
+```
+
+### 🗃️ Archive Format (.qrar)
+QRES v5.1 introduces true archiving with solid compression:
+
+```bash
+# Create archive from directory
+qres-cli archive create ./my_project -o my_project.qrar
+
+# Browse archive contents (no extraction)
+qres-cli archive list my_project.qrar
+
+# Extract specific file
+qres-cli archive extract my_project.qrar src/main.rs -o ./extracted/
+
+# Extract all
+qres-cli archive extract my_project.qrar -o ./restored_project/
+```
+
+**Archive Features:**
+- **Solid Compression**: All files concatenated before compression for better ratios
+- **Content Deduplication**: Detects duplicate chunks across the entire archive
+- **Integrity Verification**: Blake3 hashing for each file
+- **Metadata Preservation**: Permissions, timestamps, file paths
+- **Partial Extraction**: Extract individual files without decompressing everything
+
+**File Extensions:**
+- `.qres` - Individual compressed file
+- `.qrar` - QRES Archive (multiple files with manifest)
+
+**When to use archives:**
+- Source code projects (20-50% better compression)
+- Document collections
+- Backups with structure preservation
+- Any directory where files share common patterns
 
 ### Browser (WASM)
 See [docs/WASM_GUIDE.md](docs/WASM_GUIDE.md) for running QRES client-side.
