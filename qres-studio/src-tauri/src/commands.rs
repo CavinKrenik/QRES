@@ -244,7 +244,7 @@ pub async fn decompress_file(
     let _version = header_static[0];
     let _flags = header_static[1];
     let _pred_id = header_static[2];
-    let _original_size = u64::from_le_bytes(header_static[11..19].try_into().unwrap());
+    let original_size = u64::from_le_bytes(header_static[11..19].try_into().unwrap());
     let _compressed_size = u64::from_le_bytes(header_static[19..27].try_into().unwrap());
     
     // 4. Read Filename Length and Skip Filename
