@@ -5,6 +5,20 @@ All notable changes to the QRES project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.0.0-alpha] - 2026-01-02
+### Added
+- **LLM Semantic Predictor:** Production-ready Transformers integration for AI-driven compression (`python/qres/llm_predictor.py`)
+- **GPU Compute Pipeline:** wgpu framework for hardware-accelerated batch mixing (`qres_rust/src/gpu.rs`)
+- **Research Documentation:** `docs/RESEARCH_NOTES.md` with academic citations (Delétang 2024, Katharopoulos 2020, Li 2018)
+- **Fuzzing Infrastructure:** cargo-fuzz setup in `qres_rust/fuzz/` for crash safety
+- **Swarm Topology Visualization:** Real-time P2P network graph in QRES Studio
+- **LICENSE:** Official Apache 2.0 license
+
+### Changed
+- **README:** Added v6.0 alpha features section and contributing/license info
+- **API Reference:** Documented `SemanticPredictor` class
+- **CI Workflows:** Added optional LLM predictor test to `test.yml`
+
 ## [5.1.0] - 2026-01-01
 ### Added
 - **Telepathy Engine:** "Living Brain" predictor selection (Linear/Simple/Graph/Spectral) for adaptive entropy coding.

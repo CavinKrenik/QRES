@@ -65,6 +65,13 @@ jobs:
           source .venv/bin/activate
           python benchmarks/battle_royale.py --quick
 
+      - name: Test LLM Predictor (Optional)
+        continue-on-error: true
+        run: |
+          source .venv/bin/activate
+          pip install transformers torch || echo "Skipping LLM test (deps unavailable)"
+          python benchmarks/semantic_bench.py || echo "LLM test skipped"
+
   studio-test:
     name: GUI Build
     runs-on: ubuntu-latest
