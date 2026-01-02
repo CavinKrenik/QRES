@@ -23,6 +23,22 @@ Instead of a simple average, the Mixer uses a localized Auto-Regressive process 
 - **Momentum:** High-performing models act as "Anchors", preventing rapid oscillation when entropy spikes transiently.
 - **SIMD Acceleration:** The mixing dot-product is vectorized using AVX2 (x86_64) or NEON (ARM), allowing parallel evaluation of 8+ weights per cycle.
 
+```mermaid
+graph TD
+    In[Input Byte] --> Linear
+    In --> Simple
+    In --> Graph
+    In --> Spectral
+    Linear --> Mixer((Momentum Mixer))
+    Simple --> Mixer
+    Graph --> Mixer
+    Spectral --> Mixer
+    Mixer --> Out[Prediction]
+    Actual[Actual Byte] --> Loss{Loss Calc}
+    Out --> Loss
+    Loss -->|Backprop| Mixer
+```
+
 ### 2.2 Swarm Learning (P2P)
 Nodes form a **Kademlia DHT** network using `libp2p`.
 - **GossipSub:** We use the GossipSub v1.1 protocol to disseminate "Epiphanies".
