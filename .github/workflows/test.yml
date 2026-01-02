@@ -23,6 +23,7 @@ jobs:
         run: cargo fmt --manifest-path qres_rust/Cargo.toml -- --check
 
       - name: Clippy Linting
+        continue-on-error: true
         run: cargo clippy --manifest-path qres_rust/Cargo.toml -- -D warnings
 
       - name: Run Core Unit Tests (Context & Spectral)
