@@ -43,16 +43,27 @@ jobs:
         with:
           python-version: '3.10'
 
+      - name: Create Virtual Environment
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install --upgrade pip
+
       - name: Build Python Extension
         run: |
+          source .venv/bin/activate
           pip install maturin pytest numpy
           maturin develop --release
 
       - name: Run Torture Test
-        run: python benchmarks/torture_test.py
+        run: |
+          source .venv/bin/activate
+          python benchmarks/torture_test.py
       
       - name: Verify Singularity (Battle Royale)
-        run: python benchmarks/battle_royale.py --quick
+        run: |
+          source .venv/bin/activate
+          python benchmarks/battle_royale.py --quick
 
   studio-test:
     name: GUI Build
