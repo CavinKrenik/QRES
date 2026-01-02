@@ -72,7 +72,6 @@ pub struct ChunkBoundaryDetector {
     mask: u64,
     min_size: usize,
     max_size: usize,
-    avg_size: usize,
 }
 
 impl ChunkBoundaryDetector {
@@ -87,7 +86,6 @@ impl ChunkBoundaryDetector {
             mask,
             min_size: avg_chunk_size / 4,
             max_size: avg_chunk_size * 4,
-            avg_size: avg_chunk_size,
         }
     }
 
@@ -293,7 +291,6 @@ fn xxhash64(data: &[u8]) -> u64 {
     const PRIME1: u64 = 0x9E3779B185EBCA87;
     const PRIME2: u64 = 0xC2B2AE3D27D4EB4F;
     const PRIME3: u64 = 0x165667B19E3779F9;
-    const PRIME4: u64 = 0x85EBCA77C2B2AE63;
     const PRIME5: u64 = 0x27D4EB2F165667C5;
 
     let mut hash = PRIME5.wrapping_add(data.len() as u64);

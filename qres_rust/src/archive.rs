@@ -62,6 +62,15 @@ impl ArchiveManifest {
             metadata: HashMap::new(),
         }
     }
+}
+
+impl Default for ArchiveManifest {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl ArchiveManifest {
 
     pub fn add_file(&mut self, entry: FileEntry) {
         self.total_size += entry.original_size;
@@ -264,7 +273,7 @@ pub fn extract_archive<P: AsRef<Path>>(
     // Read and validate magic
     let mut magic = [0u8; 4];
     reader.read_exact(&mut magic)?;
-    if &magic != ARCHIVE_MAGIC {
+    if magic != ARCHIVE_MAGIC {
         return Err(io::Error::new(
             io::ErrorKind::InvalidData,
             "Not a QRES archive",
