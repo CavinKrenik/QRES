@@ -1,26 +1,21 @@
-use libp2p::{
-    gossipsub, mdns, identity, identify, noise, tcp, yamux,
-    swarm::{NetworkBehaviour, SwarmEvent},
-    PeerId, Transport, SwarmBuilder,
-};
-use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher};
-use std::time::Duration;
-use libp2p::futures::StreamExt; // For select_next_some
 use crate::LivingBrain;
-use std::fs;
-use std::io; // Added
+use axum::{extract::State, routing::get, Json, Router};
+use libp2p::futures::StreamExt; // For select_next_some
 use libp2p::gossipsub::IdentTopic; // Added helper
-use std::collections::HashSet;
-use std::sync::Arc;
-use tokio::sync::RwLock;
-use axum::{
-    routing::get,
-    Router,
-    Json,
-    extract::State,
+use libp2p::{
+    gossipsub, identify, identity, mdns, noise,
+    swarm::{NetworkBehaviour, SwarmEvent},
+    tcp, yamux, PeerId, SwarmBuilder,
 };
 use serde::Serialize;
+use std::collections::hash_map::DefaultHasher;
+use std::collections::HashSet;
+use std::fs;
+use std::hash::{Hash, Hasher};
+use std::io; // Added
+use std::sync::Arc;
+use std::time::Duration;
+use tokio::sync::RwLock;
 
 // Topic for brain synchronization
 const BRAIN_TOPIC: &str = "qres-brain-sync";
@@ -48,7 +43,10 @@ pub struct QresBehavior {
     pub identify: identify::Behaviour,
 }
 
-pub async fn start_p2p_node(brain_path: String, port: u16) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn start_p2p_node(
+    brain_path: String,
+    port: u16,
+) -> Result<(), Box<dyn std::error::Error>> {
     // 1. Identity
     let id_keys = identity::Keypair::generate_ed25519();
     let peer_id = PeerId::from(id_keys.public());
@@ -69,10 +67,12 @@ pub async fn start_p2p_node(brain_path: String, port: u16) -> Result<(), Box<dyn
             .route("/status", get(get_status))
             .route("/brain", get(get_brain))
             .with_state(app_state);
-        
+
         eprintln!("[API] Server listening on http://0.0.0.0:{}", port);
         // Bind to 0.0.0.0 to allow external access
-        let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port)).await.unwrap();
+        let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port))
+            .await
+            .unwrap();
         axum::serve(listener, app).await.unwrap();
     });
 
@@ -96,21 +96,22 @@ pub async fn start_p2p_node(brain_path: String, port: u16) -> Result<(), Box<dyn
                 .validation_mode(gossipsub::ValidationMode::Permissive)
                 .message_id_fn(message_id_fn)
                 .build()
-                .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+                .map_err(io::Error::other)?;
 
             let mut gossipsub = gossipsub::Behaviour::new(
                 gossipsub::MessageAuthenticity::Signed(key.clone()),
                 gossipsub_config,
-            ).map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+            )
+            .map_err(io::Error::other)?;
 
             let topic = gossipsub::IdentTopic::new(BRAIN_TOPIC);
-            gossipsub.subscribe(&topic).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{:?}", e)))?;
+            gossipsub
+                .subscribe(&topic)
+                .map_err(|e| io::Error::other(format!("{:?}", e)))?;
 
             // mDNS
-            let mdns = mdns::tokio::Behaviour::new(
-                mdns::Config::default(), 
-                PeerId::from(key.public())
-            )?;
+            let mdns =
+                mdns::tokio::Behaviour::new(mdns::Config::default(), PeerId::from(key.public()))?;
 
             // Identify
             let identify = identify::Behaviour::new(identify::Config::new(
@@ -118,7 +119,11 @@ pub async fn start_p2p_node(brain_path: String, port: u16) -> Result<(), Box<dyn
                 key.public(),
             ));
 
-            Ok(QresBehavior { gossipsub, mdns, identify })
+            Ok(QresBehavior {
+                gossipsub,
+                mdns,
+                identify,
+            })
         })?
         .build();
 
@@ -146,7 +151,7 @@ pub async fn start_p2p_node(brain_path: String, port: u16) -> Result<(), Box<dyn
                     }
                 }
             }
-            
+
             // Swarm Events
             event = swarm.select_next_some() => match event {
                 SwarmEvent::NewListenAddr { address, .. } => {
@@ -185,7 +190,7 @@ pub async fn start_p2p_node(brain_path: String, port: u16) -> Result<(), Box<dyn
                                     local_brain.merge(&remote_brain, 0.1);
                                     let _ = fs::write(brain_file, local_brain.to_json());
                                     eprintln!("[Swarm] Assimilated knowledge from peer.");
-                                    
+
                                     // Update RAM state
                                     state.write().await.brain = local_brain;
                                 }

@@ -1,5 +1,5 @@
-use serde::Deserialize;
 use lazy_static::lazy_static;
+use serde::Deserialize;
 
 const NUM_INPUTS: usize = 4;
 const NUM_OUTPUTS: usize = 5;
@@ -54,7 +54,9 @@ impl MetaBrain {
 
     fn relu(x: &mut [f32]) {
         for v in x.iter_mut() {
-            if *v < 0.0 { *v = 0.0; }
+            if *v < 0.0 {
+                *v = 0.0;
+            }
         }
     }
 
@@ -66,26 +68,40 @@ impl MetaBrain {
         }
 
         // 2. L0
-        let mut h0 = Self::dense(&x, &self.weights.layer_0_weights, &self.weights.layer_0_bias);
+        let mut h0 = Self::dense(
+            &x,
+            &self.weights.layer_0_weights,
+            &self.weights.layer_0_bias,
+        );
         Self::relu(&mut h0);
 
         // 3. L1
-        let mut h1 = Self::dense(&h0, &self.weights.layer_1_weights, &self.weights.layer_1_bias);
+        let mut h1 = Self::dense(
+            &h0,
+            &self.weights.layer_1_weights,
+            &self.weights.layer_1_bias,
+        );
         Self::relu(&mut h1);
 
         // 4. L2
-        let out = Self::dense(&h1, &self.weights.layer_2_weights, &self.weights.layer_2_bias);
-        
+        let out = Self::dense(
+            &h1,
+            &self.weights.layer_2_weights,
+            &self.weights.layer_2_bias,
+        );
+
         let mut result = [0.0; NUM_OUTPUTS];
-        for i in 0..NUM_OUTPUTS {
-            result[i] = out[i];
+        if out.len() >= NUM_OUTPUTS {
+            result.copy_from_slice(&out[..NUM_OUTPUTS]);
         }
         result
     }
 }
 
 pub fn calculate_features(data: &[u8]) -> [f32; 4] {
-    if data.is_empty() { return [0.0; 4]; }
+    if data.is_empty() {
+        return [0.0; 4];
+    }
 
     let mut counts = [0usize; 256];
     let mut sum = 0.0;
@@ -114,7 +130,7 @@ pub fn calculate_features(data: &[u8]) -> [f32; 4] {
     let mut den = 0.0;
     for i in 0..data.len() - 1 {
         let diff1 = data[i] as f32 - mean;
-        let diff2 = data[i+1] as f32 - mean;
+        let diff2 = data[i + 1] as f32 - mean;
         num += diff1 * diff2;
         den += diff1 * diff1;
     }
@@ -133,21 +149,25 @@ pub fn predict_init_weights(chunk: &[u8]) -> Option<[f32; NUM_OUTPUTS]> {
         let header_len = chunk.len().min(512);
         let features = calculate_features(&chunk[0..header_len]);
         let weights = brain.forward(&features);
-        
+
         // Normalize (Softmax or just simple abs norm? Our training data was approx normalized)
         // Let's apply Softmax to enforce distribution
         let mut max_w = -f32::INFINITY;
-        for &w in &weights { if w > max_w { max_w = w; } }
-        
+        for &w in &weights {
+            if w > max_w {
+                max_w = w;
+            }
+        }
+
         let mut sum = 0.0;
         let mut exp_w = [0.0; NUM_OUTPUTS];
-        for i in 0..NUM_OUTPUTS {
-            exp_w[i] = (weights[i] - max_w).exp();
+        for (i, &w) in weights.iter().enumerate() {
+            exp_w[i] = (w - max_w).exp();
             sum += exp_w[i];
         }
-        
-        for i in 0..NUM_OUTPUTS {
-            exp_w[i] /= sum;
+
+        for w in &mut exp_w {
+            *w /= sum;
         }
 
         Some(exp_w)

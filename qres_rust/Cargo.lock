@@ -634,6 +634,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "console_error_panic_hook"
+version = "0.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a06aeb73f470f66dcdbf7223caeebb85984942f22f1adb2a088cf9668146bbbc"
+dependencies = [
+ "cfg-if",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "const-oid"
 version = "0.9.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3463,9 +3473,11 @@ dependencies = [
  "candle-nn",
  "chrono",
  "clap",
+ "console_error_panic_hook",
  "constriction",
  "criterion",
  "dirs",
+ "getrandom 0.2.16",
  "lazy_static",
  "libp2p",
  "ndarray",
@@ -3484,6 +3496,7 @@ dependencies = [
  "tower-http",
  "tracing",
  "tracing-subscriber",
+ "wasm-bindgen",
  "zstd",
 ]
 

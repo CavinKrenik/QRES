@@ -27,7 +27,7 @@ fn main() {
         .expect("Failed to start Hive Server");
 
     // Compute absolute CLI path
-    let mut cli_path = std::env::current_exe().unwrap(); 
+    let mut cli_path = std::env::current_exe().unwrap();
     cli_path.pop(); // debug
     cli_path.pop(); // target
     cli_path.push("release");
@@ -67,7 +67,7 @@ fn main() {
             // Novices
             r#"{"confidence": [1.0, 1.0, 1.0, 1.0], "stats": {"compressions": 10}}"#
         };
-        
+
         fs::write(format!("{}/qres_brain.json", dir), brain_json).unwrap();
     }
 
@@ -75,9 +75,9 @@ fn main() {
     for i in 0..agent_count {
         let dir = format!("{}/agent_{}", base_dir, i);
         println!("[Agent {}] Syncing...", i);
-        
+
         let status = Command::new(python_path)
-            .arg("../../utils/hive_sync.py")
+            .arg("../../../utils/hive_sync.py")
             .current_dir(&dir)
             .env("HIVE_URL", "http://localhost:5000")
             .env("QRES_CLI", cli_path_str)
@@ -85,7 +85,11 @@ fn main() {
             .expect("Agent sync failed");
 
         if !status.status.success() {
-             eprintln!("Agent {} failed: {}", i, String::from_utf8_lossy(&status.stderr));
+            eprintln!(
+                "Agent {} failed: {}",
+                i,
+                String::from_utf8_lossy(&status.stderr)
+            );
         }
     }
 
@@ -98,32 +102,43 @@ fn main() {
         .arg("import requests; print(requests.get('http://localhost:5000/metrics').text)")
         .output()
         .expect("Failed to fetch metrics");
-    
-    println!("Hive Metrics:\n{}", String::from_utf8_lossy(&metrics_cmd.stdout));
+
+    println!(
+        "Hive Metrics:\n{}",
+        String::from_utf8_lossy(&metrics_cmd.stdout)
+    );
 
     // Check Novice (Agent 4) Brain
     let last_agent_dir = format!("{}/agent_{}", base_dir, agent_count - 1);
     let novice_brain = fs::read_to_string(format!("{}/qres_brain.json", last_agent_dir)).unwrap();
-    println!("[Verify] Agent {} Brain:\n{}", agent_count - 1, novice_brain);
+    println!(
+        "[Verify] Agent {} Brain:\n{}",
+        agent_count - 1,
+        novice_brain
+    );
 
     // Naive string check for transferred knowledge
-    // Should have elevated confidence for BOTH index 2 and 3? 
+    // Should have elevated confidence for BOTH index 2 and 3?
     // FedAvg might average them down, but they should be significantly higher than 1.0
     // e.g. (10 + 0.1)/2 = ~5. If weighted by samples...
     // Experts have 5000 samples, Novices 10.
     // So Global should be dominated by Experts.
-    
-    let success_idx2 = novice_brain.contains("Confidence") && (novice_brain.contains("4.") || novice_brain.contains("5.") || novice_brain.contains("9.") || novice_brain.contains("10."));
+
+    let success_idx2 = novice_brain.contains("Confidence")
+        && (novice_brain.contains("4.")
+            || novice_brain.contains("5.")
+            || novice_brain.contains("9.")
+            || novice_brain.contains("10."));
     // Actually, simple string matching is brittle with float formatting.
     // But let's check for "success" keywords printed by validation script if possible.
     // Instead, I'll rely on the output inspection for now or simple "higher confidence" check.
-    
+
     if success_idx2 {
-         println!("[SUCCESS] Agent acquired Expert Knowledge!");
+        println!("[SUCCESS] Agent acquired Expert Knowledge!");
     } else {
-         println!("[Partial] Check global weights in metrics above for confirmation.");
+        println!("[Partial] Check global weights in metrics above for confirmation.");
     }
-    
+
     // Cleanup
     let _ = server.kill();
     let _ = server.wait();

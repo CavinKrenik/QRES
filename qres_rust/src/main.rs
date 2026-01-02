@@ -74,7 +74,11 @@ fn compress_file(input: &str, output: &str) -> io::Result<()> {
             w_bytes.extend_from_slice(&f.to_le_bytes());
         }
     }
-    let weights_arg = if w_bytes.is_empty() { None } else { Some(w_bytes.as_slice()) };
+    let weights_arg = if w_bytes.is_empty() {
+        None
+    } else {
+        Some(w_bytes.as_slice())
+    };
 
     let mut buffer = vec![0u8; CHUNK_SIZE];
     let mut total_input = 0u64;
@@ -148,7 +152,11 @@ fn decompress_file(input: &str, output: &str) -> io::Result<()> {
             w_bytes.extend_from_slice(&f.to_le_bytes());
         }
     }
-    let weights_arg = if w_bytes.is_empty() { None } else { Some(w_bytes.as_slice()) };
+    let weights_arg = if w_bytes.is_empty() {
+        None
+    } else {
+        Some(w_bytes.as_slice())
+    };
 
     let mut total_output = 0u64;
     let start = std::time::Instant::now();
@@ -232,10 +240,10 @@ fn swarm_mode(brain: String, port: u16) -> io::Result<()> {
     eprintln!("[Swarm] Starting QRES P2P Swarm Node (libp2p)...");
     eprintln!("[Swarm] Brain File: {}", brain);
     eprintln!("[Swarm] API Port: {}", port);
-    
+
     // Create Tokio Runtime for async swarm
     let rt = tokio::runtime::Runtime::new().map_err(io::Error::other)?;
-    
+
     rt.block_on(async {
         if let Err(e) = qres_rust::swarm_p2p::start_p2p_node(brain, port).await {
             eprintln!("Swarm crashed: {}", e);

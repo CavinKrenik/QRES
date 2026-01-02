@@ -8,11 +8,14 @@ use pyo3::prelude::*;
 #[cfg(feature = "python")]
 use pyo3::types::PyBytes;
 
+#[cfg(feature = "swarm")]
 pub mod analytics;
+#[cfg(feature = "swarm")]
 pub mod config;
 #[cfg(feature = "swarm")]
 pub mod daemon;
 pub mod semantic;
+#[cfg(feature = "swarm")]
 pub mod stats;
 #[cfg(feature = "swarm")]
 pub mod swarm;
@@ -138,7 +141,10 @@ fn predictive_encode_v4(data: &[u8], lossy: Option<u8>, weights: Option<&[u8]>) 
             let slice = unsafe { std::slice::from_raw_parts(ptr, f32_count) };
 
             if f32_count >= 2 * NUM_MODELS {
-                (Some(&slice[0..NUM_MODELS]), Some(&slice[NUM_MODELS..2 * NUM_MODELS]))
+                (
+                    Some(&slice[0..NUM_MODELS]),
+                    Some(&slice[NUM_MODELS..2 * NUM_MODELS]),
+                )
             } else if f32_count >= NUM_MODELS {
                 (Some(&slice[0..NUM_MODELS]), None)
             } else {
@@ -204,7 +210,11 @@ fn predictive_encode_v4(data: &[u8], lossy: Option<u8>, weights: Option<&[u8]>) 
     ans.finish()
 }
 
-fn predictive_decode_v4(compressed_words: &[u8], decoded_len: usize, weights: Option<&[u8]>) -> Vec<u8> {
+fn predictive_decode_v4(
+    compressed_words: &[u8],
+    decoded_len: usize,
+    weights: Option<&[u8]>,
+) -> Vec<u8> {
     // 1. Initialize Engines
     let mut linear = 0u8;
     let mut simple = SimplePredictor::new();
@@ -220,7 +230,10 @@ fn predictive_decode_v4(compressed_words: &[u8], decoded_len: usize, weights: Op
             let slice = unsafe { std::slice::from_raw_parts(ptr, f32_count) };
 
             if f32_count >= 2 * NUM_MODELS {
-                (Some(&slice[0..NUM_MODELS]), Some(&slice[NUM_MODELS..2 * NUM_MODELS]))
+                (
+                    Some(&slice[0..NUM_MODELS]),
+                    Some(&slice[NUM_MODELS..2 * NUM_MODELS]),
+                )
             } else if f32_count >= NUM_MODELS {
                 (Some(&slice[0..NUM_MODELS]), None)
             } else {
@@ -323,7 +336,11 @@ pub fn compress_chunk(
         }
     }
 
-    let w_arg = if effective_weights.is_empty() { None } else { Some(effective_weights.as_slice()) };
+    let w_arg = if effective_weights.is_empty() {
+        None
+    } else {
+        Some(effective_weights.as_slice())
+    };
 
     // 3. Encode
     let compressed_body = predictive_encode_v4(chunk, _lossy, w_arg);
@@ -332,15 +349,15 @@ pub fn compress_chunk(
     if compressed_body.len() < chunk.len() {
         let flag = if is_neural { 0x02 } else { 0x00 };
         let mut out = Vec::with_capacity(1 + 4 + stored_init_weights.len() + compressed_body.len());
-        
+
         out.push(flag);
         out.extend_from_slice(&(chunk.len() as u32).to_le_bytes());
-        
+
         if is_neural {
             // Flag 0x02 stores 20 bytes of init weights
             out.extend_from_slice(&stored_init_weights);
         }
-        
+
         out.extend_from_slice(&compressed_body);
         Ok(out)
     } else {
@@ -392,18 +409,22 @@ pub fn decompress_chunk(
                 ));
             }
             let init_w_bytes = &compressed[5..25]; // 5 floats * 4 bytes
-            
+
             // Reconstruct effective weights: [Neural Init] + [Global from Args]
             let mut w_vec = Vec::with_capacity(40);
             w_vec.extend_from_slice(init_w_bytes);
-            
+
             if let Some(w) = _weights {
                 if w.len() >= 40 {
                     w_vec.extend_from_slice(&w[20..40]);
                 }
             }
-            
-            let w_arg = if w_vec.is_empty() { None } else { Some(w_vec.as_slice()) };
+
+            let w_arg = if w_vec.is_empty() {
+                None
+            } else {
+                Some(w_vec.as_slice())
+            };
             Ok(predictive_decode_v4(&compressed[25..], decomp_len, w_arg))
         }
         _ => Err(io::Error::new(
@@ -518,25 +539,23 @@ where
         (QRES_MAGIC.len() + 1 + 1 + 1 + 8) as u64,
     ))?;
     output.write_all(&compressed_size.to_le_bytes())?;
-    
+
     Ok(())
 }
 
 // --- WASM Interface ---
 #[cfg(target_arch = "wasm32")]
 pub mod wasm {
-    use wasm_bindgen::prelude::*;
     use crate::{compress_chunk, decompress_chunk};
-    
+    use wasm_bindgen::prelude::*;
+
     #[wasm_bindgen]
     pub fn compress(data: &[u8]) -> Result<Vec<u8>, JsValue> {
-        compress_chunk(data, 0, None, None)
-            .map_err(|e| JsValue::from_str(&e.to_string()))
+        compress_chunk(data, 0, None, None).map_err(|e| JsValue::from_str(&e.to_string()))
     }
-    
+
     #[wasm_bindgen]
     pub fn decompress(data: &[u8]) -> Result<Vec<u8>, JsValue> {
-        decompress_chunk(data, 0, None)
-            .map_err(|e| JsValue::from_str(&e.to_string()))
+        decompress_chunk(data, 0, None).map_err(|e| JsValue::from_str(&e.to_string()))
     }
 }

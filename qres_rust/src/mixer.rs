@@ -31,7 +31,7 @@ pub struct Mixer {
     running_mean: f32,
     running_var: f32,
     count: usize,
-    
+
     // Lock-on Detection
     current_winner: usize,
     win_streak: usize,
@@ -49,7 +49,7 @@ impl Mixer {
             for (i, &v) in data.iter().take(8).enumerate() {
                 arr[i] = v;
             }
-            unsafe { _mm256_loadu_ps(arr.as_ptr()) } 
+            unsafe { _mm256_loadu_ps(arr.as_ptr()) }
         };
 
         // Defaults: 0.05, 0.05, 0.05, 0.1, 0.2, 0.5 (padded)
@@ -184,7 +184,7 @@ impl Mixer {
         // Find best predictor (lowest error)
         let mut best_idx = 0;
         let mut min_err = f32::MAX;
-        
+
         for (i, &p) in preds.iter().enumerate().take(NUM_MODELS) {
             let err = (p as f32 - y).abs();
             if err < min_err {
@@ -212,13 +212,13 @@ impl Mixer {
 
         // Lock-On Boost: If one model is consistently winning, boost it
         if self.win_streak > 32 {
-             // Scalar boost even if SIMD is used for weights
-             // We need to access weights. This is tricky with SIMD types.
-             // For now, let's rely on LMS naturally increasing weight, but speed it up via LR.
-             // We effectively did that by increasing LR above if var is high, but here lock-on might mean LOW var?
-             // Actually, if we are locked on, variance might be low (good prediction).
-             // Let's manually boost the winner if using scalar fallback, or just skip if complex.
-             // Given SIMD complexity, let's skip manual weight manipulation here and rely on `update_weights`.
+            // Scalar boost even if SIMD is used for weights
+            // We need to access weights. This is tricky with SIMD types.
+            // For now, let's rely on LMS naturally increasing weight, but speed it up via LR.
+            // We effectively did that by increasing LR above if var is high, but here lock-on might mean LOW var?
+            // Actually, if we are locked on, variance might be low (good prediction).
+            // Let's manually boost the winner if using scalar fallback, or just skip if complex.
+            // Given SIMD complexity, let's skip manual weight manipulation here and rely on `update_weights`.
         }
 
         // D. Update AR(2) with Exponential Smoothing / Momentum
@@ -271,7 +271,7 @@ impl Mixer {
         };
 
         self.weights = unsafe { _mm256_mul_ps(self.weights, factor) };
-        
+
         // FedProx: Pull towards global weights if present
         if let Some(global) = self.global_weights {
             let mu = 0.001; // Continuous proximal pull
@@ -303,7 +303,7 @@ impl Mixer {
             let factor = 1.0 - (self.learning_rate * err_norm);
 
             self.weights[i] *= factor;
-            
+
             // FedProx
             if let Some(global) = self.global_weights {
                 let mu = 0.001;

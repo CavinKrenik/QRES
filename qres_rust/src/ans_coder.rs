@@ -221,8 +221,8 @@ unsafe fn compute_batch_stats_avx2(data: &[i8]) -> (f64, f64) {
     let remainder = chunks.remainder();
 
     for chunk in chunks {
-        let v_i8 = _mm_loadu_si128(chunk.as_ptr() as *const __m128i); 
-        
+        let v_i8 = _mm_loadu_si128(chunk.as_ptr() as *const __m128i);
+
         // Low 8 bytes -> i32
         let v_lo = _mm256_cvtepi8_epi32(v_i8);
         sum_acc = _mm256_add_epi32(sum_acc, v_lo);
@@ -231,7 +231,7 @@ unsafe fn compute_batch_stats_avx2(data: &[i8]) -> (f64, f64) {
 
         // High 8 bytes -> i32
         // Move high 64 bits to low 64 bits of 128-bit register
-        let v_high_i128 = _mm_unpackhi_epi64(v_i8, v_i8); 
+        let v_high_i128 = _mm_unpackhi_epi64(v_i8, v_i8);
         let v_hi = _mm256_cvtepi8_epi32(v_high_i128);
         sum_acc = _mm256_add_epi32(sum_acc, v_hi);
         let sq_hi = _mm256_mullo_epi32(v_hi, v_hi);
@@ -273,10 +273,13 @@ fn compute_batch_stats(data: &[i8]) -> (f64, f64) {
     let n = data.len() as f64;
     let sum: f64 = data.iter().map(|&x| x as f64).sum();
     let mean = sum / n;
-    let m2: f64 = data.iter().map(|&x| {
-        let diff = x as f64 - mean;
-        diff * diff
-    }).sum();
-    
+    let m2: f64 = data
+        .iter()
+        .map(|&x| {
+            let diff = x as f64 - mean;
+            diff * diff
+        })
+        .sum();
+
     (mean, m2)
 }
