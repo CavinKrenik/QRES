@@ -4,8 +4,8 @@ use constriction::stream::{Decode, Encode};
 use probability::distribution::Gaussian;
 
 // Explicitly define types to match our ans_coder.rs intent
-type Coder = AnsCoder<u32, u32>;
-type Model = LeakyQuantizer<f64, i32, u32, 24>;
+// Note: State must be at least 2x the size of Word for constriction
+type Coder = AnsCoder<u32, u64>;
 
 fn main() {
     println!("Probing Constriction API...");
