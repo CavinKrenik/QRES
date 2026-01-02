@@ -86,6 +86,6 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           name: QRES ${{ github.ref_name }} - Singularity Engine
-          body_path: RELEASE_NOTES.md
+          body_path: docs/releases/RELEASE_NOTES.md
           files: dist/*
           generate_release_notes: true
