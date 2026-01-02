@@ -5,7 +5,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use tokio::sync::Mutex;
 use std::sync::Arc;
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
+use rand::Rng;
 
 // P2P State
 struct P2PState {
@@ -243,7 +244,7 @@ pub async fn decompress_file(
     let _version = header_static[0];
     let _flags = header_static[1];
     let _pred_id = header_static[2];
-    let original_size = u64::from_le_bytes(header_static[11..19].try_into().unwrap());
+    let _original_size = u64::from_le_bytes(header_static[11..19].try_into().unwrap());
     let _compressed_size = u64::from_le_bytes(header_static[19..27].try_into().unwrap());
     
     // 4. Read Filename Length and Skip Filename
@@ -466,20 +467,19 @@ pub async fn train_on_file(file_path: String) -> Result<String, String> {
 }
 
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct PeerInfo {
-    id: String,
-    latency_ms: u32,
-    role: String,
-    throughput_mbps: f32,
-    location: String,
+    pub id: String,
+    pub latency_ms: u32,
+    pub role: String,
+    pub throughput_mbps: f32,
+    pub location: String,
 }
 
 #[tauri::command]
-pub async fn get_swarm_peers(_app: AppHandle) -> Result<Vec<PeerInfo>, String> {
+pub async fn get_swarm_peers() -> Result<Vec<PeerInfo>, String> {
     // Phase 5.1: Simulate Swarm State for GUI Visualization
     // In v6.0 this will hook into the actual libp2p Kademlia DHT
-    use rand::Rng;
     let mut rng = rand::thread_rng();
     
     let locations = ["US-East", "EU-West", "Asia-South", "SA-East", "US-West"];
