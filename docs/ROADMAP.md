@@ -1,27 +1,31 @@
-# QRES Roadmap
+# QRES Roadmap & Vision
 
-## ✅ Phase 1-4: Foundation (Completed)
-- [x] **Core Algorithm:** QRES v1.0 - v4.0 (ANS, Context Mixing).
-- [x] **Python Integration:** Initial `qres` pip package.
-- [x] **Swarm Prototype:** Python-based generic server.
+## Short-Term Enhancements (v5.1 - v5.2)
+*Focus: Scalability, Intelligence, and Stability*
 
-## 🚀 Phase 5: The Singularity (Current - v5.1)
-*Focus: Autonomy, Performance, and Architecture*
+- [x] **Transformer Predictor:** Added linear attention mechanism to ensemble.
+- [ ] **Fuzzing Suite:** Integrate `cargo-fuzz` for 100% crash-safety coverage.
+- [ ] **GPU Acceleration:** Port SIMD paths to CUDA/Rust-GPU.
+- [ ] **GUI Polish:** Real-time swarm monitoring and drag-drop improvements in `qres-studio`.
+- [ ] **Adaptive Lossy:** Perceptual metrics (SSIM) for multimedia.
 
-- [x] **Rust-Native Swarm:** Replaced Python Hive with `libp2p` (GossipSub/Kademlia).
-- [x] **Telepathy Engine:** "Living Brain" predictor selection (Linear/Simple/Graph/Spectral).
-- [x] **Vectorization:** SIMD (AVX2/NEON) optimizations for the Mixer and Neural layers.
-- [x] **Solid Archiving:** `DedupEngine` with Content-Defined Chunking (CDC).
-- [x] **QRES Studio:** Desktop GUI for visualization and management (Tauri).
+## Medium-Term Innovations (v6.0)
+*Focus: Advanced AI and Federation*
 
-## 🔮 Phase 6: Hyper-Scale (Next - v6.0)
-*Focus: Massive Concurrency and Hardware Acceleration*
+- [ ] **LLM Integration:** Hugging Face bindings for semantic understanding (Context-Aware Compression).
+- [ ] **Bio-Evolution:** Genetic algorithms for swarm weight optimization.
+- [ ] **Federated Privacy:** Differential privacy for secure medical/financial data compression.
+- [ ] **Quantum Modes:** PennyLane integration for high-dimensional entropy reduction.
+- [ ] **Ecosystem:** Pandas/TensorFlow hooks.
 
-- [ ] **GPU Acceleration:** CUDA/Metal kernels for the spectral predictor (FFT) and matrix multiplications.
-- [ ] **FPGA Offload:** Hardware description for the primary arithmetic coder (ANS).
-- [ ] **Global Swarm V2:** WAN-optimized peer discovery and NAT traversal improvements.
-- [ ] **WASM Cloud:** Run QRES entirely in the browser (Edge Computing).
+## Long-Term Vision (v7.0+)
+*Focus: Global Scale and Edge*
 
-## 🧠 Phase 7: General Purpose AI
-- [ ] **LLM Integration:** Use small local LLMs as the ultimate context predictor for text.
-- [ ] **Semantic Understanding:** Image/Video content recognition to drive pre-filtering.
+- [ ] **Global Swarm:** IPFS/Filecoin integration for persistent decentralized storage.
+- [ ] **Embedded Rust:** IoT-native compression on Cortex-M/RISC-V.
+- [ ] **Meta-Learning:** Pre-trained "Universal" models for 2x ratio improvements.
+
+## Success Metrics
+- **Ratio:** >10% better than Zstd (Level 19) on mixed corpora.
+- **Throughput:** >1GB/s decoding.
+- **Convergence:** Swarm "Epiphany" sharing <10s.
