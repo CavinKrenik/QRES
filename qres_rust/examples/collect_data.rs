@@ -77,7 +77,7 @@ fn process_file(path: &str, output: &mut File) -> std::io::Result<()> {
         }
 
         let _features = calculate_features(&chunk[0..1024]); // Features on header only? Or full chunk?
-                                                            // Real-time: we only want to scan header. Let's say 512 bytes.
+                                                             // Real-time: we only want to scan header. Let's say 512 bytes.
         let features_header = calculate_features(&chunk[0..512.min(chunk.len())]);
 
         // Run Compression Simulation (No encoding, just mixing)
