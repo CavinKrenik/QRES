@@ -11,6 +11,7 @@ def main():
     parser.add_argument("input", help="Input file path", nargs='?')
     parser.add_argument("--mode", choices=["standard", "quantum"], default="standard", help="Compression mode")
     parser.add_argument("--optimize", action="store_true", help="Run Neural/Ethical optimization first")
+    parser.add_argument("--broadcast", action="store_true", help="Broadcast output to QRES Swarm (via quantum_outbox)")
     
     args = parser.parse_args()
     
@@ -35,11 +36,22 @@ def main():
         print(f"Compressing {len(data)} bytes in {args.mode} mode...")
         compressed = api.compress(data)
         
-        out_name = args.input + ".qres"
-        with open(out_name, "wb") as f:
-            f.write(compressed)
+        if args.broadcast:
+            # Write to quantum_outbox/
+            if not os.path.exists("quantum_outbox"):
+                os.makedirs("quantum_outbox")
             
-        print(f"Saved to {out_name} ({len(compressed)} bytes)")
+            # Filename needs to be unique enough to avoid collisions before processing
+            import time
+            out_name = f"quantum_outbox/qv7_{int(time.time()*1000)}.qres"
+            with open(out_name, "wb") as f:
+                f.write(compressed)
+            print(f"Packaged for Broadcast -> {out_name}")
+        else:
+            out_name = args.input + ".qres"
+            with open(out_name, "wb") as f:
+                f.write(compressed)
+            print(f"Saved to {out_name} ({len(compressed)} bytes)")
 
 if __name__ == "__main__":
     main()

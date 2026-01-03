@@ -26,7 +26,7 @@
 ## Long-Term Vision (v8.0+)
 *Focus: Global Scale and Persistent States*
 
-- [ ] **Global P2P Quantum Swarm:** Decentralized model sharing with quantum secure pathways.
+- [wip] **Global P2P Quantum Swarm:** Decentralized model sharing with quantum secure pathways.
 - [ ] **Persistent World Compression:** State-saving for simulated environments.
 
 ## Success Metrics

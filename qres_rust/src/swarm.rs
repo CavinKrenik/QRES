@@ -66,6 +66,10 @@ impl QresSwarm {
         // Scoring
         let topic_str = "qres-hive-v2";
         let topic = gossipsub::IdentTopic::new(topic_str);
+        
+        // v8.0: Quantum Network Topic
+        let quantum_topic_str = "qres-quantum-net";
+        let quantum_topic = gossipsub::IdentTopic::new(quantum_topic_str);
 
         let score_params = gossipsub::PeerScoreParams::default();
         let score_thresholds = gossipsub::PeerScoreThresholds::default();
@@ -74,7 +78,7 @@ impl QresSwarm {
             .heartbeat_interval(Duration::from_secs(1)) // Faster heartbeat for scoring
             .validation_mode(gossipsub::ValidationMode::Strict)
             .message_id_fn(message_id_fn)
-            .max_transmit_size(10 * 1024) // Bump to 10KB
+            .max_transmit_size(1024 * 1024) // Bump to 1MB for large Tensors
             .build()
             .expect("Valid config");
 
@@ -88,6 +92,7 @@ impl QresSwarm {
         let _ = gossipsub.with_peer_score(score_params, score_thresholds);
 
         gossipsub.subscribe(&topic)?;
+        gossipsub.subscribe(&quantum_topic)?;
 
         // 4. mDNS
         let mdns = mdns::tokio::Behaviour::new(mdns::Config::default(), peer_id)?;
@@ -124,6 +129,14 @@ impl QresSwarm {
         // 7. Loop
         let mut interval = time::interval(Duration::from_secs(config.gossip_interval));
         let mut state_report_interval = time::interval(Duration::from_secs(5));
+        
+        // Ensure quantum inbox exists
+        let inbox_path = "quantum_inbox";
+        tokio::fs::create_dir_all(inbox_path).await?;
+
+        // Ensure quantum outbox exists
+        let outbox_path = "quantum_outbox";
+        tokio::fs::create_dir_all(outbox_path).await?;
 
         loop {
             tokio::select! {
@@ -138,6 +151,25 @@ impl QresSwarm {
                                  }
                              }
                          }
+                    }
+                    
+                    // Check for outgoing Quantum Tensors (from quantum_outbox)
+                    if let Ok(mut entries) = tokio::fs::read_dir(outbox_path).await {
+                        while let Ok(Some(entry)) = entries.next_entry().await {
+                            let path = entry.path();
+                            if path.is_file() {
+                                if let Ok(data) = tokio::fs::read(&path).await {
+                                    println!("🚀 [Hive] Broadcasting Quantum Tensor from outbox: {:?}", path.file_name());
+                                    // Verify header (optional safety) or just send
+                                    if let Err(e) = swarm.behaviour_mut().gossipsub.publish(quantum_topic.clone(), data) {
+                                         eprintln!("Quantum Broadcast Error: {:?}", e);
+                                    } else {
+                                         // Delete after successful publish
+                                         let _ = tokio::fs::remove_file(path).await;
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
                 _ = state_report_interval.tick() => {
@@ -179,36 +211,47 @@ impl QresSwarm {
                         }
                     },
                      SwarmEvent::Behaviour(QresBehaviorEvent::Gossipsub(gossipsub::Event::Message { propagation_source: peer_id, message_id: _, message })) => {
-                        // Handle Incoming Brain
-                        match serde_json::from_slice::<LivingBrain>(&message.data) {
-                            Ok(remote_brain) => {
-                                if validate_brain(&remote_brain) {
-                                    println!("🧠 Wisdom received from {}", peer_id);
-                                    if let Ok(local_json) = tokio::fs::read_to_string(&brain_path).await {
-                                        let mut local_brain = LivingBrain::from_json(&local_json).unwrap_or_default();
-
-                                        // V3.0: Hot-Swap Weights if Peer is Smarter
-                                        if let Some(_remote_w) = &remote_brain.best_engine_weights {
-                                             // Threshold: +0.1 confidence (Index 3 = LSTM in classic mapping, though v3 is mixed, we still track it)
-                                              if remote_brain.confidence[3] > local_brain.confidence[3] + 0.1 {
-                                                   println!("⚡ [Hive] Improved LSTM weights received from peer {}. Hot-swapping (TODO: Fix Type Inf).", peer_id);
-                                                   // let weights: Vec<u8> = remote_w.clone();
-                                                   // local_brain.update_weights(3, weights);
-                                              }
-                                        }
-
-                                        local_brain.merge(&remote_brain, 0.05);
-                                        let _ = tokio::fs::write(&brain_path, local_brain.to_json()).await;
-                                    }
-                                } else {
-                                     println!("🚫 Rejected Malformed Wisdom from {}", peer_id);
-                                     // swarm.behaviour_mut().gossipsub.blacklist_peer(&peer_id); // invalid in this version?
-                                     // Just log for now.
+                        // Check if it's a Quantum Tensor
+                        if message.topic.as_str() == "qres-quantum-net" {
+                            if message.data.starts_with(b"QRES_Q_TENSOR") {
+                                println!("🌌 [Hive] Quantum Tensor received from {} ({} bytes)", peer_id, message.data.len());
+                                let timestamp = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_millis();
+                                let filename = format!("{}/{}_{}.qt", inbox_path, timestamp, peer_id);
+                                if let Err(e) = tokio::fs::write(&filename, &message.data).await {
+                                     eprintln!("Failed to save quantum tensor: {}", e);
                                 }
-                            },
-                            Err(_) => {
-                                println!("🗑️ Garbage Data from {}", peer_id);
-                                // swarm.behaviour_mut().gossipsub.blacklist_peer(&peer_id);
+                            }
+                        } else {
+                            // Handle Standard Brain Gossip
+                            match serde_json::from_slice::<LivingBrain>(&message.data) {
+                                Ok(remote_brain) => {
+                                    if validate_brain(&remote_brain) {
+                                        println!("🧠 Wisdom received from {}", peer_id);
+                                        if let Ok(local_json) = tokio::fs::read_to_string(&brain_path).await {
+                                            let mut local_brain = LivingBrain::from_json(&local_json).unwrap_or_default();
+    
+                                            // V3.0: Hot-Swap Weights if Peer is Smarter
+                                            if let Some(_remote_w) = &remote_brain.best_engine_weights {
+                                                 // Threshold: +0.1 confidence (Index 3 = LSTM in classic mapping, though v3 is mixed, we still track it)
+                                                  if remote_brain.confidence[3] > local_brain.confidence[3] + 0.1 {
+                                                       println!("⚡ [Hive] Improved LSTM weights received from peer {}. Hot-swapping (TODO: Fix Type Inf).", peer_id);
+                                                       // let weights: Vec<u8> = remote_w.clone();
+                                                       // local_brain.update_weights(3, weights);
+                                                  }
+                                            }
+    
+                                            local_brain.merge(&remote_brain, 0.05);
+                                            let _ = tokio::fs::write(&brain_path, local_brain.to_json()).await;
+                                        }
+                                    } else {
+                                         println!("🚫 Rejected Malformed Wisdom from {}", peer_id);
+                                         // swarm.behaviour_mut().gossipsub.blacklist_peer(&peer_id); // invalid in this version?
+                                         // Just log for now.
+                                    }
+                                },
+                                Err(_) => {
+                                    // Could be other messages or encryption noise
+                                }
                             }
                         }
                     },
