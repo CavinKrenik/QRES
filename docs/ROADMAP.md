@@ -38,8 +38,8 @@
 - [x] **Version Management:** Multi-version storage with timestamp tracking.
 - [x] **API Integration:** `save_world_state()` and `load_world_state()` methods.
 - [x] **CLI Support:** `--save-state` and `--load-state` flags.
-- [ ] **Swarm Sync:** Broadcast persistent states for distributed continuity.
-- [ ] **Fidelity Guarantees:** Enforce >0.98 threshold on state merges.
+- [x] **Swarm Sync:** Broadcast persistent states for distributed continuity.
+- [x] **Fidelity Guarantees:** Enforce >0.98 threshold on state merges.
 
 ## Long-Term Vision (v8.5+)
 *Focus: Production Deployment & Advanced Features*

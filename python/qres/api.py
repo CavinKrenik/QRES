@@ -172,6 +172,54 @@ class QRES_API:
         
         return True
 
+    def broadcast_world_state(self, version: str = None) -> bool:
+        """
+        Broadcast a world state to the P2P swarm for distributed synchronization.
+        
+        Args:
+            version: Version to broadcast (None = current state, save first)
+        
+        Returns:
+            True if broadcast successful
+        """
+        if not self.persistence_enabled:
+            print("[API] Persistence disabled")
+            return False
+        
+        # Save current state if no version specified
+        if version is None:
+            print("[API] Saving current state for broadcast...")
+            version = self.save_world_state()
+        
+        # Load the state to get serialized data
+        state_data = self.world_state.states.get(version)
+        if state_data is None:
+            print(f"[API] Version {version} not found")
+            return False
+        
+        # Serialize for transmission
+        import pickle
+        serialized = pickle.dumps(state_data)
+        
+        # Add world state header
+        broadcast_data = b"QRES_WORLD_STATE" + serialized
+        
+        # Write to outbox for swarm broadcast
+        if not os.path.exists("quantum_outbox"):
+            os.makedirs("quantum_outbox")
+        
+        import time
+        filename = f"quantum_outbox/world_{version}_{int(time.time()*1000)}.qws"
+        
+        with open(filename, "wb") as f:
+            f.write(broadcast_data)
+        
+        print(f"[API] World state {version} queued for broadcast")
+        print(f"  - Size: {len(broadcast_data) / 1024:.2f} KB")
+        print(f"  - File: {filename}")
+        
+        return True
+
     def _compress_standard(self, data: bytes) -> bytes:
         if qres_rust:
             # return qres_rust.encode_bytes(data, [], 0)

@@ -24,16 +24,44 @@ def receiver_loop(inbox_path="quantum_inbox", interval=2.0):
                 
                 # Check extension or mock
                 if os.path.isfile(file_path):
-                    if filename.endswith(".qt") or filename.endswith(".qres") or "qv7" in filename:
-                        print(f"\n📩 Detected Incoming Tensor: {filename}")
+                    if filename.endswith(".qt") or filename.endswith(".qres") or filename.endswith(".qws") or "qv7" in filename or "world_" in filename:
+                        print(f"\n📩 Detected Incoming: {filename}")
                         
                         try:
                             # Read
                             with open(file_path, "rb") as f:
                                 data = f.read()
                             
-                            # Process
-                            if api.merge_quantum_state(data):
+                            # Check if it's a world state broadcast
+                            if data.startswith(b"QRES_WORLD_STATE"):
+                                print("🌍 Processing World State Broadcast...")
+                                import pickle
+                                state_data = pickle.loads(data[len(b"QRES_WORLD_STATE"):])
+                                
+                                # Merge with local state
+                                local_version = api.world_state.get_latest_version()
+                                
+                                # Import the received state
+                                remote_version = state_data['version']
+                                api.world_state.states[remote_version] = state_data
+                                api.world_state._save_db()
+                                
+                                if local_version:
+                                    # Merge states
+                                    print(f"  Merging {local_version} + {remote_version}...")
+                                    merged_version = api.world_state.merge_world_states(
+                                        local_version,
+                                        remote_version,
+                                        fidelity_threshold=0.98
+                                    )
+                                    print(f"✅ Merged world state: {merged_version}")
+                                else:
+                                    # First state, just adopt it
+                                    api.load_world_state(remote_version)
+                                    print(f"✅ Adopted world state: {remote_version}")
+                            
+                            # Process quantum tensor
+                            elif api.merge_quantum_state(data):
                                 print(f"✅ Successfully integrated {filename} into Hive Mind.")
                             else:
                                 print(f"⚠️  Rejected malformed tensor: {filename}")

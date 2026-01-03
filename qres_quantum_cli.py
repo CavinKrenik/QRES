@@ -14,6 +14,7 @@ def main():
     parser.add_argument("--broadcast", action="store_true", help="Broadcast output to QRES Swarm (via quantum_outbox)")
     parser.add_argument("--save-state", metavar="VERSION", help="Save current world state with version name")
     parser.add_argument("--load-state", metavar="VERSION", help="Load world state (use 'latest' for most recent)")
+    parser.add_argument("--broadcast-state", metavar="VERSION", help="Broadcast world state to swarm (None = current)")
     
     args = parser.parse_args()
     
@@ -41,6 +42,13 @@ def main():
         version = api.save_world_state(args.save_state)
         if version:
             print(f"✅ World state saved as {version}")
+        return
+    
+    # Handle state broadcasting
+    if args.broadcast_state:
+        version = args.broadcast_state if args.broadcast_state != "current" else None
+        if api.broadcast_world_state(version):
+            print(f"✅ World state broadcast queued")
         return
         
     if args.input:
