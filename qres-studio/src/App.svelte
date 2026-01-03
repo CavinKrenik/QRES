@@ -4,6 +4,8 @@
     import HiveMind from "./HiveMind.svelte";
     import SwarmView from "./SwarmView.svelte";
     import KnowledgeGraph from "./KnowledgeGraph.svelte";
+    import Controls from "./components/Controls.svelte";
+    import SwarmDashboard from "./components/SwarmDashboard.svelte";
 
     let activeTab = "compress";
     let stats = { total_compressions: 0, bytes_saved: 0 };
@@ -21,7 +23,7 @@
 
 <main>
     <div class="app-header">
-        <h1>QRES Studio</h1>
+        <h1>QRES Studio v8.1</h1>
         <div class="stats-bar">
             <span
                 >💾 Saved: {(stats.bytes_saved / 1024 / 1024).toFixed(
@@ -40,6 +42,24 @@
             Drop Zone
         </button>
         <button
+            class:active={activeTab === "controls"}
+            on:click={() => (activeTab = "controls")}
+        >
+            🎛️ Controls
+        </button>
+        <button
+            class:active={activeTab === "swarm"}
+            on:click={() => (activeTab = "swarm")}
+        >
+            🌐 Swarm
+        </button>
+        <button
+            class:active={activeTab === "neural"}
+            on:click={() => (activeTab = "neural")}
+        >
+            Neural Graph
+        </button>
+        <button
             class:active={activeTab === "hive"}
             on:click={() => (activeTab = "hive")}
         >
@@ -51,23 +71,21 @@
         >
             Swarm Topology
         </button>
-        <button
-            class:active={activeTab === "neural"}
-            on:click={() => (activeTab = "neural")}
-        >
-            Neural Graph
-        </button>
     </div>
 
     <div class="tab-content">
         {#if activeTab === "compress"}
             <DropZone on:complete={loadStats} />
+        {:else if activeTab === "controls"}
+            <Controls />
+        {:else if activeTab === "swarm"}
+            <SwarmDashboard />
+        {:else if activeTab === "neural"}
+            <KnowledgeGraph />
         {:else if activeTab === "hive"}
             <HiveMind />
         {:else if activeTab === "visual"}
             <SwarmView />
-        {:else}
-            <KnowledgeGraph />
         {/if}
     </div>
 </main>
