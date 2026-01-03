@@ -72,6 +72,7 @@ jobs:
           pip install qutip
           python tests/verify_phase1.py
           python tests/verify_phase2.py
+          python tests/test_swarm_broadcast.py
 
       - name: Test LLM Predictor (Optional)
         continue-on-error: true
