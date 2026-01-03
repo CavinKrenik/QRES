@@ -5,7 +5,7 @@ Reproduces key claims in a fresh environment to validate Phase 4 guarantees.
 
 import sys
 import os
-sys.path.append(os.path.join(os.getcwd(), 'python'))
+# sys.path.append(os.path.join(os.getcwd(), 'python'))
 
 import numpy as np
 import networkx as nx

@@ -7,14 +7,14 @@ import numpy as np
 
 # Ensure root is in path
 sys.path.append(os.getcwd())
-sys.path.append(os.path.join(os.getcwd(), 'python'))
+# sys.path.append(os.path.join(os.getcwd(), 'python'))
 
 class TestPhase2(unittest.TestCase):
 
     def test_quantum_encoder(self):
         print("\n[Test] Quantum Encoder")
-        from python.qres.quantum import QuantumEncoder
-        from python.qres.multimodal import MultiModalMemory
+        from qres.quantum import QuantumEncoder
+        from qres.multimodal import MultiModalMemory
         
         # 1. Setup Data
         mm = MultiModalMemory()

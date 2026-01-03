@@ -5,7 +5,7 @@ import sys
 import argparse
 
 # Path hack
-sys.path.append(os.path.join(os.getcwd(), 'python'))
+# sys.path.append(os.path.join(os.getcwd(), 'python'))
 from qres.api import QRES_API
 
 def receiver_loop(inbox_path="quantum_inbox", interval=2.0):

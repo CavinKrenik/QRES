@@ -7,7 +7,7 @@ import numpy as np
 import networkx as nx
 
 # Path hack
-sys.path.append(os.path.join(os.getcwd(), 'python'))
+# sys.path.append(os.path.join(os.getcwd(), 'python'))
 
 from qres.persistent import WorldStateManager
 

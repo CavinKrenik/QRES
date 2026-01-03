@@ -7,13 +7,14 @@ import numpy as np
 
 # Ensure root is in path
 sys.path.append(os.getcwd())
-sys.path.append(os.path.join(os.getcwd(), 'python'))
+sys.path.append(os.getcwd())
+# sys.path.append(os.path.join(os.getcwd(), 'python')) -> Removed to avoid shadowing installed package
 
 class TestPhase1(unittest.TestCase):
 
     def test_multimodal_memory(self):
         print("\n[Test] Multi-Modal Memory")
-        from python.qres.multimodal import MultiModalMemory
+        from qres.multimodal import MultiModalMemory
         mm = MultiModalMemory() # Defaults to cpu if no cuda
         
         # Test Text Node
@@ -62,7 +63,7 @@ class TestPhase1(unittest.TestCase):
     def test_tensor_sim(self):
         print("\n[Test] Quantum Tensor Sim (Legacy)")
         # Since train_tensor_v7 was refactored to use QuantumEncoder, we check that directly (or skip)
-        from python.qres.quantum import QuantumEncoder
+        from qres.quantum import QuantumEncoder
         qe = QuantumEncoder(n_qubits_per_node=2)
         # Mock Graph
         import networkx as nx 

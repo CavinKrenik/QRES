@@ -5,7 +5,7 @@ import os
 import sys
 
 # Path hack
-sys.path.append(os.path.join(os.getcwd(), 'python'))
+# sys.path.append(os.path.join(os.getcwd(), 'python'))
 
 class TestReceiverUnit(unittest.TestCase):
     
