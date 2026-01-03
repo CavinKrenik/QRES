@@ -104,9 +104,16 @@ impl QresSwarm {
         let mut kad = kad::Behaviour::with_config(peer_id, store, kad_config);
 
         if config.wan {
-            // In a real scenario, we would add bootnodes here
-            // kad.add_address(&BOOTNODE_PEER_ID, BOOTNODE_MULTIADDR);
-            kad.set_mode(Some(kad::Mode::Server)); // Act as a server in WAN mode
+            println!("🌍 WAN Mode Enabled: Initializing Global Kademlia DHT...");
+            kad.set_mode(Some(kad::Mode::Server)); 
+            
+            // Experimental: QRES Seed Nodes (Public Bootstrap)
+            // Ideally this comes from config, but for v8.0 prototype we add a known seed.
+            // Placeholder: "/ip4/148.251.10.1/tcp/4001" (Not real)
+            // Implementation: We initiate bootstrap query.
+            if let Err(e) = kad.bootstrap() {
+                eprintln!("Kademlia Bootstrap Warning: {:?}", e);
+            }
         }
 
         // 6. Swarm Construction

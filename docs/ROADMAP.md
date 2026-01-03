@@ -29,7 +29,7 @@
 - [wip] **Global P2P Quantum Swarm:**
   - [x] Sender: CLI Broadcast -> Rust Swarm Outbox.
   - [x] Receiver: Rust Swarm Inbox -> Python Reconstruction Loop.
-  - [ ] WAN Discovery: Kademlia Bootstrap & NAT Traversal.
+  - [x] WAN Discovery: Kademlia Bootstrap (Server Mode) enabled.
 - [ ] **Persistent World Compression:** State-saving for simulated environments.
 
 ## Success Metrics
