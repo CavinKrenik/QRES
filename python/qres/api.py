@@ -13,18 +13,26 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from multimodal import MultiModalMemory
 from quantum import QuantumEncoder
 from neural import NeuralOptimizer
+from persistent import WorldStateManager
 try:
     import qres_rust
 except ImportError:
     qres_rust = None
 
 class QRES_API:
-    def __init__(self, mode="hybrid"):
+    def __init__(self, mode="hybrid", enable_persistence=True):
         self.mode = mode
         self.memory = MultiModalMemory()
         self.quantum = QuantumEncoder(n_qubits_per_node=2)
         self.neural = NeuralOptimizer()
         self.brain_weights = None
+        
+        # Phase 4: Persistent World State
+        self.persistence_enabled = enable_persistence
+        if enable_persistence:
+            self.world_state = WorldStateManager()
+        else:
+            self.world_state = None
         
     def load_brain(self, path="qres_rust/assets/meta_brain_v2.json"):
         """Mock loader for header/weights."""
@@ -96,6 +104,71 @@ class QRES_API:
         node_id = f"remote_{int(time.time())}"
         self.memory.add_text_node(node_id, "Imported Quantum Knowledge")
         print(f"[API] Merged remote state into MultiModal Memory (Node: {node_id})")
+        
+        return True
+
+    def save_world_state(self, version: str = None) -> str:
+        """
+        Save current system state to persistent storage.
+        
+        Returns:
+            Version key of saved state
+        """
+        if not self.persistence_enabled:
+            print("[API] Persistence disabled")
+            return None
+            
+        print("[API] Saving World State...")
+        
+        # Get current tensor if available
+        tensor = None
+        if self.memory.graph.number_of_nodes() > 0:
+            full, reduced, metrics = self.quantum.encode_graph(self.memory.graph)
+            tensor = reduced if reduced is not None else full
+        
+        version = self.world_state.serialize_world_state(
+            self.memory.graph,
+            tensor,
+            self.brain_weights,
+            version
+        )
+        
+        print(f"[API] World state saved as {version}")
+        return version
+    
+    def load_world_state(self, version: str = None):
+        """
+        Load a world state from persistent storage.
+        
+        Args:
+            version: Specific version to load (None = latest)
+        """
+        if not self.persistence_enabled:
+            print("[API] Persistence disabled")
+            return False
+            
+        if version is None:
+            version = self.world_state.get_latest_version()
+            if version is None:
+                print("[API] No saved states found")
+                return False
+        
+        print(f"[API] Loading World State: {version}...")
+        
+        state = self.world_state.load_world_state(version)
+        if state is None:
+            return False
+        
+        # Restore graph
+        self.memory.graph = state['graph']
+        
+        # Restore neural weights
+        if state['neural_weights'] is not None:
+            self.brain_weights = state['neural_weights']
+        
+        print(f"[API] World state restored from {version}")
+        print(f"  - Nodes: {self.memory.graph.number_of_nodes()}")
+        print(f"  - Edges: {self.memory.graph.number_of_edges()}")
         
         return True
 

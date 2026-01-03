@@ -12,18 +12,36 @@ def main():
     parser.add_argument("--mode", choices=["standard", "quantum"], default="standard", help="Compression mode")
     parser.add_argument("--optimize", action="store_true", help="Run Neural/Ethical optimization first")
     parser.add_argument("--broadcast", action="store_true", help="Broadcast output to QRES Swarm (via quantum_outbox)")
+    parser.add_argument("--save-state", metavar="VERSION", help="Save current world state with version name")
+    parser.add_argument("--load-state", metavar="VERSION", help="Load world state (use 'latest' for most recent)")
     
     args = parser.parse_args()
     
-    if not args.input and not args.optimize:
+    if not args.input and not args.optimize and not args.save_state and not args.load_state:
         parser.print_help()
         return
 
     api = QRES_API(mode=args.mode)
     
+    # Handle state loading first
+    if args.load_state:
+        version = None if args.load_state == "latest" else args.load_state
+        if api.load_world_state(version):
+            print("✅ World state loaded successfully")
+        else:
+            print("❌ Failed to load world state")
+            return
+    
     if args.optimize:
         api.load_brain()
         api.optimize_system()
+    
+    # Handle state saving
+    if args.save_state:
+        version = api.save_world_state(args.save_state)
+        if version:
+            print(f"✅ World state saved as {version}")
+        return
         
     if args.input:
         if not os.path.exists(args.input):

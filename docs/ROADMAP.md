@@ -30,7 +30,21 @@
   - [x] Sender: CLI Broadcast -> Rust Swarm Outbox.
   - [x] Receiver: Rust Swarm Inbox -> Python Reconstruction Loop.
   - [x] WAN Discovery: Kademlia Bootstrap (Server Mode) enabled.
-- [ ] **Persistent World Compression:** State-saving for simulated environments.
+
+## Phase 4: Persistent World Compression (v8.1)
+*Focus: Lossless State Persistence & Continuity*
+
+- [x] **State Serialization:** Implemented `WorldStateManager` for graph + tensor + neural persistence.
+- [x] **Version Management:** Multi-version storage with timestamp tracking.
+- [x] **API Integration:** `save_world_state()` and `load_world_state()` methods.
+- [x] **CLI Support:** `--save-state` and `--load-state` flags.
+- [ ] **Swarm Sync:** Broadcast persistent states for distributed continuity.
+- [ ] **Fidelity Guarantees:** Enforce >0.98 threshold on state merges.
+
+## Long-Term Vision (v8.5+)
+*Focus: Production Deployment & Advanced Features*
+
+- [ ] **Swarm State Sync:** Distributed world state synchronization.
 
 ## Success Metrics
 - **Multi-Modal Gain:** >15% improvement when compressing mixed text/image data.
