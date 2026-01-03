@@ -1,12 +1,13 @@
-<script lang="ts">
+<script>
+    // @ts-nocheck
     import { quantumState, compressionStats, swarmStatus } from "../stores.js";
 
-    let mode: string = "standard";
-    let threshold: number = 0.5;
-    let noiseLevel: number = 0.1;
-    let inputFile: File | null = null;
-    let isProcessing: boolean = false;
-    let statusMessage: string = "";
+    let mode = "standard";
+    let threshold = 0.5;
+    let noiseLevel = 0.1;
+    let inputFile = null;
+    let isProcessing = false;
+    let statusMessage = "";
 
     // Simulate API call (replace with actual fetch to Python backend)
     async function compressData() {

@@ -1,10 +1,11 @@
 <script>
+    // @ts-nocheck
     import { swarmStatus, quantumState } from "../stores.js";
     import { onMount, onDestroy } from "svelte";
 
     let broadcastHistory = [];
     let receiveHistory = [];
-    let updateInterval;
+    let updateInterval = null;
 
     // Simulate real-time updates (replace with actual WebSocket/polling)
     onMount(() => {

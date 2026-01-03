@@ -22,7 +22,7 @@ export const compressionStats = writable({
     ratio: 0,
     originalSize: 0,
     compressedSize: 0,
-    timestamp: null as number | null
+    timestamp: null
 });
 
 // Neural Optimization Store - for AQC/RL metrics
