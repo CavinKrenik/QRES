@@ -1,174 +1,237 @@
 <script>
+    // @ts-nocheck
+    import { writable } from "svelte/store";
     import { invoke } from "@tauri-apps/api/core";
-    import DropZone from "./DropZone.svelte";
-    import HiveMind from "./HiveMind.svelte";
-    import SwarmView from "./SwarmView.svelte";
+    import { fade, slide } from "svelte/transition";
+    import StarshipHeader from "./components/StarshipHeader.svelte";
+    import StarshipSidebar from "./components/StarshipSidebar.svelte";
     import KnowledgeGraph from "./KnowledgeGraph.svelte";
-    import Controls from "./components/Controls.svelte";
-    import SwarmDashboard from "./components/SwarmDashboard.svelte";
+    import SwarmView from "./SwarmView.svelte";
+    import HiveMind from "./HiveMind.svelte";
 
-    let activeTab = "compress";
-    let stats = { total_compressions: 0, bytes_saved: 0 };
+    const graphData = writable({ nodes: [], edges: [] });
+    let currentTab = "graph";
+    let sidebarOpen = true;
 
-    async function loadStats() {
+    // Load initial data
+    async function loadInitialData() {
         try {
-            stats = await invoke("get_stats");
+            const stats = await invoke("load_stats");
+            // Update stores
         } catch (e) {
             console.error("Failed to load stats:", e);
         }
     }
 
-    loadStats();
+    // Reactive graph updates
+    function updateGraph() {
+        // This will be called after compression to refresh the graph
+    }
 </script>
 
-<main>
-    <div class="app-header">
-        <h1>QRES Studio v8.1</h1>
-        <div class="stats-bar">
-            <span
-                >💾 Saved: {(stats.bytes_saved / 1024 / 1024).toFixed(
-                    1,
-                )}MB</span
+<!-- <Toaster position="top-right" /> -->
+
+<div class="starship-app">
+    <StarshipHeader />
+
+    <main class="dashboard-grid">
+        <button
+            class="sidebar-toggle"
+            on:click={() => (sidebarOpen = !sidebarOpen)}
+            title="Toggle Sidebar"
+        >
+            {sidebarOpen ? "◀" : "▶"}
+        </button>
+
+        {#if sidebarOpen}
+            <aside
+                class="sidebar"
+                transition:slide={{ axis: "x", duration: 400 }}
             >
-            <span>📦 Files: {stats.total_compressions}</span>
-        </div>
-    </div>
-
-    <div class="tabs">
-        <button
-            class:active={activeTab === "compress"}
-            on:click={() => (activeTab = "compress")}
-        >
-            Drop Zone
-        </button>
-        <button
-            class:active={activeTab === "controls"}
-            on:click={() => (activeTab = "controls")}
-        >
-            🎛️ Controls
-        </button>
-        <button
-            class:active={activeTab === "swarm"}
-            on:click={() => (activeTab = "swarm")}
-        >
-            🌐 Swarm
-        </button>
-        <button
-            class:active={activeTab === "neural"}
-            on:click={() => (activeTab = "neural")}
-        >
-            Neural Graph
-        </button>
-        <button
-            class:active={activeTab === "hive"}
-            on:click={() => (activeTab = "hive")}
-        >
-            Hive Mainnet
-        </button>
-        <button
-            class:active={activeTab === "visual"}
-            on:click={() => (activeTab = "visual")}
-        >
-            Swarm Topology
-        </button>
-    </div>
-
-    <div class="tab-content">
-        {#if activeTab === "compress"}
-            <DropZone on:complete={loadStats} />
-        {:else if activeTab === "controls"}
-            <Controls />
-        {:else if activeTab === "swarm"}
-            <SwarmDashboard />
-        {:else if activeTab === "neural"}
-            <KnowledgeGraph />
-        {:else if activeTab === "hive"}
-            <HiveMind />
-        {:else if activeTab === "visual"}
-            <SwarmView />
+                <StarshipSidebar {updateGraph} />
+            </aside>
         {/if}
-    </div>
-</main>
+
+        <section class="central-hologram">
+            <nav class="orbital-tabs">
+                <button
+                    class:active={currentTab === "graph"}
+                    on:click={() => (currentTab = "graph")}
+                    class="tab-btn"
+                >
+                    Neural Graph
+                </button>
+                <button
+                    class:active={currentTab === "swarm"}
+                    on:click={() => (currentTab = "swarm")}
+                    class="tab-btn"
+                >
+                    Live Swarm
+                </button>
+                <button
+                    class:active={currentTab === "hive"}
+                    on:click={() => (currentTab = "hive")}
+                    class="tab-btn"
+                >
+                    Hive Stats
+                </button>
+            </nav>
+
+            <div class="content-viewport">
+                {#if currentTab === "graph"}
+                    <div class="view-pane" transition:fade>
+                        <KnowledgeGraph />
+                    </div>
+                {:else if currentTab === "swarm"}
+                    <div class="view-pane" transition:fade>
+                        <SwarmView />
+                    </div>
+                {:else if currentTab === "hive"}
+                    <div class="view-pane" transition:fade>
+                        <HiveMind />
+                    </div>
+                {/if}
+            </div>
+        </section>
+    </main>
+</div>
 
 <style>
     :global(body) {
         margin: 0;
         font-family:
+            "Outfit",
             "Inter",
             -apple-system,
-            BlinkMacSystemFont,
-            "Segoe UI",
             sans-serif;
-        background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
-        color: #e0e7ff;
         overflow: hidden;
+        background: #05051a;
+        color: #fff;
     }
 
-    main {
-        height: 100vh;
+    .starship-app {
         display: flex;
         flex-direction: column;
+        height: 100vh;
+        z-index: 1;
+        position: relative;
     }
 
-    .app-header {
-        padding: 1.5rem 2rem;
-        background: rgba(15, 23, 42, 0.8);
-        backdrop-filter: blur(10px);
-        border-bottom: 1px solid rgba(99, 102, 241, 0.2);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    h1 {
-        margin: 0;
-        font-size: 1.5rem;
-        font-weight: 700;
-        background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
-        background-clip: text;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-
-    .stats-bar {
-        display: flex;
-        gap: 2rem;
-        font-size: 0.9rem;
-        color: #94a3b8;
-    }
-
-    .tabs {
-        display: flex;
-        padding: 0 2rem;
-        gap: 0.5rem;
-        background: rgba(15, 23, 42, 0.6);
-        border-bottom: 1px solid rgba(99, 102, 241, 0.2);
-    }
-
-    .tabs button {
-        padding: 1rem 2rem;
-        background: transparent;
-        border: none;
-        color: #94a3b8;
-        cursor: pointer;
-        border-bottom: 2px solid transparent;
-        transition: all 0.3s;
-        font-size: 0.95rem;
-        font-weight: 500;
-    }
-
-    .tabs button:hover {
-        color: #c7d2fe;
-        background: rgba(99, 102, 241, 0.1);
-    }
-
-    .tabs button.active {
-        color: #818cf8;
-        border-bottom-color: #818cf8;
-    }
-
-    .tab-content {
+    .dashboard-grid {
         flex: 1;
-        overflow: auto;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .sidebar-toggle {
+        position: absolute;
+        bottom: 2rem;
+        left: 1rem;
+        background: rgba(0, 255, 204, 0.1);
+        border: 1px solid rgba(0, 255, 204, 0.4);
+        color: #00ffcc;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        cursor: pointer;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s;
+        box-shadow: 0 0 10px rgba(0, 255, 204, 0.2);
+    }
+
+    .sidebar-toggle:hover {
+        background: rgba(0, 255, 204, 0.2);
+        box-shadow: 0 0 20px rgba(0, 255, 204, 0.4);
+        transform: scale(1.1);
+    }
+
+    .sidebar {
+        width: 320px;
+        height: 100%;
+        background: rgba(10, 10, 42, 0.8);
+        backdrop-filter: blur(10px);
+        border-right: 1px solid rgba(0, 255, 204, 0.2);
+        box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .central-hologram {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        background: radial-gradient(
+            circle at center,
+            rgba(0, 80, 255, 0.05) 0%,
+            transparent 70%
+        );
+    }
+
+    .orbital-tabs {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        padding: 1.5rem;
+        z-index: 10;
+    }
+
+    .tab-btn {
+        padding: 0.8rem 1.5rem;
+        background: rgba(26, 26, 74, 0.6);
+        border: 1px solid rgba(0, 128, 255, 0.3);
+        border-radius: 30px;
+        color: #a8dadc;
+        cursor: pointer;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        font-weight: 500;
+        letter-spacing: 0.5px;
+    }
+
+    .tab-btn:hover {
+        border-color: #00ffcc;
+        color: #fff;
+        box-shadow: 0 0 15px rgba(0, 255, 204, 0.3);
+        transform: translateY(-2px);
+    }
+
+    .tab-btn.active {
+        background: linear-gradient(
+            135deg,
+            rgba(0, 255, 204, 0.2) 0%,
+            rgba(0, 128, 255, 0.2) 100%
+        );
+        border-color: #00ffcc;
+        color: #00ffcc;
+        box-shadow: 0 0 20px rgba(0, 255, 204, 0.4);
+    }
+
+    .content-viewport {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+        padding: 1rem 2rem;
+    }
+
+    .view-pane {
+        width: 100%;
+        height: 100%;
+        position: relative;
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+        .sidebar {
+            position: absolute;
+            z-index: 50;
+            width: 100%;
+            height: 100%;
+        }
     }
 </style>

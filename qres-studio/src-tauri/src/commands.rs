@@ -49,7 +49,7 @@ fn get_swarm_config_path(app: &AppHandle) -> PathBuf {
     app.path().app_data_dir().unwrap().join("swarm_config.json")
 }
 
-fn load_stats(app: &AppHandle) -> Stats {
+fn load_stats_from_disk(app: &AppHandle) -> Stats {
     let path = get_stats_path(app);
     if let Ok(content) = fs::read_to_string(&path) {
         serde_json::from_str(&content).unwrap_or_default()
@@ -131,7 +131,7 @@ pub async fn compress_file(
     let bytes_saved = original_size.saturating_sub(compressed_size);
     let ratio = compressed_size as f64 / original_size as f64;
     
-    let mut stats = load_stats(&app);
+    let mut stats = load_stats_from_disk(&app);
     stats.bytes_saved += bytes_saved;
     stats.total_compressions += 1;
     stats.avg_ratio = (stats.avg_ratio * (stats.total_compressions - 1) as f64 + ratio) 
@@ -189,7 +189,7 @@ async fn compress_folder(
     })).unwrap_or(());
     
     // Update stats
-    let mut stats = load_stats(&app);
+    let mut stats = load_stats_from_disk(&app);
     stats.total_compressions += manifest.files.len() as u32;
     
     // Calculate compression ratio
@@ -418,7 +418,7 @@ pub async fn extract_archive_file(
 
 #[tauri::command]
 pub async fn get_stats(app: AppHandle) -> Result<serde_json::Value, String> {
-    let stats = load_stats(&app);
+    let stats = load_stats_from_disk(&app);
     Ok(serde_json::to_value(stats).map_err(|e| e.to_string())?)
 }
 
@@ -506,6 +506,61 @@ pub async fn get_swarm_peers() -> Result<Vec<PeerInfo>, String> {
     }
     
     Ok(peers)
+}
+
+#[tauri::command]
+pub async fn load_stats() -> Result<serde_json::Value, String> {
+    // Simplified stats for GUI
+    Ok(serde_json::json!({
+        "bytes_saved": 0.0,
+        "efficiency": 0.0,
+        "compressions": 0,
+        "active_nodes": 0
+    }))
+}
+
+#[tauri::command]
+pub async fn fetch_peers() -> Result<Vec<String>, String> {
+    // Simplified peer list
+    Ok(vec!["Node1 (Local)".to_string()])
+}
+
+#[tauri::command]
+pub async fn load_data() -> Result<String, String> {
+    // Placeholder for loading data
+    Ok("Data loaded".to_string())
+}
+
+#[tauri::command]
+pub async fn compress(path: String, mode: String, threshold: f32) -> Result<String, String> {
+    // Simplified compress - for now just return a path
+    let out_path = format!("output/{}.qres", path.split('.').next().unwrap_or("file"));
+    Ok(out_path)
+}
+
+#[tauri::command]
+pub async fn decompress(path: String) -> Result<String, String> {
+    let out_path = "output/decompressed".to_string();
+    Ok(out_path)
+}
+
+#[tauri::command]
+pub async fn get_knowledge_graph() -> Result<serde_json::Value, String> {
+    Ok(serde_json::json!({
+        "nodes": [
+            { "id": "User", "type": "human", "content": "Operator" },
+            { "id": "Agent-001", "type": "agent", "content": "Neural Processor" },
+            { "id": "DataStore", "type": "storage", "content": "Hive Storage" },
+            { "id": "Node-A", "type": "node", "content": "Compute Node A" },
+            { "id": "Node-B", "type": "node", "content": "Compute Node B" }
+        ],
+        "edges": [
+            { "source": "User", "target": "Agent-001", "weight": 1.0 },
+            { "source": "Agent-001", "target": "DataStore", "weight": 0.8 },
+            { "source": "Agent-001", "target": "Node-A", "weight": 0.5 },
+            { "source": "Agent-001", "target": "Node-B", "weight": 0.5 }
+        ]
+    }))
 }
 
 async fn sync_with_swarm(_app: &AppHandle) -> Result<(), String> {

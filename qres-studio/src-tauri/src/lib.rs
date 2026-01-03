@@ -17,7 +17,13 @@ pub fn run() {
             commands::toggle_swarm,
             commands::get_swarm_status,
             commands::get_swarm_peers,
-            commands::train_on_file
+            commands::train_on_file,
+            commands::load_stats,
+            commands::fetch_peers,
+            commands::load_data,
+            commands::compress,
+            commands::decompress,
+            commands::get_knowledge_graph
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
