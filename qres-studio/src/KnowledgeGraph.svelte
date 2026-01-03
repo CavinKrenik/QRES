@@ -1,98 +1,101 @@
 <script>
-    // @ts-nocheck
     import { onMount } from "svelte";
     import * as d3 from "d3";
     import { invoke } from "@tauri-apps/api/core";
+    import { toast } from "@zerodevx/svelte-toast";
 
     /** @type {SVGSVGElement} */
     let svg;
     let width = 800;
     let height = 600;
 
-    async function loadGraphData() {
+    onMount(async () => {
         try {
-            const data = await invoke("get_knowledge_graph");
-            initGraph(data);
-        } catch (e) {
-            console.error("Failed to load graph:", e);
-        }
-    }
+            let data;
+            // @ts-ignore
+            if (window.__TAURI__) {
+                data = await invoke('get_knowledge_graph');
+            } else {
+                // Fallback to static data in browser mode
+                const response = await fetch("/knowledge_graph.json");
+                data = await response.json();
+            }
 
-    function initGraph(data) {
-        if (!svg) return;
-        d3.select(svg).selectAll("*").remove();
+            // @ts-ignore
+            const nodes = data.nodes.map((d) => ({ ...d }));
+            // @ts-ignore
+            const links = data.edges.map((d) => ({ ...d }));
+
+            // Simulation
+            const simulation = d3
+                .forceSimulation(nodes)
+                .force(
+                    "link",
+                    d3
+                        .forceLink(links)
+                        // @ts-ignore
+                        .id((d) => d.id)
+                        .distance(150),
+                )
+                .force("charge", d3.forceManyBody().strength(-300))
+                .force("center", d3.forceCenter(width / 2, height / 2));
+
+            const svgEl = d3
+                .select(svg)
+                .attr("viewBox", [0, 0, width, height])
+                .attr("title", "Multi-Modal Knowledge Graph");
+
+            // Add zoom
+            const zoom = d3.zoom()
+                .scaleExtent([0.1, 4])
+                .on("zoom", (event) => {
+                // @ts-ignore
+                svgEl.attr("transform", event.transform);
+            });
 
         // @ts-ignore
-        const nodes = data.nodes.map((d) => ({ ...d }));
-        // @ts-ignore
-        const links = data.edges.map((d) => ({ ...d }));
-
-        const simulation = d3
-            .forceSimulation(nodes)
-            .force(
-                "link",
-                d3
-                    .forceLink(links)
-                    .id((d) => d.id)
-                    .distance(150),
-            )
-            .force("charge", d3.forceManyBody().strength(-400))
-            .force("center", d3.forceCenter(width / 2, height / 2))
-            .force("collision", d3.forceCollide().radius(40));
-
-        const svgEl = d3.select(svg).attr("viewBox", [0, 0, width, height]);
-
-        // Definition for glow
-        const defs = svgEl.append("defs");
-        const filter = defs
-            .append("filter")
-            .attr("id", "glow")
-            .attr("x", "-50%")
-            .attr("y", "-50%")
-            .attr("width", "200%")
-            .attr("height", "200%");
-        filter
-            .append("feGaussianBlur")
-            .attr("stdDeviation", "3.5")
-            .attr("result", "coloredBlur");
-        const feMerge = filter.append("feMerge");
-        feMerge.append("feMergeNode").attr("in", "coloredBlur");
-        feMerge.append("feMergeNode").attr("in", "SourceGraphic");
+        svgEl.call(zoom);
 
         // Edges
         const link = svgEl
-            .append("g")
-            .selectAll("line")
-            .data(links)
-            .join("line")
-            .attr("stroke", "rgba(0, 255, 204, 0.3)")
-            .attr("stroke-width", 2);
+                .append("g")
+                .attr("stroke", "#999")
+                .attr("stroke-opacity", 0.6)
+                .selectAll("line")
+                .data(links)
+                .join("line")
+                .attr("stroke-width", (d) => Math.sqrt(d.weight * 5));
 
-        // Nodes
-        const node = svgEl
+            // Nodes
+            const node = svgEl
             .append("g")
-            .selectAll("g")
+            .attr("stroke", "#fff")
+            .attr("stroke-width", 1.5)
+            .selectAll("circle")
             .data(nodes)
-            .join("g")
+            .join("circle")
+            .attr("r", 10)
+            .attr("fill", (d) => (d.type === "image" ? "#ff6b6b" : "#69db7c"))
+            // @ts-ignore
             .call(drag(simulation));
 
-        node.append("circle")
-            .attr("r", 15)
-            .attr("fill", (d) => {
-                if (d.type === "human") return "#0080ff";
-                if (d.type === "agent") return "#00ffcc";
-                return "#a29bfe";
-            })
-            .style("filter", "url(#glow)");
+        // Tooltips (Simple title for now)
+        // @ts-ignore
+        node.append("title").text((d) => d.id + ": " + (d.content || d.path));
 
-        node.append("text")
-            .attr("dy", 30)
-            .attr("text-anchor", "middle")
+        // Labels
+        const labels = svgEl
+            .append("g")
+            .attr("class", "labels")
+            .selectAll("text")
+            .data(nodes)
+            .join("text")
+            .attr("dx", 12)
+            .attr("dy", ".35em")
             .text((d) => d.id)
-            .style("fill", "#fff")
+            .style("fill", "#ccc")
             .style("font-size", "12px")
-            .style("font-family", "'Outfit', 'Inter', sans-serif")
-            .style("text-shadow", "0 0 5px rgba(0,0,0,0.8)");
+            .style("font-family", "monospace");
 
         simulation.on("tick", () => {
             link.attr("x1", (d) => d.source.x)
@@ -100,59 +103,83 @@
                 .attr("x2", (d) => d.target.x)
                 .attr("y2", (d) => d.target.y);
 
-            node.attr("transform", (d) => `translate(${d.x},${d.y})`);
+            node.attr("cx", (d) => d.x).attr("cy", (d) => d.y);
+
+            labels.attr("x", (d) => d.x).attr("y", (d) => d.y);
         });
 
+        // Fit to view after simulation stabilizes
+        simulation.on('end', () => {
+            // @ts-ignore
+            const bounds = svgEl.node().getBBox();
+            const fullWidth = bounds.width;
+            const fullHeight = bounds.height;
+            const midX = bounds.x + fullWidth / 2;
+            const midY = bounds.y + fullHeight / 2;
+
+            const scale = 0.9 / Math.max(fullWidth / width, fullHeight / height);
+            const translate = [width / 2 - scale * midX, height / 2 - scale * midY];
+
+            // @ts-ignore
+            svgEl.transition().duration(750).call(
+                // @ts-ignore
+                zoom.transform,
+                // @ts-ignore
+                d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale)
+            );
+        });
+
+        // @ts-ignore
         function drag(simulation) {
+            // @ts-ignore
             function dragstarted(event) {
                 if (!event.active) simulation.alphaTarget(0.3).restart();
                 event.subject.fx = event.subject.x;
                 event.subject.fy = event.subject.y;
             }
+
+            // @ts-ignore
             function dragged(event) {
                 event.subject.fx = event.x;
                 event.subject.fy = event.y;
             }
+
+            // @ts-ignore
             function dragended(event) {
                 if (!event.active) simulation.alphaTarget(0);
                 event.subject.fx = null;
                 event.subject.fy = null;
             }
+
             return d3
                 .drag()
                 .on("start", dragstarted)
                 .on("drag", dragged)
                 .on("end", dragended);
         }
-    }
-
-    onMount(() => {
-        loadGraphData();
+        } catch (e) {
+            console.error('Failed to load graph:', e);
+            toast.push(`Failed to load graph: ${e}`);
+        }
     });
 </script>
 
 <div class="graph-container">
-    <svg bind:this={svg}></svg>
+    <svg bind:this={svg} {width} {height}></svg>
 </div>
 
 <style>
     .graph-container {
         width: 100%;
         height: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background: radial-gradient(
-            circle at center,
-            rgba(10, 10, 42, 0.5) 0%,
-            rgba(0, 0, 0, 0) 100%
-        );
+        background: transparent;
+        position: relative;
     }
 
     svg {
         width: 100%;
         height: 100%;
-        max-width: 800px;
-        max-height: 600px;
+        background: transparent;
+        border-radius: 8px;
     }
 </style>

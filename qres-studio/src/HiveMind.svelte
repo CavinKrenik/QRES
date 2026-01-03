@@ -3,6 +3,7 @@
     import { invoke } from "@tauri-apps/api/core";
     import { onMount } from "svelte";
     import { writable } from "svelte/store";
+    import { toast } from "@zerodevx/svelte-toast";
 
     // Persistent swarm state
     const swarmEnabled = writable(false);
@@ -16,6 +17,11 @@
     };
 
     async function loadData() {
+        // @ts-ignore
+        if (!window.__TAURI__) {
+            toast.push('Running in browser mode - hive features disabled');
+            return;
+        }
         try {
             stats = await invoke("get_stats");
 
@@ -25,10 +31,16 @@
             swarmStatus = enabled ? "Connected" : "Offline";
         } catch (e) {
             console.error("Failed to load data:", e);
+            toast.push(`Failed to load data: ${e}`);
         }
     }
 
     async function handleSwarmToggle() {
+        // @ts-ignore
+        if (!window.__TAURI__) {
+            toast.push('Swarm toggle not available in browser mode');
+            return;
+        }
         const enabled = $swarmEnabled;
         try {
             const result = (await invoke("toggle_swarm", {
@@ -38,15 +50,9 @@
             console.log(result);
 
             if (enabled) {
-                showNotification(
-                    "🐝 Swarm Network Enabled",
-                    "Now sharing learnings with the collective!",
-                );
+                toast.push("Swarm Network Enabled - sharing learnings with the collective!");
             } else {
-                showNotification(
-                    "⚪ Swarm Network Disabled",
-                    "Operating in isolated mode",
-                );
+                toast.push("Swarm Network Disabled - operating in isolated mode");
             }
         } catch (e) {
             console.error("Swarm toggle failed:", e);

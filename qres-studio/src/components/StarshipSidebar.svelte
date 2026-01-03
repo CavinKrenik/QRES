@@ -2,6 +2,7 @@
     // @ts-nocheck
     import { invoke } from "@tauri-apps/api/core";
     import { save, open } from "@tauri-apps/plugin-dialog";
+    import { toast } from "@zerodevx/svelte-toast";
 
     export let updateGraph = () => {};
 
@@ -10,37 +11,40 @@
     let selectedFile = null;
     let isProcessing = false;
 
-    async function handleFileSelect() {
-        try {
-            const selected = await open({
-                multiple: false,
-                title: "Select file to compress",
-            });
-            if (selected && typeof selected === "string") {
-                selectedFile = {
-                    name: selected.split(/[\/\\]/).pop(),
-                    path: selected,
-                };
-                console.log(`Selected: ${selectedFile.name}`);
-            }
-        } catch (e) {
-            console.error("Failed to open file dialog");
+    function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (file) {
+            selectedFile = file;
+            toast.push(`Selected: ${file.name}`);
         }
     }
 
     async function handleCompress() {
+        // @ts-ignore
+        if (!window.__TAURI__) {
+            toast.push('Compression not available in browser mode');
+            return;
+        }
         if (!selectedFile) {
-            console.error("Please select a file first");
+            toast.push("Please select a file first");
             return;
         }
 
         isProcessing = true;
 
         try {
+            const fileInput = document.getElementById("file-input");
+            const filePath = fileInput.files[0].path;
+
+            if (!filePath) {
+                toast.push("Could not get file path");
+                isProcessing = false;
+                return;
+            }
+
             const destPath = await save({
                 defaultPath: `${selectedFile.name}.qres`,
                 title: "Save compressed file",
-                filters: [{ name: "QRES", extensions: ["qres"] }],
             });
 
             if (!destPath) {
@@ -48,24 +52,22 @@
                 return;
             }
 
-            console.log("Compressing...");
-
-            // Use compress_file for real functionality
-            await invoke("compress_file", {
-                src: selectedFile.path,
-                dest: destPath,
-            });
-
-            console.log(`Compressed! Saved to ${destPath}`);
-            updateGraph(); // Refresh neural graph
+            const outPath = await invoke("compress", { path: filePath, mode, threshold, outPath: destPath });
+            toast.push(`Compressed! Saved to ${outPath}`);
+            updateGraph();  // Refresh neural graph
         } catch (error) {
-            console.error(`Failed: ${error}`);
+            toast.push(`Failed: ${error}`);
         } finally {
             isProcessing = false;
         }
     }
 
     async function handleDecompress() {
+        // @ts-ignore
+        if (!window.__TAURI__) {
+            toast.push('Decompression not available in browser mode');
+            return;
+        }
         isProcessing = true;
 
         try {
@@ -74,12 +76,13 @@
                 title: "Select file to decompress",
             });
 
-            if (!srcPath || typeof srcPath !== "string") {
+            if (!srcPath) {
                 isProcessing = false;
                 return;
             }
 
             const destPath = await save({
+                defaultPath: "extracted",
                 title: "Save decompressed file",
             });
 
@@ -88,16 +91,10 @@
                 return;
             }
 
-            console.log("Decompressing...");
-
-            await invoke("decompress_file", {
-                src: srcPath,
-                dest: destPath,
-            });
-
-            console.log(`Decompressed to ${destPath}`);
+            const outPath = await invoke("decompress", { path: srcPath, outFolder: destPath });
+            toast.push(`Decompressed to ${outPath}`);
         } catch (error) {
-            console.error(`Failed: ${error}`);
+            toast.push(`Failed: ${error}`);
         } finally {
             isProcessing = false;
         }
@@ -140,18 +137,16 @@
     </div>
 
     <div class="section">
-        <label for="file-picker">Source File</label>
-        <button
-            id="file-picker"
-            class="picker-btn"
-            on:click={handleFileSelect}
+        <label for="file-input">Select File</label>
+        <input
+            id="file-input"
+            type="file"
+            on:change={handleFileSelect}
             disabled={isProcessing}
-        >
-            {selectedFile ? "📂 Change File" : "📁 Select File"}
-        </button>
+        />
 
         {#if selectedFile}
-            <div class="file-info" title={selectedFile.path}>
+            <div class="file-info">
                 📄 {selectedFile.name}
             </div>
         {/if}
@@ -248,21 +243,14 @@
         cursor: pointer;
     }
 
-    .picker-btn {
-        padding: 0.6rem;
+    input[type="file"] {
+        padding: 0.5rem;
         background: rgba(0, 128, 255, 0.1);
-        border: 1px dashed rgba(0, 128, 255, 0.5);
+        border: 1px solid rgba(0, 128, 255, 0.3);
         border-radius: 4px;
-        color: #00ffcc;
+        color: #ffffff;
         cursor: pointer;
-        transition: all 0.2s;
         font-size: 0.85rem;
-    }
-
-    .picker-btn:hover:not(:disabled) {
-        background: rgba(0, 128, 255, 0.2);
-        border-style: solid;
-        border-color: #00ffcc;
     }
 
     .file-info {

@@ -3,6 +3,7 @@
     import { listen } from "@tauri-apps/api/event";
     import { save, open } from "@tauri-apps/plugin-dialog";
     import { createEventDispatcher } from "svelte";
+    import { toast } from "@zerodevx/svelte-toast";
     import ArchiveView from "./ArchiveView.svelte";
 
     const dispatch = createEventDispatcher();
@@ -68,6 +69,11 @@
     }
 
     async function processFile(filePath: string) {
+        // @ts-ignore
+        if (!window.__TAURI__) {
+            toast.push('File processing not available in browser mode');
+            return;
+        }
         // Detect if it is a QRES archive (check extension)
         const lower = filePath.toLowerCase();
         const isArchive = lower.endsWith(".qres") || lower.endsWith(".qrar");
@@ -91,6 +97,7 @@
                     "Archive browse failed, attempting single-stream decompression",
                     e,
                 );
+                toast.push(`Archive browse failed: ${e}`);
                 await startSingleFileDecompression(filePath);
             }
         } else {

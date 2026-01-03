@@ -1,6 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
     import { invoke } from "@tauri-apps/api/core";
+    import { toast } from "@zerodevx/svelte-toast";
 
     export let manifest: any;
     // Archive path for future use (external reference)
