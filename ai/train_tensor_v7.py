@@ -1,84 +1,53 @@
-"""
-Phase 2: Quantum-Inspired Tensor Networks for Compression
-Focus: Research & Prototyping
-"""
-
-import numpy as np
 import sys
+import os
+sys.path.append(os.path.join(os.getcwd(), 'python'))
+from qres.quantum import QuantumEncoder
+from qres.multimodal import MultiModalMemory
+import numpy as np
 
-try:
-    import qutip
-    from qutip import tensor, rand_dm, Qobj
-    # Try different locations for partial_trace
+def test_multimodal_compression():
+    print("="*60)
+    print("Quantum-Enhanced Multi-Modal Compression (v7.5)")
+    print("="*60)
+    
+    # 1. Setup Phase 1 Memory
+    print("[1] Initializing MultiModal Memory...")
+    mm = MultiModalMemory()
+    mm.add_text_node("doc1", "Quantum computing uses qubits.")
+    mm.add_text_node("doc2", "QRES optimizes data storage with AI.")
+    mm.add_text_node("img1", "path/to/virtual_image.png") # Virtual, embedding will be 0s or we mock it
+    
+    # Mock embedding for image since path doesn't exist really
+    import torch
+    mm.graph.nodes["img1"]["embedding"] = torch.rand(384) 
+    
+    # 2. Initialize Phase 2 Quantum Encoder
+    # Using 2 qubits per node for faster simulation of noise calculation
+    qe = QuantumEncoder(n_qubits_per_node=2)
+    
+    # 3. Compress
+    print("[2] Encoding Graph to Quantum Tensor Network...")
+    full, reduced, metrics = qe.encode_graph(mm.graph)
+    
+    if metrics:
+        print(f"\n[3] Compression Results:")
+        print(f"  - Simulated Qubits: {metrics['qubits_simulated']}")
+        print(f"  - Original State Size: {metrics['original_size'] / 1024:.2f} KB")
+        print(f"  - Compressed Size: {metrics['compressed_size'] / 1024:.2f} KB")
+        print(f"  - Compression Ratio: {metrics['ratio']:.4%}")
+        print(f"  - Von Neumann Entropy: {metrics['entropy']:.4f}")
+        
+    # 4. Noise Simulation
+    print("\n[4] Simulating Decoherence (Noise)...")
+    noisy = qe.simulate_noise(full, error_prob=0.1)
+    # properly check fidelity using qutip
+    # qutip.fidelity(A, B) = trace(sqrt(sqrt(A) * B * sqrt(A)))
     try:
-        from qutip import ptrace as partial_trace
-    except ImportError:
-        try:
-            from qutip.core import ptrace as partial_trace
-        except ImportError:
-            # Maybe it's a function on Qobj or different name
-            print("Warning: partial_trace not found in standard paths")
-            partial_trace = None
-except ImportError as e:
-    print(f"QuTiP Import Error: {e}")
-    sys.exit(1)
-
-def simulate_tensor_compression(num_qubits=4):
-    print(f"🔬 Simulating Quantum Tensor Network with {num_qubits} qubits...")
-    
-    # 1. Create a random state (density matrix) representing a complex data chunk
-    # In reality, we would map data to this state via amplitude encoding.
-    dims_list = [2] * num_qubits
-    # rand_dm(N) returns an NxN density matrix. 
-    full_state = rand_dm(2**num_qubits)
-    full_state.dims = [dims_list, dims_list]
-    
-    original_size = full_state.shape[0] * full_state.shape[1] * 16 # Complex128 bytes
-    print(f"  Original State Size (Memory): {original_size} bytes (Virtual)")
-    
-    # 2. Schmidt Decomposition via Partial Trace
-    # We trace out half the system to find the reduced density matrix of the "core"
-    keep_indices = list(range(num_qubits // 2))
-    reduced_state = partial_trace(full_state, keep_indices)
-    
-    compressed_size = reduced_state.shape[0] * reduced_state.shape[1] * 16
-    print(f"  Reduced State Size: {compressed_size} bytes")
-    
-    # 3. Calculate Von Neumann Entropy (Information Content)
-    # Lower entropy = higher compressibility potential using quantum tensors
-    entropy = qutip.entropy_vn(reduced_state)
-    print(f"  Von Neumann Entropy: {entropy:.4f}")
-    
-    ratio = compressed_size / original_size
-    print(f"  Theoretical Compression Ratio: {ratio:.2%}")
-    
-    return ratio, entropy
-
-def map_data_to_state(data_bytes):
-    """
-    Experimental: Map 4 bytes to a 2-qubit state.
-    """
-    # Normalize bytes to amplitudes
-    floats = np.frombuffer(data_bytes, dtype=np.uint8) / 255.0
-    # Pad to power of 2
-    target_len = 2**np.ceil(np.log2(len(floats))).astype(int)
-    padded = np.zeros(target_len)
-    padded[:len(floats)] = floats
-    padded /= np.linalg.norm(padded) # Normalize state
-    
-    # Create Qobj
-    psi = Qobj(padded)
-    return psi
+        import qutip as qt
+        fid = qt.fidelity(full, noisy)
+        print(f"  - Fidelity (Original vs Noisy): {fid:.4f}")
+    except Exception as e:
+        print(f"  - Fidelity check failed: {e}")
 
 if __name__ == "__main__":
-    print("="*60)
-    print("Quantum-Inspired Tensor Network Research (v7.5)")
-    print("="*60)
-    
-    simulate_tensor_compression(4)
-    simulate_tensor_compression(8)
-    
-    print("\n🧪 Mapping Real Data...")
-    data = b"test_data_chunk"
-    state = map_data_to_state(data)
-    print(f"  Mapped '{data.decode()}' to Quantum State: {state.shape}")
+    test_multimodal_compression()

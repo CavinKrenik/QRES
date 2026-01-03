@@ -38,13 +38,14 @@ class MultiModalMemory:
             except Exception as e:
                 print(f"[QRES-MM] Failed to load text model: {e}")
 
-            # Load CLIP Model (Lazy load or on init? Let's do init for now but safeguard)
+            # Load CLIP Model
             try:
+                # Use smaller model or just check if we need it
                 self.clip_model, _, self.clip_preprocess = open_clip.create_model_and_transforms(clip_model, pretrained='laion2b_s34b_b79k', device=self.device)
                 self.clip_tokenizer = open_clip.get_tokenizer(clip_model)
                 print(f"[QRES-MM] CLIP model '{clip_model}' loaded.")
             except Exception as e:
-                print(f"[QRES-MM] Failed to load CLIP model: {e}")
+                print(f"[QRES-MM] Warning: Failed to load CLIP model. Image features disabled. ({e})")
 
     def add_text_node(self, node_id: str, text: str):
         """Adds a text node to the graph with its embedding."""

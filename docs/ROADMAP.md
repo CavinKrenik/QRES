@@ -19,8 +19,8 @@
 ## Phase 2: Quantum-Inspired Transformation (v7.5)
 *Focus: Quantum Supremacy in Classical Simulation*
 
-- [wip] **Tensor Network Compression:** Prototyped log(n) reduction via QuTiP (Ratio < 6%).
-- [ ] **LiePrune & AQC:** Quadratic pruning for Neural Meta-Brain.
+- [x] **Tensor Network Compression:** Implemented `QuantumEncoder` (QuTiP/NetworkX) w/ Noise Sim.
+- [x] **LiePrune & AQC:** Prototyped Hamiltonian-based weight pruning (~44% sparsity).
 - [ ] **Quantum Mode CLI:** Hybrid classical-quantum (sim) execution.
 
 ## Long-Term Vision (v8.0+)
