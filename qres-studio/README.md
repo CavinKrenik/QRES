@@ -1,8 +1,8 @@
-# QRES Studio v4.2
+# QRES Studio v4.3
 
-**Cross-platform GUI for QRES compression with P2P collective learning**
+**Cross-platform GUI for QRES v8 compression with P2P collective learning**
 
-Built with Tauri (Rust) + Svelte for maximum performance and minimal bundle size.
+Built with Tauri v2 (Rust) + Svelte 5 for maximum performance and minimal bundle size.
 
 ---
 
@@ -12,7 +12,7 @@ Built with Tauri (Rust) + Svelte for maximum performance and minimal bundle size
 - **Drag-Drop Interface**: Files or entire folders
 - **Real-time Progress**: Color-coded engine visualization
   - 🟡 Gold = ZSTD
-  - 🔵 Blue = LINEAR  
+  - 🔵 Blue = LINEAR
   - 🟢 Green = IPEPS
   - 🟣 Purple = LSTM
 - **Training Detection**: Auto-prompt for data files (CSV, JSON, TXT)
@@ -28,14 +28,28 @@ Built with Tauri (Rust) + Svelte for maximum performance and minimal bundle size
 - **Automatic Sync**: Shares learnings with Hive when enabled
 - **Zero-Shot Adaptation**: Benefit from collective intelligence
 
+### 📊 Knowledge Graph
+- **Interactive Visualization**: D3.js powered force-directed graph
+- **Zoom & Pan**: Navigate complex neural relationships
+- **Auto-fit**: Automatically centers and scales the graph
+- **Real-time Updates**: Reflects current brain state
+
 ---
 
 ## 🚀 Quick Start
+
+### Prerequisites
+- **Rust**: Latest stable version
+- **Node.js**: v18 or higher
+- **Tauri CLI**: `npm install -g @tauri-apps/cli`
 
 ### Development
 ```bash
 # Install dependencies
 npm install
+
+# Run static analysis check
+npm run check
 
 # Run dev server
 npm run tauri dev
@@ -81,15 +95,24 @@ npm run tauri build
 
 ## 🏗️ Architecture
 
-### Backend (Rust)
+### Backend (Rust + Tauri v2)
 - **Tauri Commands**: Compression, decompression, stats, swarm, training
 - **P2P State**: Global state with `Arc<Mutex<P2PState>>`
 - **Persistent Storage**: JSON files in app data directory
+- **IPC Communication**: Secure cross-process communication
 
-### Frontend (Svelte)
-- **App.svelte**: Main layout with tab navigation
-- **DropZone.svelte**: Drag-drop with folder support
-- **HiveMind.svelte**: Stats dashboard with persistent swarm toggle
+### Frontend (Svelte 5 + TypeScript)
+- **App.svelte**: Main layout with tab navigation and global state
+- **DropZone.svelte**: Drag-drop interface with folder support
+- **HiveMind.svelte**: Analytics dashboard with persistent swarm toggle
+- **KnowledgeGraph.svelte**: Interactive D3.js visualization
+- **Environment Guards**: Browser vs Tauri mode detection
+
+### Dependencies
+- **Tauri v2**: Cross-platform desktop app framework
+- **Svelte 5**: Reactive UI framework with runes
+- **D3.js v7**: Data visualization library
+- **@zerodevx/svelte-toast**: Notification system
 
 ---
 
@@ -104,11 +127,20 @@ qres-studio/
 │   │   └── main.rs        # App entry point
 │   └── Cargo.toml         # Rust dependencies
 ├── src/
-│   ├── App.svelte         # Main layout
+│   ├── App.svelte         # Main layout with tab navigation
 │   ├── DropZone.svelte    # Compression interface
-│   └── HiveMind.svelte    # Analytics dashboard
+│   ├── HiveMind.svelte    # Analytics dashboard
+│   ├── KnowledgeGraph.svelte # Neural graph visualization
+│   ├── SwarmView.svelte   # P2P network view
+│   ├── ArchiveView.svelte # Archive browser
+│   ├── components/
+│   │   ├── StarshipHeader.svelte # Header with stats
+│   │   └── StarshipSidebar.svelte # Sidebar controls
+│   └── types.d.ts         # TypeScript declarations
 ├── static/                # Static assets
-└── package.json           # Node dependencies
+├── package.json           # Node dependencies
+├── jsconfig.json          # JavaScript config
+└── svelte.config.js       # Svelte configuration
 ```
 
 ---
@@ -125,6 +157,12 @@ Located in app data directory:
 - `stats.json` - Compression statistics
 - `swarm_config.json` - Swarm enabled/disabled state
 
+### Compatibility
+- **QRES Backend**: Compatible with QRES v8.x
+- **Tauri**: Built with Tauri v2 API
+- **Node.js**: Requires v18+
+- **Rust**: Latest stable recommended
+
 ---
 
 ## 🎯 Keyboard Shortcuts
@@ -133,6 +171,7 @@ Located in app data directory:
 |--------|----------|
 | Switch to Drop Zone | `Ctrl+1` |
 | Switch to Hive Mind | `Ctrl+2` |
+| Switch to Knowledge Graph | `Ctrl+3` |
 | Toggle Swarm | `Ctrl+S` |
 | Refresh Stats | `F5` |
 
@@ -140,9 +179,14 @@ Located in app data directory:
 
 ## 🐛 Troubleshooting
 
-### "Ollama connection failed"
-- **This is expected!** Ollama was removed in v4.1
-- Use the new training integration instead
+### Import Resolution Errors
+- **Tauri v2 Migration**: Ensure all imports use `@tauri-apps/api/core` instead of `@tauri-apps/api/tauri`
+- **Run Check**: Use `npm run check` to verify TypeScript/svelte-check passes
+- **Clear Cache**: Delete `node_modules` and `package-lock.json` if issues persist
+
+### "invoke is not defined" Error
+- **Environment Guards**: Check that Tauri API calls are wrapped in `window.__TAURI__` checks
+- **Browser Mode**: App should work in browser for development (limited functionality)
 
 ### Swarm toggle doesn't persist
 - Check app data directory permissions
@@ -153,13 +197,18 @@ Located in app data directory:
 - Check file permissions
 - Try smaller folders first
 
+### Graph visualization issues
+- **D3.js**: Ensure D3 v7 is properly installed
+- **Zoom/Pan**: Check browser console for JavaScript errors
+- **Auto-fit**: Graph should center automatically on load
+
 ---
 
 ## 📚 Documentation
 
 - **[P2P_IMPLEMENTATION.md](P2P_IMPLEMENTATION.md)** - v4.2 P2P guide
 - **[STREAMLINED_RELEASE.md](STREAMLINED_RELEASE.md)** - v4.1 release notes
-- **[../README.md](../README.md)** - Main project README
+- **[../README.md](../README.md)** - Main QRES project README
 - **[../ROADMAP.md](../ROADMAP.md)** - Development roadmap
 
 ---
@@ -173,6 +222,7 @@ See [../CONTRIBUTING.md](../CONTRIBUTING.md) for guidelines.
 - Performance optimization
 - Cross-platform testing
 - Documentation
+- Graph visualization enhancements
 
 ---
 
@@ -182,4 +232,4 @@ Dual-licensed under MIT OR Apache-2.0.
 
 ---
 
-**QRES Studio v4.2** - *Compression through Collective Intelligence* 🚀
+**QRES Studio v4.3** - *Compression through Collective Intelligence* 🚀

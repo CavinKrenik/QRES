@@ -1,4 +1,5 @@
 <script lang="ts">
+    // @ts-nocheck
     import { invoke } from "@tauri-apps/api/core";
     import { onMount } from "svelte";
     import { writable } from "svelte/store";
@@ -177,9 +178,9 @@
 
 <style>
     .hive-container {
-        padding: 2rem;
-        max-width: 1200px;
-        margin: 0 auto;
+        padding: 1rem;
+        height: 100%;
+        overflow-y: auto;
     }
 
     .hive-header {

@@ -88,12 +88,20 @@ original = qres.decode_bytes(compressed)
 ```
 
 ### 3. Archive Studio (GUI)
-A beautiful, GPU-accelerated interface for desktop users.
-*   **Drag & Drop**: Drop any file, folder, or archive.
-*   **Visualizations**: Watch the "Living Brain" think in real-time.
+> [!WARNING]
+> **Experimental Preview**: The QRES Studio interface is currently under active development. Expect rapid changes and potential instabilities.
+
+A premium, "AEON" branded interface inspired by SpaceX UIs. Built with **Svelte 5** and **Tauri v2** for peak performance and stability.
+
+![QRES Studio AEON](docs/screenshots/aeon_studio_preview.png)
+
+*   **Futuristic Dashboard**: Real-time telemetry for Swarm activity, efficiency, and bytes saved.
+*   **Neural Graph Visualization**: Interactive D3.js powered "hologram" of the Living Brain's decision graph.
+*   **Hive Mind Controls**: Peer discovery and swarm synchronization at your fingertips.
+*   **Starship UX**: Dark mode optics, glassmorphism, and minimal-latency feedback.
 *   [Download Latest Release](https://github.com/CavinKrenik/QRES/releases)
 
-### 4. Quantum CLI (v7.5 Preview)
+### 4. Quantum CLI (v8.2 "AEON" Preview)
 Interact with the research-grade Quantum core.
 ```bash
 # Compress with Quantum Tensor Networks

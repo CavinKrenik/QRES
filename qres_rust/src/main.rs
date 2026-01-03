@@ -41,6 +41,7 @@ enum Commands {
         input: String,
     },
     /// Run swarm node
+    #[cfg(feature = "swarm")]
     Swarm {
         /// Path to brain file
         #[arg(long, default_value = "qres_brain.json")]
@@ -236,6 +237,7 @@ fn brain_import(file_path: &str) -> io::Result<()> {
     Ok(())
 }
 
+#[cfg(feature = "swarm")]
 fn swarm_mode(brain: String, port: u16) -> io::Result<()> {
     eprintln!("[Swarm] Starting QRES P2P Swarm Node (libp2p)...");
     eprintln!("[Swarm] Brain File: {}", brain);
@@ -261,6 +263,7 @@ fn main() {
         Commands::Decompress { input, output } => decompress_file(&input, &output),
         Commands::ExportBrain { output } => brain_export_to_file(&output),
         Commands::ImportBrain { input } => brain_import(&input),
+        #[cfg(feature = "swarm")]
         Commands::Swarm { brain, port } => swarm_mode(brain, port),
     };
 
