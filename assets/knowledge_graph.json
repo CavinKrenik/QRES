@@ -1,0 +1,36 @@
+{
+  "nodes": [
+    {
+      "type": "text",
+      "content": "The quick brown fox jumps over the lazy dog.",
+      "id": "doc1"
+    },
+    {
+      "type": "text",
+      "content": "A fast russet canine leaps over a sluggish hound.",
+      "id": "doc2"
+    },
+    {
+      "type": "text",
+      "content": "Quantum mechanics describes the physical propertie",
+      "id": "doc3"
+    },
+    {
+      "type": "text",
+      "content": "bias",
+      "id": "bias_node"
+    }
+  ],
+  "edges": [
+    {
+      "weight": 0.6160239577293396,
+      "source": "doc1",
+      "target": "doc2"
+    },
+    {
+      "weight": 0.99,
+      "source": "doc1",
+      "target": "bias_node"
+    }
+  ]
+}

@@ -1,31 +1,35 @@
 # QRES Roadmap & Vision
 
-## Short-Term Enhancements (v5.1 - v5.2)
-*Focus: Scalability, Intelligence, and Stability*
+## Current: Phase 0 - Foundations (v6.1 - v7.0α)
+*Focus: Strategic Groundwork & Multi-Modal Foundation*
 
-- [x] **Transformer Predictor:** Added linear attention mechanism to ensemble.
-- [ ] **Fuzzing Suite:** Integrate `cargo-fuzz` for 100% crash-safety coverage.
-- [ ] **GPU Acceleration:** Port SIMD paths to CUDA/Rust-GPU.
-- [ ] **GUI Polish:** Real-time swarm monitoring and drag-drop improvements in `qres-studio`.
-- [ ] **Adaptive Lossy:** Perceptual metrics (SSIM) for multimedia.
+- [x] **Branching Strategy:** Transition to `feature/v7-foundations`.
+- [x] **Dependency Integration:** Integrated PyTorch, NetworkX, Gymnasium, and QuTiP.
+- [x] **Baseline Benchmarking:** Established metrics for IoT (61%) and Shakespeare (92%).
+- [x] **Audit & Lint:** Validated v6 alpha integration and fixed path issues.
 
-## Medium-Term Innovations (v6.0)
-*Focus: Advanced AI and Federation*
+## Phase 1: Strategic Enhancements (v7.0)
+*Focus: Differentiation & Self-Optimization*
 
-- [ ] **LLM Integration:** Hugging Face bindings for semantic understanding (Context-Aware Compression).
-- [ ] **Bio-Evolution:** Genetic algorithms for swarm weight optimization.
-- [ ] **Federated Privacy:** Differential privacy for secure medical/financial data compression.
-- [ ] **Quantum Modes:** PennyLane integration for high-dimensional entropy reduction.
-- [ ] **Ecosystem:** Pandas/TensorFlow hooks.
+- [x] **Multi-Modal Memory:** Implemented `MultiModalMemory` (NetworkX+CLIP) & Exported Graph.
+- [x] **Adaptive RL Mixer:** Trained PPO Agent (Reward: 3.75, Ratio: 62%).
+- [x] **Explainable AI (XAI):** Integrated `KnowledgeGraph.svelte` with D3 into QRES Studio.
+- [ ] **Ethical Pruning:** Bias detection in edge distribution.
 
-## Long-Term Vision (v7.0+)
-*Focus: Global Scale and Edge*
+## Phase 2: Quantum-Inspired Transformation (v7.5)
+*Focus: Quantum Supremacy in Classical Simulation*
 
-- [ ] **Global Swarm:** IPFS/Filecoin integration for persistent decentralized storage.
-- [ ] **Embedded Rust:** IoT-native compression on Cortex-M/RISC-V.
-- [ ] **Meta-Learning:** Pre-trained "Universal" models for 2x ratio improvements.
+- [wip] **Tensor Network Compression:** Prototyped log(n) reduction via QuTiP (Ratio < 6%).
+- [ ] **LiePrune & AQC:** Quadratic pruning for Neural Meta-Brain.
+- [ ] **Quantum Mode CLI:** Hybrid classical-quantum (sim) execution.
+
+## Long-Term Vision (v8.0+)
+*Focus: Global Scale and Persistent States*
+
+- [ ] **Global P2P Quantum Swarm:** Decentralized model sharing with quantum secure pathways.
+- [ ] **Persistent World Compression:** State-saving for simulated environments.
 
 ## Success Metrics
-- **Ratio:** >10% better than Zstd (Level 19) on mixed corpora.
-- **Throughput:** >1GB/s decoding.
-- **Convergence:** Swarm "Epiphany" sharing <10s.
+- **Multi-Modal Gain:** >15% improvement when compressing mixed text/image data.
+- **Self-Optimization:** RL agent converges to optimal strategy <500 steps.
+- **Quantum Efficiency:** Simulated tensor gains >40% on structured data.

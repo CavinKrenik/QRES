@@ -28,9 +28,14 @@ The new **QRAR** format brings full archival capabilities.
 
 ### 🤖 AI-Powered Prediction (v6.0 Alpha)
 Experimental features pushing compression to the next level:
-- **LLM Semantic Predictor**: Uses local language models (GPT-2, CodeLlama) to predict next bytes in code/text, achieving 15-25% better ratios on structured data.
-- **GPU Acceleration**: Offloads heavy matrix operations to your graphics card for 10x throughput on batch compression.
 - **Research-Backed**: All features cite academic papers (see [RESEARCH_NOTES.md](docs/RESEARCH_NOTES.md)).
+
+## 🔮 v7 Vision: Quantum-Relational Intelligence
+We are actively transitioning from a strong relational compressor to a future-proof, multi-modal powerhouse. 
+- **Multi-Modal Graphs**: Treating text, images, and sensors as unified relational nodes.
+- **Self-Optimizing RL**: Autonomous strategy selection via Reinforcement Learning (Gymnasium).
+- **Quantum-Inspired Tensors**: Simulated quantum states for exponential data representation efficiency.
+- **Interpretability**: "Why" reports for every compression decision.
 
 ## ⚡ Performance
 

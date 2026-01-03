@@ -3,6 +3,7 @@
     import DropZone from "./DropZone.svelte";
     import HiveMind from "./HiveMind.svelte";
     import SwarmView from "./SwarmView.svelte";
+    import KnowledgeGraph from "./KnowledgeGraph.svelte";
 
     let activeTab = "compress";
     let stats = { total_compressions: 0, bytes_saved: 0 };
@@ -50,6 +51,12 @@
         >
             Swarm Topology
         </button>
+        <button
+            class:active={activeTab === "neural"}
+            on:click={() => (activeTab = "neural")}
+        >
+            Neural Graph
+        </button>
     </div>
 
     <div class="tab-content">
@@ -57,8 +64,10 @@
             <DropZone on:complete={loadStats} />
         {:else if activeTab === "hive"}
             <HiveMind />
-        {:else}
+        {:else if activeTab === "visual"}
             <SwarmView />
+        {:else}
+            <KnowledgeGraph />
         {/if}
     </div>
 </main>

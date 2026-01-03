@@ -1,0 +1,14 @@
+torch
+networkx
+gymnasium
+qutip
+sentence-transformers
+open-clip-torch
+numpy
+pandas
+scikit-learn
+matplotlib
+safetensors
+stable-baselines3
+shimmy
+tensorboard

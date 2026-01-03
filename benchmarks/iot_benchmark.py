@@ -57,11 +57,12 @@ def run_qres(filename):
     start = time.time()
     try:
         # Use local qres-cli
-        cli = os.path.abspath(os.path.join("..", "qres_rust", "target", "release", "qres-cli.exe"))
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        cli = os.path.join(base_dir, "qres_rust", "target", "release", "qres-cli.exe")
         if not os.path.exists(cli):
              # Try building it
              print("[Info] Building qres-cli...")
-             subprocess.run(["cargo", "build", "--release"], cwd="../qres_rust", check=True)
+             subprocess.run(["cargo", "build", "--release"], cwd=os.path.join(base_dir, "qres_rust"), check=True)
         
         subprocess.run([cli, "compress", filename, out_file], 
                        check=True, stdout=subprocess.DEVNULL)

@@ -462,7 +462,7 @@ fn encode_bytes<'a>(
     _predictor_id: u8,
     _weights: Option<&[u8]>,
 ) -> PyResult<&'a PyBytes> {
-    let compressed = compress_chunk(data, 0, None, None)
+    let compressed = compress_chunk(data, _predictor_id, _weights, None)
         .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(e.to_string()))?;
     Ok(PyBytes::new(py, &compressed))
 }
@@ -475,7 +475,7 @@ fn decode_bytes<'a>(
     _predictor_id: u8,
     _weights: Option<&[u8]>,
 ) -> PyResult<&'a PyBytes> {
-    let decompressed = decompress_chunk(data, 0, None)
+    let decompressed = decompress_chunk(data, _predictor_id, _weights)
         .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(e.to_string()))?;
     Ok(PyBytes::new(py, &decompressed))
 }
