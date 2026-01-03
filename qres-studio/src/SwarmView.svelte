@@ -2,6 +2,7 @@
     // @ts-nocheck
     import { invoke } from "@tauri-apps/api/core";
     import { onMount, onDestroy } from "svelte";
+    import { toast } from "@zerodevx/svelte-toast";
 
     let peers: any[] = [];
     let canvas: HTMLCanvasElement;
@@ -14,6 +15,11 @@
     let height = 0;
 
     async function fetchPeers() {
+        // @ts-ignore
+        if (!window.__TAURI__) {
+            toast.push('Running in browser mode - swarm features disabled');
+            return;
+        }
         try {
             peers = await invoke("get_swarm_peers");
             // Randomly position for topology if not set
@@ -28,6 +34,7 @@
             });
         } catch (e) {
             console.error(e);
+            toast.push(`Failed to fetch peers: ${e}`);
         }
     }
 

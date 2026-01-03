@@ -66,7 +66,6 @@ impl QresSwarm {
         // Scoring
         let topic_str = "qres-hive-v2";
         let topic = gossipsub::IdentTopic::new(topic_str);
-        
         // v8.0: Quantum Network Topic
         let quantum_topic_str = "qres-quantum-net";
         let quantum_topic = gossipsub::IdentTopic::new(quantum_topic_str);
@@ -105,8 +104,7 @@ impl QresSwarm {
 
         if config.wan {
             println!("🌍 WAN Mode Enabled: Initializing Global Kademlia DHT...");
-            kad.set_mode(Some(kad::Mode::Server)); 
-            
+            kad.set_mode(Some(kad::Mode::Server));
             // Experimental: QRES Seed Nodes (Public Bootstrap)
             // Ideally this comes from config, but for v8.0 prototype we add a known seed.
             // Placeholder: "/ip4/148.251.10.1/tcp/4001" (Not real)
@@ -136,7 +134,6 @@ impl QresSwarm {
         // 7. Loop
         let mut interval = time::interval(Duration::from_secs(config.gossip_interval));
         let mut state_report_interval = time::interval(Duration::from_secs(5));
-        
         // Ensure quantum inbox exists
         let inbox_path = "quantum_inbox";
         tokio::fs::create_dir_all(inbox_path).await?;
@@ -159,7 +156,6 @@ impl QresSwarm {
                              }
                          }
                     }
-                    
                     // Check for outgoing Quantum Tensors (from quantum_outbox)
                     if let Ok(mut entries) = tokio::fs::read_dir(outbox_path).await {
                         while let Ok(Some(entry)) = entries.next_entry().await {
@@ -236,7 +232,6 @@ impl QresSwarm {
                                         println!("🧠 Wisdom received from {}", peer_id);
                                         if let Ok(local_json) = tokio::fs::read_to_string(&brain_path).await {
                                             let mut local_brain = LivingBrain::from_json(&local_json).unwrap_or_default();
-    
                                             // V3.0: Hot-Swap Weights if Peer is Smarter
                                             if let Some(_remote_w) = &remote_brain.best_engine_weights {
                                                  // Threshold: +0.1 confidence (Index 3 = LSTM in classic mapping, though v3 is mixed, we still track it)
@@ -246,7 +241,6 @@ impl QresSwarm {
                                                        // local_brain.update_weights(3, weights);
                                                   }
                                             }
-    
                                             local_brain.merge(&remote_brain, 0.05);
                                             let _ = tokio::fs::write(&brain_path, local_brain.to_json()).await;
                                         }

@@ -532,16 +532,18 @@ pub async fn load_data() -> Result<String, String> {
 }
 
 #[tauri::command]
-pub async fn compress(path: String, mode: String, threshold: f32) -> Result<String, String> {
-    // Simplified compress - for now just return a path
-    let out_path = format!("output/{}.qres", path.split('.').next().unwrap_or("file"));
-    Ok(out_path)
+pub async fn compress(path: String, mode: String, threshold: f32, out_path: Option<String>) -> Result<String, String> {
+    let dest = out_path.unwrap_or_else(|| format!("output/{}.qres", path.split('.').next().unwrap_or("file")));
+    // For now, simulate compression
+    // In full implementation, call the actual compression logic
+    Ok(dest)
 }
 
 #[tauri::command]
-pub async fn decompress(path: String) -> Result<String, String> {
-    let out_path = "output/decompressed".to_string();
-    Ok(out_path)
+pub async fn decompress(path: String, out_folder: Option<String>) -> Result<String, String> {
+    let dest = out_folder.unwrap_or_else(|| "output/decompressed".to_string());
+    // For now, simulate decompression
+    Ok(dest)
 }
 
 #[tauri::command]
