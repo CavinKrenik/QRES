@@ -66,6 +66,13 @@ jobs:
           source .venv/bin/activate
           python benchmarks/battle_royale.py --quick
 
+      - name: Run Phase 1 & 2 Verifications (Quantum)
+        run: |
+          source .venv/bin/activate
+          pip install qutip
+          python tests/verify_phase1.py
+          python tests/verify_phase2.py
+
       - name: Test LLM Predictor (Optional)
         continue-on-error: true
         run: |

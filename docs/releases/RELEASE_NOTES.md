@@ -2,6 +2,24 @@
 
 ---
 
+# v7.5.0-Preview (Hybrid Quantum)
+*Release Date: TBD*
+
+**Experimental Features**
+*   **Quantum Tensor Compression:** `QuantumEncoder` maps multi-modal graphs to density matrices for exponential compression (Simulated).
+*   **AQC Pruning:** `NeuralOptimizer` uses Hamiltonian evolution to discover optimal sparsity masks for neural weights.
+*   **Unified API & CLI:** `python/qres/api.py` and `qres_quantum_cli.py` enable seamless switching between standard and quantum modes.
+
+# v7.0.0-Beta (Foundations)
+*Release Date: January 2, 2026*
+
+*   **Multi-Modal Memory:** Implemented NetworkX + CLIP graph memory.
+*   **Adaptive RL Mixer:** Added PPO Agent (Gymnasium) for dynamic compression strategy.
+*   **Explainable AI:** Added D3.js Knowledge Graph visualization to QRES Studio.
+*   **Ethical Pruning:** Added bias detection (Gini coefficient) for graph edges.
+
+---
+
 # QRES v6.0 Alpha "Antigravity" Release Notes
 
 **Date:** January 2, 2026  

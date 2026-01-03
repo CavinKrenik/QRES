@@ -20,8 +20,8 @@
 *Focus: Quantum Supremacy in Classical Simulation*
 
 - [x] **Tensor Network Compression:** Implemented `QuantumEncoder` (QuTiP/NetworkX) w/ Noise Sim.
-- [x] **LiePrune & AQC:** Prototyped Hamiltonian-based weight pruning (~44% sparsity).
-- [ ] **Quantum Mode CLI:** Hybrid classical-quantum (sim) execution.
+- [x] **LiePrune & AQC:** Prototyped Hamiltonian-based weight pruning (~50% sparsity).
+- [x] **Quantum Mode CLI:** Implemented `qres_quantum_cli.py` for hybrid execution.
 
 ## Long-Term Vision (v8.0+)
 *Focus: Global Scale and Persistent States*

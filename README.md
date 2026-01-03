@@ -93,6 +93,16 @@ A beautiful, GPU-accelerated interface for desktop users.
 *   **Visualizations**: Watch the "Living Brain" think in real-time.
 *   [Download Latest Release](https://github.com/CavinKrenik/QRES/releases)
 
+### 4. Quantum CLI (v7.5 Preview)
+Interact with the research-grade Quantum core.
+```bash
+# Compress with Quantum Tensor Networks
+python qres_quantum_cli.py data.txt --mode quantum
+
+# Optimize Neural Weights via AQC Simulation
+python qres_quantum_cli.py --optimize
+```
+
 ## 📚 Documentation
 
 Detailed documentation has been consolidated into the `docs/` directory:
