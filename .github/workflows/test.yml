@@ -53,7 +53,9 @@ jobs:
       - name: Build Python Extension
         run: |
           source .venv/bin/activate
-          pip install maturin pytest numpy
+          pip install maturin pytest
+          # Install dependencies from pyproject.toml
+          pip install .
           maturin develop --release
 
       - name: Run Torture Test
@@ -69,7 +71,6 @@ jobs:
       - name: Run Phase 1 & 2 Verifications (Quantum)
         run: |
           source .venv/bin/activate
-          pip install qutip
           python tests/verify_phase1.py
           python tests/verify_phase2.py
           python tests/test_swarm_broadcast.py
@@ -79,7 +80,6 @@ jobs:
         continue-on-error: true
         run: |
           source .venv/bin/activate
-          pip install transformers torch || echo "Skipping LLM test (deps unavailable)"
           python benchmarks/semantic_bench.py || echo "LLM test skipped"
 
   studio-test:

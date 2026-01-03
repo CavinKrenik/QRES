@@ -10,6 +10,20 @@ requires-python = ">=3.8"
 dependencies = [
     "numpy", 
     "pandas",
+    "networkx",
+    "gymnasium",
+    "qutip",
+    "scipy",
+    "torch",
+    "sentence-transformers",
+    "open-clip-torch",
+    "pillow",
+    "scikit-learn",
+    "matplotlib",
+    "safetensors",
+    "transformers",
+    "stable-baselines3",
+    "shimmy",
 ]
 readme = "README.md"
 authors = [{name = "Cavin Krenik"}]
