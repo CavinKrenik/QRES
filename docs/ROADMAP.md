@@ -14,7 +14,7 @@
 - [x] **Multi-Modal Memory:** Implemented `MultiModalMemory` (NetworkX+CLIP) & Exported Graph.
 - [x] **Adaptive RL Mixer:** Trained PPO Agent (Reward: 3.75, Ratio: 62%).
 - [x] **Explainable AI (XAI):** Integrated `KnowledgeGraph.svelte` with D3 into QRES Studio.
-- [ ] **Ethical Pruning:** Bias detection in edge distribution.
+- [x] **Ethical Pruning:** Bias detection in edge distribution.
 
 ## Phase 2: Quantum-Inspired Transformation (v7.5)
 *Focus: Quantum Supremacy in Classical Simulation*
