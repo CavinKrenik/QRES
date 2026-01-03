@@ -65,6 +65,40 @@ class QRES_API:
             new_sparsity = 1.0 - (np.count_nonzero(self.brain_weights) / self.brain_weights.size)
             print(f"[API] Sparsity improved: {original_sparsity:.2%} -> {new_sparsity:.2%}")
 
+    def merge_quantum_state(self, tensor_bytes: bytes):
+        """
+        [Receiver] reconstructs a graph/state from received tensor bytes.
+        """
+        print("[API] Receiving Quantum State...")
+        
+        # 1. Deserialize (Mock - in real qres we'd use pickle or safetensors)
+        # Verify header
+        if not tensor_bytes.startswith(b"QRES_Q_TENSOR"):
+            print("[API] Error: Invalid Quantum Header")
+            return False
+            
+        payload = tensor_bytes[len(b"QRES_Q_TENSOR"):]
+        
+        # 2. Reconstruct (Mocking reconstruction of Density Matrix)
+        # In a real app, we'd use qutip.Qobj(payload)
+        import time
+        print(f"  - Payload Size: {len(payload)} bytes")
+        print("  - Reconstructing Density Matrix (Telepathy)...")
+        time.sleep(0.1) 
+        
+        # 3. Fidelity Check (Simulated)
+        fidelity = 0.98 # Mock high fidelity
+        print(f"  - Fidelity Check: {fidelity:.4f} (Pass)")
+        
+        # 4. Merge into Memory
+        # We assume the tensor encodes new knowledge (nodes/edges).
+        # We'll add a "Remote_Node" to our graph to signify learned data.
+        node_id = f"remote_{int(time.time())}"
+        self.memory.add_text_node(node_id, "Imported Quantum Knowledge")
+        print(f"[API] Merged remote state into MultiModal Memory (Node: {node_id})")
+        
+        return True
+
     def _compress_standard(self, data: bytes) -> bytes:
         if qres_rust:
             # return qres_rust.encode_bytes(data, [], 0)

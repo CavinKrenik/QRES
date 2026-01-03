@@ -73,6 +73,7 @@ jobs:
           python tests/verify_phase1.py
           python tests/verify_phase2.py
           python tests/test_swarm_broadcast.py
+          python tests/test_receiver_unit.py
 
       - name: Test LLM Predictor (Optional)
         continue-on-error: true

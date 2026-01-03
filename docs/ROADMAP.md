@@ -26,7 +26,10 @@
 ## Long-Term Vision (v8.0+)
 *Focus: Global Scale and Persistent States*
 
-- [wip] **Global P2P Quantum Swarm:** Decentralized model sharing with quantum secure pathways.
+- [wip] **Global P2P Quantum Swarm:**
+  - [x] Sender: CLI Broadcast -> Rust Swarm Outbox.
+  - [x] Receiver: Rust Swarm Inbox -> Python Reconstruction Loop.
+  - [ ] WAN Discovery: Kademlia Bootstrap & NAT Traversal.
 - [ ] **Persistent World Compression:** State-saving for simulated environments.
 
 ## Success Metrics

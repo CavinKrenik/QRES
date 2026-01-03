@@ -101,6 +101,9 @@ python qres_quantum_cli.py data.txt --mode quantum
 
 # Optimize Neural Weights via AQC Simulation
 python qres_quantum_cli.py --optimize
+
+# Start Quantum Receiver (P2P Listener)
+python qres_quantum_receiver.py --dir quantum_inbox
 ```
 
 ## 📚 Documentation
