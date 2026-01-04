@@ -18,6 +18,10 @@ The brain consists of an ensemble of specialized predictors managed by an **Auto
 
 **The Mixer (Momentum AR(2)):**
 Instead of a simple average, the Mixer uses a localized Auto-Regressive process with Momentum, accelerated by AVX2/NEON SIMD instructions.
+- **Weights:** $W_t = \beta W_{t-1} + (1-\beta) \nabla L$, where $L$ is the loss function.
+- **Momentum:** High-performing models act as "Anchors", preventing rapid oscillation when entropy spikes.
+
+---
 
 ### 2.2 Swarm Learning (P2P)
 Nodes form a **Kademlia DHT** network using `libp2p`.
@@ -28,6 +32,11 @@ Nodes form a **Kademlia DHT** network using `libp2p`.
 
 ### 2.3 Deduplication (The Memory)
 The v5.1 architecture adds a long-term memory via Content-Defined Chunking (CDC).
+- **Short-term Memory:** The predictors (Window ~64KB).
+- **Long-term Memory:** The Dedup Hash Map (Unlimited).
+This allows QRES to recall and reference data seen Gigabytes or Terabytes ago, essential for archival storage.
+
+---
 
 ## 3. Quantum-Inspired Tensors (v7.0)
 QRES v7 introduces the **QuantumEncoder**, utilizing Tensor Networks to represent the state space of the data. 
