@@ -37,6 +37,7 @@ use spectral::SpectralPredictor; // Added Predictor
 #[cfg(feature = "gpu")]
 pub mod gpu;
 pub mod transformer;
+pub mod quantum;
 use transformer::TransformerPredictor;
 
 // --- Living Brain (Adaptive Learning) ---
@@ -561,11 +562,25 @@ fn get_residuals_py<'a>(
 }
 
 #[cfg(feature = "python")]
+#[pyfunction]
+fn compress_matrix_v1(_py: Python, data: Vec<f64>, rows: usize, cols: usize, threshold: f64) -> PyResult<Vec<f64>> {
+    let compressor = quantum::MpsCompressor::new(10, threshold);
+    // MPS returns Vec<Vec<f64>> (cores). We flatten for v1 prototype.
+    let cores = compressor.compress_matrix(&data, rows, cols);
+    if let Some(first_core) = cores.first() {
+         Ok(first_core.clone())
+    } else {
+         Ok(vec![])
+    }
+}
+
+#[cfg(feature = "python")]
 #[pymodule]
 fn qres_rust(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(encode_bytes, m)?)?;
     m.add_function(wrap_pyfunction!(decode_bytes, m)?)?;
     m.add_function(wrap_pyfunction!(get_residuals_py, m)?)?;
+    m.add_function(wrap_pyfunction!(compress_matrix_v1, m)?)?;
     Ok(())
 }
 

@@ -12,11 +12,13 @@ crate-type = ["cdylib", "rlib"]
 default = []
 python = ["dep:pyo3"]
 swarm = []
-gpu = []
+gpu = ["dep:wgpu", "dep:pollster"]
 
 [dependencies]
 # PyO3 with buffer protocol support (Required for Python Wheel)
 pyo3 = { version = "0.20.0", features = ["extension-module", "abi3-py38"], optional = true }
+wgpu = { version = "0.19", optional = true }
+pollster = { version = "0.3", optional = true }
 
 # Entropy Coding Backend (The Main Engine)
 constriction = "0.4"
