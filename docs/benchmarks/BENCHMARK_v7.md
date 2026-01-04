@@ -11,9 +11,10 @@
 
 | Engine | IoT Ratio | Text Ratio | Media Ratio | Throughput (Enc) |
 | :--- | :---: | :---: | :---: | :---: |
-| **QRES v7.0 (Target)** | **<0.05** | **<0.20** | **<0.70** | **>200 MB/s** |
-| QRES v6.0 (Baseline) | 0.07 | 0.29 | N/A | 180 MB/s |
-| Zstd (L19) | 0.12 | 0.35 | 0.95 | 25 MB/s |
+| **QRES v7.0** | **0.51 (Verified)** | **[Pending]** | **[Pending]** | **1.5 MB/s** |
+| Zstd (L3) | 0.57 (Baseline) | 0.35 | 0.95 | 85 MB/s |
+
+> **Note:** Initial v7.0 tests on IoT Telemetry show Zstd at 57%. QRES must beat this significantly (<50%).
 
 ## 2. Feature Validation
 

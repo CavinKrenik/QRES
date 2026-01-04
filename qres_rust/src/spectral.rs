@@ -22,6 +22,8 @@ pub struct SpectralPredictor {
 
 struct SpectralModel {
     dc: f32,
+    slope: f32,
+    intercept: f32,
     components: Vec<FreqComponent>,
 }
 
@@ -62,7 +64,6 @@ impl SpectralPredictor {
 
         // Lazy Update Strategy:
         // Only re-calculate FFT every 64 steps (reduces overhead by 64x)
-        // For sine waves, frequency doesn't change rapidly.
         if self.cached_model.is_none() || self.steps_since_update >= 64 {
             self.recalc_model();
             self.steps_since_update = 0;
@@ -73,7 +74,6 @@ impl SpectralPredictor {
 
             // Project forward
             // t = window_size (end of window) + steps_since_last_fft
-            // Phase is relative to window start (t=0)
             let t = (self.window_size + self.steps_since_update) as f32;
 
             for comp in &model.components {
@@ -83,12 +83,15 @@ impl SpectralPredictor {
                 pred_val += comp.amplitude * angle.cos();
             }
 
-            let result = model.dc + pred_val;
+            // Add back trend: y = mx + b + periodic
+            // Note: intercept is at t=0 of the window
+            let trend = model.slope * t + model.intercept;
+            
+            let result = trend + pred_val;
             return result.clamp(0.0, 255.0) as u8;
         }
 
         // Fallback: Use most recent value
-        // Cursor points to oldest, so cursor-1 (modulo size) is newest
         let last_idx = if self.cursor == 0 {
             self.window_size - 1
         } else {
@@ -98,23 +101,47 @@ impl SpectralPredictor {
     }
 
     fn recalc_model(&mut self) {
-        // 1. Prepare FFT Input (Unroll circular buffer)
-        // Order: Oldest -> Newest
-        // Start reading from self.cursor (oldest)
+        // 1. Calculate Linear Trend (Simple Regression)
+        // x = 0..N, y = buffer
+        let n = self.window_size as f32;
+        let sum_x = (n * (n - 1.0)) / 2.0;
+        let sum_x2 = (n * (n - 1.0) * (2.0 * n - 1.0)) / 6.0;
+        
+        let mut sum_y = 0.0;
+        let mut sum_xy = 0.0;
+
+        // Unroll buffer to linear order for regression
+        // Order: Oldest (t=0) -> Newest (t=N-1)
+        for i in 0..self.window_size {
+            let idx = (self.cursor + i) % self.window_size;
+            let val = self.buffer[idx];
+            sum_y += val;
+            sum_xy += (i as f32) * val;
+        }
+
+        let denominator = n * sum_x2 - sum_x * sum_x;
+        let slope = if denominator.abs() < 1e-9 {
+            0.0
+        } else {
+            (n * sum_xy - sum_x * sum_y) / denominator
+        };
+        let intercept = (sum_y - slope * sum_x) / n;
+
+        // 2. Prepare FFT Input (Detrended)
         let mut input: Vec<Complex<f32>> = (0..self.window_size)
             .map(|i| {
                 let idx = (self.cursor + i) % self.window_size;
-                Complex::new(self.buffer[idx], 0.0)
+                let trend = slope * (i as f32) + intercept;
+                Complex::new(self.buffer[idx] - trend, 0.0)
             })
             .collect();
 
-        // 2. Perform FFT
+        // 3. Perform FFT
         let fft = self.planner.plan_fft_forward(self.window_size);
         fft.process(&mut input);
 
-        // 3. Find Dominant Frequencies
+        // 4. Find Dominant Frequencies
         let mut components = Vec::new();
-
         let mut max_mag = 0.0;
         let mut fundamental_idx = 0;
 
@@ -128,26 +155,22 @@ impl SpectralPredictor {
         }
 
         let threshold = max_mag * 0.1;
-        self.signal_strength_history.push(max_mag);
-        if self.signal_strength_history.len() > 10 {
-            self.signal_strength_history.remove(0);
-        }
+        
+        // Add fundamental
+        let add_comp = |idx: usize, bins: &[Complex<f32>], out: &mut Vec<FreqComponent>| {
+            let bin = bins[idx];
+            out.push(FreqComponent {
+                amplitude: bin.norm() / (self.window_size as f32) * 2.0,
+                frequency: idx as f32,
+                phase: bin.arg(),
+            });
+        };
 
-        if max_mag > 100.0 {
-            // Helper to add component
-            let add_comp = |idx: usize, bins: &[Complex<f32>], out: &mut Vec<FreqComponent>| {
-                let bin = bins[idx];
-                out.push(FreqComponent {
-                    amplitude: bin.norm() / (self.window_size as f32) * 2.0,
-                    frequency: idx as f32,
-                    phase: bin.arg(),
-                });
-            };
-
+        if max_mag > 50.0 { // Lowered threshold slightly
             add_comp(fundamental_idx, &input, &mut components);
-
+            
             // Harmonics
-            for harmonic in 2..=3 {
+            for harmonic in 2..=5 { // Increased harmonics
                 let h_idx = fundamental_idx * harmonic;
                 if h_idx < self.window_size / 2 && input[h_idx].norm_sqr() > threshold {
                     add_comp(h_idx, &input, &mut components);
@@ -155,8 +178,7 @@ impl SpectralPredictor {
             }
         }
 
-        let dc = input[0].re / (self.window_size as f32);
-        self.cached_model = Some(SpectralModel { dc, components });
+        self.cached_model = Some(SpectralModel { dc: 0.0, slope, intercept, components });
     }
 
     /// Returns confidence in prediction (0.0 to 1.0)

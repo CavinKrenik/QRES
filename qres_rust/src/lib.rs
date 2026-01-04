@@ -310,6 +310,47 @@ pub fn compress_chunk(
 ) -> io::Result<Vec<u8>> {
     const HIGH_ENTROPY_THRESHOLD: f32 = 7.5;
 
+    // 0. Interleave Detection (Smart Pre-Pass)
+    if chunk.len() > 1024 {
+        let n = chunk.len().min(4096);
+        let mut diff1 = 0i64;
+        let mut diff2 = 0i64;
+        
+        for i in 2..n {
+            diff1 += (chunk[i] as i64 - chunk[i-1] as i64).abs();
+            diff2 += (chunk[i] as i64 - chunk[i-2] as i64).abs();
+        }
+
+        // If Lag-2 variation is significantly lower than Lag-1, it's interleaved
+        if diff2 < (diff1 as f64 * 0.7) as i64 {
+            let mut even = Vec::with_capacity(chunk.len() / 2 + 1);
+            let mut odd = Vec::with_capacity(chunk.len() / 2 + 1);
+            for (i, &b) in chunk.iter().enumerate() {
+                if i % 2 == 0 { even.push(b); } else { odd.push(b); }
+            }
+
+            // Recursive compression
+            let c_even = compress_chunk(&even, 0, _weights, _lossy)?;
+            let c_odd = compress_chunk(&odd, 0, _weights, _lossy)?;
+
+            // Flag 0x03: Interleaved Split
+            // Structure: [0x03] [TotalLen: 4] [EvenLen: 4] [EvenData] [OddData]
+            let total_len = chunk.len() as u32;
+            let even_compressed_len = c_even.len() as u32;
+            
+            // Heuristic: Only use split if it actually compresses better than original
+            if (c_even.len() + c_odd.len() + 9) < chunk.len() {
+                let mut out = Vec::with_capacity(9 + c_even.len() + c_odd.len());
+                out.push(0x03);
+                out.extend_from_slice(&total_len.to_le_bytes());
+                out.extend_from_slice(&even_compressed_len.to_le_bytes());
+                out.extend_from_slice(&c_even);
+                out.extend_from_slice(&c_odd);
+                return Ok(out);
+            }
+        }
+    }
+
     // 1. Smart Fallback Pre-scan
     if chunk.len() > 512 {
         let entropy = calculate_sample_entropy(chunk);
@@ -444,6 +485,34 @@ pub fn decompress_chunk(
                 Some(w_vec.as_slice())
             };
             Ok(predictive_decode_v4(&compressed[25..], decomp_len, w_arg))
+        }
+        0x03 => {
+            // Interleaved Split (V7)
+            // Structure: [Flag] [TotalLen:4] [EvenLen:4] [EvenData] [OddData]
+            if compressed.len() < 9 {
+                 return Err(io::Error::new(io::ErrorKind::InvalidData, "Split chunk too short"));
+            }
+            let even_len = u32::from_le_bytes(compressed[5..9].try_into().unwrap()) as usize;
+            
+            let even_data = &compressed[9..9+even_len];
+            let odd_data = &compressed[9+even_len..];
+            
+            let even_decomp = decompress_chunk(even_data, 0, _weights)?;
+            let odd_decomp = decompress_chunk(odd_data, 0, _weights)?;
+            
+            // Re-interleave
+            let mut out = Vec::with_capacity(decomp_len);
+            let mut e_iter = even_decomp.iter();
+            let mut o_iter = odd_decomp.iter();
+            
+            for _ in 0..decomp_len/2 {
+                if let Some(b) = e_iter.next() { out.push(*b); }
+                if let Some(b) = o_iter.next() { out.push(*b); }
+            }
+            // Handle residual if odd length (though IoT usually pairs)
+            if let Some(b) = e_iter.next() { out.push(*b); }
+            
+            Ok(out)
         }
         _ => Err(io::Error::new(
             io::ErrorKind::InvalidData,
