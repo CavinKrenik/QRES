@@ -8,8 +8,8 @@
 - [x] **Adaptive RL Mixer:** Trained PPO Agent (Gymnasium) (Reward: 3.75, Ratio: 62%).
 - [x] **Explainable AI (XAI):** Integrated `KnowledgeGraph.svelte` with D3 into QRES Studio.
 - [x] **Ethical Pruning:** Bias detection in edge distribution.
-- [ ] **Beta Release:** Package `v7.0.0-beta` for user testing.
-- [ ] **Benchmarks:** Publish `BENCHMARK_v7.md` with diverse data sets.
+- [x] **Beta Release:** Package `v7.0.0-beta` for user testing (Ready).
+- [x] **Benchmarks:** Publish `BENCHMARK_v7.md` with diverse data sets (IoT Verified, Text Tuned).
 
 ## Phase 2: Quantum-Inspired Transformation (v7.5) - *Target: Feb 2026*
 *Focus: Quantum Supremacy in Classical Simulation*

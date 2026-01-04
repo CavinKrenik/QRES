@@ -92,7 +92,7 @@ impl LivingBrain {
     }
 }
 
-const CHUNK_SIZE: usize = 64 * 1024; // 64KB
+const CHUNK_SIZE: usize = 1024 * 1024; // 1MB Chunk for better Text/LZ context
 const QRES_MAGIC: &[u8] = b"QRES";
 
 // --- Header Architecture (V3) ---

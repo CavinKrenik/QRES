@@ -21,3 +21,13 @@
 ### Decisions
 - Documented v7.0 performance as "Pre-Alpha" in `BENCHMARK_v7.md`.
 - Will proceed to Phase 2 (Quantum) to see if Tensor Networks handle the interleaving naturally (MPS is great for this).
+
+## Experiment 2: Text Compression Tuning (Jan 3, 2026)
+**Feature:** Text Prediction (SimplePredictor Order-2, LzMatch Hash Fix)
+
+### Outcome
+- **Baseline (V6):** 91.70% ratio on text_1mb.txt.
+- **Improved (V7):** 91.36% ratio.
+- **Analysis:** Simple predictive coding + ANS is insufficient for text. Residuals are not Laplacian. Text requires FSE (Finite State Entropy) or explicit Dictionary Coding (zstd style) or LLM-based token probabilities (not byte residuals).
+- **Decision:** Deferred to Phase 2 (Quantum/Tensor) or separate Entropy Coding overhaul. The code improvements (Order-2, Better Hash) are kept as they are technically superior, even if the gain is marginal.
+
