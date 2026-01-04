@@ -44,5 +44,11 @@ QRES v7 introduces the **QuantumEncoder**, utilizing Tensor Networks to represen
 - **Pruning:** Using Adiabatic Quantum Computation (AQC) principles (simulated via QuTiP), we prune the tensor network to its most "energetically favorable" (highest compression) state.
 - **Advantage:** Allows for exponential compression of highly correlated multi-dimensional data.
 
-## 4. Conclusion
-QRES bridges the gap between fast, heuristic compression (LZ4) and slow, generative compression (LLMs). By treating compression as an intelligent agent rather than a math problem, we achieve the "Singularity" of optimal entropy reduction.
+## 5. Persistent World Swarm (v8.0)
+The v8.0 architecture introduces **State Persistence**, allowing the "Living Brain" to survive beyond a single session.
+- **World State Manager:** Serializes the entire graph, tensor network, and neural weights into a unified `.qstate` file.
+- **Swarm Sync:** These states are broadcast across the P2P network, allowing nodes to "wake up" with the accumulated wisdom of the entire swarm.
+- **Fidelity Guarantee:** We enforce a strict Crypto-Fidelity threshold (>0.98 cosine similarity) before merging remote states, ensuring that no malicious or degraded models corrupt the collective intelligence.
+
+## 6. Conclusion
+QRES bridges the gap between fast, heuristic compression (LZ4) and slow, generative compression (LLMs). By treating compression as an intelligent agent rather than a math problem, we achieve the "Singularity" of optimal entropy reduction. With the advent of v8.0, QRES evolves from a compressor into a distributed, persistent, and quantum-aware global memory system.
