@@ -21,7 +21,7 @@ pub struct SpectralPredictor {
 }
 
 struct SpectralModel {
-    dc: f32,
+    _dc: f32,
     slope: f32,
     intercept: f32,
     components: Vec<FreqComponent>,
@@ -86,7 +86,7 @@ impl SpectralPredictor {
             // Add back trend: y = mx + b + periodic
             // Note: intercept is at t=0 of the window
             let trend = model.slope * t + model.intercept;
-            
+
             let result = trend + pred_val;
             return result.clamp(0.0, 255.0) as u8;
         }
@@ -106,7 +106,7 @@ impl SpectralPredictor {
         let n = self.window_size as f32;
         let sum_x = (n * (n - 1.0)) / 2.0;
         let sum_x2 = (n * (n - 1.0) * (2.0 * n - 1.0)) / 6.0;
-        
+
         let mut sum_y = 0.0;
         let mut sum_xy = 0.0;
 
@@ -155,7 +155,7 @@ impl SpectralPredictor {
         }
 
         let threshold = max_mag * 0.1;
-        
+
         // Add fundamental
         let add_comp = |idx: usize, bins: &[Complex<f32>], out: &mut Vec<FreqComponent>| {
             let bin = bins[idx];
@@ -166,11 +166,13 @@ impl SpectralPredictor {
             });
         };
 
-        if max_mag > 50.0 { // Lowered threshold slightly
+        if max_mag > 50.0 {
+            // Lowered threshold slightly
             add_comp(fundamental_idx, &input, &mut components);
-            
+
             // Harmonics
-            for harmonic in 2..=5 { // Increased harmonics
+            for harmonic in 2..=5 {
+                // Increased harmonics
                 let h_idx = fundamental_idx * harmonic;
                 if h_idx < self.window_size / 2 && input[h_idx].norm_sqr() > threshold {
                     add_comp(h_idx, &input, &mut components);
@@ -178,7 +180,12 @@ impl SpectralPredictor {
             }
         }
 
-        self.cached_model = Some(SpectralModel { dc: 0.0, slope, intercept, components });
+        self.cached_model = Some(SpectralModel {
+            _dc: 0.0,
+            slope,
+            intercept,
+            components,
+        });
     }
 
     /// Returns confidence in prediction (0.0 to 1.0)

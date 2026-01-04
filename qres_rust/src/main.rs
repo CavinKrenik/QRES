@@ -275,21 +275,34 @@ use qres_rust::quantum::MpsCompressor;
 
 // ...
 
-fn compress_quantum_file(input: &str, output: &str, rows: usize, cols: usize, threshold: f64) -> io::Result<()> {
+fn compress_quantum_file(
+    input: &str,
+    output: &str,
+    rows: usize,
+    cols: usize,
+    threshold: f64,
+) -> io::Result<()> {
     let mut file = File::open(input)?;
     let metadata = file.metadata()?;
     let len = metadata.len();
-    
+
     // Validate size (must be rows*cols*8)
     if len != (rows * cols * 8) as u64 {
-         return Err(io::Error::new(io::ErrorKind::InvalidData, format!("File size {} does not match rows*cols*8 ({})", len, rows*cols*8)));
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!(
+                "File size {} does not match rows*cols*8 ({})",
+                len,
+                rows * cols * 8
+            ),
+        ));
     }
 
     // Read all data as f64 (unsafe/transmute for speed, or byte-by-byte conversion)
     // For simplicity: Read bytes, convert to f64 safely.
     let mut buffer = Vec::with_capacity(len as usize);
     file.read_to_end(&mut buffer)?;
-    
+
     // Convert to Vec<f64>
     // Assuming Little Endian (standard)
     let mut floats = Vec::with_capacity(rows * cols);
@@ -297,36 +310,36 @@ fn compress_quantum_file(input: &str, output: &str, rows: usize, cols: usize, th
         let val = f64::from_le_bytes(chunk.try_into().unwrap());
         floats.push(val);
     }
-    
+
     // Compress
     eprintln!("[Quantum] Compressing {}x{} Matrix...", rows, cols);
     let start = std::time::Instant::now();
-    
+
     let compressor = MpsCompressor::new(10, threshold);
     let chunks = compressor.compress_matrix(&floats, rows, cols);
-    
+
     // Write Output
     // Format: [Magic: QMPS] [Rows:8] [Cols:8] [Data...]
     let mut out_file = File::create(output)?;
     out_file.write_all(b"QMPS")?;
     out_file.write_all(&(rows as u64).to_le_bytes())?;
     out_file.write_all(&(cols as u64).to_le_bytes())?;
-    
+
     let mut compressed_size = 20; // Header
-    
+
     if let Some(data) = chunks.first() {
         // Simple Sparse Serialization: [Index:4, Value:8] or just [Value:8] if dense?
         // My MpsCompressor returns a dense vector with 0.0s for pruned values.
         // We should RLE or Sparse-Pack it here to realize gains.
-        
+
         let mut n_zeros = 0;
         let mut packed_bytes = Vec::new();
-        
+
         // Simple RLE for Zero Runs
         // Flag byte: 0x00 = Run of Zeros (Next byte = count), 0x01 = Value follows (8 bytes)
         // Optimization: Just count non-zeros for the "Breakthrough" metrics?
         // No, user wants usable CLI. Let's do a trivial packing.
-        
+
         for &val in data {
             if val.abs() < 1e-9 {
                 n_zeros += 1;
@@ -347,22 +360,25 @@ fn compress_quantum_file(input: &str, output: &str, rows: usize, cols: usize, th
         }
         // Flush zeros
         if n_zeros > 0 {
-             packed_bytes.push(0x00);
-             packed_bytes.push(n_zeros as u8);
+            packed_bytes.push(0x00);
+            packed_bytes.push(n_zeros as u8);
         }
-        
+
         out_file.write_all(&packed_bytes)?;
         compressed_size += packed_bytes.len();
     }
-    
+
     let elapsed = start.elapsed();
     let ratio = (compressed_size as f64 / len as f64) * 100.0;
-    
+
     eprintln!(
         "[Done] Quantum Compressed {} bytes to {} bytes ({:.2}%) in {:.2}s",
-        len, compressed_size, ratio, elapsed.as_secs_f64()
+        len,
+        compressed_size,
+        ratio,
+        elapsed.as_secs_f64()
     );
-    
+
     Ok(())
 }
 
@@ -376,7 +392,13 @@ fn main() {
         Commands::ImportBrain { input } => brain_import(&input),
         #[cfg(feature = "swarm")]
         Commands::Swarm { brain, port } => swarm_mode(brain, port),
-        Commands::QuantumCompress { input, output, rows, cols, threshold } => compress_quantum_file(&input, &output, rows, cols, threshold),
+        Commands::QuantumCompress {
+            input,
+            output,
+            rows,
+            cols,
+            threshold,
+        } => compress_quantum_file(&input, &output, rows, cols, threshold),
     };
 
     if let Err(e) = result {

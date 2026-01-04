@@ -146,17 +146,24 @@ impl Predictor for GraphPredictor {
         let err_simd = unsafe { _mm256_set1_ps(err) };
         let norm_factor = unsafe { _mm256_set1_ps(1.0 / 255.0) };
         let delta = unsafe {
-            _mm256_mul_ps(lr_simd, _mm256_mul_ps(err_simd, _mm256_mul_ps(input_simd, norm_factor)))
+            _mm256_mul_ps(
+                lr_simd,
+                _mm256_mul_ps(err_simd, _mm256_mul_ps(input_simd, norm_factor)),
+            )
         };
         self.weights = unsafe { _mm256_add_ps(self.weights, delta) };
-        
+
         let mut w_arr = [0.0f32; 8];
         unsafe { _mm256_storeu_ps(w_arr.as_mut_ptr(), self.weights) };
-        for w in &mut w_arr { *w = w.clamp(-5.0, 5.0); }
+        for w in &mut w_arr {
+            *w = w.clamp(-5.0, 5.0);
+        }
         self.weights = unsafe { _mm256_loadu_ps(w_arr.as_ptr()) };
 
         self.history.push_back(actual);
-        if self.history.len() > 40 { self.history.pop_front(); }
+        if self.history.len() > 40 {
+            self.history.pop_front();
+        }
     }
 
     #[cfg(not(target_arch = "x86_64"))]
@@ -174,7 +181,9 @@ impl Predictor for GraphPredictor {
             }
         }
         self.history.push_back(actual);
-        if self.history.len() > 40 { self.history.pop_front(); }
+        if self.history.len() > 40 {
+            self.history.pop_front();
+        }
     }
 }
 
@@ -206,23 +215,30 @@ impl LzMatchPredictor {
 
     #[inline(always)]
     fn hash(data: &[u8]) -> usize {
-        if data.len() < 4 { return 0; }
+        if data.len() < 4 {
+            return 0;
+        }
         let key = u32::from_le_bytes(data[0..4].try_into().unwrap());
         // Multiplicative hash
-        (key.wrapping_mul(0x9E3779B9)) as usize 
+        (key.wrapping_mul(0x9E3779B9)) as usize
     }
 }
 
 impl Predictor for LzMatchPredictor {
     fn predict_next(&self) -> u8 {
-        if self.pos < 4 { return 0; }
+        if self.pos < 4 {
+            return 0;
+        }
         let start = self.pos - 4;
         let ctx = &self.history[start..self.pos];
         let h = Self::hash(ctx) & self.hash_mask;
         let match_pos = self.table[h];
 
-        if match_pos > 0 && match_pos + 4 < self.history.len() && &self.history[match_pos..match_pos+4] == ctx {
-             return self.history[match_pos + 4];
+        if match_pos > 0
+            && match_pos + 4 < self.history.len()
+            && &self.history[match_pos..match_pos + 4] == ctx
+        {
+            return self.history[match_pos + 4];
         }
         self.history[self.pos - 1]
     }

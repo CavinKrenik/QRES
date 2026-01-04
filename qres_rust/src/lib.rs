@@ -36,8 +36,8 @@ use predictors::{GraphPredictor, LzMatchPredictor, Predictor, SimplePredictor};
 use spectral::SpectralPredictor; // Added Predictor
 #[cfg(feature = "gpu")]
 pub mod gpu;
-pub mod transformer;
 pub mod quantum;
+pub mod transformer;
 use transformer::TransformerPredictor;
 
 // --- Living Brain (Adaptive Learning) ---
@@ -316,10 +316,10 @@ pub fn compress_chunk(
         let n = chunk.len().min(4096);
         let mut diff1 = 0i64;
         let mut diff2 = 0i64;
-        
+
         for i in 2..n {
-            diff1 += (chunk[i] as i64 - chunk[i-1] as i64).abs();
-            diff2 += (chunk[i] as i64 - chunk[i-2] as i64).abs();
+            diff1 += (chunk[i] as i64 - chunk[i - 1] as i64).abs();
+            diff2 += (chunk[i] as i64 - chunk[i - 2] as i64).abs();
         }
 
         // If Lag-2 variation is significantly lower than Lag-1, it's interleaved
@@ -327,7 +327,11 @@ pub fn compress_chunk(
             let mut even = Vec::with_capacity(chunk.len() / 2 + 1);
             let mut odd = Vec::with_capacity(chunk.len() / 2 + 1);
             for (i, &b) in chunk.iter().enumerate() {
-                if i % 2 == 0 { even.push(b); } else { odd.push(b); }
+                if i % 2 == 0 {
+                    even.push(b);
+                } else {
+                    odd.push(b);
+                }
             }
 
             // Recursive compression
@@ -338,7 +342,7 @@ pub fn compress_chunk(
             // Structure: [0x03] [TotalLen: 4] [EvenLen: 4] [EvenData] [OddData]
             let total_len = chunk.len() as u32;
             let even_compressed_len = c_even.len() as u32;
-            
+
             // Heuristic: Only use split if it actually compresses better than original
             if (c_even.len() + c_odd.len() + 9) < chunk.len() {
                 let mut out = Vec::with_capacity(9 + c_even.len() + c_odd.len());
@@ -491,28 +495,37 @@ pub fn decompress_chunk(
             // Interleaved Split (V7)
             // Structure: [Flag] [TotalLen:4] [EvenLen:4] [EvenData] [OddData]
             if compressed.len() < 9 {
-                 return Err(io::Error::new(io::ErrorKind::InvalidData, "Split chunk too short"));
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    "Split chunk too short",
+                ));
             }
             let even_len = u32::from_le_bytes(compressed[5..9].try_into().unwrap()) as usize;
-            
-            let even_data = &compressed[9..9+even_len];
-            let odd_data = &compressed[9+even_len..];
-            
+
+            let even_data = &compressed[9..9 + even_len];
+            let odd_data = &compressed[9 + even_len..];
+
             let even_decomp = decompress_chunk(even_data, 0, _weights)?;
             let odd_decomp = decompress_chunk(odd_data, 0, _weights)?;
-            
+
             // Re-interleave
             let mut out = Vec::with_capacity(decomp_len);
             let mut e_iter = even_decomp.iter();
             let mut o_iter = odd_decomp.iter();
-            
-            for _ in 0..decomp_len/2 {
-                if let Some(b) = e_iter.next() { out.push(*b); }
-                if let Some(b) = o_iter.next() { out.push(*b); }
+
+            for _ in 0..decomp_len / 2 {
+                if let Some(b) = e_iter.next() {
+                    out.push(*b);
+                }
+                if let Some(b) = o_iter.next() {
+                    out.push(*b);
+                }
             }
             // Handle residual if odd length (though IoT usually pairs)
-            if let Some(b) = e_iter.next() { out.push(*b); }
-            
+            if let Some(b) = e_iter.next() {
+                out.push(*b);
+            }
+
             Ok(out)
         }
         _ => Err(io::Error::new(
@@ -563,14 +576,20 @@ fn get_residuals_py<'a>(
 
 #[cfg(feature = "python")]
 #[pyfunction]
-fn compress_matrix_v1(_py: Python, data: Vec<f64>, rows: usize, cols: usize, threshold: f64) -> PyResult<Vec<f64>> {
+fn compress_matrix_v1(
+    _py: Python,
+    data: Vec<f64>,
+    rows: usize,
+    cols: usize,
+    threshold: f64,
+) -> PyResult<Vec<f64>> {
     let compressor = quantum::MpsCompressor::new(10, threshold);
     // MPS returns Vec<Vec<f64>> (cores). We flatten for v1 prototype.
     let cores = compressor.compress_matrix(&data, rows, cols);
     if let Some(first_core) = cores.first() {
-         Ok(first_core.clone())
+        Ok(first_core.clone())
     } else {
-         Ok(vec![])
+        Ok(vec![])
     }
 }
 
