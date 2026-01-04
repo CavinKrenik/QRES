@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+
 
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*; // SIMD
@@ -58,7 +58,9 @@ type GraphWeights = [f32; 8];
 pub struct GraphPredictor {
     weights: GraphWeights,
     edges: [usize; 8],
-    history: VecDeque<u8>,
+    // OPTIMIZATION: Fixed array instead of VecDeque
+    history: [u8; 64],
+    cursor: usize,
     learning_rate: f32,
 }
 
@@ -77,7 +79,8 @@ impl GraphPredictor {
         GraphPredictor {
             weights,
             edges,
-            history: VecDeque::from(vec![0; 40]),
+            history: [0; 64],
+            cursor: 0,
             learning_rate: 0.015,
         }
     }
@@ -90,7 +93,8 @@ impl GraphPredictor {
         GraphPredictor {
             weights,
             edges,
-            history: VecDeque::from(vec![0; 40]),
+            history: [0; 64],
+            cursor: 0,
             learning_rate: 0.015,
         }
     }
@@ -100,12 +104,11 @@ impl Predictor for GraphPredictor {
     #[cfg(target_arch = "x86_64")]
     fn predict_next(&self) -> u8 {
         let mut inputs = [0.0f32; 8];
-        let hist_len = self.history.len();
         for (i, input) in inputs.iter_mut().enumerate().take(7) {
             let lag = self.edges[i];
-            if lag <= hist_len {
-                *input = self.history[hist_len - lag] as f32;
-            }
+            // Calculate circular index
+            let idx = (self.cursor + 64 - lag) % 64;
+            *input = self.history[idx] as f32;
         }
         let input_simd = unsafe { _mm256_loadu_ps(inputs.as_ptr()) };
         let product = unsafe { _mm256_mul_ps(self.weights, input_simd) };
@@ -118,13 +121,12 @@ impl Predictor for GraphPredictor {
     #[cfg(not(target_arch = "x86_64"))]
     fn predict_next(&self) -> u8 {
         let mut sum = 0.0;
-        let hist_len = self.history.len();
         for i in 0..7 {
             let lag = self.edges[i];
-            if lag <= hist_len {
-                let input = self.history[hist_len - lag] as f32;
-                sum += self.weights[i] * input;
-            }
+            // Calculate circular index
+            let idx = (self.cursor + 64 - lag) % 64;
+            let input = self.history[idx] as f32;
+            sum += self.weights[i] * input;
         }
         sum.clamp(0.0, 255.0) as u8
     }
@@ -134,12 +136,11 @@ impl Predictor for GraphPredictor {
         let pred = self.predict_next() as f32;
         let err = actual as f32 - pred;
         let mut inputs = [0.0f32; 8];
-        let hist_len = self.history.len();
         for (i, input) in inputs.iter_mut().enumerate().take(7) {
             let lag = self.edges[i];
-            if lag <= hist_len {
-                *input = self.history[hist_len - lag] as f32;
-            }
+            // Calculate circular index
+            let idx = (self.cursor + 64 - lag) % 64;
+            *input = self.history[idx] as f32;
         }
         let input_simd = unsafe { _mm256_loadu_ps(inputs.as_ptr()) };
         let lr_simd = unsafe { _mm256_set1_ps(self.learning_rate) };
@@ -160,30 +161,25 @@ impl Predictor for GraphPredictor {
         }
         self.weights = unsafe { _mm256_loadu_ps(w_arr.as_ptr()) };
 
-        self.history.push_back(actual);
-        if self.history.len() > 40 {
-            self.history.pop_front();
-        }
+        self.history[self.cursor] = actual;
+        self.cursor = (self.cursor + 1) % 64;
     }
 
     #[cfg(not(target_arch = "x86_64"))]
     fn update(&mut self, actual: u8) {
         let pred = self.predict_next() as f32;
         let err = actual as f32 - pred;
-        let hist_len = self.history.len();
         for i in 0..7 {
             let lag = self.edges[i];
-            if lag <= hist_len {
-                let input = self.history[hist_len - lag] as f32;
-                let delta = self.learning_rate * err * (input / 255.0);
-                self.weights[i] += delta;
-                self.weights[i] = self.weights[i].clamp(-5.0, 5.0);
-            }
+            // Calculate circular index
+            let idx = (self.cursor + 64 - lag) % 64;
+            let input = self.history[idx] as f32;
+            let delta = self.learning_rate * err * (input / 255.0);
+            self.weights[i] += delta;
+            self.weights[i] = self.weights[i].clamp(-5.0, 5.0);
         }
-        self.history.push_back(actual);
-        if self.history.len() > 40 {
-            self.history.pop_front();
-        }
+        self.history[self.cursor] = actual;
+        self.cursor = (self.cursor + 1) % 64;
     }
 }
 

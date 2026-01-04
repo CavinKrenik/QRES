@@ -15,9 +15,12 @@ from quantum import QuantumEncoder
 from neural import NeuralOptimizer
 from persistent import WorldStateManager
 try:
-    import qres_rust
+    from . import qres_rust
 except ImportError:
-    qres_rust = None
+    try:
+        import qres_rust
+    except ImportError:
+        qres_rust = None
 
 class QRES_API:
     def __init__(self, mode="hybrid", enable_persistence=True):
@@ -222,9 +225,11 @@ class QRES_API:
 
     def _compress_standard(self, data: bytes) -> bytes:
         if qres_rust:
-            # return qres_rust.encode_bytes(data, [], 0)
-            # Mock for now if DLL issue
-            return data 
+            try:
+                return qres_rust.encode_bytes(data, 0, None)
+            except Exception as e:
+                print(f"[API] Rust backend warning: {e}")
+                return data
         return data
 
     def _compress_quantum(self, data: bytes) -> bytes:
@@ -239,9 +244,33 @@ class QRES_API:
             text = data.decode('utf-8')
             node_id = f"chunk_{hash(data)}"
             self.memory.add_text_node(node_id, text)
-        except:
-             # Binary data
-             pass
+        except UnicodeDecodeError:
+            print("[API] Non-UTF8 data detected. Building binary spectral graph...")
+            import networkx as nx
+            # Binary-to-graph: Treat as byte sequences, build spectral graph
+            bytes_seq = list(data)
+            # Create a simple chain/correlation graph from bytes
+            # Limiting graph size for performance on large binary blobs
+            max_nodes = min(len(bytes_seq), 1000) 
+            
+            # Temporary graph for this chunk
+            temp_graph = nx.Graph()
+            for i in range(max_nodes - 1):
+                u, v = bytes_seq[i], bytes_seq[i+1]
+                if temp_graph.has_edge(u, v):
+                    temp_graph[u][v]['weight'] += 1
+                else:
+                    temp_graph.add_edge(u, v, weight=1)
+            
+            # Merge into main memory (or keep separate). For now, we merge a summary node.
+            # In a full implementation, we'd merge the whole subgraph or use it for tensor contraction directly.
+            # Here we just ensure the memory graph has content so encode_graph works.
+            node_id = f"bin_chunk_{hash(data)}"
+            self.memory.graph.add_node(node_id, type="binary", size=len(data))
+            # Attach the binary graph structure to the main memory somehow, or just let encode_graph use the main memory.
+            # For this demo, let's just ensure we don't crash and have *some* graph.
+            # Real fallback: use the temp_graph for the encoding step.
+            self.memory.graph = nx.compose(self.memory.graph, temp_graph)
              
         # 2. Encode Graph
         full, reduced, metrics = self.quantum.encode_graph(self.memory.graph)

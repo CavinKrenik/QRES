@@ -63,8 +63,9 @@ impl SpectralPredictor {
         }
 
         // Lazy Update Strategy:
-        // Only re-calculate FFT every 64 steps (reduces overhead by 64x)
-        if self.cached_model.is_none() || self.steps_since_update >= 64 {
+        // OPTIMIZATION: Increase stride from 64 to 512 (reduces overhead by 8x)
+        // A 2048-byte window doesn't change spectral characteristics significantly in 64 bytes.
+        if self.cached_model.is_none() || self.steps_since_update >= 512 {
             self.recalc_model();
             self.steps_since_update = 0;
         }

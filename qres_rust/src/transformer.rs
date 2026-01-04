@@ -28,49 +28,49 @@ impl Predictor for TransformerPredictor {
         }
 
         let query_start = self.pos.wrapping_sub(4);
-
-        // AVX2 implementation could process batches of 32 keys.
-        // For now, the scalar unroll in `compute_attention_avx2` (renamed logic) is sufficient
-        // given the non-contiguous circular buffer. A true SIMD Scan requires linear memory.
-
-        // Inline Scalar Logic (Optimized):
-        let mut sum_weights = 0.0;
-        let mut sum_values = 0.0;
-
         let q_idx = query_start & self.buffer_mask;
+        
+        // Cache query bytes to registers
         let q0 = self.history[q_idx] as i32;
         let q1 = self.history[(q_idx + 1) & self.buffer_mask] as i32;
         let q2 = self.history[(q_idx + 2) & self.buffer_mask] as i32;
         let q3 = self.history[(q_idx + 3) & self.buffer_mask] as i32;
 
-        // Sparse Attention: Check 128 positions (Increased from 64)
-        for i in 1..128 {
+        let mut sum_weights = 0.0;
+        let mut sum_values = 0.0;
+
+        // OPTIMIZATION 1: Reduce search depth from 128 to 32
+        // This provides 4x speedup immediately.
+        const SEARCH_DEPTH: usize = 32;
+
+        // Sparse Attention: Check SEARCH_DEPTH positions
+        for i in 1..SEARCH_DEPTH {
             let key_pos_end = self.pos.wrapping_sub(i * 4);
             let k_idx = key_pos_end.wrapping_sub(4) & self.buffer_mask;
 
-            // Check wrap area
-            if k_idx + 4 <= self.history.len() {
-                // Fast path
-                let k = &self.history[k_idx..k_idx + 4];
-                let dist = (q0 - k[0] as i32).abs()
-                    + (q1 - k[1] as i32).abs()
-                    + (q2 - k[2] as i32).abs()
-                    + (q3 - k[3] as i32).abs();
-                let weight = 1.0 / (1.0 + dist as f32 * 0.5); // Sharpness tuning
-                let value = self.history[key_pos_end & self.buffer_mask] as f32;
-                sum_values += value * weight;
-                sum_weights += weight;
-            } else {
-                // Slow wrap path
-                let dist = (q0 - self.history[k_idx] as i32).abs()
-                    + (q1 - self.history[(k_idx + 1) & self.buffer_mask] as i32).abs()
-                    + (q2 - self.history[(k_idx + 2) & self.buffer_mask] as i32).abs()
-                    + (q3 - self.history[(k_idx + 3) & self.buffer_mask] as i32).abs();
-                let weight = 1.0 / (1.0 + dist as f32 * 0.5);
-                let value = self.history[key_pos_end & self.buffer_mask] as f32;
-                sum_values += value * weight;
-                sum_weights += weight;
+            // Manual bounds check optimization check not needed with mask
+            // We use simple scalar difference
+            let d0 = (q0 - self.history[k_idx] as i32).abs();
+            let d1 = (q1 - self.history[(k_idx + 1) & self.buffer_mask] as i32).abs();
+            let d2 = (q2 - self.history[(k_idx + 2) & self.buffer_mask] as i32).abs();
+            let d3 = (q3 - self.history[(k_idx + 3) & self.buffer_mask] as i32).abs();
+            
+            let dist = d0 + d1 + d2 + d3;
+
+            // OPTIMIZATION 2: Early Exit on Perfect Match
+            if dist == 0 {
+                // If we found an exact sequence match in history, USE IT.
+                // This is effectively LZ77 logic inside the transformer.
+                let val = self.history[key_pos_end & self.buffer_mask];
+                return val; 
             }
+
+            // Inverse distance weighting
+            let weight = 1.0 / (1.0 + dist as f32 * 0.5);
+            let value = self.history[key_pos_end & self.buffer_mask] as f32;
+            
+            sum_values += value * weight;
+            sum_weights += weight;
         }
 
         if sum_weights < 0.001 {

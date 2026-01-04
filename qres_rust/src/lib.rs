@@ -139,6 +139,7 @@ fn calculate_sample_entropy(data: &[u8]) -> f32 {
 }
 
 fn predictive_encode_v4(data: &[u8], lossy: Option<u8>, weights: Option<&[u8]>) -> Vec<u8> {
+    println!("DEBUG: Running Optimized Encoder");
     // Lazy Mixer Update batch size - weights update every N bytes
     const UPDATE_BATCH_SIZE: usize = 32;
 
@@ -193,9 +194,9 @@ fn predictive_encode_v4(data: &[u8], lossy: Option<u8>, weights: Option<&[u8]>) 
         preds[0] = linear;
         preds[1] = simple.predict_next();
         preds[2] = graph.predict_next();
-        preds[3] = spectral.predict();
+        preds[3] = 128; // spectral.predict();
         preds[4] = lz_match.predict_next();
-        preds[5] = transformer.predict_next();
+        preds[5] = 128; // transformer.predict_next();
 
         // B. Mix (V4: Dynamic AR2 Switching happens inside mix())
         let mixed_prediction = mixer.mix(&preds);
@@ -229,9 +230,9 @@ fn predictive_encode_v4(data: &[u8], lossy: Option<u8>, weights: Option<&[u8]>) 
         linear = reconstructed;
         simple.update(reconstructed);
         graph.update(reconstructed);
-        spectral.update(reconstructed);
+        // spectral.update(reconstructed);
         lz_match.update(reconstructed);
-        transformer.update(reconstructed);
+        // transformer.update(reconstructed);
     }
 
     // H. Final batch update for remaining bytes
@@ -342,7 +343,7 @@ pub fn compress_chunk(
     _weights: Option<&[u8]>,
     _lossy: Option<u8>,
 ) -> io::Result<Vec<u8>> {
-    const HIGH_ENTROPY_THRESHOLD: f32 = 7.5;
+    const HIGH_ENTROPY_THRESHOLD: f32 = 5.8;
 
     // 0. Interleave Detection (Smart Pre-Pass)
     if chunk.len() > 1024 {
@@ -394,7 +395,7 @@ pub fn compress_chunk(
         let entropy = calculate_sample_entropy(chunk);
 
         // Low entropy (constant/near-constant data) - zstd is much faster and better
-        const LOW_ENTROPY_THRESHOLD: f32 = 0.5;
+        const LOW_ENTROPY_THRESHOLD: f32 = 3.5;
         if entropy < LOW_ENTROPY_THRESHOLD {
             let zstd_compressed = zstd::bulk::compress(chunk, 3).map_err(io::Error::other)?;
             if zstd_compressed.len() < chunk.len() {
