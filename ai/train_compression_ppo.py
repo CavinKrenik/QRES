@@ -14,6 +14,7 @@ except ImportError:
     EMBED_AVAILABLE = False
     
 from snn_predictor import SNNPredictor  # Breakthrough 1: SNN Integration
+from qnn_vqc import QNNPredictor        # Breakthrough 2: QNN Fusion
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import DummyVecEnv
 from stable_baselines3.common.callbacks import CheckpointCallback
@@ -117,15 +118,18 @@ class CompressionEnv(gym.Env):
         self.num_chunks = len(self.data_buffer)
         self.current_step = 0
         
-        # Observation: Normalized Byte Histogram (256 floats) + Entropy (1 float)
-        self.observation_space = spaces.Box(low=0, high=1.0, shape=(257,), dtype=np.float32)
+        # SNN for sparsity reward (simulated integration)
+        self.snn = SNNPredictor() 
+        
+        # QNN for entangled features (simulated correlation detection)
+        self.qnn = QNNPredictor(n_qubits=4)
         
         # Action: 6 continuous weights for the Mixer [0, 1]
         self.action_space = spaces.Box(low=0, high=1.0, shape=(6,), dtype=np.float32)
-        
-        # SNN for sparsity reward (simulated integration)
-        self.snn = SNNPredictor() 
 
+        # Observation Space Update: 
+        # 256 (Hist) + 1 (Entropy) + 4 (QNN Features) = 261
+        self.observation_space = spaces.Box(low=0, high=1.0, shape=(261,), dtype=np.float32)
         
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
@@ -154,12 +158,15 @@ class CompressionEnv(gym.Env):
         # Entropy (normalized 0-1, assuming max entropy is 8 bits)
         entropy = self._calculate_entropy(chunk) / 8.0
         
-        return np.concatenate([norm_hist, [entropy]])
+        # QNN Entangled Features
+        qnn_feats = self.qnn.get_entangled_features(chunk)
+        
+        return np.concatenate([norm_hist, [entropy], qnn_feats])
         
     def step(self, action):
         if self.current_step >= len(self.data_buffer):
             # End of epoch
-            return np.zeros(257, dtype=np.float32), 0, True, False, {}
+            return np.zeros(261, dtype=np.float32), 0, True, False, {}
 
         chunk = self.data_buffer[self.current_step]
         
@@ -203,7 +210,7 @@ class CompressionEnv(gym.Env):
         if not done:
             next_obs = self._get_obs(self.data_buffer[self.current_step])
         else:
-            next_obs = np.zeros(257, dtype=np.float32)
+            next_obs = np.zeros(261, dtype=np.float32)
              
         return next_obs, reward, done, False, {}
 
@@ -239,16 +246,13 @@ if __name__ == "__main__":
     print("Target: 20,000 timesteps")
     
     # Checkpoint every 5k steps
-    checkpoint_callback = CheckpointCallback(save_freq=5000, save_path='./ai/logs/', name_prefix='metabrain_v4')
+    checkpoint_callback = CheckpointCallback(save_freq=5000, save_path='./ai/logs/', name_prefix='metabrain_v5')
     
-    # Load previous model if available to continue learning
-    if os.path.exists("ai/metabrain_ppo_v3.zip"):
-         print("Resuming from v3 model...")
-         model = PPO.load("ai/metabrain_ppo_v3.zip", env=env)
-         model.set_parameters("ai/metabrain_ppo_v3.zip")
+    # Architecture changed (257 -> 261), so we cannot load v4. Starting fresh v5.
+    print("Starting fresh MetaBrain v5 (SNN+QNN) training...")
     
     model.learn(total_timesteps=20000, callback=checkpoint_callback)
     
-    output_path = "ai/metabrain_ppo_v4.zip"
+    output_path = "ai/metabrain_ppo_v5.zip"
     model.save(output_path)
     print(f"\n✅ Training Complete. Model saved to {output_path}")
