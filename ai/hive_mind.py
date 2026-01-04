@@ -41,10 +41,32 @@ class HiveMind:
         }
         return epiphany
 
-    def assimilate_epiphanies(self, incoming_epiphanies):
+    def compute_kl_divergence(self, local_params, peer_params):
         """
-        Aggregates weights from peers using FedAvg/FedProx.
+        Compute KL divergence between local and peer policy distributions.
+        Used for KL-FedDis: Reject updates with divergence > threshold.
+        
+        Simplified: Uses L2 norm of weight difference as proxy for distribution divergence.
+        """
+        total_divergence = 0.0
+        count = 0
+        
+        for key in local_params['policy'].keys():
+            local_w = np.array(local_params['policy'][key])
+            peer_w = np.array(peer_params['policy'][key])
+            
+            # L2 norm as divergence proxy
+            diff = np.linalg.norm(local_w - peer_w)
+            total_divergence += diff
+            count += 1
+        
+        return total_divergence / count if count > 0 else 0.0
+
+    def assimilate_epiphanies(self, incoming_epiphanies, kl_threshold=0.5):
+        """
+        Aggregates weights from peers using FedAvg/FedProx with KL-FedDis filtering.
         incoming_epiphanies: List of weight dictionaries from peers.
+        kl_threshold: Max allowed divergence (rejects high-divergence updates).
         """
         if not incoming_epiphanies:
             return
@@ -54,30 +76,37 @@ class HiveMind:
         local_model = self.load_local_model()
         local_params = local_model.get_parameters()
         
-        # Federated Averaging: W_new = (W_local + Sum(W_peers)) / (N + 1)
-        # We assume strict structure matching (v5 architecture)
+        # Filter by KL divergence (KL-FedDis)
+        accepted_updates = []
+        for peer_data in incoming_epiphanies:
+            kl = self.compute_kl_divergence(local_params, peer_data['weights'])
+            if kl < kl_threshold:
+                accepted_updates.append(peer_data)
+                print(f"  [{peer_data.get('node_id', 'unknown')}] Accepted (KL={kl:.4f})")
+            else:
+                print(f"  [{peer_data.get('node_id', 'unknown')}] Rejected (KL={kl:.4f} > {kl_threshold})")
         
+        if not accepted_updates:
+            print(f"[{self.swarm_id}] No valid updates passed KL filter. Skipping merge.")
+            return
+        
+        # Federated Averaging: W_new = (W_local + Sum(W_peers)) / (N + 1)
         aggregated_params = copy.deepcopy(local_params)
         
-        # Iterate over policy/value networks (flattened dict in SB3)
         for key in aggregated_params['policy'].keys():
-            # Sum peer contributions
-            peer_sum = torch.tensor(aggregated_params['policy'][key]) # Start with local
+            peer_sum = torch.tensor(aggregated_params['policy'][key])
             
-            for peer_data in incoming_epiphanies:
+            for peer_data in accepted_updates:
                 peer_weights = peer_data['weights']['policy'][key]
                 peer_sum += torch.tensor(peer_weights)
                 
-            # Average
-            avg_weight = peer_sum / (len(incoming_epiphanies) + 1)
+            avg_weight = peer_sum / (len(accepted_updates) + 1)
             aggregated_params['policy'][key] = avg_weight.numpy()
-            
-        # Apply Logic to Value Net as well (omitted for brevity, assume shared structure)
         
         # Update Local Model
         local_model.set_parameters(aggregated_params)
         local_model.save(self.local_model_path)
-        print(f"[{self.swarm_id}] Hive Mind sync complete. Model evolved.")
+        print(f"[{self.swarm_id}] Hive Mind sync complete. Model evolved with {len(accepted_updates)} peers.")
 
     def simulate_swarm_cycle(self, n_peers=3):
         """
