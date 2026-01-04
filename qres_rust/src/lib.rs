@@ -96,6 +96,10 @@ impl LivingBrain {
 const CHUNK_SIZE: usize = 1024 * 1024; // 1MB Chunk for better Text/LZ context
 const QRES_MAGIC: &[u8] = b"QRES";
 
+// Define constants to prevent future magic-number errors (Phantom Weight Fix)
+const NUM_PREDICTORS: usize = 6;
+const WEIGHTS_LEN: usize = NUM_PREDICTORS * 4; // 24 bytes for 6 f32 weights
+
 // --- Header Architecture (V3) ---
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct QresHeader {
@@ -380,23 +384,42 @@ pub fn compress_chunk(
     // A. Init Weights
     if let Some(nw) = crate::meta_brain::predict_init_weights(chunk) {
         is_neural = true;
-        for f in nw {
+        // Ensure we serialize exactly WEIGHTS_LEN (24 bytes for 6 predictors)
+        for f in nw.iter().take(NUM_PREDICTORS) {
             let b = f.to_le_bytes();
             stored_init_weights.extend_from_slice(&b);
             effective_weights.extend_from_slice(&b);
         }
+        // Pad if meta_brain returned fewer weights
+        while stored_init_weights.len() < WEIGHTS_LEN {
+            let b = 0.0f32.to_le_bytes();
+            stored_init_weights.extend_from_slice(&b);
+            effective_weights.extend_from_slice(&b);
+        }
     } else {
-        // Fallback to LivingBrain init
+        // Fallback to LivingBrain init (RL Agent provided weights)
         if let Some(w) = _weights {
-            let take = w.len().min(20); // 5 float32s * 4
+            // FIX: Take up to WEIGHTS_LEN (24 bytes), not 20
+            let take = w.len().min(WEIGHTS_LEN);
             effective_weights.extend_from_slice(&w[0..take]);
+
+            // If explicit weights provided, we treat it as "Neural" for storage
+            if take > 0 {
+                is_neural = true;
+                stored_init_weights.extend_from_slice(&w[0..take]);
+                // Pad if necessary
+                while stored_init_weights.len() < WEIGHTS_LEN {
+                    stored_init_weights.push(0);
+                }
+            }
         }
     }
 
     // B. Global Weights (FedProx) - Append if present
+    // Assuming input is [Init(24) + Global(24)]
     if let Some(w) = _weights {
-        if w.len() >= 40 {
-            effective_weights.extend_from_slice(&w[20..40]);
+        if w.len() >= WEIGHTS_LEN * 2 {
+            effective_weights.extend_from_slice(&w[WEIGHTS_LEN..WEIGHTS_LEN * 2]);
         }
     }
 
@@ -418,7 +441,7 @@ pub fn compress_chunk(
         out.extend_from_slice(&(chunk.len() as u32).to_le_bytes());
 
         if is_neural {
-            // Flag 0x02 stores 20 bytes of init weights
+            // Flag 0x02 stores WEIGHTS_LEN (24) bytes of init weights
             out.extend_from_slice(&stored_init_weights);
         }
 
@@ -465,22 +488,24 @@ pub fn decompress_chunk(
             zstd::bulk::decompress(&compressed[5..], decomp_len).map_err(io::Error::other)
         }
         0x02 => {
-            // ANS codec with Neural Init (V5)
-            if compressed.len() < 25 {
+            // ANS codec with Neural Init (V5+)
+            // FIX: Header size check must account for WEIGHTS_LEN (24), not 20
+            let header_size = 5 + WEIGHTS_LEN; // 5 + 24 = 29 bytes
+            if compressed.len() < header_size {
                 return Err(io::Error::new(
                     io::ErrorKind::InvalidData,
                     "Chunk too short for Neural Header",
                 ));
             }
-            let init_w_bytes = &compressed[5..25]; // 5 floats * 4 bytes
+            let init_w_bytes = &compressed[5..header_size]; // 6 floats * 4 bytes = 24
 
             // Reconstruct effective weights: [Neural Init] + [Global from Args]
-            let mut w_vec = Vec::with_capacity(40);
+            let mut w_vec = Vec::with_capacity(WEIGHTS_LEN * 2);
             w_vec.extend_from_slice(init_w_bytes);
 
             if let Some(w) = _weights {
-                if w.len() >= 40 {
-                    w_vec.extend_from_slice(&w[20..40]);
+                if w.len() >= WEIGHTS_LEN * 2 {
+                    w_vec.extend_from_slice(&w[WEIGHTS_LEN..WEIGHTS_LEN * 2]);
                 }
             }
 
@@ -489,7 +514,11 @@ pub fn decompress_chunk(
             } else {
                 Some(w_vec.as_slice())
             };
-            Ok(predictive_decode_v4(&compressed[25..], decomp_len, w_arg))
+            Ok(predictive_decode_v4(
+                &compressed[header_size..],
+                decomp_len,
+                w_arg,
+            ))
         }
         0x03 => {
             // Interleaved Split (V7)

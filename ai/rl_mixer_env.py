@@ -71,55 +71,42 @@ class CompressionMixingEnv(gym.Env):
         return self._get_obs(self.current_chunk), {}
 
     def step(self, action):
-        # Normalize action to sum to 1 (Softmax-like or just L1 norm)
-        # Even if QRES mixer expects raw floats, normalizing helps stability
-        weights = np.clip(action, 0.01, 10.0) # Avoid zeros
-        # weights /= np.sum(weights) # Optional: QRES mixer handles scaling internally mostly
+        # 1. Normalize Action
+        # Clip to safe range [0.01, 10.0] for Mixers
+        weights = np.clip(action, 0.01, 10.0)
         
-        # Pack weights for QRES (4 floats = 16 bytes)
-        # Assuming QRES expects [Lin, Sim, Graph, Spec, LZ, Trans] - Wait, check lib.rs for NUM_MODELS
-        # In lib.rs: "let mut preds = [0u8; 6];"
-        # "let mut mixer = Mixer::new(init_w, global_w);"
+        # 2. Construct Weight Vector (24 Bytes)
+        # We need 6 weights: [Linear, Simple, Graph, Spectral, LZ, Transformer]
+        # The Action space provides 4 weights. We append 2 placeholders.
+        # This matches the WEIGHTS_LEN = 24 in Rust (6 floats * 4 bytes).
+        full_action = np.concatenate([weights, [0.1, 0.1]]).astype(np.float32)
         
-        # NOTE: Mixer in rust likely expects weights for ALL predictors?
-        # Let's assume passed weights map to predictors 0..N.
-        # Ideally we pass 4 weights for the main ones.
-        # I'll enable 4 weights here.
+        weight_bytes = struct.pack('6f', *full_action)
         
-        # We need to construct the byte array.
-        # Step 167 lib.rs snippet: "f32_count >= 2 * NUM_MODELS"
-        # I need to know NUM_MODELS. Usually it's 6 in v5/v6.
-        # If I pass fewer, it might ignore or panic?
-        # "if f32_count >= NUM_MODELS { (Some(&slice[0..NUM_MODELS]), None) }"
-        # If NUM_MODELS is 6, I need 6 floats.
-        
-        # I'll pad with small values for the others (LZ, Transformer) which we aren't optimizing yet.
-        full_action = np.concatenate([weights, [0.1, 0.1]]) # 6 weights
-        
-        weight_bytes = struct.pack('f'*6, *full_action)
-        
-        # Run QRES Compression
+        # 3. Run QRES Compression
         try:
-            # We use ID 2 to trigger Neural/Custom Weight path in QRES if possible?
-            # Actually compress_chunk logic:
-            # "if let Some(w) = _weights { let take = w.len().min(20); ... }"
-            # It takes up to 20 bytes (5 floats). 
-            # Wait, 5 floats? 
-            # lib.rs: "let b = f.to_le_bytes(); stored_init_weights.extend... take = w.len().min(20)"
-            # It seems it expects 5 floats for init weights in the header?
-            # And expects NUM_MODELS for the Mixer?
-            
-            # Use specific ID or flags?
-            # In encode_bytes, I call `compress_chunk(data, predictor_id, weights, None)`
-            
+            # We pass predictor_id=0, but weights trigger the Custom/Neural path
             compressed = qres.encode_bytes(self.current_chunk, 0, weight_bytes)
             
-            # Calculate Reward
+            # 4. Calculate Reward
+            # If compression fails (returns larger than original), QRES returns zstd fallback.
+            # We want to reward the RAW predictive performance.
+            
             ratio = len(compressed) / len(self.current_chunk)
-            reward = (self.last_ratio - ratio) * 10.0 # Reward for improving over baseline
+            
+            # Reward:
+            # Baseline is 1.0 (uncompressed). 
+            # We want ratio < 1.0. 
+            # New Reward: (1.0 - Ratio) * 100. Higher compression = Higher reward.
+            # This gives absolute performance feedback rather than delta-based.
+            reward = (1.0 - ratio) * 100.0
             
             self.last_ratio = ratio
-            terminated = True # Episode per chunk for now (Contextual Bandit style)
+            
+            # Terminated: True (Contextual Bandit Mode)
+            # Since Rust backend is currently stateless per call, we cannot benefit 
+            # from multi-step episodes yet.
+            terminated = True
             truncated = False
             
             info = {"ratio": ratio, "size": len(compressed)}
@@ -128,7 +115,8 @@ class CompressionMixingEnv(gym.Env):
             
         except Exception as e:
             print(f"Compression failed: {e}")
-            return self._get_obs(self.current_chunk), -1.0, True, False, {}
+            # Heavy penalty for crash
+            return self._get_obs(self.current_chunk), -100.0, True, False, {}
 
 if __name__ == "__main__":
     print("Testing CompressionMixingEnv...")
