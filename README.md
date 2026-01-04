@@ -18,17 +18,19 @@
 
 ## 🚀 Key Features
 
-### 🧠 Cognitive Context & The "Living Brain" (MetaBrain v4)
-- **Neural-Symbolic Hybrid:** Linear, graph/spectral, LSTM predictors; LLM semantic prediction (v6, CodeLlama/GPT).
-- **Reinforcement Learning Agent:** PPO-based MetaBrain (v4, trained on multimodal data: IoT, text, images, PDFs, audio, archives) for dynamic strategy/weight selection.
-- **Multimodal Support:** Handles diverse inputs via CLIP embeddings and binary fallbacks; trained on `data/` dataset for generalization.
+### 🧠 Cognitive Context & The "Living Brain" (MetaBrain v5)
+- **Spiking Neural Networks (SNN):** Leaky Integrate-and-Fire neurons for temporal, sparse data encoding (v8.1).
+- **Quantum VQC Fusion (QNN):** Variational Quantum Circuits for entanglement-based correlation detection (v8.1).
+- **Reinforcement Learning Agent:** PPO-based MetaBrain (v5, SNN+QNN hybrid, 261-dim observations).
+- **Multimodal Support:** Handles diverse inputs via CLIP embeddings and binary fallbacks.
 
 ### ⚛️ Quantum-Inspired Tensors (v7/v8)
 - **Tensor Networks:** QuTiP-simulated states for high-dimensional correlations; ethical pruning for bias mitigation.
 - **Binary Fallback:** Spectral graph building for non-UTF8 data in quantum mode.
 
-### 🐝 Swarm Intelligence (P2P)
-- **Hive Mind:** Kademlia DHT + GossipSub for sharing "Epiphanies" (models) and states; FedProx for distributed optimization.
+### 🐝 Swarm Intelligence (P2P) & Hive Mind
+- **Hive Mind:** Federated Averaging (FedProx) for continual learning across nodes without raw data sharing (`ai/hive_mind.py`).
+- **Kademlia DHT + GossipSub:** For sharing "Epiphanies" (model weights) and quantum states.
 - **Persistent World State:** Synchronization with >0.98 fidelity across nodes.
 
 ### 📦 QRAR Archives
@@ -41,11 +43,11 @@
 
 | Version | Status | Focus |
 | :--- | :--- | :--- |
-| **v6.0.0-alpha** | **Stable** | AI Foundation (LLM, GPU, Starship GUI) |
-| **v7.5** | **Stable** | Quantum Foundations |
+| **v8.1.0** | **Development** | Brain-Like Quantum ML (SNN, QNN, Hive Mind) |
 | **v8.0.0** | **Released** | AEON Update – MetaBrain v4, Swarm Persistence, Multimodal Training |
+| **v7.5** | Stable | Quantum Foundations |
 
-Latest release: v8.0.0 (Jan 2, 2026). See [CHANGELOG.md](CHANGELOG.md) for details.
+Latest release: v8.1.0-dev (Jan 4, 2026). See [CHANGELOG.md](CHANGELOG.md) for details.
 
 ---
 
@@ -55,8 +57,8 @@ See [BENCHMARKS.md](docs/BENCHMARKS.md) for full analysis. Recent v4 training ma
 
 | Engine | Ratio (IoT, 20MB) | Ratio (Text) | Speed (MB/s) |
 | :--- | :---: | :---: | :---: |
-| **QRES v8.0 (MetaBrain v4)** | **0.537** | **~0.19** | **~150** |
-| **QRES v7.0** | **~0.048** | **~0.19** | **~150** |
+| **QRES v8.1 (MetaBrain v5)** | **0.537** | **~0.19** | **~150** |
+| **QRES v8.0 (MetaBrain v4)** | 0.537 | ~0.19 | ~150 |
 | Zstd (L19) | 0.12 | 0.35 | 25 |
 
 ---
