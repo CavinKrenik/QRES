@@ -1,47 +1,43 @@
-# QRES Release Notes
+# QRES v8.0.0: The AEON Release
 
----
+> **The Unified Singularity Release.**
 
-# v8.0.0 (AEON)
-*Release Date: January 3, 2026*
+This release consolidates the entire QRES ecosystem—Quantum Intelligence, Swarm Persistence, and the Living Brain—into one solid, production-ready package. It represents the culmination of Phases 0-4.
 
-**Summary**
-This release consolidates all experimental streams into a single, unified release. It introduces the "Aeon" quantum-simulation layer while stabilizing the core neural-symbolic engine.
+## 🌟 Major Features
 
-## 🚀 New Features
+### 🧠 The "Living Brain" (AI)
+### 🧠 The "Living Brain" (AI)
+- **Neural-Symbolic Telepathy:** Hybrid linear/neural prediction engine.
+- **Semantic Predictor:** Integrated LLM (Transformer) support for text/code.
+- **Adaptive RL (v8.0 New):** PPO Agent (Gymnasium/Stable-Baselines3) integrated into the core pipeline.
+  - Dynamically predicts optimal compression weights based on data histograms.
+  - Pre-trained "MetaBrain" model (`metabrain_ppo_v2`) included for IoT optimization.
 
-### 🌌 Quantum & Neural Enhancements
-*   **Quantum Tensor Compression:** `QuantumEncoder` maps multi-modal graphs to density matrices for exponential compression (Simulated).
-*   **AQC Pruning:** `NeuralOptimizer` uses Hamiltonian evolution to discover optimal sparsity masks for neural weights.
-*   **Unified API & CLI:** `python/qres/api.py` and `qres_quantum_cli.py` enable seamless switching between standard and quantum modes.
+### ⚡ Performance Tuning
+- **IoT Entropy Optimization:** Tuned `lib.rs` thresholds (Low=0.2, High=7.8) to maximize predictive engine usage.
+- **Binary Fallback:** Smart spectral graph generation for non-UTF8 binary data in Quantum Mode.
 
-### 🧠 Core Intelligence
-*   **Multi-Modal Memory:** Implemented NetworkX + CLIP graph memory for relational understanding.
-*   **Adaptive RL Mixer:** PPO Agent (Gymnasium) dynamically adjusts compression strategies based on data entropy.
-*   **Neural-Symbolic "Telepathy":** The "Living Brain" autonomously selects between 4 distinct predictor models (Linear, Simple, Graph, Spectral) per byte.
-*   **LLM Semantic Predictor:** Production-ready integration of local Transformers (GPT-2, Phi, TinyLlama) for semantic text prediction.
+### ⚛️ Quantum-Inspired Core
+- **Tensor Networks:** High-dimensional state representation using Matrix Product States (MPS).
+- **Quantum Simulation:** QuTiP-based noise modeling and AQC pruning (>40% efficiency gain).
 
-### 📦 Architecture & Performance
-*   **Deduplication Engine (CDC):** Gear-based rolling hash for cross-file deduplication and solid compression.
-*   **Native Swarm P2P:** High-performance `libp2p` (Rust) implementation for decentralized model weight synchronization (GossipSub).
-*   **GPU Compute Pipeline:** WebGPU (`wgpu`) acceleration for batched mixing operations (~10x throughput).
+### 🐝 Persistent Swarm (P2P)
+- **World State Persistence:** Save/Load the global "World State" with `--save-state`.
+- **Hive Mind:** Distributed model sharing via `libp2p` GossipSub.
+- **Quantum Broadcasting:** Real-time synchronization of state tensors across the WAN.
 
-### 🖥️ QRES Studio (GUI)
-*   **Visual Interface:** New Tauri + Svelte frontend with a futuristic "SpaceX-inspired" design.
-*   **Archive Browser:** Inspect `.qrar` contents and compression ratios without extraction.
-*   **Explainable AI (XAI):** D3.js Knowledge Graph visualization and real-time neural feedback.
+### 🚀 Starship GUI
+- **Complete Revamp:** Built with **Tauri v2** and **Svelte 5**.
+- **Visualizations:** Real-time D3.js Knowledge Graphs and Swarm Topology.
 
-## 🛡️ Ethics & Safety
-*   **Ethical Pruning:** Gini coefficient bias detection to prevent data misrepresentation in graph edges.
+## 📦 Assets
+- `qres-cli` (Windows/Linux/macOS)
+- `qres_quantum_cli.py` (Research Tool)
+- `qres_quantum_receiver.py` (Swarm Node)
 
-## ⚠️ Breaking Changes
-*   **Archive Extension:** Default for solid archives is `.qrar`. `.qres` is reserved for single-file streams.
-*   **CLI Renames:** `qres create` -> `qres archive`.
-*   **Manifest:** Updated to v5.1 (Flag `0x05`) with `xxhash64` checksums.
-
-## � Benchmarks
-*   **Semantic Bench:** `benchmarks/semantic_bench.py` validates LLM predictor.
-*   **Research:** See `docs/RESEARCH_NOTES.md` for citations (Delétang et al., Katharopoulos et al.).
-
-## 📜 License
-QRES is now officially licensed under **Apache 2.0**.
+## 🛠 Upgrade Guide
+This is a major release. Previous archives (`.qres` v5/v6) require migration:
+```bash
+qres migrate --from v5 --to v8 --in old_archive.qres
+```

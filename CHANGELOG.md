@@ -5,23 +5,27 @@ All notable changes to the QRES project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-### Fixed
-- **CI/CD:** Resolved `qres_rust` import errors in continuous integration pipelines (bcfe3c6).
-- **Paths:** Fixed various file path issues for cross-platform compatibility.
-
-## [7.5.0-alpha] - 2026-01-03
+## [8.0.0] - 2026-01-04
 ### Added
+- **MetaBrain Integration:** Integrated `stable-baselines3` PPO agent into `api.py` for dynamic weight prediction.
+- **Training Infrastructure:** Added `ai/train_compression_ppo.py` for training custom compression agents.
+- **Binary Quantum Fallback:** Added spectral graph generation for binary data in quantum mode.
 - **Quantum Tensor Compression:** `MpsCompressor` (Haar Wavelet) backend for structured data (`qres_rust::quantum`).
 - **GPU Acceleration:** Added `wgpu` dependency and foundational bindings for hardware compute.
 - **Improved Performance:**
-  - IoT Telemetry: **51% Ratio** (Beats Zstd 57%) using Smart Interleave Detection (`0x03` flag).
+  - **IoT Optimization:** Widened entropy thresholds (0.2-7.8) to route more data to the neural-symbolic engine.
   - Structured Data: **64% Ratio** (Beats Zstd 95%) on correlated floating-point matrices.
 - **Python Bindings:** New `compress_matrix_v1` for tensor compression.
 
 ### Changed
 - **Predictors:** Optimizations for `SpectralPredictor` (Linear Detrending) and `TransformerPredictor` (AVX2, 4KB window).
 - **Benchmarks:** Validated against Zstd on IoT and Structured data.
+- **CI/CD:** Resolved `qres_rust` import errors in continuous integration pipelines.
+
+## [7.5.0-alpha] - 2026-01-03
+### Added
+- Early preview of Quantum Tensor Compression.
+
 
 ## [6.0.0-alpha] - 2026-01-02
 ### Added

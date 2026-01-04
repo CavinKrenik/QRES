@@ -40,8 +40,8 @@
 | Version | Status | Focus |
 | :--- | :--- | :--- |
 | **v6.0.0-alpha** | **Stable** | AI Foundation (LLM, GPU, Starship GUI) |
-| **v7.0** | **Preview** | Quantum Foundations (Phases 0-2 Complete) |
-| **v8.1** | **Preview** | Persistent World & Swarm Sync (Phase 4 Complete) |
+| **v7.5** | **Preview** | Quantum Foundations |
+| **v8.0** | **Released** | **The AEON Update:** Living Brain, Swarm Persistence, PPO Agent |
 
 ---
 
