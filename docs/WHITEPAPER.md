@@ -1,54 +1,95 @@
-# QRES: The Singularity Engine Whitepaper
+# QRES Technical Whitepaper
+
+**Version 9.0 "Singularity Brain"**
+
+---
 
 ## Abstract
-QRES (Quantum-Relational Encoding System) represents a paradigm shift in data compression. Unlike static algorithms (Huffman, LZ77) that rely on fixed statistical models, QRES employs a "Living Brain"—an autonomic, self-organizing neural-symbolic agent that adapts its internal structure to the entropy of the data stream in real-time.
 
-## 1. The Core Philosophy: "Telepathy"
-Traditional compression is reactive: it sees a symbol and encodes it based on past frequency. QRES is predictive: it anticipates the next symbol before it arrives.
-By maintaining a high-confidence model of the data generation process (the "Singularity"), the encoder and decoder share a hallucinated reality. Only the deviations from this reality (the "Surprise" or Residuals) need to be transmitted.
+QRES (Quantum-Relational Encoding System) is a paradigm shift in data compression. Unlike static algorithms that rely on fixed statistical models, QRES employs a **"Living Brain"**—an autonomous, self-organizing neural agent that adapts to data in real-time using spiking neural networks and quantum-inspired circuits.
+
+---
+
+## 1. Core Philosophy: Predictive Compression
+
+Traditional compression is reactive. QRES is **predictive**.
+
+```
+Traditional: See symbol → Encode based on history
+QRES:        Predict symbol → Encode only the surprise
+```
+
+By maintaining a high-confidence model of the data, encoder and decoder share a "hallucinated reality." Only deviations (residuals) are transmitted.
+
+---
 
 ## 2. Architecture
 
-### 2.1 The "Living Brain" (MetaBrain v4)
-The brain consists of an ensemble of specialized predictors managed by an Autonomic Mixer:
-*   **Linear & Simple:** Fast arithmetic extrapolation and context counting.
-*   **Graph:** 2nd-order Markov chains for structured text/code.
-*   **Spectral:** FFT-based periodicity detection for signal data.
-*   **LSTM / LLM (v6):** Deep pattern recognition via Transformers (CodeLlama).
-*   **RL Agent (v4):** PPO (Stable Baselines3) for strategy selection; trained on diverse data (IoT, text, images, PDFs, audio) with Gymnasium env.
+### 2.1 The Living Brain (MetaBrain v5)
 
-**The Mixer (Momentum AR(2)):**
-Instead of a simple average, the Mixer uses a localized Auto-Regressive process with Momentum, accelerated by AVX2/NEON SIMD instructions.
-*   **Weights:** $W_t = \beta W_{t-1} + (1-\beta) \nabla L$, where $L$ is the loss function.
-*   **Momentum:** High-performing models act as "Anchors", preventing rapid oscillation when entropy spikes.
-*   **Multimodal Extension:** CLIP embeddings for images/audio; binary fallbacks for PDFs/GZ.
+An ensemble of specialized predictors managed by an RL agent:
 
-### 2.2 Swarm Learning (P2P)
-Nodes form a Kademlia DHT network using `libp2p`.
-*   **GossipSub:** We use the GossipSub v1.1 protocol to disseminate "Epiphanies".
-    *   **Topic:** `qres/v1/epiphany/{model_type}`
-    *   **Payload:** The quantized weight tensor of a converged model.
-*   **Privacy:** Only model weights are shared. The training data (files) never leaves the local node.
+| Predictor | Purpose |
+|-----------|---------|
+| **Linear** | Fast arithmetic extrapolation |
+| **Graph** | 2nd-order Markov chains |
+| **Spectral** | FFT-based periodicity detection |
+| **SNN** | Spiking temporal patterns (GIF neurons) |
+| **QNN** | Quantum entanglement detection (VQC) |
 
-### 2.3 Deduplication (The Memory)
-The v5.1 architecture adds a long-term memory via Content-Defined Chunking (CDC).
-*   **Short-term Memory:** The predictors (Window ~64KB).
-*   **Long-term Memory:** The Dedup Hash Map (Unlimited).
-This allows QRES to recall and reference data seen Gigabytes or Terabytes ago, essential for archival storage.
+**The Mixer:**
+```
+W_t = β·W_{t-1} + (1-β)·∇L
+```
+- Uses momentum AR(2) for stability
+- SIMD-accelerated (AVX2/NEON)
 
-## 3. Quantum-Inspired & Spiking Architectures (v8.1+)
+### 2.2 Spiking Neural Networks (v8.1+)
 
-### 3.1 Spiking Neural Networks (SNN) - The Biological Leap
-To surpass the limits of static weight multiplication, QRES adopts the biological "Spike" paradigm.
-*   **Temporal Coding:** Information is encoded in the *timing* of pulses, not just magnitude.
-*   **Sparsity:** SNNs are quiescent (energy-neutral) until stimulation. Ideally, perfectly compressed data looks like "silence" to the network.
-*   **STDP Learning:** We employ Spike-Timing Dependent Plasticity to physically prune connections that do not contribute to data prediction, effectively "forgetting" noise.
+Biological-inspired compression using spike timing:
 
-### 3.2 Quantum Entanglement for Correlation
-QRES v8.1 introduces hybrid Quantum-Classical networks (QNN).
-*   **The Idea:** Classical bits are independent. Qubits can be entangled.
-*   **Method:** We map a window of bytes to a quantum state $|\psi\rangle$. A Variational Quantum Circuit (VQC) rotates this state to find a basis where the entanglement entropy is minimized (disentanglement).
-*   **Result:** Highly correlated complex data (like encrypted sensors or chaotic physics data) collapses into simple basis states.
+- **GIF Neurons**: Generalized Integrate-and-Fire with adaptive thresholds
+- **OSBC Pruning**: 97% sparsity via second-order methods
+- **STDP Learning**: Spike-Timing Dependent Plasticity
+
+### 2.3 Quantum VQC (v8.1+)
+
+Variational Quantum Circuits for correlation detection:
+
+```
+|ψ⟩ = U(θ)|00...0⟩
+```
+
+- Maps bytes to quantum states
+- Finds minimal entanglement entropy basis
+- Collapses correlated data to simple states
+
+### 2.4 P2P Swarm Learning
+
+Distributed intelligence via `libp2p`:
+
+- **GossipSub**: Epiphany broadcasting
+- **Kademlia DHT**: Peer discovery
+- **FedProx + KL-FedDis**: Federated averaging with divergence filtering
+- **Privacy**: Only model weights shared, never raw data
+
+---
+
+## 3. Key Innovations (v9.0)
+
+| Feature | Research Basis |
+|---------|----------------|
+| GIF Neurons | SpikeLLM (ICLR 2025) |
+| OSBC Pruning | OpenReview 2025 |
+| Equivariant QNN | NeurIPS 2025 |
+| Auto-Tuning | Fed2Com (ICNC 2024) |
+
+---
 
 ## 4. Conclusion
-QRES bridges the gap between fast, heuristic compression (LZ4) and slow, generative compression (LLMs). By treating compression as an intelligent agent rather than a math problem, we achieve the "Singularity" of optimal entropy reduction.
+
+QRES bridges fast heuristic compression (LZ4) and slow generative compression (LLMs). By treating compression as an intelligent agent, we approach the theoretical **Singularity** of optimal entropy reduction.
+
+---
+
+*© 2026 QRES Project. Apache 2.0 License.*

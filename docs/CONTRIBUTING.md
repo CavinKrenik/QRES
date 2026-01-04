@@ -1,48 +1,77 @@
 # Contributing to QRES
 
-We welcome contributions to the Singularity! Since QRES is a hybrid Rust/Python system, there are a few things to know about the build process.
+Thank you for your interest in contributing to the Quantum-Relational Encoding System!
+
+---
+
+## Getting Started
+
+1. **Fork** the repository
+2. **Clone** your fork: `git clone https://github.com/YOUR_USERNAME/QRES.git`
+3. **Create a branch**: `git checkout -b feature/your-feature`
+4. **Make changes** and test
+5. **Submit a Pull Request**
+
+---
 
 ## Development Setup
 
-### Prerequisites
-*   **Rust:** Stable toolchain (install via `rustup`).
-*   **Python:** 3.8+ (virtual environment recommended).
-*   **Node.js:** (Optional) Only for QRES Studio development.
-*   **RL/ML Libs:** Stable Baselines3, Gymnasium (for MetaBrain training).
-
-### Architecture
-*   `qres_rust/`: The core engine. It compiles to a native library and a Python extension (`.pyd` / `.so`).
-*   `python/`: The Python wrapper (mostly types and loading logic).
-*   `ai/`: Training scripts for MetaBrain PPO agent.
-*   `qres-studio/`: The Tauri/Svelte GUI.
-*   `data/`: Sample datasets for testing/training.
-
-## Building the Core & Python Bindings
 ```bash
-maturin develop --release --manifest-path qres_rust/Cargo.toml
-```
+# Python environment
+python -m venv .venv
+source .venv/bin/activate  # or .venv\Scripts\activate on Windows
+pip install -e .
 
-## Training MetaBrain
-```bash
-python ai/train_compression_ppo.py --data-dir data/  # Add custom data to data/
-```
+# Rust core
+cd qres_rust
+cargo build --release
 
-## Running Tests
-```bash
-cargo test --manifest-path qres_rust/Cargo.toml
+# Run tests
 pytest tests/
-python verify_fidelity.py  # Fidelity checks
+cargo test
 ```
 
-## Formatting & Linting
-```bash
-cargo fmt --all
-cargo clippy
+---
+
+## Areas of Interest
+
+We welcome contributions in these areas:
+
+| Area | Description |
+|------|-------------|
+| 🧠 **SNN Optimization** | Improve sparsity and efficiency |
+| ⚛️ **QNN Circuits** | Better variational designs |
+| 🐝 **P2P Swarm** | Scalability and reliability |
+| 📊 **Benchmarks** | New datasets and metrics |
+| 📝 **Documentation** | Tutorials and examples |
+
+---
+
+## Code Style
+
+- **Python**: Follow PEP 8, use `ruff` for linting
+- **Rust**: Run `cargo fmt` and `cargo clippy`
+- **Markdown**: Use consistent formatting
+
+---
+
+## Commit Messages
+
+Use conventional commits:
+```
+feat: Add new feature
+fix: Fix a bug
+docs: Update documentation
+test: Add tests
+chore: Maintenance
 ```
 
-## Core Guidelines
-1.  **Performance:** Critical paths allocation-free.
-2.  **Safety:** Document `unsafe` blocks.
-3.  **Telepathy:** New predictors must implement `Predictor` trait.
-4.  **RL Contributions:** Ensure env observations match (e.g., 257-dim for v4).
-5.  **Multimodal:** Test on `data/` folder; maintain >0.98 fidelity.
+---
+
+## Questions?
+
+Open an issue or start a discussion. We're happy to help!
+
+---
+
+*See [ROADMAP.md](ROADMAP.md) for current priorities.*
