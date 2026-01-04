@@ -23,9 +23,18 @@ Located in `qres_rust/src/swarm.rs`.
 
 | Topic | Description | Payload |
 | :--- | :--- | :--- |
-| `qres/v1/epiphany` | Shared model weights | `Epiphany { model_type, weights, accuracy }` |
+| `qres/v1/epiphany` | Shared model weights | `Epiphany { model_type, weights, fidelity_score }` |
 | `qres/v1/quantum` | Quantum State updates | `QuantumState { timestamp, fidelity, tensor_blob }` |
 | `qres/v1/heartbeat` | Node status updates | `Heartbeat { uptime, version }` |
+
+### 3. Hive Mind (Continual Learning)
+Implemented in `ai/hive_mind.py`.
+*   **FedProx:** Federated Averaging with Proximal term to handle non-IID data stability.
+*   **Cycle:**
+    1.  **Local Train:** Node evolves SNN/QNN locally on new data.
+    2.  **Epiphany:** Weights extract -> Quantize -> Broadcast on `qres/v1/epiphany`.
+    3.  **Assimilate:** Receiver averages parameter vectors: $W_{new} = \frac{1}{N} \sum W_i$.
+    4.  **Evolve:** Local model updated with community knowledge.
 
 ## 3. Usage
 
