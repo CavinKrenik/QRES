@@ -139,6 +139,9 @@ fn calculate_sample_entropy(data: &[u8]) -> f32 {
 }
 
 fn predictive_encode_v4(data: &[u8], lossy: Option<u8>, weights: Option<&[u8]>) -> Vec<u8> {
+    // Lazy Mixer Update batch size - weights update every N bytes
+    const UPDATE_BATCH_SIZE: usize = 32;
+
     // 1. Initialize Engines
     let mut linear = 0u8;
     let mut simple = SimplePredictor::new();
@@ -182,7 +185,8 @@ fn predictive_encode_v4(data: &[u8], lossy: Option<u8>, weights: Option<&[u8]>) 
     // Prepare quantization factor
     let q_factor = lossy.unwrap_or(1).max(1) as i8;
 
-    let mut preds = [0u8; 6]; // Updated to 6
+    let mut preds = [0u8; 6];
+    let mut batch_counter = 0usize;
 
     for &actual in data {
         // A. Predict
@@ -207,16 +211,21 @@ fn predictive_encode_v4(data: &[u8], lossy: Option<u8>, weights: Option<&[u8]>) 
             base_residual
         };
 
-        // D. Encode Residual (V4: Lazy Batched Updates)
+        // D. Encode Residual
         ans.write_residual(residual);
 
-        // E. Update
-        // Crucial: Update models with the *reconstructed* value, not the original 'actual',
-        // to prevent drift (encoder/decoder desync).
-        // Recalculate actual from prediction + quantized residual.
+        // E. Reconstruct value for predictor updates
         let reconstructed = mixed_prediction.wrapping_add(residual as u8);
 
-        mixer.update(reconstructed, &preds);
+        // F. Lazy Mixer Update - only update mixer weights every N bytes
+        batch_counter += 1;
+        if batch_counter >= UPDATE_BATCH_SIZE {
+            // Use current sample as representative for the batch
+            mixer.update_lazy(UPDATE_BATCH_SIZE, reconstructed, &preds);
+            batch_counter = 0;
+        }
+
+        // G. Update individual predictors EVERY byte (they're cheap and need context)
         linear = reconstructed;
         simple.update(reconstructed);
         graph.update(reconstructed);
@@ -225,7 +234,12 @@ fn predictive_encode_v4(data: &[u8], lossy: Option<u8>, weights: Option<&[u8]>) 
         transformer.update(reconstructed);
     }
 
-    // F. Finish (Seal the stream)
+    // H. Final batch update for remaining bytes
+    if batch_counter > 0 {
+        mixer.update_lazy(batch_counter, linear, &preds);
+    }
+
+    // I. Finish (Seal the stream)
     ans.finish()
 }
 
@@ -234,6 +248,9 @@ fn predictive_decode_v4(
     decoded_len: usize,
     weights: Option<&[u8]>,
 ) -> Vec<u8> {
+    // Lazy Mixer Update batch size - MUST match encoder
+    const UPDATE_BATCH_SIZE: usize = 32;
+
     // 1. Initialize Engines
     let mut linear = 0u8;
     let mut simple = SimplePredictor::new();
@@ -273,7 +290,8 @@ fn predictive_decode_v4(
     let mut ans = AnsReader::new(compressed_words);
 
     let mut out = Vec::with_capacity(decoded_len);
-    let mut preds = [0u8; 6]; // Updated to 6
+    let mut preds = [0u8; 6];
+    let mut batch_counter = 0usize;
 
     for _ in 0..decoded_len {
         // A. Predict
@@ -294,14 +312,25 @@ fn predictive_decode_v4(
         let actual = mixed_prediction.wrapping_add(residual as u8);
         out.push(actual);
 
-        // E. Update
-        mixer.update(actual, &preds);
+        // E. Lazy Mixer Update - must match encoder exactly
+        batch_counter += 1;
+        if batch_counter >= UPDATE_BATCH_SIZE {
+            mixer.update_lazy(UPDATE_BATCH_SIZE, actual, &preds);
+            batch_counter = 0;
+        }
+
+        // F. Update individual predictors EVERY byte
         linear = actual;
         simple.update(actual);
         graph.update(actual);
         spectral.update(actual);
         lz_match.update(actual);
         transformer.update(actual);
+    }
+
+    // G. Final batch update for remaining bytes (must match encoder)
+    if batch_counter > 0 {
+        mixer.update_lazy(batch_counter, linear, &preds);
     }
 
     out
