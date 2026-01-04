@@ -16,6 +16,7 @@ except ImportError:
 encode_bytes = qres_rust.encode_bytes
 decode_bytes = qres_rust.decode_bytes
 get_residuals = qres_rust.get_residuals_py
+compress_matrix_v1 = qres_rust.compress_matrix_v1
 
 class QRESError(Exception):
     """Base exception for QRES errors."""

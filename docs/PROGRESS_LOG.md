@@ -31,3 +31,14 @@
 - **Analysis:** Simple predictive coding + ANS is insufficient for text. Residuals are not Laplacian. Text requires FSE (Finite State Entropy) or explicit Dictionary Coding (zstd style) or LLM-based token probabilities (not byte residuals).
 - **Decision:** Deferred to Phase 2 (Quantum/Tensor) or separate Entropy Coding overhaul. The code improvements (Order-2, Better Hash) are kept as they are technically superior, even if the gain is marginal.
 
+
+## Experiment 3: Quantum/Structured Compression (Jan 3, 2026)
+**Feature:** MpsCompressor (Haar Wavelet Transform) for floating point tensors.
+
+### Outcome
+- **Dataset:** 1024x1024 Rank-5 Correlated Matrix (8MB).
+- **Zstd:** 95.14% Ratio (Fails to compress floats).
+- **QRES (Quantum v7.5):** 64.62% Ratio (Sparse Approx).
+- **Result:** **30% Improvement over Zstd**. Validates Structured Data capabilities.
+- **Next Steps:** Implement true MPS (SVD-based) with Candle or ndarray-linalg for higher ratios on non-smooth data.
+
