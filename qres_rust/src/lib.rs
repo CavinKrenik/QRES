@@ -363,8 +363,22 @@ pub fn compress_chunk(
     // 1. Smart Fallback Pre-scan
     if chunk.len() > 512 {
         let entropy = calculate_sample_entropy(chunk);
+
+        // Low entropy (constant/near-constant data) - zstd is much faster and better
+        const LOW_ENTROPY_THRESHOLD: f32 = 0.5;
+        if entropy < LOW_ENTROPY_THRESHOLD {
+            let zstd_compressed = zstd::bulk::compress(chunk, 3).map_err(io::Error::other)?;
+            if zstd_compressed.len() < chunk.len() {
+                let mut out = Vec::with_capacity(5 + zstd_compressed.len());
+                out.push(0x01); // Flag: Zstd
+                out.extend_from_slice(&(chunk.len() as u32).to_le_bytes());
+                out.extend_from_slice(&zstd_compressed);
+                return Ok(out);
+            }
+        }
+
+        // High entropy (random data) - also use zstd fallback
         if entropy > HIGH_ENTROPY_THRESHOLD {
-            // Zstd Fallback logic
             let zstd_compressed = zstd::bulk::compress(chunk, 3).map_err(io::Error::other)?;
             if zstd_compressed.len() < chunk.len() {
                 let mut out = Vec::with_capacity(5 + zstd_compressed.len());
