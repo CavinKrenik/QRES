@@ -33,7 +33,15 @@
 - [x] **Fidelity Guarantees:** Enforce >0.98 threshold on state merges.
 - [x] **Multimodal Extension:** MetaBrain v4 training on diverse data (images, PDFs, audio, archives).
 
-## Long-Term Vision (v8.5+)
+## Phase 5: Brain-Like Quantum ML Breakthroughs (v8.0.1+ Planning)
+**Focus: Spiking Neural Networks & Quantum Entanglement**
+
+- [ ] **SNN Integration:** Replace LSTM with Spiking Neural Networks (snnTorch/Norse) for temporal sparsity.
+- [ ] **Quantum-Like ML:** Integrate QNNs (Quantum Neural Networks) via PennyLane/QuTiP for entangled state compression.
+- [ ] **Hive Mind Continual Learning:** Multi-Agent RL (PPO) over GossipSub (FedProx) for true collective intelligence.
+- [ ] **Breakthrough Ratios:** Target IoT <0.30, Text <0.15 via combined SNN-QNN strategies.
+
+## Long-Term Vision (v9.0+)
 **Focus: Production Deployment & Global Swarm**
 
 1. **Global P2P Quantum Swarm:**
