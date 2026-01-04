@@ -1,6 +1,5 @@
 use crate::predictors::Predictor;
 
-
 /// TransformerPredictor: A lightweight Self-Attention mechanism for byte streams.
 /// Architecture:
 /// - Window Size: 4096 bytes (Increased)
@@ -20,8 +19,6 @@ impl TransformerPredictor {
             pos: 0,
         }
     }
-
-
 }
 
 impl Predictor for TransformerPredictor {
