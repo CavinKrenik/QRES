@@ -29,7 +29,7 @@ impl Predictor for TransformerPredictor {
 
         let query_start = self.pos.wrapping_sub(4);
         let q_idx = query_start & self.buffer_mask;
-        
+
         // Cache query bytes to registers
         let q0 = self.history[q_idx] as i32;
         let q1 = self.history[(q_idx + 1) & self.buffer_mask] as i32;
@@ -54,7 +54,7 @@ impl Predictor for TransformerPredictor {
             let d1 = (q1 - self.history[(k_idx + 1) & self.buffer_mask] as i32).abs();
             let d2 = (q2 - self.history[(k_idx + 2) & self.buffer_mask] as i32).abs();
             let d3 = (q3 - self.history[(k_idx + 3) & self.buffer_mask] as i32).abs();
-            
+
             let dist = d0 + d1 + d2 + d3;
 
             // OPTIMIZATION 2: Early Exit on Perfect Match
@@ -62,13 +62,13 @@ impl Predictor for TransformerPredictor {
                 // If we found an exact sequence match in history, USE IT.
                 // This is effectively LZ77 logic inside the transformer.
                 let val = self.history[key_pos_end & self.buffer_mask];
-                return val; 
+                return val;
             }
 
             // Inverse distance weighting
             let weight = 1.0 / (1.0 + dist as f32 * 0.5);
             let value = self.history[key_pos_end & self.buffer_mask] as f32;
-            
+
             sum_values += value * weight;
             sum_weights += weight;
         }
