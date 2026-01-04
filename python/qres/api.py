@@ -38,9 +38,9 @@ class QRES_API:
         
         # Load MetaBrain (PPO) if available
         self.metabrain = None
-        if PPO_AVAILABLE and os.path.exists("ai/metabrain_ppo_v2.zip"):
+        if PPO_AVAILABLE and os.path.exists("ai/metabrain_ppo_v3.zip"):
             try:
-                self.metabrain = PPO.load("ai/metabrain_ppo_v2.zip")
+                self.metabrain = PPO.load("ai/metabrain_ppo_v3.zip")
                 print("[API] MetaBrain (PPO) loaded successfully.")
             except Exception as e:
                 print(f"[API] Failed to load MetaBrain: {e}")
@@ -242,12 +242,24 @@ class QRES_API:
         weights = None
         if self.metabrain:
             try:
-                # Feature Extraction: Normalized Byte Histogram
+                # Feature Extraction: Normalized Byte Histogram + Entropy
                 # Using numpy for speed
                 arr = np.frombuffer(data, dtype=np.uint8)
-                counts = np.bincount(arr, minlength=256)
+                counts = np.bincount(arr, minlength=256).astype(np.float32)
+                
                 if len(data) > 0:
-                    obs = counts.astype(np.float32) / len(data)
+                    # Histogram feature
+                    norm_hist = counts / len(data)
+                    
+                    # Entropy calculation logic
+                    probs = counts[counts > 0] / len(data)
+                    entropy = -np.sum(probs * np.log2(probs))
+                    # Normalize entropy (0-8) -> 0-1
+                    norm_entropy = entropy / 8.0
+                    
+                    # Concatenate [Hist(256), Entropy(1)] -> (257,)
+                    obs = np.concatenate([norm_hist, [norm_entropy]])
+                    
                     action, _ = self.metabrain.predict(obs, deterministic=True)
                     
                     # Pack 6 floats (24 bytes) for Rust
