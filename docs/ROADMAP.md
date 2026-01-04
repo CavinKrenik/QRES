@@ -42,16 +42,19 @@
 - [x] **MetaBrain v5:** Trained SNN+QNN hybrid agent (261-dim observations, 24k timesteps).
 - [ ] **Breakthrough Ratios:** Target IoT <0.30, Text <0.15 via combined SNN-QNN strategies. *(In Progress)*
 
-## Long-Term Vision (v9.0+)
+## Long-Term Vision (v9.0+) - Partially Completed ✅
 **Focus: Production Deployment & Global Swarm**
 
 1. **Global P2P Quantum Swarm:**
-   - [ ] Sender: CLI Broadcast -> Rust Swarm Outbox.
-   - [ ] Receiver: Rust Swarm Inbox -> Python Reconstruction Loop.
-   - [ ] WAN Discovery: Kademlia Bootstrap (Server Mode) enabled.
-   - [ ] Full WAN Visualization in Studio.
+   - [x] Sender: CLI Broadcast -> Rust Swarm Outbox (`python/qres/swarm_cli.py`).
+   - [x] Receiver: Rust Swarm Inbox -> Python Reconstruction Loop.
+   - [x] WAN Discovery: Kademlia Bootstrap (Server Mode) enabled in `swarm.rs`.
+   - [ ] Full WAN Visualization in Studio. *(Next: Update `SwarmViz.svelte`)*
 
-2. **Advanced Training:** Federated RL across swarms; auto-tuning on user data.
+2. **Advanced Training:**
+   - [x] Federated RL with KL-FedDis divergence filtering (`ai/hive_mind.py`).
+   - [x] Fed2Com delta compression for efficient Epiphany sharing (`swarm_cli.py`).
+   - [ ] Auto-tuning on user data (v9.0 roadmap).
 
 ## Success Metrics
 
