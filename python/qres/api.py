@@ -15,6 +15,12 @@ from quantum import QuantumEncoder
 from neural import NeuralOptimizer
 from persistent import WorldStateManager
 try:
+    from stable_baselines3 import PPO
+    PPO_AVAILABLE = True
+except ImportError:
+    PPO_AVAILABLE = False
+import struct
+try:
     from . import qres_rust
 except ImportError:
     try:
@@ -30,6 +36,15 @@ class QRES_API:
         self.neural = NeuralOptimizer()
         self.brain_weights = None
         
+        # Load MetaBrain (PPO) if available
+        self.metabrain = None
+        if PPO_AVAILABLE and os.path.exists("ai/metabrain_ppo_v2.zip"):
+            try:
+                self.metabrain = PPO.load("ai/metabrain_ppo_v2.zip")
+                print("[API] MetaBrain (PPO) loaded successfully.")
+            except Exception as e:
+                print(f"[API] Failed to load MetaBrain: {e}")
+
         # Phase 4: Persistent World State
         self.persistence_enabled = enable_persistence
         if enable_persistence:
@@ -224,9 +239,27 @@ class QRES_API:
         return True
 
     def _compress_standard(self, data: bytes) -> bytes:
+        weights = None
+        if self.metabrain:
+            try:
+                # Feature Extraction: Normalized Byte Histogram
+                # Using numpy for speed
+                arr = np.frombuffer(data, dtype=np.uint8)
+                counts = np.bincount(arr, minlength=256)
+                if len(data) > 0:
+                    obs = counts.astype(np.float32) / len(data)
+                    action, _ = self.metabrain.predict(obs, deterministic=True)
+                    
+                    # Pack 6 floats (24 bytes) for Rust
+                    if len(action) >= 6:
+                         weights = b''.join([struct.pack('<f', float(x)) for x in action[:6]])
+                        #  print(f"[API] MetaBrain weights: {[f'{x:.2f}' for x in action[:6]]}")
+            except Exception as e:
+                print(f"[API] MetaBrain error: {e}")
+
         if qres_rust:
             try:
-                return qres_rust.encode_bytes(data, 0, None)
+                return qres_rust.encode_bytes(data, 0, weights)
             except Exception as e:
                 print(f"[API] Rust backend warning: {e}")
                 return data

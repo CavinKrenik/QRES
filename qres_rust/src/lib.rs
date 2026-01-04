@@ -343,7 +343,7 @@ pub fn compress_chunk(
     _weights: Option<&[u8]>,
     _lossy: Option<u8>,
 ) -> io::Result<Vec<u8>> {
-    const HIGH_ENTROPY_THRESHOLD: f32 = 5.8;
+    const HIGH_ENTROPY_THRESHOLD: f32 = 7.8;
 
     // 0. Interleave Detection (Smart Pre-Pass)
     if chunk.len() > 1024 {
@@ -395,7 +395,7 @@ pub fn compress_chunk(
         let entropy = calculate_sample_entropy(chunk);
 
         // Low entropy (constant/near-constant data) - zstd is much faster and better
-        const LOW_ENTROPY_THRESHOLD: f32 = 3.5;
+        const LOW_ENTROPY_THRESHOLD: f32 = 0.2;
         if entropy < LOW_ENTROPY_THRESHOLD {
             let zstd_compressed = zstd::bulk::compress(chunk, 3).map_err(io::Error::other)?;
             if zstd_compressed.len() < chunk.len() {
