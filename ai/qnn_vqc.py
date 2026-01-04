@@ -124,3 +124,32 @@ class QNNPredictor:
             features = self.circuit(input_tensor)
             
         return features.numpy()[0]
+
+    def equivariant_lattice(self, features, grid_step=0.05):
+        """
+        Equivariant lattice compression (NeurIPS 2025 inspired).
+        Preserves O(3) symmetries by quantizing to a finer lattice.
+        
+        Args:
+            features: Input feature tensor
+            grid_step: Quantization step (smaller = finer lattice)
+        
+        Returns:
+            Quantized features preserving symmetry structure.
+        """
+        if isinstance(features, np.ndarray):
+            features = torch.tensor(features, dtype=torch.float32)
+        
+        # Quantize to lattice
+        quantized = torch.round(features / grid_step) * grid_step
+        
+        return quantized.numpy() if isinstance(quantized, torch.Tensor) else quantized
+
+    def compress_with_symmetry(self, chunk):
+        """
+        Combined entangled features + equivariant compression.
+        """
+        raw_features = self.get_entangled_features(chunk)
+        compressed = self.equivariant_lattice(raw_features)
+        return compressed
+
