@@ -12,6 +12,8 @@ try:
     EMBED_AVAILABLE = True
 except ImportError:
     EMBED_AVAILABLE = False
+    
+from snn_predictor import SNNPredictor  # Breakthrough 1: SNN Integration
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import DummyVecEnv
 from stable_baselines3.common.callbacks import CheckpointCallback
@@ -121,6 +123,10 @@ class CompressionEnv(gym.Env):
         # Action: 6 continuous weights for the Mixer [0, 1]
         self.action_space = spaces.Box(low=0, high=1.0, shape=(6,), dtype=np.float32)
         
+        # SNN for sparsity reward (simulated integration)
+        self.snn = SNNPredictor() 
+
+        
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
         # Shuffle buffer on reset for randomness
@@ -181,6 +187,12 @@ class CompressionEnv(gym.Env):
            if ratio > 1.05:
                reward -= 10.0
                
+           # --- Breakthrough 1: SNN Sparsity Reward ---
+           # Reward confident/sparse SNN predictions
+           if len(chunk) > 10:
+              probs = self.snn.predict_next(chunk[:10]) 
+              if np.max(probs) > 0.5:
+                  reward += 1.0
         except Exception as e:
            print(f"Error in compression: {e}")
            reward = -10.0
