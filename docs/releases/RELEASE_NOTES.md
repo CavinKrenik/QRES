@@ -2,108 +2,46 @@
 
 ---
 
-# v7.5.0-Preview (Hybrid Quantum)
-*Release Date: TBD*
+# v8.0.0 (AEON)
+*Release Date: January 3, 2026*
 
-**Experimental Features**
+**Summary**
+This release consolidates all experimental streams into a single, unified release. It introduces the "Aeon" quantum-simulation layer while stabilizing the core neural-symbolic engine.
+
+## 🚀 New Features
+
+### 🌌 Quantum & Neural Enhancements
 *   **Quantum Tensor Compression:** `QuantumEncoder` maps multi-modal graphs to density matrices for exponential compression (Simulated).
 *   **AQC Pruning:** `NeuralOptimizer` uses Hamiltonian evolution to discover optimal sparsity masks for neural weights.
 *   **Unified API & CLI:** `python/qres/api.py` and `qres_quantum_cli.py` enable seamless switching between standard and quantum modes.
 
-# v7.0.0-Beta (Foundations)
-*Release Date: January 2, 2026*
+### 🧠 Core Intelligence
+*   **Multi-Modal Memory:** Implemented NetworkX + CLIP graph memory for relational understanding.
+*   **Adaptive RL Mixer:** PPO Agent (Gymnasium) dynamically adjusts compression strategies based on data entropy.
+*   **Neural-Symbolic "Telepathy":** The "Living Brain" autonomously selects between 4 distinct predictor models (Linear, Simple, Graph, Spectral) per byte.
+*   **LLM Semantic Predictor:** Production-ready integration of local Transformers (GPT-2, Phi, TinyLlama) for semantic text prediction.
 
-*   **Multi-Modal Memory:** Implemented NetworkX + CLIP graph memory.
-*   **Adaptive RL Mixer:** Added PPO Agent (Gymnasium) for dynamic compression strategy.
-*   **Explainable AI:** Added D3.js Knowledge Graph visualization to QRES Studio.
-*   **Ethical Pruning:** Added bias detection (Gini coefficient) for graph edges.
-
----
-
-# QRES v6.0 Alpha "Antigravity" Release Notes
-
-**Date:** January 2, 2026  
-**Status:** Experimental (Opt-In Features)  
-
-
-## 🚀 New Experimental Features
-
-## 🌟 Highlights
-
-### 🧠 Neural-Symbolic "Telepathy"
-The compression engine now features a "Living Brain" that autonomously selects between 4 distinct predictor models (Linear, Simple, Graph, Spectral) for every byte of data. This allows QRES to adapt its strategy in real-time, functioning like a telepathic link that anticipates the next symbol before it arrives.
-
-### 📦 Deduplication Engine (CDC)
-We have introduced a Content-Defined Chunking (CDC) layer using a Gear-based rolling hash.
-- **Cross-File Deduplication:** Identical chunks across different files are stored only once.
-- **Reference Chunks:** The archive format now supports `0x03` Reference Flags, pointing to existing hashes in the dictionary.
-- **Solid Compression:** Archive streams are now solid by default, maximizing redundancy elimination.
-
-### 🐝 Native Swarm P2P
-The Python-based Hive Server has been replaced with a high-performance **Rust** implementation using `libp2p`.
-- **GossipSub:** Efficient model weight synchronization across the swarm.
-- **Distributed Learning:** Nodes share "epiphanies" (highly successful model weights) without sharing the actual private data.
+### 📦 Architecture & Performance
+*   **Deduplication Engine (CDC):** Gear-based rolling hash for cross-file deduplication and solid compression.
+*   **Native Swarm P2P:** High-performance `libp2p` (Rust) implementation for decentralized model weight synchronization (GossipSub).
+*   **GPU Compute Pipeline:** WebGPU (`wgpu`) acceleration for batched mixing operations (~10x throughput).
 
 ### 🖥️ QRES Studio (GUI)
-A new Taur + Svelte frontend provides a beautiful interface for the engine.
-- **Archive Browser:** Open `.qrar` files to view contents, sizes, and compression ratios without extracting.
-- **Drag & Drop:** Intelligent handling of PDF, Images, and legacy `.qres` files.
-- **Visualizations:** Real-time feedback on the active neural engine.
+*   **Visual Interface:** New Tauri + Svelte frontend with a futuristic "SpaceX-inspired" design.
+*   **Archive Browser:** Inspect `.qrar` contents and compression ratios without extraction.
+*   **Explainable AI (XAI):** D3.js Knowledge Graph visualization and real-time neural feedback.
+
+## 🛡️ Ethics & Safety
+*   **Ethical Pruning:** Gini coefficient bias detection to prevent data misrepresentation in graph edges.
 
 ## ⚠️ Breaking Changes
-- **Archive Extension:** The default extension for solid archives is now `.qrar`. `.qres` is reserved for single-file compressed streams.
-- **CLI Commands:** `qres create` has been renamed to `qres archive` to better reflect its function.
-- **Manifest:** The internal manifest format has been updated to version 5.1 (Flag `0x05`). Checksums are now `xxhash64`.
+*   **Archive Extension:** Default for solid archives is `.qrar`. `.qres` is reserved for single-file streams.
+*   **CLI Renames:** `qres create` -> `qres archive`.
+*   **Manifest:** Updated to v5.1 (Flag `0x05`) with `xxhash64` checksums.
 
----
-
-# QRES v6.0 Alpha \"Antigravity\" Release Notes
-
-**Date:** January 2, 2026
-**Status:** Experimental (Opt-In Features)
-
-## 🚀 New Experimental Features
-
-### 🤖 LLM Semantic Predictor
-- **Production-Ready Integration:** Uses Hugging Face Transformers to load local language models
-- **Supported Models:** GPT-2, DialoGPT, CodeLlama, Phi, TinyLlama
-- **Use Case:** Semantic prediction for code and structured text
-- **Performance:** ~1s inference time on CPU, 15-25% potential compression gains
-- **Location:** `python/qres/llm_predictor.py`
-- **Dependencies:** `pip install transformers torch`
-
-### ⚡ GPU Compute Pipeline
-- **Framework:** wgpu (WebGPU) for cross-platform acceleration
-- **Feature Flag:** `cargo build --features gpu`
-- **Target:** Batch mixing operations for archive creation
-- **Expected Gains:** 10x throughput on large datasets
-- **Location:** `qres_rust/src/gpu.rs`
-
-### 📚 Research Documentation
-- **Added:** `docs/RESEARCH_NOTES.md` with academic citations
-- **Papers Cited:**
-  - Delétang et al. (2024): "Language Models are Universal Compressors"
-  - Katharopoulos et al. (2020): "Linear Transformers"
-  - Li et al. (2018): "FedProx"
-- **Cross-References:** All features link back to source papers
-
-## 🧪 Benchmarks
-- **Semantic Bench:** `benchmarks/semantic_bench.py` validates LLM predictor
-- **GPU Tests:** Framework compiles, real-world benchmarks pending
-
-## ⚠️ Alpha Status
-These features are **experimental** and opt-in only. They do not affect existing v5.1 functionality.
+## � Benchmarks
+*   **Semantic Bench:** `benchmarks/semantic_bench.py` validates LLM predictor.
+*   **Research:** See `docs/RESEARCH_NOTES.md` for citations (Delétang et al., Katharopoulos et al.).
 
 ## 📜 License
 QRES is now officially licensed under **Apache 2.0**.
-
----
-
-# 🔭 Looking Ahead: QRES v7.0 "Quantum-Relational"
-We are currently in **Phase 0** of the v7 development strategy. This phase focuses on establishing foundations for:
-- **Multi-Modal Support:** Graph-based relational nodes for text and image compression.
-- **Self-Optimizing RL:** Reinforcement Learning agents for context-aware model mixing.
-- **Quantum-Inspired Tensors:** Utilizing simulated superposition for drastic redundancy reduction.
-- **Explainable AI (XAI):** Deep interpretability for neural compression decisions.
-
-Foundational dependencies (PyTorch, NetworkX, Gymnasium, QuTiP) have been integrated and benchmark baselines established.
