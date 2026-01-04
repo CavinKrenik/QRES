@@ -38,9 +38,9 @@ class QRES_API:
         
         # Load MetaBrain (PPO) if available
         self.metabrain = None
-        if PPO_AVAILABLE and os.path.exists("ai/metabrain_ppo_v3.zip"):
+        if PPO_AVAILABLE and os.path.exists("ai/metabrain_ppo_v4.zip"):
             try:
-                self.metabrain = PPO.load("ai/metabrain_ppo_v3.zip")
+                self.metabrain = PPO.load("ai/metabrain_ppo_v4.zip")
                 print("[API] MetaBrain (PPO) loaded successfully.")
             except Exception as e:
                 print(f"[API] Failed to load MetaBrain: {e}")

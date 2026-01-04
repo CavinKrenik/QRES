@@ -6,6 +6,12 @@ import sys
 import struct
 import math
 import random
+from PIL import Image
+try:
+    from sentence_transformers import SentenceTransformer
+    EMBED_AVAILABLE = True
+except ImportError:
+    EMBED_AVAILABLE = False
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import DummyVecEnv
 from stable_baselines3.common.callbacks import CheckpointCallback
@@ -39,26 +45,71 @@ def generate_synthetic_data(size=1024, mode='random'):
         # Random high entropy
         return os.urandom(size)
 
+def load_real_chunks(data_dir='data/', chunk_size=1024):
+    all_chunks = []
+    print(f"Loading real training data from {data_dir}...")
+    
+    for root, _, files in os.walk(data_dir):
+        for f in files:
+            full_path = os.path.join(root, f)
+            try:
+                # Handle Images via raw bytes (Simulating pure compression first)
+                if f.lower().endswith(('.jpg', '.png', '.jpeg')):
+                    with Image.open(full_path) as img:
+                        # Convert to RGB to standardize
+                        img = img.convert('RGB')
+                        # Get raw bytes
+                        raw = img.tobytes()
+                        # Chunk it
+                        for i in range(0, len(raw), chunk_size):
+                            all_chunks.append(raw[i:i+chunk_size])
+                            
+                # Handle Text/Binary/Other
+                else:
+                    with open(full_path, 'rb') as f_obj:
+                        raw = f_obj.read()
+                        
+                        # Special handling for "other" edge cases (PDF/WAV/GZ logic)
+                        if f.lower().endswith('.pdf') or f.lower().endswith('.wav') or f.lower().endswith('.gz'):
+                            # Treat as opaque bytes but ensure they get into the mix
+                            # Potentially add metadata tag in future
+                            pass
+                            
+                        for i in range(0, len(raw), chunk_size):
+                            all_chunks.append(raw[i:i+chunk_size])
+            except Exception as e:
+                pass # Skip bad files
+                
+    print(f"Loaded {len(all_chunks)} chunks from real files.")
+    return all_chunks
+
 class CompressionEnv(gym.Env):
-    def __init__(self, data_path=None, chunk_size=1024):
+    def __init__(self, data_path=None, data_dir='data/', chunk_size=1024):
         super(CompressionEnv, self).__init__()
         
         self.chunk_size = chunk_size
         self.data_buffer = []
-        
-        # Load real data if available
+
+        # 1. Load Real Data from data/ folder
+        real_chunks = load_real_chunks(data_dir, chunk_size)
+        self.data_buffer.extend(real_chunks)
+
+        # 2. Load specific large file if needed (legacy support)
         if data_path and os.path.exists(data_path):
             with open(data_path, 'rb') as f:
-                # Read up to 5MB for training pool
+                # Read up to 5MB 
                 real_data = f.read(5 * 1024 * 1024)
                 for i in range(0, len(real_data), chunk_size):
                     self.data_buffer.append(real_data[i:i+chunk_size])
         
-        # If no data or too little, generate synthetic diversity
-        while len(self.data_buffer) < 1000:
+        # 3. Fill remaining with synthetic if needed
+        # We want a mix, so let's guarantee at least 500 synthetic chunks too
+        for _ in range(500):
             modes = ['text', 'sine', 'constant', 'random']
             mode = random.choice(modes)
             self.data_buffer.append(generate_synthetic_data(chunk_size, mode))
+            
+        random.shuffle(self.data_buffer)
             
         random.shuffle(self.data_buffer)
         self.num_chunks = len(self.data_buffer)
@@ -146,7 +197,7 @@ class CompressionEnv(gym.Env):
 
 def make_env():
     # Helper for VecEnv
-    return CompressionEnv(data_path="iot_telemetry.dat")
+    return CompressionEnv(data_path="iot_telemetry.dat", data_dir="data/")
 
 if __name__ == "__main__":
     print("="*60)
@@ -173,13 +224,19 @@ if __name__ == "__main__":
     )
     
     print(f"Starting training on {num_envs} vectorized environments...")
-    print("Target: 10,000 timesteps")
+    print("Target: 20,000 timesteps")
     
-    # Checkpoint every 2k steps
-    checkpoint_callback = CheckpointCallback(save_freq=2000, save_path='./ai/logs/', name_prefix='metabrain_v3')
+    # Checkpoint every 5k steps
+    checkpoint_callback = CheckpointCallback(save_freq=5000, save_path='./ai/logs/', name_prefix='metabrain_v4')
     
-    model.learn(total_timesteps=10000, callback=checkpoint_callback)
+    # Load previous model if available to continue learning
+    if os.path.exists("ai/metabrain_ppo_v3.zip"):
+         print("Resuming from v3 model...")
+         model = PPO.load("ai/metabrain_ppo_v3.zip", env=env)
+         model.set_parameters("ai/metabrain_ppo_v3.zip")
     
-    output_path = "ai/metabrain_ppo_v3.zip"
+    model.learn(total_timesteps=20000, callback=checkpoint_callback)
+    
+    output_path = "ai/metabrain_ppo_v4.zip"
     model.save(output_path)
     print(f"\n✅ Training Complete. Model saved to {output_path}")
