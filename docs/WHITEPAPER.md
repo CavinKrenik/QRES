@@ -36,11 +36,19 @@ The v5.1 architecture adds a long-term memory via Content-Defined Chunking (CDC)
 *   **Long-term Memory:** The Dedup Hash Map (Unlimited).
 This allows QRES to recall and reference data seen Gigabytes or Terabytes ago, essential for archival storage.
 
-## 3. Quantum-Inspired Tensors (v7.0)
-QRES v7 introduces the **QuantumEncoder**, utilizing Tensor Networks to represent the state space of the data.
-*   **Method:** We model the data stream as a Matrix Product State (MPS).
-*   **Pruning:** Using Adiabatic Quantum Computation (AQC) principles (simulated via QuTiP), we prune the tensor network to its most "energetically favorable" (highest compression) state.
-*   **Advantage:** Allows for exponential compression of highly correlated multi-dimensional data.
+## 3. Quantum-Inspired & Spiking Architectures (v8.1+)
+
+### 3.1 Spiking Neural Networks (SNN) - The Biological Leap
+To surpass the limits of static weight multiplication, QRES adopts the biological "Spike" paradigm.
+*   **Temporal Coding:** Information is encoded in the *timing* of pulses, not just magnitude.
+*   **Sparsity:** SNNs are quiescent (energy-neutral) until stimulation. Ideally, perfectly compressed data looks like "silence" to the network.
+*   **STDP Learning:** We employ Spike-Timing Dependent Plasticity to physically prune connections that do not contribute to data prediction, effectively "forgetting" noise.
+
+### 3.2 Quantum Entanglement for Correlation
+QRES v8.1 introduces hybrid Quantum-Classical networks (QNN).
+*   **The Idea:** Classical bits are independent. Qubits can be entangled.
+*   **Method:** We map a window of bytes to a quantum state $|\psi\rangle$. A Variational Quantum Circuit (VQC) rotates this state to find a basis where the entanglement entropy is minimized (disentanglement).
+*   **Result:** Highly correlated complex data (like encrypted sensors or chaotic physics data) collapses into simple basis states.
 
 ## 4. Conclusion
 QRES bridges the gap between fast, heuristic compression (LZ4) and slow, generative compression (LLMs). By treating compression as an intelligent agent rather than a math problem, we achieve the "Singularity" of optimal entropy reduction.
