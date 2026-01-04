@@ -45,20 +45,23 @@ class TestPhase1(unittest.TestCase):
 
     def test_rl_env(self):
         print("\n[Test] RL Environment")
-        from ai.rl_mixer_env import CompressionMixingEnv
-        env = CompressionMixingEnv()
+        # Updated to use CompressionEnv from train_compression_ppo (rl_mixer_env was removed)
+        sys.path.insert(0, os.path.join(os.getcwd(), 'ai'))
+        from train_compression_ppo import CompressionEnv
+        
+        # CompressionEnv requires data, use synthetic mode
+        env = CompressionEnv(data_path=None, data_dir='data/', chunk_size=1024)
         obs, _ = env.reset()
         
-        # Check observation shape
-        self.assertEqual(obs.shape, (5,))
+        # Check observation shape (261 for v9.0: 256 hist + 1 entropy + 4 QNN)
+        self.assertEqual(obs.shape[0], 261)
         
         # Check Step
-        action = np.array([0.25, 0.25, 0.25, 0.25], dtype=np.float32)
+        action = np.array([0.2, 0.2, 0.2, 0.2, 0.1, 0.1], dtype=np.float32)
         obs, reward, done, _, info = env.step(action)
         
-        print(f"Step Reward: {reward}, Ratio: {info['ratio']}")
+        print(f"Step Reward: {reward}")
         self.assertIsInstance(reward, float)
-        self.assertIsInstance(info['ratio'], float)
 
     def test_tensor_sim(self):
         print("\n[Test] Quantum Tensor Sim (Legacy)")
