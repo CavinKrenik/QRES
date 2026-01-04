@@ -1,0 +1,20 @@
+[
+    {
+        "timestamp": "2026-01-04T10:00:00Z",
+        "sensor_id": "sensor_01",
+        "value": 23.5,
+        "unit": "C"
+    },
+    {
+        "timestamp": "2026-01-04T10:01:00Z",
+        "sensor_id": "sensor_02",
+        "value": 45.2,
+        "unit": "%"
+    },
+    {
+        "timestamp": "2026-01-04T10:02:00Z",
+        "sensor_id": "sensor_01",
+        "value": 23.8,
+        "unit": "C"
+    }
+]
