@@ -4,76 +4,63 @@
 [![Build Status](https://img.shields.io/github/actions/workflow/status/CavinKrenik/QRES/test.yml?style=flat-square)](https://github.com/CavinKrenik/QRES/actions)
 [![License](https://img.shields.io/badge/license-Apache--2.0-green?style=flat-square)](LICENSE)
 
-**QRES (Quantum-Relational Encoding System)** is a next-generation compression platform designed for the "Singularity Era" of data. It moves beyond static algorithms like Deflate or Zstd by using **Neural-Symbolic Telepathy**—a hybrid approach where an autonomous "Living Brain" dynamically selects the optimal compression strategy for every micro-chunk of data.
+**QRES (Quantum-Relational Encoding System)** is a next-generation compression platform designed for the "Singularity Era" of data. It moves beyond static algorithms by using **Neural-Symbolic Telepathy**—a hybrid approach where an autonomous "Living Brain" dynamically selects the optimal compression strategy for every micro-chunk of data.
 
 > "Data is not static; your compressor shouldn't be either."
+
+**Topics:** ai-compression, neural-symbolic, quantum-inspired, rust, python, p2p-swarm, reinforcement-learning
+
+---
 
 ## 🚀 Key Features
 
 ### 🧠 Cognitive Context & The "Living Brain"
-QRES does not just "compress"; it **understands**. 
-- **Neural-Symbolic Hybrid**: Combines the raw speed of linear prediction with the pattern-recognition of distinct neural models (Simple, Graph, Spectral, LSTM).
-- **Zero-Shot Adaptation**: The engine learns the data structure in real-time, adapting its internal weights to match the entropy of the stream instantly.
+- **Neural-Symbolic Hybrid:** Combines raw speed (Linear) with deep pattern recognition (Graph, Spectral, LSTM).
+- **LLM Semantic Prediction (v6):** Uses Transformer-based models (CodeLlama/GPT) to predict text and code streams with unprecedented accuracy.
+- **Reinforcement Learning (v7):** A PPO Agent (Gymnasium) autonomously learns the optimal compression strategy for your specific data type.
+
+### ⚛️ Quantum-Inspired Tensors (v7/v8)
+- **Tensor Networks:** Simulates quantum states to represent complex data relationships in high-dimensional space.
+- **Noise Simulation:** Validated against QuTiP noise models for robustness.
+- **Ethical Pruning:** Automatically detects and mitigates bias in the learned representation.
 
 ### 🐝 Swarm Intelligence (P2P)
-Compression is no longer an isolated task.
-- **Hive Mind**: Instances of QRES can synchronize their learned models across a private peer-to-peer swarm.
-- **Distributed Learning**: When one node learns how to compress a specific log format effectively, the entire swarm gets smarter.
+- **Hive Mind:** Nodes form a Kademlia DHT network to share learned models ("Epiphanies") via GossipSub.
+- **Persistent World State:** Synchronize your compressed "World State" across devices with >0.98 fidelity.
+- **Distributed Learning:** Train on edge devices and broadcast the wisdom to the swarm.
 
-### 📦 Solid Archives (QRAR)
-The new **QRAR** format brings full archival capabilities.
-- **Deduplication Engine**: Integrated Content-Defined Chunking (CDC) eliminates duplicate data across terabytes of files.
-- **Solid Compression**: Concatenates similar files to exploit cross-file redundancy.
-- **"Telepathy" Browsing**: Browse, search, and extract individual files from massive solid archives without decompressing the whole stream.
+### 📦 QRAR Archives
+- **Deduplication:** Content-Defined Chunking (CDC) eliminates redundancy across petabytes of data.
+- **Solid Compression:** Archive-aware optimization for maximum density.
 
-### 🤖 AI-Powered Prediction (v6.0 Alpha)
-Experimental features pushing compression to the next level:
-- **Research-Backed**: All features cite academic papers (see [RESEARCH_NOTES.md](docs/RESEARCH_NOTES.md)).
+---
 
-## 🔮 v7 Vision: Quantum-Relational Intelligence
-We are actively transitioning from a strong relational compressor to a future-proof, multi-modal powerhouse. 
-- **Multi-Modal Graphs**: Treating text, images, and sensors as unified relational nodes.
-- **Self-Optimizing RL**: Autonomous strategy selection via Reinforcement Learning (Gymnasium).
-- **Quantum-Inspired Tensors**: Simulated quantum states for exponential data representation efficiency.
-- **Interpretability**: "Why" reports for every compression decision.
+## 📊 Current Status
+
+| Version | Status | Focus |
+| :--- | :--- | :--- |
+| **v6.0.0-alpha** | **Stable** | AI Foundation (LLM, GPU, Starship GUI) |
+| **v7.0** | **Preview** | Quantum Foundations (Phases 0-2 Complete) |
+| **v8.1** | **Preview** | Persistent World & Swarm Sync (Phase 4 Complete) |
+
+---
 
 ## ⚡ Performance
 
-Comparisons performed on the `IoT-Drift` and `Shakespeare` corpora.
+See [BENCHMARKS.md](docs/BENCHMARKS.md) for full analysis.
 
 | Engine | Ratio (IoT) | Ratio (Text) | Speed (MB/s) |
 | :--- | :---: | :---: | :---: |
-| **QRES v6.0α** | **0.07*** | **0.29*** | **180** |
+| **QRES v7.0** | **~0.048*** | **~0.19*** | **~150** |
+| **QRES v6.0α** | **0.07** | **0.29** | **180** |
 | Zstd (L19) | 0.12 | 0.35 | 25 |
-| Gzip (L9) | 0.28 | 0.42 | 40 |
-| LZ4 | 0.55 | 0.60 | 800 |
 
-*QRES v6.0 Alpha introduces LLM-based semantic prediction for even higher density. Targets are estimates based on initial benchmarks.*
+---
 
-## 💻 Requirements
+## 🛠️ Installation & Usage
 
-- **CPU:** x86_64 with **AVX2** support, or ARM64 with **NEON**. The neural mixer relies heavily on SIMD vectorization.
-- **OS:** Linux (Kernel 5.4+), macOS (12+), Windows 10+.
-- **Software:** Rust 1.75+ (for building from source), Python 3.8+ (for API).
-
-## 🛠️ Quick Start
-
-### 1. The CLI (Rust)
-Ideal for servers and pipelines.
-
-```bash
-# Compress a file
-qres compress data.log --out data.qres
-
-# Decompress
-qres decompress data.qres
-
-# Create an archive
-qres archive --dir ./logs --out logs.qrar
-```
-
-### 2. Python API
-Integrate into your AI workflows.
+### 1. Python API
+The easiest way to integrate QRES into your AI workflows. *PyPI package coming soon.*
 
 ```bash
 pip install qres
@@ -81,63 +68,61 @@ pip install qres
 
 ```python
 import qres
+# Use the Semantic Predictor (LLM)
+from qres.llm_predictor import SemanticPredictor
 
-data = b"..." * 1000
-compressed = qres.encode_bytes(data)
-original = qres.decode_bytes(compressed)
+predictor = SemanticPredictor(model="codellama-7b")
+data = b"def fibonacci(n): ..."
+compressed = qres.encode_bytes(data, predictor=predictor)
+```
+
+### 2. Quantum CLI (v8.2 Preview)
+Interact with the research-grade Quantum core.
+
+```bash
+# Compress with Quantum Tensor Networks (QuTiP Backend)
+python qres_quantum_cli.py data.txt --mode quantum --save-state
+
+# Optimize Neural Weights via and AQC Simulation
+python qres_quantum_cli.py --optimize
+
+# Start Quantum Swarm Receiver
+python qres_quantum_receiver.py --dir ./inbox
 ```
 
 ### 3. Archive Studio (GUI)
-> [!WARNING]
-> **Experimental Preview**: The QRES Studio interface is currently under active development. Expect rapid changes and potential instabilities.
-
-A premium, "AEON" branded interface inspired by SpaceX UIs. Built with **Svelte 5** and **Tauri v2** for peak performance and stability.
+A premium, "AEON" branded interface. Built with **Svelte 5** and **Tauri v2**.
+Visualizes the **Living Brain** decision graph and Swarm topology in real-time.
 
 ![QRES Studio AEON](docs/screenshots/aeon_studio_preview.png)
+*(Note: Screenshot is a placeholder for the v6 Starship revamp)*
 
-*   **Futuristic Dashboard**: Real-time telemetry for Swarm activity, efficiency, and bytes saved.
-*   **Neural Graph Visualization**: Interactive D3.js powered "hologram" of the Living Brain's decision graph.
-*   **Hive Mind Controls**: Peer discovery and swarm synchronization at your fingertips.
-*   **Starship UX**: Dark mode optics, glassmorphism, and minimal-latency feedback.
-*   [Download Latest Release](https://github.com/CavinKrenik/QRES/releases)
+- [Download Latest Release](https://github.com/CavinKrenik/QRES/releases)
 
-### 4. Quantum CLI (v8.2 "AEON" Preview)
-Interact with the research-grade Quantum core.
-```bash
-# Compress with Quantum Tensor Networks
-python qres_quantum_cli.py data.txt --mode quantum
-
-# Optimize Neural Weights via AQC Simulation
-python qres_quantum_cli.py --optimize
-
-# Start Quantum Receiver (P2P Listener)
-python qres_quantum_receiver.py --dir quantum_inbox
-```
+---
 
 ## 📚 Documentation
+Detailed documentation is located in the `docs/` directory:
 
-Detailed documentation has been consolidated into the `docs/` directory:
-- **Python API:** `pip install qres` (Coming to PyPI). See [API Reference](docs/API_REFERENCE.md).
-- [**Whitepaper**](docs/WHITEPAPER.md): The theory behind Neural-Symbolic Compression.
-- [**Benchmarks**](docs/benchmarks/BENCHMARK_v5.md): Extensive performance analysis.
-- [**P2P Guides**](docs/guides/P2P_IMPLEMENTATION.md): Setting up your own Swarm.
-- [**Roadmap**](docs/ROADMAP.md): Future plans for Version 6.0 and beyond.
+- [**Roadmap**](docs/ROADMAP.md): Tracking v6, v7, and v8 progress.
+- [**Whitepaper**](docs/WHITEPAPER.md): The theory (Telepathy, Swarm, Deduplication).
+- [**Benchmarks**](docs/BENCHMARKS.md): Performance data.
+- [**P2P Implementation**](docs/guides/P2P_IMPLEMENTATION.md): How the Swarm works.
+- [**Research Notes**](docs/RESEARCH_NOTES.md): Academic citations.
 - [**Contributing**](docs/CONTRIBUTING.md): Join the Hive.
+
+---
 
 ## 🔬 Research & Citations
 QRES evolves by implementing cutting-edge compression theory.
-- **LLM Compression:** Inspired by *Delétang et al. (2024)*.
-- **Linear Attention:** Adapted from *Katharopoulos et al. (2020)*.
-- **Swarm FedProx:** Based on *Li et al. (2018)*.
+See [RESEARCH_NOTES.md](docs/RESEARCH_NOTES.md) for details.
 
-See [RESEARCH_NOTES.md](docs/RESEARCH_NOTES.md) for detailed bibliography and implementation strategies.
-
-## 🤝 Contributing
-
-We welcome contributions! See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for development setup.
-
-**License:** Apache 2.0 (see [LICENSE](LICENSE))
+- **LLM Compression:** *Delétang et al. (2024)*.
+- **Linear Attention:** *Katharopoulos et al. (2020)*.
+- **Swarm FedProx:** *Li et al. (2018)*.
 
 ---
+
+**License:** Apache 2.0 (see [LICENSE](LICENSE))
 
 *Designed by Cavin Krenik & The QRES Team.*
