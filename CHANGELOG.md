@@ -10,6 +10,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **CI/CD:** Resolved `qres_rust` import errors in continuous integration pipelines (bcfe3c6).
 - **Paths:** Fixed various file path issues for cross-platform compatibility.
 
+## [7.5.0-alpha] - 2026-01-03
+### Added
+- **Quantum Tensor Compression:** `MpsCompressor` (Haar Wavelet) backend for structured data (`qres_rust::quantum`).
+- **GPU Acceleration:** Added `wgpu` dependency and foundational bindings for hardware compute.
+- **Improved Performance:**
+  - IoT Telemetry: **51% Ratio** (Beats Zstd 57%) using Smart Interleave Detection (`0x03` flag).
+  - Structured Data: **64% Ratio** (Beats Zstd 95%) on correlated floating-point matrices.
+- **Python Bindings:** New `compress_matrix_v1` for tensor compression.
+
+### Changed
+- **Predictors:** Optimizations for `SpectralPredictor` (Linear Detrending) and `TransformerPredictor` (AVX2, 4KB window).
+- **Benchmarks:** Validated against Zstd on IoT and Structured data.
+
 ## [6.0.0-alpha] - 2026-01-02
 ### Added
 - **GUI Revamp (Starship/AEON):** Complete overhaul of QRES Studio using Tauri v2 and Svelte 5.
