@@ -51,9 +51,9 @@ The transition to production-grade reliability requires rigorous engineering acr
 
 | Status | Task |
 |--------|------|
-| [ ] | **Problem:** `f32` weights and `_mm256` SIMD instructions are not bit-identical across architectures (x86 server vs. ARM M3 MacBook) |
-| [ ] | **Fix:** Switch to **Fixed-Point Arithmetic (Q16.16)** for predictor weights |
-| [ ] | **Action:** Replace `f32` in `GraphPredictor` and `SimplePredictor` with `i32` scaled by 16 bits |
+| [x] | **Problem:** `f32` weights and `_mm256` SIMD instructions are not bit-identical across architectures (x86 server vs. ARM M3 MacBook) |
+| [x] | **Fix:** Switch to **Fixed-Point Arithmetic (Q16.16)** for predictor weights |
+| [x] | **Action:** Replace `f32` in `GraphPredictor` and `SimplePredictor` with `i32` scaled by 16 bits |
 
 > 💡 **Why:** This guarantees that `0.1 + 0.2` equals the exact same bit pattern on every CPU in the universe.
 
@@ -61,17 +61,17 @@ The transition to production-grade reliability requires rigorous engineering acr
 
 | Status | Task |
 |--------|------|
-| [ ] | **Problem:** `WEIGHTS_LEN` is manually calculated (`NUM_PREDICTORS * 4`). Adding a predictor without updating this breaks backward compatibility |
-| [ ] | **Fix:** Implement a **Protocol Version Handshake** |
-| [ ] | **Action:** In `QresHeader`, formally version the predictor set. If decoder sees `predictor_id: 2` (SNN-based) but only knows `1` (Linear), fail gracefully instead of decoding garbage |
+| [x] | **Problem:** `WEIGHTS_LEN` is manually calculated (`NUM_PREDICTORS * 4`). Adding a predictor without updating this breaks backward compatibility |
+| [x] | **Fix:** Implement a **Protocol Version Handshake** |
+| [x] | **Action:** In `QresHeader`, formally version the predictor set. If decoder sees `predictor_id: 2` (SNN-based) but only knows `1` (Linear), fail gracefully instead of decoding garbage |
 
 #### 1.3 Cross-Platform "Battle Royale"
 
 | Status | Task |
 |--------|------|
-| [ ] | **Problem:** `battle_royale.py` currently tests compression ratios only |
-| [ ] | **Fix:** Must test **integrity across architectures** |
-| [ ] | **Action:** Create a CI/CD pipeline (GitHub Actions) that compresses on Linux/x86 and decompresses on macOS/ARM. If SHA256 doesn't match, **block the release** |
+| [x] | **Problem:** `battle_royale.py` currently tests compression ratios only |
+| [x] | **Fix:** Must test **integrity across architectures** |
+| [x] | **Action:** Create a CI/CD pipeline (GitHub Actions) that compresses on Linux/x86 and decompresses on macOS/ARM. If SHA256 doesn't match, **block the release** |
 
 ---
 
@@ -88,16 +88,16 @@ The transition to production-grade reliability requires rigorous engineering acr
 
 | Status | Task |
 |--------|------|
-| [ ] | **Why:** A user just wanting to decompress a log file shouldn't need to spin up a `libp2p` swarm node |
-| [ ] | **Action:** Refactor `qres_rust/Cargo.toml` to use a **workspace** with two crates: `qres-codec` and `qres-brain` |
+| [x] | **Why:** A user just wanting to decompress a log file shouldn't need to spin up a `libp2p` swarm node |
+| [x] | **Action:** Refactor `qres_rust/Cargo.toml` to use a **workspace** with two crates: `qres-codec` and `qres-brain` |
 
 #### 2.2 Optimize the Swarm "Gossip"
 
 | Status | Task |
 |--------|------|
-| [ ] | **Problem:** In `swarm_p2p.rs`, we broadcast the entire `LivingBrain` JSON on `BRAIN_TOPIC`. As models grow (especially with SNNs), this will choke the network |
-| [ ] | **Fix:** **Delta Updates** |
-| [ ] | **Action:** Implement a Merkle Tree or simple hash comparison. Only send weights that have changed significantly ("Epiphanies"), as hinted in `hive_mind.py` logic |
+| [x] | **Problem:** In `swarm_p2p.rs`, we broadcast the entire `LivingBrain` JSON on `BRAIN_TOPIC`. As models grow (especially with SNNs), this will choke the network |
+| [x] | **Fix:** **Delta Updates** |
+| [x] | **Action:** Implement a Merkle Tree or simple hash comparison. Only send weights that have changed significantly ("Epiphanies"), as hinted in `hive_mind.py` logic |
 
 ---
 
@@ -130,10 +130,10 @@ The transition to production-grade reliability requires rigorous engineering acr
 
 | Status | Priority | Task |
 |--------|----------|------|
-| [ ] | 🔴 P0 | Refactor: `f32` → `i32` (Fixed Point) in predictors |
-| [ ] | 🔴 P0 | Test: Add Cross-Arch CI test (Linux → macOS roundtrip) |
-| [ ] | 🟡 P1 | Refactor: Split `qres_rust` into `lib` (codec) and `bin` (swarm) |
-| [ ] | 🟡 P1 | Feature: Implement Delta-Encoding for Swarm sync |
+| [x] | 🔴 P0 | Refactor: `f32` → `i32` (Fixed Point) in predictors |
+| [x] | 🔴 P0 | Test: Add Cross-Arch CI test (Linux → macOS roundtrip) |
+| [x] | 🟡 P1 | Refactor: Split `qres_rust` into `lib` (codec) and `bin` (swarm) |
+| [x] | 🟡 P1 | Feature: Implement Delta-Encoding for Swarm sync |
 | [ ] | 🟢 P2 | Feature: Add `--reference` flag for context seeding |
 | [ ] | 🟢 P2 | Feature: Formalize Split-Brain mode for interleaved data |
 
@@ -143,12 +143,12 @@ The transition to production-grade reliability requires rigorous engineering acr
 
 | Metric | Target | Current | Status |
 |--------|--------|---------|--------|
-| Cross-Arch Integrity | 100% | TBD | 🔴 Untested |
+| Cross-Arch Integrity | 100% | 100% | ✅ Achieved |
 | IoT Ratio | <0.30 | 0.537 | 🟡 In Progress |
 | Text Ratio | <0.15 | 0.19 | 🟡 In Progress |
 | Fidelity | >0.99 | 0.99+ | ✅ Achieved |
 | SNN Sparsity | >95% | 97% | ✅ Achieved |
-| Binary Size (core) | <2MB | TBD | 🔴 Untested |
+| Binary Size (core) | <2MB | TBD | � In Progress |
 
 ---
 

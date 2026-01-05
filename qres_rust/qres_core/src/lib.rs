@@ -8,90 +8,26 @@ use pyo3::prelude::*;
 #[cfg(feature = "python")]
 use pyo3::types::PyBytes;
 
-#[cfg(feature = "swarm")]
-pub mod analytics;
-#[cfg(feature = "swarm")]
-pub mod config;
-#[cfg(feature = "swarm")]
-pub mod daemon;
-// pub mod semantic; // Disabled: requires tokenizers crate
-#[cfg(feature = "swarm")]
-pub mod stats;
-#[cfg(feature = "swarm")]
-pub mod swarm;
-#[cfg(feature = "swarm")]
-pub mod swarm_p2p;
-
 // --- v3.0/v4.0 Modules ---
 pub mod ans_coder;
-pub mod archive; // Archive container format
-pub mod dedup; // Content-Defined Chunking & Deduplication
-pub mod meta_brain;
+pub mod archive;
+pub mod dedup;
+pub mod meta_brain; // Inference Engine (moved to Core)
 pub mod mixer;
 pub mod predictors;
-pub mod spectral; // Task 6
-pub use ans_coder::{AnsReader, AnsWriter};
-use mixer::{Mixer, NUM_MODELS};
-use predictors::{GraphPredictor, LzMatchPredictor, Predictor, SimplePredictor};
-use spectral::SpectralPredictor; // Added Predictor
+pub mod spectral;
 #[cfg(feature = "gpu")]
 pub mod gpu;
 pub mod quantum;
 pub mod transformer;
 use transformer::TransformerPredictor;
+use crate::predictors::{Predictor, SimplePredictor, GraphPredictor, LzMatchPredictor};
+use crate::spectral::SpectralPredictor;
+use crate::mixer::{Mixer, NUM_MODELS};
+use crate::ans_coder::{AnsReader, AnsWriter};
 
 // --- Living Brain (Adaptive Learning) ---
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct LivingBrain {
-    pub version: u8,
-    pub predictors: Vec<String>,
-    pub stats: serde_json::Value,
-    pub confidence: Vec<f32>,
-    pub global_confidence: Option<Vec<f32>>, // Phase 2: FedProx Anchor
-    pub best_engine_weights: Option<Vec<u8>>,
-}
-
-impl Default for LivingBrain {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl LivingBrain {
-    pub fn new() -> Self {
-        LivingBrain {
-            version: 1,
-            predictors: vec![
-                "lstm".to_string(),
-                "graph".to_string(),
-                "transformer".to_string(),
-            ],
-            stats: serde_json::json!({"compressions": 0}),
-            confidence: vec![0.5; NUM_MODELS.max(4)], // Ensure enough space
-            global_confidence: None,
-            best_engine_weights: None,
-        }
-    }
-
-    pub fn from_json(json: &str) -> Option<Self> {
-        serde_json::from_str(json).ok()
-    }
-
-    pub fn to_json(&self) -> String {
-        serde_json::to_string(self).unwrap_or("{}".to_string())
-    }
-
-    pub fn merge(&mut self, other: &LivingBrain, alpha: f32) {
-        for i in 0..self.confidence.len().min(other.confidence.len()) {
-            self.confidence[i] = self.confidence[i] * (1.0 - alpha) + other.confidence[i] * alpha;
-        }
-        // Always derive global anchor from the imported brain (truth)
-        if other.global_confidence.is_some() {
-            self.global_confidence = other.global_confidence.clone();
-        }
-    }
-}
+// Note: LivingBrain struct moved to qres_daemon. Core only handles inference via meta_brain.rs.
 
 const CHUNK_SIZE: usize = 1024 * 1024;
 const QRES_MAGIC: &[u8] = b"QRES";
@@ -702,65 +638,7 @@ fn qres_rust(_py: Python, m: &PyModule) -> PyResult<()> {
 }
 
 // --- Tauri Interface ---
-
-pub fn compress_with_callback<F>(
-    src: &str,
-    dest: &str,
-    mut callback: F,
-) -> Result<(), Box<dyn std::error::Error>>
-where
-    F: FnMut(f32, f32, &str),
-{
-    use std::fs::File;
-    use std::io::{Read, Seek, Write};
-
-    let mut input = File::open(src)?;
-    let mut output = File::create(dest)?;
-
-    let mut buffer = vec![0u8; CHUNK_SIZE];
-    let mut total_read = 0u64;
-    let file_size = input.metadata()?.len();
-
-    output.write_all(QRES_MAGIC)?;
-    output.write_all(&[4u8])?;
-    output.write_all(&[0u8])?;
-    output.write_all(&[0u8])?;
-    output.write_all(&chrono::Utc::now().timestamp().to_le_bytes())?;
-    output.write_all(&file_size.to_le_bytes())?;
-    output.write_all(&(0u64.to_le_bytes()))?;
-    output.write_all(&(src.len() as u32).to_le_bytes())?;
-    output.write_all(src.as_bytes())?;
-
-    let mut compressed_size = 0u64;
-
-    loop {
-        let bytes_read = input.read(&mut buffer)?;
-        if bytes_read == 0 {
-            break;
-        }
-
-        let chunk = &buffer[..bytes_read];
-        let compressed = compress_chunk(chunk, 0, None, None)?;
-
-        output.write_all(&(compressed.len() as u32).to_le_bytes())?;
-        output.write_all(&compressed)?;
-
-        total_read += bytes_read as u64;
-        compressed_size += compressed.len() as u64 + 4;
-
-        let progress = (total_read as f32 / file_size as f32) * 100.0;
-        let ratio = compressed_size as f32 / total_read as f32;
-
-        callback(progress, ratio, "predictive");
-    }
-
-    output.seek(std::io::SeekFrom::Start(
-        (QRES_MAGIC.len() + 1 + 1 + 1 + 8) as u64,
-    ))?;
-    output.write_all(&compressed_size.to_le_bytes())?;
-
-    Ok(())
-}
+// Removed from Core. Use qres_core::compress_chunk directly.
 
 // --- WASM Interface ---
 #[cfg(target_arch = "wasm32")]

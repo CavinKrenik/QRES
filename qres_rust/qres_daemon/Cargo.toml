@@ -1,0 +1,22 @@
+[package]
+name = "qres_daemon"
+version = "0.10.0"
+edition = "2021"
+
+[dependencies]
+qres_core = { workspace = true } # Depends on the core
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+log = { workspace = true }
+dirs = "5.0"
+lazy_static = "1.4"
+sysinfo = "0.30"
+tower-http = { version = "0.5", features = ["cors"] }
+chrono = { version = "0.4", features = ["serde"] }
+clap = { version = "4.4", features = ["derive"] }
+toml = "0.8"
+
+# P2P Stack
+libp2p = { version = "0.53", features = ["tcp", "tls", "dns", "yamux", "websocket", "noise", "macros", "tokio", "gossipsub", "mdns", "identify", "kad"] }
+axum = "0.7" # For the API

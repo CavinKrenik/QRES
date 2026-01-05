@@ -1,0 +1,16 @@
+[package]
+name = "qres_core"
+version = "0.10.0"
+edition = "2021"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+rand = { workspace = true }
+zstd = { workspace = true }
+lazy_static = "1.4"
+constriction = "0.3"
+rustfft = "6.2"
+probability = "0.20"
+walkdir = "2.3"
+blake3 = "1.5"

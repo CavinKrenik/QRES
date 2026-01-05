@@ -1,4 +1,4 @@
-use super::LivingBrain;
+use crate::living_brain::LivingBrain;
 use libp2p::futures::StreamExt;
 use libp2p::{
     core::upgrade,

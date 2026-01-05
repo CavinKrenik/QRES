@@ -1,4 +1,4 @@
-use crate::LivingBrain;
+use crate::living_brain::{LivingBrain, BrainMessage};
 use axum::{extract::State, routing::get, Json, Router};
 use libp2p::futures::StreamExt; // For select_next_some
 use libp2p::gossipsub::IdentTopic; // Added helper
@@ -132,22 +132,44 @@ pub async fn start_p2p_node(
     // 6. Loop
     let mut interval = tokio::time::interval(Duration::from_secs(10));
     let brain_file = &brain_path;
+    let mut last_broadcast_brain: Option<LivingBrain> = None;
 
     loop {
         tokio::select! {
-            // Periodic Brain Broadcast
+            // Periodic Brain Broadcast with Delta Encoding
             _ = interval.tick() => {
                 if let Ok(content) = fs::read_to_string(brain_file) {
-                    // Update State
-                    if let Some(loaded_brain) = LivingBrain::from_json(&content) {
-                        state.write().await.brain = loaded_brain;
-                    }
+                    if let Some(current_brain) = LivingBrain::from_json(&content) {
+                        // Update RAM state
+                        state.write().await.brain = current_brain.clone();
 
-                    let topic = IdentTopic::new(BRAIN_TOPIC);
-                    if let Err(e) = swarm.behaviour_mut().gossipsub.publish(topic, content.as_bytes()) {
-                         eprintln!("[Swarm] Publish error: {:?}", e);
-                    } else {
-                         eprintln!("[Swarm] Broadcasted local wisdom.");
+                        // Delta Encoding Logic
+                        let message = if let Some(last) = &last_broadcast_brain {
+                            if let Some(delta) = current_brain.diff(last) {
+                                Some(BrainMessage::Delta(delta))
+                            } else {
+                                None // No significant change - skip broadcast
+                            }
+                        } else {
+                            Some(BrainMessage::Full(current_brain.clone()))
+                        };
+
+                        if let Some(msg) = message {
+                            let topic = IdentTopic::new(BRAIN_TOPIC);
+                            if let Ok(payload) = serde_json::to_vec(&msg) {
+                                if let Err(e) = swarm.behaviour_mut().gossipsub.publish(topic, payload) {
+                                     eprintln!("[Swarm] Publish error: {:?}", e);
+                                } else {
+                                     match &msg {
+                                         BrainMessage::Delta(d) => eprintln!("[Swarm] Broadcasted Delta ({} updates).", d.updates.len()),
+                                         BrainMessage::Full(_) => eprintln!("[Swarm] Broadcasted Full Wisdom."),
+                                     }
+                                     last_broadcast_brain = Some(current_brain);
+                                }
+                            }
+                        } else {
+                            eprintln!("[Swarm] No significant changes - skipping broadcast.");
+                        }
                     }
                 }
             }
@@ -183,16 +205,28 @@ pub async fn start_p2p_node(
                 SwarmEvent::Behaviour(QresBehaviorEvent::Gossipsub(gossipsub::Event::Message { propagation_source: _, message_id: _, message })) => {
                     eprintln!("[Swarm] Received Merge Candidate");
                     if let Ok(json) = String::from_utf8(message.data) {
-                        if let Some(remote_brain) = LivingBrain::from_json(&json) {
-                            // Merge
-                            if let Ok(local_json) = fs::read_to_string(brain_file) {
-                                if let Some(mut local_brain) = LivingBrain::from_json(&local_json) {
-                                    local_brain.merge(&remote_brain, 0.1);
-                                    let _ = fs::write(brain_file, local_brain.to_json());
-                                    eprintln!("[Swarm] Assimilated knowledge from peer.");
-
-                                    // Update RAM state
-                                    state.write().await.brain = local_brain;
+                        // Try to parse as BrainMessage (supports both Full and Delta)
+                        if let Ok(msg) = serde_json::from_str::<BrainMessage>(&json) {
+                            match msg {
+                                BrainMessage::Full(remote_brain) => {
+                                    if let Ok(local_json) = fs::read_to_string(brain_file) {
+                                        if let Some(mut local_brain) = LivingBrain::from_json(&local_json) {
+                                            local_brain.merge(&remote_brain, 0.1);
+                                            let _ = fs::write(brain_file, local_brain.to_json());
+                                            eprintln!("[Swarm] Assimilated Full Knowledge.");
+                                            state.write().await.brain = local_brain;
+                                        }
+                                    }
+                                }
+                                BrainMessage::Delta(delta) => {
+                                    if let Ok(local_json) = fs::read_to_string(brain_file) {
+                                        if let Some(mut local_brain) = LivingBrain::from_json(&local_json) {
+                                            local_brain.apply_delta(&delta);
+                                            let _ = fs::write(brain_file, local_brain.to_json());
+                                            eprintln!("[Swarm] Applied Knowledge Delta ({} updates).", delta.updates.len());
+                                            state.write().await.brain = local_brain;
+                                        }
+                                    }
                                 }
                             }
                         }
