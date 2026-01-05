@@ -5,8 +5,6 @@ use std::io;
 
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
-#[cfg(feature = "python")]
-use pyo3::types::PyBytes;
 
 // --- v3.0/v4.0 Modules ---
 pub mod ans_coder;
@@ -658,56 +656,55 @@ where
     Ok(())
 }
 
-// --- Python Wrapper ---
+// --- Python Wrapper (PyO3 0.22+) ---
+
+#[cfg(feature = "python")]
+use pyo3::types::PyModule;
 
 #[cfg(feature = "python")]
 #[pyfunction]
-fn encode_bytes<'a>(
-    py: Python<'a>,
+#[pyo3(signature = (data, predictor_id=0, weights=None))]
+fn encode_bytes(
+    py: Python<'_>,
     data: &[u8],
-    _predictor_id: u8,
-    _weights: Option<&[u8]>,
-) -> PyResult<&'a PyBytes> {
-    let compressed = compress_chunk(data, _predictor_id, _weights, None)
+    predictor_id: u8,
+    weights: Option<&[u8]>,
+) -> PyResult<Py<pyo3::types::PyBytes>> {
+    let compressed = compress_chunk(data, predictor_id, weights, None)
         .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(e.to_string()))?;
-    Ok(PyBytes::new(py, &compressed))
+    Ok(pyo3::types::PyBytes::new_bound(py, &compressed).unbind())
 }
 
 #[cfg(feature = "python")]
 #[pyfunction]
-fn decode_bytes<'a>(
-    py: Python<'a>,
+#[pyo3(signature = (data, predictor_id=0, weights=None))]
+fn decode_bytes(
+    py: Python<'_>,
     data: &[u8],
-    _predictor_id: u8,
-    _weights: Option<&[u8]>,
-) -> PyResult<&'a PyBytes> {
-    let decompressed = decompress_chunk(data, _predictor_id, _weights)
+    predictor_id: u8,
+    weights: Option<&[u8]>,
+) -> PyResult<Py<pyo3::types::PyBytes>> {
+    let decompressed = decompress_chunk(data, predictor_id, weights)
         .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(e.to_string()))?;
-    Ok(PyBytes::new(py, &decompressed))
+    Ok(pyo3::types::PyBytes::new_bound(py, &decompressed).unbind())
 }
 
 #[cfg(feature = "python")]
 #[pyfunction]
-fn get_residuals_py<'a>(
-    _py: Python<'a>,
-    _data: &[u8],
-    _predictor_id: u8,
-    _weights: Option<&[u8]>,
-) -> PyResult<Vec<i8>> {
+#[pyo3(signature = (_data, _predictor_id=0, _weights=None))]
+fn get_residuals_py(_data: &[u8], _predictor_id: u8, _weights: Option<&[u8]>) -> PyResult<Vec<i8>> {
     Ok(Vec::new())
 }
 
 #[cfg(feature = "python")]
 #[pyfunction]
 fn compress_matrix_v1(
-    _py: Python,
     data: Vec<f64>,
     rows: usize,
     cols: usize,
     threshold: f64,
 ) -> PyResult<Vec<f64>> {
     let compressor = quantum::MpsCompressor::new(10, threshold);
-    // MPS returns Vec<Vec<f64>> (cores). We flatten for v1 prototype.
     let cores = compressor.compress_matrix(&data, rows, cols);
     if let Some(first_core) = cores.first() {
         Ok(first_core.clone())
@@ -718,7 +715,7 @@ fn compress_matrix_v1(
 
 #[cfg(feature = "python")]
 #[pymodule]
-fn qres_rust(_py: Python, m: &PyModule) -> PyResult<()> {
+fn qres_rust(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(encode_bytes, m)?)?;
     m.add_function(wrap_pyfunction!(decode_bytes, m)?)?;
     m.add_function(wrap_pyfunction!(get_residuals_py, m)?)?;
