@@ -8,13 +8,13 @@ import argparse
 # sys.path.append(os.path.join(os.getcwd(), 'python'))
 from qres.api import QRES_API
 
-def receiver_loop(inbox_path="quantum_inbox", interval=2.0):
-    print(f"🌌 [Quantum Receiver] Watching {inbox_path} for teleported tensors...")
+def receiver_loop(inbox_path="tensor_inbox", interval=2.0):
+    print(f"📡 [Tensor Receiver] Watching {inbox_path} for synchronized states...")
     
     if not os.path.exists(inbox_path):
         os.makedirs(inbox_path)
         
-    api = QRES_API(mode="quantum")
+    api = QRES_API(mode="tensor")
     
     try:
         while True:
@@ -24,7 +24,7 @@ def receiver_loop(inbox_path="quantum_inbox", interval=2.0):
                 
                 # Check extension or mock
                 if os.path.isfile(file_path):
-                    if filename.endswith(".qt") or filename.endswith(".qres") or filename.endswith(".qws") or "qv7" in filename or "world_" in filename:
+                    if filename.endswith(".qt") or filename.endswith(".qres") or filename.endswith(".qws") or "tv10" in filename or "world_" in filename:
                         print(f"\n📩 Detected Incoming: {filename}")
                         
                         try:
@@ -60,9 +60,9 @@ def receiver_loop(inbox_path="quantum_inbox", interval=2.0):
                                     api.load_world_state(remote_version)
                                     print(f"✅ Adopted world state: {remote_version}")
                             
-                            # Process quantum tensor
-                            elif api.merge_quantum_state(data):
-                                print(f"✅ Successfully integrated {filename} into Hive Mind.")
+                            # Process tensor
+                            elif api.merge_tensor_state(data):
+                                print(f"✅ Successfully integrated {filename} into swarm.")
                             else:
                                 print(f"⚠️  Rejected malformed tensor: {filename}")
                                 
@@ -78,8 +78,8 @@ def receiver_loop(inbox_path="quantum_inbox", interval=2.0):
         print("\n🛑 Receiver stopped.")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="QRES v8.0 Quantum Receiver")
-    parser.add_argument("--dir", default="quantum_inbox", help="Inbox directory to watch")
+    parser = argparse.ArgumentParser(description="QRES v10.0 Tensor Receiver")
+    parser.add_argument("--dir", default="tensor_inbox", help="Inbox directory to watch")
     args = parser.parse_args()
     
     receiver_loop(args.dir)

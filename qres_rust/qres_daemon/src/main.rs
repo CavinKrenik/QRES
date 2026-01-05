@@ -9,7 +9,7 @@ pub mod swarm_p2p;
 
 use crate::living_brain::LivingBrain;
 use clap::{Parser, Subcommand};
-use qres_core::quantum::MpsCompressor;
+use qres_core::tensor::MpsCompressor;
 use qres_core::{compress_chunk, decompress_chunk};
 use std::fs::{self, File};
 use std::io::{self, Read, Write};
@@ -60,8 +60,8 @@ enum Commands {
         #[arg(long, default_value = "8080")]
         port: u16,
     },
-    /// Compress structured data using Quantum MPS
-    QuantumCompress {
+    /// Compress structured data using Tensor MPS
+    TensorCompress {
         /// Input file path (Raw f64 binary)
         input: String,
         /// Output file path
@@ -292,7 +292,7 @@ fn swarm_mode(brain: String, port: u16) -> io::Result<()> {
     Ok(())
 }
 
-fn compress_quantum_file(
+fn compress_tensor_file(
     input: &str,
     output: &str,
     rows: usize,
@@ -329,16 +329,16 @@ fn compress_quantum_file(
     }
 
     // Compress
-    eprintln!("[Quantum] Compressing {}x{} Matrix...", rows, cols);
+    eprintln!("[Tensor] Compressing {}x{} Matrix...", rows, cols);
     let start = std::time::Instant::now();
 
     let compressor = MpsCompressor::new(10, threshold);
     let chunks = compressor.compress_matrix(&floats, rows, cols);
 
     // Write Output
-    // Format: [Magic: QMPS] [Rows:8] [Cols:8] [Data...]
+    // Format: [Magic: TMPS] [Rows:8] [Cols:8] [Data...]
     let mut out_file = File::create(output)?;
-    out_file.write_all(b"QMPS")?;
+    out_file.write_all(b"TMPS")?;
     out_file.write_all(&(rows as u64).to_le_bytes())?;
     out_file.write_all(&(cols as u64).to_le_bytes())?;
 
@@ -353,7 +353,8 @@ fn compress_quantum_file(
         let mut packed_bytes = Vec::new();
 
         // Simple RLE for Zero Runs (0x00 flag)
-        for &val in data {
+        for val in data {
+            let val = *val as f64;
             if val.abs() < 1e-9 {
                 n_zeros += 1;
                 while n_zeros >= 255 {
@@ -389,7 +390,7 @@ fn compress_quantum_file(
     };
 
     eprintln!(
-        "[Done] Quantum Compressed {} bytes to {} bytes ({:.2}%) in {:.2}s",
+        "[Done] Tensor Compressed {} bytes to {} bytes ({:.2}%) in {:.2}s",
         len,
         compressed_size,
         ratio,
@@ -408,13 +409,13 @@ fn main() {
         Commands::ExportBrain { output } => brain_export_to_file(&output),
         Commands::ImportBrain { input } => brain_import(&input),
         Commands::Swarm { brain, port } => swarm_mode(brain, port),
-        Commands::QuantumCompress {
+        Commands::TensorCompress {
             input,
             output,
             rows,
             cols,
             threshold,
-        } => compress_quantum_file(&input, &output, rows, cols, threshold),
+        } => compress_tensor_file(&input, &output, rows, cols, threshold),
     };
 
     if let Err(e) = result {

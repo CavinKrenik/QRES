@@ -91,19 +91,19 @@ class QRES_API:
             new_sparsity = 1.0 - (np.count_nonzero(self.brain_weights) / self.brain_weights.size)
             print(f"[API] Sparsity improved: {original_sparsity:.2%} -> {new_sparsity:.2%}")
 
-    def merge_quantum_state(self, tensor_bytes: bytes):
+    def merge_tensor_state(self, tensor_bytes: bytes):
         """
         [Receiver] reconstructs a graph/state from received tensor bytes.
         """
-        print("[API] Receiving Quantum State...")
+        print("[API] Receiving Tensor State...")
         
-        # 1. Deserialize (Mock - in real qres we'd use pickle or safetensors)
+        # 1. Deserialize
         # Verify header
-        if not tensor_bytes.startswith(b"QRES_Q_TENSOR"):
-            print("[API] Error: Invalid Quantum Header")
+        if not tensor_bytes.startswith(b"QRES_T_TENSOR"):
+            print("[API] Error: Invalid Tensor Header")
             return False
             
-        payload = tensor_bytes[len(b"QRES_Q_TENSOR"):]
+        payload = tensor_bytes[len(b"QRES_T_TENSOR"):]
         
         # 2. Reconstruct (Mocking reconstruction of Density Matrix)
         # In a real app, we'd use qutip.Qobj(payload)

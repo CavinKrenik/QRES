@@ -18,7 +18,8 @@ fn float_to_fixed(f: f32) -> i32 {
 pub struct SimplePredictor {
     prev1: u8,
     prev2: u8,
-    context: Box<[u8; 65536]>,
+    prev3: u8,
+    context: Box<[u8]>, // Order-3 (256^3) = 16MB
 }
 
 impl Default for SimplePredictor {
@@ -32,20 +33,22 @@ impl SimplePredictor {
         SimplePredictor {
             prev1: 0,
             prev2: 0,
-            context: Box::new([0; 65536]),
+            prev3: 0,
+            context: vec![0u8; 16777216].into_boxed_slice(),
         }
     }
 }
 
 impl Predictor for SimplePredictor {
     fn predict_next(&self) -> u8 {
-        let idx = ((self.prev2 as usize) << 8) | (self.prev1 as usize);
+        let idx = ((self.prev3 as usize) << 16) | ((self.prev2 as usize) << 8) | (self.prev1 as usize);
         self.context[idx]
     }
 
     fn update(&mut self, actual: u8) {
-        let idx = ((self.prev2 as usize) << 8) | (self.prev1 as usize);
+        let idx = ((self.prev3 as usize) << 16) | ((self.prev2 as usize) << 8) | (self.prev1 as usize);
         self.context[idx] = actual;
+        self.prev3 = self.prev2;
         self.prev2 = self.prev1;
         self.prev1 = actual;
     }

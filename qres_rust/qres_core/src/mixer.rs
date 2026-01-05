@@ -73,7 +73,6 @@ impl Mixer {
         Mixer {
             weights,
             learning_rate: 0.01,
-            learning_rate: 0.01,
             ar_coeffs: [1.0, 0.0], // Start as Delta Predictor (Optimized for Telemetry)
             history: [0.0, 0.0],   // Zero init
             ar_learning_rate: 0.05,
@@ -109,7 +108,6 @@ impl Mixer {
         Mixer {
             weights,
             learning_rate: 0.01,
-            learning_rate: 0.01,
             ar_coeffs: [1.0, 0.0],
             history: [0.0, 0.0],
             ar_learning_rate: 0.05,
@@ -133,7 +131,10 @@ impl Mixer {
         // 3. Dynamic Selection
         let std = (self.running_var / (self.count.max(1) as f32)).sqrt();
 
-        let prediction = if std < 45.0 {
+        let prediction = if self.win_streak > 32 {
+            // Lock-On: One model is crushing it. Use it exclusively.
+            preds[self.current_winner] as f32
+        } else if std < 45.0 {
             0.6 * ar_pred + 0.4 * ensemble_sum
         } else {
             ensemble_sum
@@ -258,9 +259,10 @@ impl Mixer {
         // Adaptive Learning Rate
         // High variance -> Concept Drift -> Increase LR
         // Low variance -> Stable -> Decrease LR
+        // Win Streak -> Confidence -> Double LR to lock on
         let std = (self.running_var / (self.count.max(1) as f32)).sqrt();
-        let adaptive_lr = if std > 40.0 { 0.05 } else { 0.005 };
-        self.learning_rate = adaptive_lr;
+        let base_lr = if std > 40.0 { 0.05 } else { 0.005 };
+        self.learning_rate = if self.win_streak > 32 { base_lr * 2.5 } else { base_lr };
 
         // C. Update Ensemble Weights (LMS)
         self.update_weights(y, preds);
@@ -345,7 +347,8 @@ impl Mixer {
 
         // 3. Adaptive Learning Rate
         let std = (self.running_var / 10.0).sqrt(); // Approx
-        self.learning_rate = if std > 40.0 { 0.05 } else { 0.005 };
+        let base_lr = if std > 40.0 { 0.05 } else { 0.005 };
+        self.learning_rate = if self.win_streak > 32 { base_lr * 2.5 } else { base_lr };
 
         // 4. Heavy SIMD Weight Update (Run once per batch)
         self.update_weights(y, sample_preds);

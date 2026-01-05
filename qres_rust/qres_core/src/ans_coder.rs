@@ -10,7 +10,7 @@ use std::arch::x86_64::*;
 // Strategy: Lazy Adaptive ANS with Batched Updates
 // Batch Size: 128 ensures we only calculate optimal params/models once per 128 bytes
 // This provides 2-3x speed improvement over per-byte updates
-const BATCH_SIZE: usize = 128;
+const BATCH_SIZE: usize = 32;
 
 pub struct AnsWriter {
     encoder: DefaultRangeEncoder,
