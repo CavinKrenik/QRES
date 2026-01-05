@@ -1,5 +1,5 @@
-use alloc::vec::Vec;
 use alloc::vec;
+use alloc::vec::Vec;
 
 /// Tensor Network MPS (Matrix Product State) Compressor
 /// Breaks a high-dimensional tensor into a chain of low-rank tensors (cores).

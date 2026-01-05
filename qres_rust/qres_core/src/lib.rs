@@ -5,9 +5,9 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
-use alloc::vec::Vec;
 use alloc::format;
 use alloc::string::String;
+use alloc::vec::Vec;
 // use alloc::boxed::Box;
 // Use #[allow(unused_imports)] or just remove.
 // Removing it.
@@ -339,9 +339,10 @@ pub fn compress_chunk(
 ) -> Result<Vec<u8>> {
     // 1. SAFETY CHECK: Validate Predictor ID
     if _predictor_id > PREDICTOR_ID_SPLIT {
-        return Err(QresError::InvalidInput(
-            format!("Unsupported Predictor ID: {}", _predictor_id),
-        ));
+        return Err(QresError::InvalidInput(format!(
+            "Unsupported Predictor ID: {}",
+            _predictor_id
+        )));
     }
 
     // 0. Interleave Detection (Smart Pre-Pass)
@@ -397,7 +398,7 @@ pub fn compress_chunk(
     // 1. Smart Fallback Pre-scan (ZSTD)
     // 1. Pre-scan Check
     // If entropy is extremely high (random), we might skip or warn.
-    // For no_std/Core purification, we do NOT fallback to Zstd. 
+    // For no_std/Core purification, we do NOT fallback to Zstd.
     // We let the caller decide if the result is larger than input.
 
     // 2. Prepare Weights (Neural vs Static)
@@ -472,7 +473,9 @@ pub fn compress_chunk(
         // Core Purification: If we expand, return specific error so Daemon can handle fallback.
         // Or return Expanded variant if we had an Enum return type.
         // For now, Err(CompressionError("Expansion detected")) allows Daemon to catch and fallback.
-        Err(QresError::CompressionError(String::from("Expansion detected")))
+        Err(QresError::CompressionError(String::from(
+            "Expansion detected",
+        )))
     }
 }
 
@@ -495,12 +498,10 @@ pub fn decompress_chunk(
     if version != (QRES_PROTOCOL_VERSION & 0x0F) {
         // Graceful fallback for legacy files (pre-handshake) could go here
         // But for Engineering Phase 1, we fail fast.
-        return Err(QresError::InvalidData(
-            format!(
-                "Version Mismatch: File v{} != Library v{}",
-                version, QRES_PROTOCOL_VERSION
-            ),
-        ));
+        return Err(QresError::InvalidData(format!(
+            "Version Mismatch: File v{} != Library v{}",
+            version, QRES_PROTOCOL_VERSION
+        )));
     }
 
     let decomp_len = u32::from_le_bytes(
@@ -516,13 +517,17 @@ pub fn decompress_chunk(
         }
         0x01 => {
             // Zstd fallback - Not supported in Core Purification
-            Err(QresError::CompressionError(String::from("Zstd decompression not supported in pure Core")))
+            Err(QresError::CompressionError(String::from(
+                "Zstd decompression not supported in pure Core",
+            )))
         }
         0x02 => {
             // ANS codec with Neural Init
             let header_size = 5 + WEIGHTS_LEN;
             if compressed.len() < header_size {
-                return Err(QresError::InvalidData(String::from("Chunk too short for Neural Header")));
+                return Err(QresError::InvalidData(String::from(
+                    "Chunk too short for Neural Header",
+                )));
             }
             let init_w_bytes = &compressed[5..header_size];
 
@@ -549,7 +554,9 @@ pub fn decompress_chunk(
         0x03 => {
             // Interleaved Split
             if compressed.len() < 9 {
-                return Err(QresError::InvalidData(String::from("Split chunk too short")));
+                return Err(QresError::InvalidData(String::from(
+                    "Split chunk too short",
+                )));
             }
             let even_len = u32::from_le_bytes(compressed[5..9].try_into().unwrap()) as usize;
             let even_data = &compressed[9..9 + even_len];
@@ -577,9 +584,10 @@ pub fn decompress_chunk(
 
             Ok(out)
         }
-        _ => Err(QresError::InvalidData(
-            format!("Unknown codec mode: {:#x}", codec_mode),
-        )),
+        _ => Err(QresError::InvalidData(format!(
+            "Unknown codec mode: {:#x}",
+            codec_mode
+        ))),
     }
 }
 
@@ -588,9 +596,9 @@ pub fn decompress_chunk(
 #[cfg(feature = "std")]
 use std::fs::File;
 #[cfg(feature = "std")]
-use std::io::{BufReader, BufWriter, Read, Write};
-#[cfg(feature = "std")]
 use std::io;
+#[cfg(feature = "std")]
+use std::io::{BufReader, BufWriter, Read, Write};
 #[cfg(feature = "std")]
 use std::path::Path;
 
@@ -752,12 +760,12 @@ fn qres_rust(m: &Bound<'_, PyModule>) -> PyResult<()> {
 // pub mod wasm {
 //     use crate::{compress_chunk, decompress_chunk};
 //     use wasm_bindgen::prelude::*;
-// 
+//
 //     #[wasm_bindgen]
 //     pub fn compress(data: &[u8]) -> Result<Vec<u8>, JsValue> {
 //         compress_chunk(data, 0, None, None).map_err(|e| JsValue::from_str(&e.to_string()))
 //     }
-// 
+//
 //     #[wasm_bindgen]
 //     pub fn decompress(data: &[u8]) -> Result<Vec<u8>, JsValue> {
 //         decompress_chunk(data, 0, None).map_err(|e| JsValue::from_str(&e.to_string()))

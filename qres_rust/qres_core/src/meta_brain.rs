@@ -1,7 +1,7 @@
+use alloc::vec;
+use alloc::vec::Vec;
 use lazy_static::lazy_static;
 use serde::Deserialize;
-use alloc::vec::Vec;
-use alloc::vec;
 
 const NUM_INPUTS: usize = 4;
 const NUM_OUTPUTS: usize = 6;

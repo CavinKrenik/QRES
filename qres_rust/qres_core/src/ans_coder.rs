@@ -3,9 +3,9 @@ use constriction::stream::queue::{DefaultRangeDecoder, DefaultRangeEncoder};
 use constriction::stream::{Decode, Encode};
 use probability::distribution::Gaussian;
 
+use alloc::vec::Vec;
 #[cfg(target_arch = "x86_64")]
 use core::arch::x86_64::*;
-use alloc::vec::Vec;
 
 // QRES v4.0 "Hive-Optimized" Backend
 // Strategy: Lazy Adaptive ANS with Batched Updates

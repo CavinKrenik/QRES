@@ -3,9 +3,9 @@ pub trait Predictor {
     fn update(&mut self, actual: u8);
 }
 
-use alloc::vec::Vec;
-use alloc::vec;
 use alloc::boxed::Box;
+use alloc::vec;
+use alloc::vec::Vec;
 use core::convert::TryInto;
 
 // --- Constants for Fixed-Point Arithmetic (Q16.16) ---

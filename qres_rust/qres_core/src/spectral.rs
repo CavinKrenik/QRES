@@ -1,6 +1,6 @@
-use rustfft::{num_complex::Complex, FftPlanner};
-use alloc::vec::Vec;
 use alloc::vec;
+use alloc::vec::Vec;
+use rustfft::{num_complex::Complex, FftPlanner};
 
 // QRES v4.1 Enhanced Spectral Predictor
 // Improvements:
