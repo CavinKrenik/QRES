@@ -1,4 +1,4 @@
-# QRES Research Notes & Citations (v9.0)
+# QRES Research Notes & Citations (v10.0)
 
 ## 1. Context-Aware Neural Compression (LLM Integration)
 **Goal:** Outperform traditional entropy coders on source code by leveraging semantic understanding.
@@ -32,7 +32,7 @@
 
 ---
 
-## 7. Spiking Neural Networks (v9.0 - NEW)
+## 7. Spiking Neural Networks (Implemented in v9.0)
 
 *   **"SpikeLLM: Scaling Up Spiking Neural Networks with Generalized Integrate-and-Fire"** (ICLR 2025): GIF neurons for scalable spiking architectures.
     *   *QRES v9.0:* Upgraded `snn_predictor.py` with `GIFNeuron` for adaptive thresholds.
@@ -41,7 +41,7 @@
 *   **"Energy-Efficient Intelligence: SNN Survey"** (Oulu Univ., Oct 2025): 1,000-10,000x energy reduction vs ANNs.
     *   *Insight:* Edge viability for QRES IoT deployment.
 
-## 8. Quantum Machine Learning Compression (v9.0 - NEW)
+## 8. Quantum Machine Learning Compression (Implemented in v9.0)
 
 *   **"Equivariant Quantum Operator Compression"** (NeurIPS 2025): Preserve O(3) symmetries in quantum tensors.
     *   *QRES v9.0:* Implemented in `qnn_vqc.py:equivariant_lattice()`.
