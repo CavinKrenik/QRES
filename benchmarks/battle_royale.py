@@ -81,11 +81,24 @@ def run_benchmark(name, data):
         print(f"{algo_name:<10} | {ratio*100:6.2f}%    | {comp_speed:6.2f} MB/s    | {decomp_speed:6.2f} MB/s    | {speedup:6.2f}x")
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser(description="QRES Battle Royale Benchmark")
+    parser.add_argument("--quick", action="store_true", help="Run with smaller data for faster CI")
+    args = parser.parse_args()
+    
+    if args.quick:
+        print("Running in QUICK mode (reduced data size for CI)")
+        size_mb = 1
+        rows = 10000
+    else:
+        size_mb = 5
+        rows = 50000
+    
     print("generating synthetic data...")
-    synthetic = generate_synthetic_data(size_mb=5) # 5MB Sine
+    synthetic = generate_synthetic_data(size_mb=size_mb)
     
     print("generating telemetry data...")
-    telemetry = generate_real_world_simulation(rows=50000)
+    telemetry = generate_real_world_simulation(rows=rows)
     
     run_benchmark("Sine Wave (Predictable)", synthetic)
     run_benchmark("Telemetry CSV (Mixed)", telemetry)
