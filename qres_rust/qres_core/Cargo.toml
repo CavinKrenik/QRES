@@ -5,7 +5,7 @@ edition = "2021"
 
 [features]
 default = ["std"]
-std = ["serde/std", "rand/std", "dep:zstd", "dep:walkdir", "constriction/std"]
+std = ["serde/std", "rand/std", "dep:walkdir", "constriction/std"]
 python = ["pyo3", "std"]
 gpu = []
 
@@ -17,7 +17,6 @@ crate-type = ["cdylib", "rlib"]
 serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 rand = { version = "0.8", default-features = false }
-zstd = { version = "0.13", optional = true, default-features = false } # Optional, requires std/libc
 lazy_static = { version = "1.4", features = ["spin_no_std"] }
 constriction = { version = "0.3", default-features = false }
 rustfft = "6.2"

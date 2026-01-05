@@ -107,6 +107,7 @@ pub struct QresHeader {
 // --- V4 Encoding Logic ---
 
 #[cfg(feature = "std")]
+#[allow(dead_code)]
 fn calculate_sample_entropy(data: &[u8]) -> f32 {
     let mut counts = [0usize; 256];
     let step = if data.len() > 4096 { 4 } else { 1 }; // Stride for speed
@@ -394,29 +395,10 @@ pub fn compress_chunk(
     }
 
     // 1. Smart Fallback Pre-scan (ZSTD)
-    #[cfg(feature = "std")]
-    if chunk.len() > 512 {
-        let entropy = calculate_sample_entropy(chunk);
-
-        // Use zstd if entropy is very low or very high (random)
-        const LOW_ENTROPY_THRESHOLD: f32 = 0.2;
-        const HIGH_ENTROPY_THRESHOLD: f32 = 7.8;
-
-        if !(LOW_ENTROPY_THRESHOLD..=HIGH_ENTROPY_THRESHOLD).contains(&entropy) {
-            let zstd_compressed = zstd::bulk::compress(chunk, 3).map_err(|e| QresError::CompressionError(format!("{}", e)))?;
-            if zstd_compressed.len() < chunk.len() {
-                // Flag 0x01: Zstd
-                let ver = QRES_PROTOCOL_VERSION & 0x0F;
-                let flag_byte = (ver << 4) | 0x01;
-
-                let mut out = Vec::with_capacity(5 + zstd_compressed.len());
-                out.push(flag_byte);
-                out.extend_from_slice(&(chunk.len() as u32).to_le_bytes());
-                out.extend_from_slice(&zstd_compressed);
-                return Ok(out);
-            }
-        }
-    }
+    // 1. Pre-scan Check
+    // If entropy is extremely high (random), we might skip or warn.
+    // For no_std/Core purification, we do NOT fallback to Zstd. 
+    // We let the caller decide if the result is larger than input.
 
     // 2. Prepare Weights (Neural vs Static)
     // (Assuming standard logic for effective_weights...)
@@ -487,40 +469,10 @@ pub fn compress_chunk(
         out.extend_from_slice(&compressed_body);
         Ok(out)
     } else {
-        #[cfg(feature = "std")]
-        {
-            // Zstd Fallback (Flag 0x01)
-            // We still embed version to be safe
-            let ver = QRES_PROTOCOL_VERSION & 0x0F;
-            let flag_byte = (ver << 4) | 0x01;
-
-            let zstd_compressed = zstd::bulk::compress(chunk, 3).map_err(|e| QresError::CompressionError(format!("{}", e)))?;
-            let mut out = Vec::with_capacity(1 + 4 + zstd_compressed.len());
-            out.push(flag_byte);
-            out.extend_from_slice(&(chunk.len() as u32).to_le_bytes());
-            out.extend_from_slice(&zstd_compressed);
-            Ok(out)
-        }
-        #[cfg(not(feature = "std"))]
-        {
-            // No Zstd in no_std mode, rely on direct copy or error if it strictly must preserve data but can't compress?
-            // Usually we'd return original with a flag, but 'predictive_encode_v4' logic above handles regular encoding.
-            // If body > original, we can just store uncompressed if we had a flag for it.
-            // For now, let's just return the expanded compressed body to be safe or implement 0x04 Stored.
-            // But to simplify, we'll just return compressed_body even if larger.
-             let mode = if is_neural { 0x02 } else { 0x00 };
-            let ver = QRES_PROTOCOL_VERSION & 0x0F;
-            let flag_byte = (ver << 4) | mode;
-
-            let mut out = Vec::with_capacity(1 + 4 + stored_init_weights.len() + compressed_body.len());
-            out.push(flag_byte);
-            out.extend_from_slice(&(chunk.len() as u32).to_le_bytes());
-             if is_neural {
-                out.extend_from_slice(&stored_init_weights);
-            }
-            out.extend_from_slice(&compressed_body);
-            Ok(out)
-        }
+        // Core Purification: If we expand, return specific error so Daemon can handle fallback.
+        // Or return Expanded variant if we had an Enum return type.
+        // For now, Err(CompressionError("Expansion detected")) allows Daemon to catch and fallback.
+        Err(QresError::CompressionError(String::from("Expansion detected")))
     }
 }
 
@@ -563,15 +515,8 @@ pub fn decompress_chunk(
             Ok(predictive_decode_v4(&compressed[5..], decomp_len, _weights))
         }
         0x01 => {
-            // Zstd fallback
-            #[cfg(feature = "std")]
-            {
-                zstd::bulk::decompress(&compressed[5..], decomp_len).map_err(|e| QresError::CompressionError(format!("{}", e)))
-            }
-            #[cfg(not(feature = "std"))]
-            {
-                Err(QresError::CompressionError(String::from("Zstd decompression not supported in no_std")))
-            }
+            // Zstd fallback - Not supported in Core Purification
+            Err(QresError::CompressionError(String::from("Zstd decompression not supported in pure Core")))
         }
         0x02 => {
             // ANS codec with Neural Init
