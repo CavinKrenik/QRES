@@ -7,12 +7,12 @@ pub mod stats;
 pub mod swarm;
 pub mod swarm_p2p;
 
-use clap::{Parser, Subcommand};
-use qres_core::{compress_chunk, decompress_chunk};
 use crate::living_brain::LivingBrain;
+use clap::{Parser, Subcommand};
+use qres_core::quantum::MpsCompressor;
+use qres_core::{compress_chunk, decompress_chunk};
 use std::fs::{self, File};
 use std::io::{self, Read, Write};
-use qres_core::quantum::MpsCompressor;
 
 const DEFAULT_BRAIN_FILE: &str = "qres_brain.json";
 const CHUNK_SIZE: usize = 64 * 1024; // 64KB chunks
@@ -129,7 +129,7 @@ fn compress_file(input: &str, output: &str) -> io::Result<()> {
         total_output += compressed.len() as u64 + 4;
 
         // Progress indicator
-        if total_input >= 1024 * 1024 && total_input % (1024 * 1024) == 0 {
+        if total_input >= 1024 * 1024 && total_input.is_multiple_of(1024 * 1024) {
             let ratio = (total_output as f64 / total_input as f64) * 100.0;
             eprint!(
                 "\rCompressed: {:.2} MB -> {:.2} MB ({:.1}%)",
@@ -141,7 +141,11 @@ fn compress_file(input: &str, output: &str) -> io::Result<()> {
     }
 
     let elapsed = start.elapsed();
-    let ratio = if total_input > 0 { (total_output as f64 / total_input as f64) * 100.0 } else { 0.0 };
+    let ratio = if total_input > 0 {
+        (total_output as f64 / total_input as f64) * 100.0
+    } else {
+        0.0
+    };
 
     eprintln!(
         "\n[Done] Compressed {} bytes to {} bytes ({:.2}%) in {:.2}s",
@@ -152,7 +156,11 @@ fn compress_file(input: &str, output: &str) -> io::Result<()> {
     );
     eprintln!(
         "  Throughput: {:.2} MB/s",
-        if elapsed.as_secs_f64() > 0.0 { (total_input as f64 / 1024.0 / 1024.0) / elapsed.as_secs_f64() } else { 0.0 }
+        if elapsed.as_secs_f64() > 0.0 {
+            (total_input as f64 / 1024.0 / 1024.0) / elapsed.as_secs_f64()
+        } else {
+            0.0
+        }
     );
 
     Ok(())
@@ -210,7 +218,7 @@ fn decompress_file(input: &str, output: &str) -> io::Result<()> {
         total_output += decompressed.len() as u64;
 
         // Progress indicator
-        if total_output >= 1024 * 1024 && total_output % (1024 * 1024) == 0 {
+        if total_output >= 1024 * 1024 && total_output.is_multiple_of(1024 * 1024) {
             eprint!(
                 "\rDecompressed: {:.2} MB",
                 total_output as f64 / 1024.0 / 1024.0
@@ -226,7 +234,11 @@ fn decompress_file(input: &str, output: &str) -> io::Result<()> {
     );
     eprintln!(
         "  Throughput: {:.2} MB/s",
-         if elapsed.as_secs_f64() > 0.0 { (total_output as f64 / 1024.0 / 1024.0) / elapsed.as_secs_f64() } else { 0.0 }
+        if elapsed.as_secs_f64() > 0.0 {
+            (total_output as f64 / 1024.0 / 1024.0) / elapsed.as_secs_f64()
+        } else {
+            0.0
+        }
     );
 
     Ok(())
@@ -370,7 +382,11 @@ fn compress_quantum_file(
     }
 
     let elapsed = start.elapsed();
-    let ratio = if len > 0 { (compressed_size as f64 / len as f64) * 100.0 } else { 0.0 };
+    let ratio = if len > 0 {
+        (compressed_size as f64 / len as f64) * 100.0
+    } else {
+        0.0
+    };
 
     eprintln!(
         "[Done] Quantum Compressed {} bytes to {} bytes ({:.2}%) in {:.2}s",

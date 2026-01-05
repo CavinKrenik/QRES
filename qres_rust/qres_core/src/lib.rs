@@ -12,29 +12,33 @@ use pyo3::types::PyBytes;
 pub mod ans_coder;
 pub mod archive;
 pub mod dedup;
+#[cfg(feature = "gpu")]
+pub mod gpu;
 pub mod meta_brain; // Inference Engine (moved to Core)
 pub mod mixer;
 pub mod predictors;
-pub mod spectral;
-#[cfg(feature = "gpu")]
-pub mod gpu;
 pub mod quantum;
+pub mod spectral;
 pub mod transformer;
-use transformer::TransformerPredictor;
-use crate::predictors::{Predictor, SimplePredictor, GraphPredictor, LzMatchPredictor};
-use crate::spectral::SpectralPredictor;
-use crate::mixer::{Mixer, NUM_MODELS};
 use crate::ans_coder::{AnsReader, AnsWriter};
+use crate::mixer::{Mixer, NUM_MODELS};
+use crate::predictors::{GraphPredictor, LzMatchPredictor, Predictor, SimplePredictor};
+use crate::spectral::SpectralPredictor;
+use transformer::TransformerPredictor;
 
 // --- Living Brain (Adaptive Learning) ---
 // Note: LivingBrain struct moved to qres_daemon. Core only handles inference via meta_brain.rs.
 
+#[allow(dead_code)]
 const CHUNK_SIZE: usize = 1024 * 1024;
+#[allow(dead_code)]
 const QRES_MAGIC: &[u8] = b"QRES";
 const QRES_PROTOCOL_VERSION: u8 = 10; // v10.0 Engineering
 
 // Known Predictor IDs
+#[allow(dead_code)]
 const PREDICTOR_ID_DEFAULT: u8 = 0;
+#[allow(dead_code)]
 const PREDICTOR_ID_NEURAL: u8 = 1;
 const PREDICTOR_ID_SPLIT: u8 = 2; // Reserved for Interleaved
 
@@ -350,7 +354,7 @@ pub fn compress_chunk(
         const LOW_ENTROPY_THRESHOLD: f32 = 0.2;
         const HIGH_ENTROPY_THRESHOLD: f32 = 7.8;
 
-        if entropy < LOW_ENTROPY_THRESHOLD || entropy > HIGH_ENTROPY_THRESHOLD {
+        if !(LOW_ENTROPY_THRESHOLD..=HIGH_ENTROPY_THRESHOLD).contains(&entropy) {
             let zstd_compressed = zstd::bulk::compress(chunk, 3).map_err(io::Error::other)?;
             if zstd_compressed.len() < chunk.len() {
                 // Flag 0x01: Zstd
@@ -384,16 +388,14 @@ pub fn compress_chunk(
             stored_init_weights.extend_from_slice(&b);
             effective_weights.extend_from_slice(&b);
         }
-    } else {
-        if let Some(w) = _weights {
-            let take = w.len().min(WEIGHTS_LEN);
-            effective_weights.extend_from_slice(&w[0..take]);
-            if take > 0 {
-                is_neural = true;
-                stored_init_weights.extend_from_slice(&w[0..take]);
-                while stored_init_weights.len() < WEIGHTS_LEN {
-                    stored_init_weights.push(0);
-                }
+    } else if let Some(w) = _weights {
+        let take = w.len().min(WEIGHTS_LEN);
+        effective_weights.extend_from_slice(&w[0..take]);
+        if take > 0 {
+            is_neural = true;
+            stored_init_weights.extend_from_slice(&w[0..take]);
+            while stored_init_weights.len() < WEIGHTS_LEN {
+                stored_init_weights.push(0);
             }
         }
     }

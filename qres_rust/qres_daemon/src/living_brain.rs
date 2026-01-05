@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use qres_core::mixer::NUM_MODELS;
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct LivingBrain {
@@ -67,32 +67,38 @@ impl LivingBrain {
     pub fn diff(&self, other: &LivingBrain) -> Option<BrainDelta> {
         let mut updates = Vec::new();
         // Check for significant differences in confidence
-        for (i, (&a, &b)) in self.confidence.iter().zip(other.confidence.iter()).enumerate() {
-            if (a - b).abs() > 0.05 { // 5% change threshold for "Epiphany"
+        for (i, (&a, &b)) in self
+            .confidence
+            .iter()
+            .zip(other.confidence.iter())
+            .enumerate()
+        {
+            if (a - b).abs() > 0.05 {
+                // 5% change threshold for "Epiphany"
                 updates.push((i, a));
             }
         }
-        
+
         if updates.is_empty() {
-             None
+            None
         } else {
-             Some(BrainDelta {
-                 timestamp: std::time::SystemTime::now()
+            Some(BrainDelta {
+                timestamp: std::time::SystemTime::now()
                     .duration_since(std::time::UNIX_EPOCH)
                     .unwrap_or_default()
                     .as_secs(),
-                 updates,
-             })
+                updates,
+            })
         }
     }
 
     pub fn apply_delta(&mut self, delta: &BrainDelta) {
-         for &(i, val) in &delta.updates {
-             if i < self.confidence.len() {
-                 // Alpha blend the delta (safely absorb knowledge)
-                 let alpha = 0.2;
-                 self.confidence[i] = self.confidence[i] * (1.0 - alpha) + val * alpha;
-             }
-         }
+        for &(i, val) in &delta.updates {
+            if i < self.confidence.len() {
+                // Alpha blend the delta (safely absorb knowledge)
+                let alpha = 0.2;
+                self.confidence[i] = self.confidence[i] * (1.0 - alpha) + val * alpha;
+            }
+        }
     }
 }

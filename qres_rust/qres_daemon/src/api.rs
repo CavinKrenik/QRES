@@ -1,5 +1,4 @@
 use axum::{
-    extract::State,
     http::StatusCode,
     response::Json,
     routing::{get, post},
@@ -8,19 +7,13 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tower_http::cors::{CorsLayer, Any};
+use tower_http::cors::{Any, CorsLayer};
 
 use crate::daemon::DaemonManager;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct ApiState {
     // Shared state for the API
-}
-
-impl ApiState {
-    pub fn new() -> Self {
-        Self {}
-    }
 }
 
 // Response types
@@ -59,7 +52,7 @@ async fn health() -> Json<HealthResponse> {
 async fn get_status() -> Json<StatusResponse> {
     let pid_file = DaemonManager::get_pid_file();
     let state_file = DaemonManager::get_state_file();
-    
+
     let (running, pid) = if let Ok(content) = std::fs::read_to_string(&pid_file) {
         if let Ok(pid_val) = content.trim().parse::<u32>() {
             let s = sysinfo::System::new_all();
@@ -71,7 +64,7 @@ async fn get_status() -> Json<StatusResponse> {
     } else {
         (false, None)
     };
-    
+
     let metrics = if running {
         std::fs::read_to_string(&state_file)
             .ok()
@@ -79,7 +72,7 @@ async fn get_status() -> Json<StatusResponse> {
     } else {
         None
     };
-    
+
     Json(StatusResponse {
         running,
         pid,
@@ -87,10 +80,12 @@ async fn get_status() -> Json<StatusResponse> {
     })
 }
 
-async fn start_swarm(Json(payload): Json<StartRequest>) -> Result<Json<StatusResponse>, (StatusCode, Json<ErrorResponse>)> {
+async fn start_swarm(
+    Json(payload): Json<StartRequest>,
+) -> Result<Json<StatusResponse>, (StatusCode, Json<ErrorResponse>)> {
     let wan = payload.wan.unwrap_or(false);
     let interval = payload.gossip_interval.unwrap_or(600);
-    
+
     match DaemonManager::start(wan, interval) {
         Ok(_) => Ok(Json(StatusResponse {
             running: true,
@@ -120,13 +115,13 @@ async fn stop_swarm() -> Result<Json<StatusResponse>, (StatusCode, Json<ErrorRes
 
 async fn get_brain_wisdom() -> Json<serde_json::Value> {
     let brain_path = "qres_brain.json";
-    
+
     if let Ok(json) = std::fs::read_to_string(brain_path) {
         if let Ok(value) = serde_json::from_str(&json) {
             return Json(value);
         }
     }
-    
+
     Json(serde_json::json!({
         "error": "Brain not found or invalid"
     }))
@@ -149,8 +144,8 @@ async fn get_config() -> Json<crate::config::Config> {
 }
 
 pub async fn run_api_server(port: u16) -> Result<(), Box<dyn std::error::Error>> {
-    let state = Arc::new(RwLock::new(ApiState::new()));
-    
+    let _state = Arc::new(RwLock::new(ApiState::default()));
+
     let app = Router::new()
         .route("/health", get(health))
         .route("/api/status", get(get_status))
@@ -164,14 +159,14 @@ pub async fn run_api_server(port: u16) -> Result<(), Box<dyn std::error::Error>>
             CorsLayer::new()
                 .allow_origin(Any)
                 .allow_methods(Any)
-                .allow_headers(Any)
+                .allow_headers(Any),
         );
-    
+
     let addr = format!("0.0.0.0:{}", port);
     println!("🌐 API Server listening on http://{}", addr);
-    
+
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     axum::serve(listener, app).await?;
-    
+
     Ok(())
 }

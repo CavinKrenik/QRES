@@ -3,6 +3,11 @@ name = "qres_core"
 version = "0.10.0"
 edition = "2021"
 
+[features]
+default = []
+python = ["pyo3"]
+gpu = []
+
 [dependencies]
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -14,3 +19,4 @@ rustfft = "6.2"
 probability = "0.20"
 walkdir = "2.3"
 blake3 = "1.5"
+pyo3 = { version = "0.20", optional = true }

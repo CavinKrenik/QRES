@@ -1,4 +1,4 @@
-use crate::living_brain::{LivingBrain, BrainMessage};
+use crate::living_brain::{BrainMessage, LivingBrain};
 use axum::{extract::State, routing::get, Json, Router};
 use libp2p::futures::StreamExt; // For select_next_some
 use libp2p::gossipsub::IdentTopic; // Added helper
@@ -145,11 +145,7 @@ pub async fn start_p2p_node(
 
                         // Delta Encoding Logic
                         let message = if let Some(last) = &last_broadcast_brain {
-                            if let Some(delta) = current_brain.diff(last) {
-                                Some(BrainMessage::Delta(delta))
-                            } else {
-                                None // No significant change - skip broadcast
-                            }
+                            current_brain.diff(last).map(BrainMessage::Delta)
                         } else {
                             Some(BrainMessage::Full(current_brain.clone()))
                         };
