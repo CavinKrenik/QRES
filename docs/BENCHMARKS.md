@@ -20,7 +20,7 @@ Performance metrics for the Quantum-Relational Encoding System.
 
 | Dataset | QRES v9.0 | Zstd (L19) | Notes |
 |---------|-----------|------------|-------|
-| **IoT Correlated** (20MB) | **0.380** | 0.450 | Strong win on signal |
+| **IoT Correlated** (20MB) | **0.760** | 0.450 | *Optimization Pending* |
 | **IoT Noise** (20MB) | 0.920 | 0.880 | *Lack of ANS backend hurts here* |
 | **Text/Code** | **~0.19** | 0.355 | 46% better than Zstd |
 | **PDF Documents** | ~0.9 | ~0.95 | Already compressed |
