@@ -141,7 +141,7 @@ fn compress_file(input: &str, output: &str) -> io::Result<()> {
                 out.extend_from_slice(&zstd_data);
                 out
             }
-            Err(e) => return Err(io::Error::new(io::ErrorKind::Other, e.to_string())),
+            Err(e) => return Err(io::Error::other(e.to_string())),
         };
 
         // Write chunk size (4 bytes) + compressed data
@@ -251,7 +251,7 @@ fn decompress_file(input: &str, output: &str) -> io::Result<()> {
                 let payload = &compressed[5..];
                 zstd::bulk::decompress(payload, decomp_len)?
             }
-            Err(e) => return Err(io::Error::new(io::ErrorKind::Other, e.to_string())),
+            Err(e) => return Err(io::Error::other(e.to_string())),
         };
 
         output_file.write_all(&decompressed)?;

@@ -43,7 +43,7 @@ impl From<std::io::Error> for QresError {
 #[cfg(feature = "std")]
 impl From<QresError> for std::io::Error {
     fn from(err: QresError) -> Self {
-        std::io::Error::new(std::io::ErrorKind::Other, err.to_string())
+        std::io::Error::other(err.to_string())
     }
 }
 
