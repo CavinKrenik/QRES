@@ -4,7 +4,7 @@
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/CavinKrenik/QRES/release.yml?style=flat)](https://github.com/CavinKrenik/QRES/actions)
-[![Version](https://img.shields.io/badge/version-v10.0.1-brightgreen)](https://github.com/CavinKrenik/QRES/releases)
+[![Version](https://img.shields.io/badge/version-v10.1.0-brightgreen)](https://github.com/CavinKrenik/QRES/releases)
 [![Python](https://img.shields.io/badge/python-3.10+-blue)](https://python.org)
 [![Rust](https://img.shields.io/badge/rust-1.70+-orange)](https://rust-lang.org)
 
@@ -92,6 +92,20 @@ cd qres_rust && cargo build --release --workspace
 
 ### Basic Usage
 
+**Start the Daemon (Secure by Default):**
+```bash
+# Binds to 127.0.0.1
+qres-daemon start
+```
+
+**Start for External Access (e.g., in Docker/P2P):**
+```bash
+# Binds to 0.0.0.0 (Warning: Publicly accessible)
+QRES_PUBLIC=1 qres-daemon start
+```
+
+**Python Client:**
+
 ```python
 import qres
 
@@ -148,31 +162,26 @@ QRES/
 - ✅ **v8.0** – MetaBrain v4, Multimodal, World State Persistence
 - ✅ **v8.1** – SNN Integration, TNC Fusion, Hive Mind
 - ✅ **v9.0** – GIF Neurons, OSBC Pruning, Auto-Tuning
-- ✅ **v10.0** – Tensor Network Correlator, Deterministic Q16.16, Ratio <0.30
-- 🔮 **v10.5** – FPGA Acceleration & WebAssembly Core
+- ✅ **v10.0** – Tensor Network Correlator, Deterministic Q16.16
+- ✅ **v10.1** – Security Hardening, JSON Persistence, Structured Logging (Stable Baseline)
+- � **v10.5** – FPGA Acceleration & WebAssembly Core (Active)
 
 ---
 
-## 🤝 Contributing
+## 🏗️ Engineering Roadmap (v10.5 - Hardware Era)
 
-We welcome contributions! See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for guidelines.
+The focus shifts from software architecture to hardware acceleration and edge deployment.
 
-**Areas of interest:**
-- SNN optimization for breakthrough ratios
-- Quantum circuit improvements
-- P2P swarm scalability
+### 🏎️ Phase 1: FPGA Acceleration (Active)
+> **Goal:** Offload the `SNN Predictor` and `Mixer` to FPGA logic for microsecond latency.
 
----
+- [ ] **`no_std` Refactor:** Decouple `qres_core` from standard library for embedded/FPGA usage.
+- [ ] **Hardware Description:** Port `Mixer` logic to Verilog/HLS.
+- [ ] **Driver Layer:** Create DMA bridge between Rust Daemon and FPGA Core.
 
-## 📜 License
+### 🌐 Phase 2: WebAssembly Core
+> **Goal:** Run QRES entirely in the browser for client-side compression.
 
-[Apache 2.0](LICENSE) – Free for commercial and personal use.
-
----
-
-<p align="center">
-  <strong>Built with 🧠 for the Singularity Era</strong><br>
-  <a href="https://github.com/CavinKrenik/QRES">GitHub</a> •
-  <a href="docs/WHITEPAPER.md">Whitepaper</a> •
-  <a href="examples/brain_demo.ipynb">Demo</a>
-</p>
+- [ ] **WASM Target:** Ensure `qres_core` compiles to `wasm32-unknown-unknown`.
+- [ ] **JS Bindings:** `wasm-bindgen` interface for TypeScript Studio.
+- [ ] **Browser Persistence:** Adapt `WorldStateManager` to use `IndexedDB` instead of file system.
