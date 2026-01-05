@@ -1654,6 +1654,9 @@ name = "lazy_static"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
+dependencies = [
+ "spin 0.9.8",
+]
 
 [[package]]
 name = "libc"
@@ -2768,11 +2771,13 @@ dependencies = [
 
 [[package]]
 name = "qres_core"
-version = "0.10.1"
+version = "10.1.0"
 dependencies = [
  "blake3",
  "constriction",
  "lazy_static",
+ "libm",
+ "num-traits",
  "probability",
  "pyo3",
  "rand 0.8.5",
@@ -2780,12 +2785,11 @@ dependencies = [
  "serde",
  "serde_json",
  "walkdir",
- "zstd",
 ]
 
 [[package]]
 name = "qres_daemon"
-version = "0.10.1"
+version = "10.1.0"
 dependencies = [
  "axum",
  "chrono",
@@ -2803,6 +2807,7 @@ dependencies = [
  "tower-http",
  "tracing",
  "tracing-subscriber",
+ "zstd",
 ]
 
 [[package]]
@@ -3059,7 +3064,7 @@ dependencies = [
  "cc",
  "libc",
  "once_cell",
- "spin",
+ "spin 0.5.2",
  "untrusted 0.7.1",
  "web-sys",
  "winapi",
@@ -3468,6 +3473,12 @@ name = "spin"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
+
+[[package]]
+name = "spin"
+version = "0.9.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6980e8d7511241f8acf4aebddbb1ff938df5eebe98691418c4468d0b72a96a67"
 
 [[package]]
 name = "spki"

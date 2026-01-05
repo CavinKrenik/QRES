@@ -1,3 +1,5 @@
+use alloc::vec;
+use alloc::vec::Vec;
 use lazy_static::lazy_static;
 use serde::Deserialize;
 
@@ -110,7 +112,8 @@ pub fn calculate_features(data: &[u8]) -> [f32; 4] {
     for &b in data {
         counts[b as usize] += 1;
         sum += b as f32;
-        sum_sq += (b as f32).powi(2);
+        let val = b as f32;
+        sum_sq += val * val;
     }
 
     let n = data.len() as f32;
@@ -121,7 +124,7 @@ pub fn calculate_features(data: &[u8]) -> [f32; 4] {
     for &c in &counts {
         if c > 0 {
             let p = c as f32 / n;
-            entropy -= p * p.log2();
+            entropy -= p * libm::log2f(p);
         }
     }
 
@@ -162,7 +165,7 @@ pub fn predict_init_weights(chunk: &[u8]) -> Option<[f32; NUM_OUTPUTS]> {
         let mut sum = 0.0;
         let mut exp_w = [0.0; NUM_OUTPUTS];
         for (i, &w) in weights.iter().enumerate() {
-            exp_w[i] = (w - max_w).exp();
+            exp_w[i] = libm::expf(w - max_w);
             sum += exp_w[i];
         }
 

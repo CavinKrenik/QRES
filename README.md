@@ -7,6 +7,14 @@
 [![Version](https://img.shields.io/badge/version-v10.1.0-brightgreen)](https://github.com/CavinKrenik/QRES/releases)
 [![Python](https://img.shields.io/badge/python-3.10+-blue)](https://python.org)
 [![Rust](https://img.shields.io/badge/rust-1.70+-orange)](https://rust-lang.org)
+[![WASM Ready](https://img.shields.io/badge/target-wasm32-blueviolet)](https://github.com/CavinKrenik/QRES)
+[![no_std](https://img.shields.io/badge/std-optional-blue)](https://docs.rust-embedded.org/book/intro/no-std.html)
+
+## 🔧 Build Targets
+QRES v10.5+ supports diverse build targets:
+* **x86_64 / ARM64:** Full `std` support (Daemon + Core)
+* **wasm32-unknown-unknown:** Client-side browser compression (Core only)
+* **thumbv7em-none-eabihf:** Embedded/Bare-metal ready (Core only)
 
 ---
 

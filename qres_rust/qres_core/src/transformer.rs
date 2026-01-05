@@ -1,4 +1,6 @@
 use crate::predictors::Predictor;
+use alloc::vec;
+use alloc::vec::Vec;
 
 /// TransformerPredictor: A lightweight Self-Attention mechanism for byte streams.
 /// Architecture:

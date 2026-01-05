@@ -1,3 +1,5 @@
+use alloc::vec;
+use alloc::vec::Vec;
 use rustfft::{num_complex::Complex, FftPlanner};
 
 // QRES v4.1 Enhanced Spectral Predictor
@@ -78,10 +80,10 @@ impl SpectralPredictor {
             let t = (self.window_size + self.steps_since_update) as f32;
 
             for comp in &model.components {
-                let angle = (2.0 * std::f32::consts::PI * comp.frequency * t
+                let angle = (2.0 * core::f32::consts::PI * comp.frequency * t
                     / (self.window_size as f32))
                     + comp.phase;
-                pred_val += comp.amplitude * angle.cos();
+                pred_val += comp.amplitude * libm::cosf(angle);
             }
 
             // Add back trend: y = mx + b + periodic

@@ -10,10 +10,11 @@ pub mod swarm_p2p;
 use crate::living_brain::LivingBrain;
 use clap::{Parser, Subcommand};
 use qres_core::tensor::MpsCompressor;
-use qres_core::{compress_chunk, decompress_chunk};
+use qres_core::{compress_chunk, decompress_chunk, QresError};
+// use qres_core::QresError;
 use std::fs::{self, File};
 use std::io::{self, Read, Write};
-use tracing::{info, error};
+use tracing::{error, info};
 
 const DEFAULT_BRAIN_FILE: &str = "qres_brain.json";
 const CHUNK_SIZE: usize = 64 * 1024; // 64KB chunks
@@ -120,7 +121,28 @@ fn compress_file(input: &str, output: &str) -> io::Result<()> {
         }
 
         let chunk = &buffer[..bytes_read];
-        let compressed = compress_chunk(chunk, 0, weights_arg, None)?;
+        let compressed_result = compress_chunk(chunk, 0, weights_arg, None);
+
+        let compressed = match compressed_result {
+            Ok(c) => c,
+            Err(QresError::CompressionError(_)) => {
+                // Core failed to compress (expansion or error). Use Zstd fallback.
+                // We need to implement the Zstd chunk format manually here to match what Core used to do.
+                // Header: [Version: 4 bits][Mode 0x01: 4 bits]
+                // Format: [Header: 1] [Len: 4] [ZstdData]
+                // Note: qres_core's Zstd mode was 0x01.
+                let zstd_data = zstd::bulk::compress(chunk, 3)?;
+                let ver = 0x0A; // V10 protocol version (0x0A & 0x0F)
+                let flag_byte = (ver << 4) | 0x01; // Mode 0x01 = Zstd
+
+                let mut out = Vec::with_capacity(5 + zstd_data.len());
+                out.push(flag_byte);
+                out.extend_from_slice(&(chunk.len() as u32).to_le_bytes());
+                out.extend_from_slice(&zstd_data);
+                out
+            }
+            Err(e) => return Err(io::Error::new(io::ErrorKind::Other, e.to_string())),
+        };
 
         // Write chunk size (4 bytes) + compressed data
         output_file.write_all(&(compressed.len() as u32).to_le_bytes())?;
@@ -210,7 +232,28 @@ fn decompress_file(input: &str, output: &str) -> io::Result<()> {
         input_file.read_exact(&mut compressed)?;
 
         // Decompress
-        let decompressed = decompress_chunk(&compressed, 0, weights_arg)?;
+        // Decompress
+        let result = decompress_chunk(&compressed, 0, weights_arg);
+
+        let decompressed = match result {
+            Ok(d) => d,
+            Err(QresError::CompressionError(s)) if s.contains("Zstd") => {
+                // Fallback for Zstd chunks (0x01) which Core rejected
+                // We need to parse the header manually to extract Zstd payload
+                // Offsets: [Header:1][UncompressedLen:4][Payload...]
+                if compressed.len() < 5 {
+                    return Err(io::Error::new(
+                        io::ErrorKind::InvalidData,
+                        "Chunk too short",
+                    ));
+                }
+                let decomp_len = u32::from_le_bytes(compressed[1..5].try_into().unwrap()) as usize;
+                let payload = &compressed[5..];
+                zstd::bulk::decompress(payload, decomp_len)?
+            }
+            Err(e) => return Err(io::Error::new(io::ErrorKind::Other, e.to_string())),
+        };
+
         output_file.write_all(&decompressed)?;
 
         total_output += decompressed.len() as u64;
@@ -271,7 +314,11 @@ fn brain_import(file_path: &str) -> io::Result<()> {
 }
 
 fn swarm_mode(brain: String, port: u16) -> io::Result<()> {
-    info!(brain_file = brain, port = port, "Starting QRES P2P Swarm Node (libp2p)...");
+    info!(
+        brain_file = brain,
+        port = port,
+        "Starting QRES P2P Swarm Node (libp2p)..."
+    );
 
     // Create Tokio Runtime for async swarm
     let rt = tokio::runtime::Runtime::new().map_err(io::Error::other)?;

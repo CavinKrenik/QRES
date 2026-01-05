@@ -3,8 +3,9 @@ use constriction::stream::queue::{DefaultRangeDecoder, DefaultRangeEncoder};
 use constriction::stream::{Decode, Encode};
 use probability::distribution::Gaussian;
 
+use alloc::vec::Vec;
 #[cfg(target_arch = "x86_64")]
-use std::arch::x86_64::*;
+use core::arch::x86_64::*;
 
 // QRES v4.0 "Hive-Optimized" Backend
 // Strategy: Lazy Adaptive ANS with Batched Updates
@@ -58,7 +59,7 @@ impl AnsWriter {
         let std = if self.count == 0 {
             32.0 // Initial guess
         } else {
-            ((self.running_var / (self.count).max(1) as f64).sqrt()).max(1e-6)
+            (libm::sqrt(self.running_var / (self.count).max(1) as f64)).max(1e-6)
         };
 
         let quantizer = LeakyQuantizer::<f64, i32, u32, 24>::new(-128..=127);
@@ -170,7 +171,7 @@ impl AnsReader {
         let std = if self.count == 0 {
             32.0
         } else {
-            ((self.running_var / (self.count).max(1) as f64).sqrt()).max(1e-6)
+            (libm::sqrt(self.running_var / (self.count).max(1) as f64)).max(1e-6)
         };
 
         let quantizer = LeakyQuantizer::<f64, i32, u32, 24>::new(-128..=127);
@@ -262,7 +263,7 @@ unsafe fn compute_batch_stats_avx2(data: &[i8]) -> (f64, f64) {
 }
 
 fn compute_batch_stats(data: &[i8]) -> (f64, f64) {
-    #[cfg(target_arch = "x86_64")]
+    #[cfg(all(feature = "std", target_arch = "x86_64"))]
     {
         if is_x86_feature_detected!("avx2") {
             return unsafe { compute_batch_stats_avx2(data) };

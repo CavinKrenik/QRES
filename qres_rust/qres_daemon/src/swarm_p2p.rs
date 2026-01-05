@@ -1,6 +1,5 @@
 use crate::living_brain::{BrainMessage, LivingBrain};
 use axum::{extract::State, routing::get, Json, Router};
-use tracing::{info, error};
 use libp2p::futures::StreamExt; // For select_next_some
 use libp2p::gossipsub::IdentTopic; // Added helper
 use libp2p::{
@@ -17,6 +16,7 @@ use std::io; // Added
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::RwLock;
+use tracing::{error, info};
 
 // Topic for brain synchronization
 const BRAIN_TOPIC: &str = "qres-brain-sync";
@@ -75,12 +75,10 @@ pub async fn start_p2p_node(
         } else {
             format!("127.0.0.1:{}", port)
         };
-        
+
         info!(address = addr_str, "API Server listening");
         // Bind to localhost by default
-        let listener = tokio::net::TcpListener::bind(&addr_str)
-            .await
-            .unwrap();
+        let listener = tokio::net::TcpListener::bind(&addr_str).await.unwrap();
         axum::serve(listener, app).await.unwrap();
     });
 

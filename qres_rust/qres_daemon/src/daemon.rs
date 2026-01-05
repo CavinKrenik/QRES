@@ -106,7 +106,11 @@ impl DaemonManager {
                     info!(status = "RUNNING", pid = pid_val, "Daemon Status");
                     running = true;
                 } else {
-                    info!(status = "CRASHED/STOPPED", reason = "Stale PID", "Daemon Status");
+                    info!(
+                        status = "CRASHED/STOPPED",
+                        reason = "Stale PID",
+                        "Daemon Status"
+                    );
                 }
             } else {
                 info!(status = "UNKNOWN", reason = "Corrupt PID", "Daemon Status");
