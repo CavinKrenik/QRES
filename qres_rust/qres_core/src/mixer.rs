@@ -73,8 +73,9 @@ impl Mixer {
         Mixer {
             weights,
             learning_rate: 0.01,
-            ar_coeffs: [0.7, -0.2],
-            history: [128.0, 128.0],
+            learning_rate: 0.01,
+            ar_coeffs: [1.0, 0.0], // Start as Delta Predictor (Optimized for Telemetry)
+            history: [0.0, 0.0],   // Zero init
             ar_learning_rate: 0.05,
             ar_velocities: [0.0, 0.0],
             running_mean: 128.0,
@@ -108,8 +109,9 @@ impl Mixer {
         Mixer {
             weights,
             learning_rate: 0.01,
-            ar_coeffs: [0.7, -0.2],
-            history: [128.0, 128.0],
+            learning_rate: 0.01,
+            ar_coeffs: [1.0, 0.0],
+            history: [0.0, 0.0],
             ar_learning_rate: 0.05,
             ar_velocities: [0.0, 0.0],
             running_mean: 128.0,
@@ -132,7 +134,7 @@ impl Mixer {
         let std = (self.running_var / (self.count.max(1) as f32)).sqrt();
 
         let prediction = if std < 45.0 {
-            0.8 * ar_pred + 0.2 * ensemble_sum
+            0.6 * ar_pred + 0.4 * ensemble_sum
         } else {
             ensemble_sum
         };
