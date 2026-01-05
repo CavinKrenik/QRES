@@ -64,10 +64,64 @@ jobs:
         with:
           name: cli-${{ matrix.os }}
           path: bin/*
+  
+  build_studio:
+    name: Build Studio (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - uses: dtolnay/rust-toolchain@stable
+      
+      # WASM Pre-requisite
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - name: Build WASM Core (Pre-requisite for Studio)
+        working-directory: ./qres_rust/qres_wasm
+        run: wasm-pack build --target web --release
+
+      - name: Install Frontend Deps
+        working-directory: qres-studio
+        run: npm install
+      
+      - name: Build Tauri App
+        working-directory: qres-studio
+        run: npm run tauri build
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_SIGNING_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+      
+      # Upload Tauri Artifacts (Paths vary by OS)
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        if: matrix.os == 'ubuntu-latest'
+        with:
+          name: studio-linux
+          path: qres-studio/src-tauri/target/release/bundle/deb/*.deb
+          
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        if: matrix.os == 'windows-latest'
+        with:
+          name: studio-windows
+          path: qres-studio/src-tauri/target/release/bundle/msi/*.msi
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        if: matrix.os == 'macos-latest'
+        with:
+          name: studio-macos
+          path: qres-studio/src-tauri/target/release/bundle/dmg/*.dmg
 
   release:
     name: Publish Release
-    needs: [build_wheels, build_cli]
+    needs: [build_wheels, build_cli, build_studio]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -79,6 +133,11 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           pattern: cli-*
+          path: dist
+          merge-multiple: true
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: studio-*
           path: dist
           merge-multiple: true
       

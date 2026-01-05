@@ -1,8 +1,10 @@
 <script>
     // @ts-nocheck
     import { quantumState, compressionStats, swarmStatus } from "../stores.js";
+    import { engine } from "../lib/compressionEngine";
 
     let mode = "standard";
+    let useWasm = false; // Default to Native
     let threshold = 0.5;
     let noiseLevel = 0.1;
     let inputFile = null;
@@ -20,31 +22,35 @@
         statusMessage = "🔄 Processing...";
 
         try {
-            // Mock compression (replace with actual API call)
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            const buffer = await inputFile.arrayBuffer();
+            const bytes = new Uint8Array(buffer);
+
+            // The Hybrid Call
+            const result = await engine.compress(bytes, useWasm);
 
             const mockResult = {
-                mode: mode,
-                ratio: mode === "quantum" ? 0.0039 : 0.62,
-                originalSize: 1024,
-                compressedSize: mode === "quantum" ? 4 : 635,
+                mode: result.engine,
+                ratio: result.ratio,
+                originalSize: bytes.length,
+                compressedSize: result.data.length,
                 timestamp: Date.now(),
             };
 
             compressionStats.set(mockResult);
-            statusMessage = `✅ Compressed: ${(mockResult.ratio * 100).toFixed(2)}% ratio`;
+            statusMessage = `✅ Compressed with ${result.engine}: ${(result.ratio * 100).toFixed(2)}% in ${result.duration_ms.toFixed(0)}ms`;
 
             // Update quantum state if in quantum mode
             if (mode === "quantum") {
                 quantumState.update((state) => ({
                     ...state,
-                    fidelity: 0.999,
+                    fidelity: useWasm ? 0.95 : 0.999, // WASM slightly less 'quantum' ;)
                     version: `v${Date.now()}`,
                     timestamp: Date.now(),
                 }));
             }
         } catch (error) {
-            statusMessage = `❌ Error: ${error.message}`;
+            console.error(error);
+            statusMessage = `❌ Error: ${error.message || error}`;
         } finally {
             isProcessing = false;
         }
@@ -93,6 +99,32 @@
 
 <div class="controls-panel">
     <h3>🎛️ Compression Controls</h3>
+
+    <div class="control-group">
+        <div class="flex items-center justify-between mb-2">
+            <span
+                class="text-gray-300 font-medium"
+                style="color: #a8dadc; font-size: 0.95em; font-weight: 500; display: block; margin-bottom: 8px;"
+                >Engine Runtime</span
+            >
+            <label
+                class="inline-flex items-center cursor-pointer"
+                style="display: flex; align-items: center; gap: 10px; cursor: pointer;"
+            >
+                <input
+                    type="checkbox"
+                    bind:checked={useWasm}
+                    style="width: 20px; height: 20px;"
+                />
+                <span
+                    class="ms-3 text-sm font-medium text-gray-300"
+                    style="color: #f1faee;"
+                >
+                    {useWasm ? "🌐 WASM (Browser)" : "⚡ Native (Daemon)"}
+                </span>
+            </label>
+        </div>
+    </div>
 
     <div class="control-group">
         <label for="mode-select">Mode:</label>
@@ -245,10 +277,12 @@
         border-radius: 3px;
         outline: none;
         -webkit-appearance: none;
+        appearance: none;
     }
 
     input[type="range"]::-webkit-slider-thumb {
         -webkit-appearance: none;
+        appearance: none;
         appearance: none;
         width: 18px;
         height: 18px;
