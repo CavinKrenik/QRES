@@ -4,7 +4,7 @@
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/CavinKrenik/QRES/test.yml?style=flat)](https://github.com/CavinKrenik/QRES/actions)
-[![Version](https://img.shields.io/badge/version-v9.0-brightgreen)](https://github.com/CavinKrenik/QRES/releases)
+[![Version](https://img.shields.io/badge/version-v10.0-brightgreen)](https://github.com/CavinKrenik/QRES/releases)
 [![Python](https://img.shields.io/badge/python-3.10+-blue)](https://python.org)
 [![Rust](https://img.shields.io/badge/rust-1.70+-orange)](https://rust-lang.org)
 
@@ -65,21 +65,21 @@ cd QRES
 # Install Python dependencies
 pip install -e .
 
-# Build Rust core (optional, for native performance)
-cd qres_rust && cargo build --release
+# Build Rust core (optimized native binary)
+cd qres_rust && cargo build --release --workspace
 ```
 
 ### Basic Usage
 
 ```python
-from qres import qres_rust
+import qres
 
 # Compress
 data = open("input.dat", "rb").read()
-compressed = qres_rust.encode_bytes(data, 0, b'')
+compressed = qres.compress(data)
 
 # Decompress
-restored = qres_rust.decode_bytes(compressed, b'')
+restored = qres.decompress(compressed)
 ```
 
 ### Try the Demo
@@ -94,7 +94,9 @@ Explore the interactive notebook: **[examples/brain_demo.ipynb](examples/brain_d
 QRES/
 ├── ai/                    # Neural networks (SNN, QNN, Hive Mind)
 ├── python/qres/           # Python API & utilities
-├── qres_rust/             # Rust core engine
+├── qres_rust/             # Rust Workspace
+│   ├── qres_core/         # Pure compression library (Codecs)
+│   └── qres_daemon/       # P2P Swarm & Training Node
 ├── qres-studio/           # Svelte/Tauri GUI
 ├── docs/                  # Documentation
 ├── examples/              # Demo notebooks

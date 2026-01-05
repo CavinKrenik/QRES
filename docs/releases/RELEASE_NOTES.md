@@ -1,43 +1,39 @@
-# QRES v8.0.0: The AEON Release
+# QRES v10.0.0: The Engineering Release
 
-> **The Unified Singularity Release.**
+> **Hardened. Modular. Production-Ready.**
 
-This release consolidates the entire QRES ecosystem—Quantum Intelligence, Swarm Persistence, and the Living Brain—into one solid, production-ready package. It represents the culmination of Phases 0-4.
+This milestone release transforms QRES from an experimental research project into a rigorous engineering standard. It introduces a modular workspace architecture, bit-perfect deterministic compression across architectures (Linux/macOS/Windows), and optimized P2P protocols.
 
-## 🌟 Major Features
+## 🌟 Major Highlights
 
-### 🧠 The "Living Brain" (AI)
-### 🧠 The "Living Brain" (AI)
-- **Neural-Symbolic Telepathy:** Hybrid linear/neural prediction engine.
-- **Semantic Predictor:** Integrated LLM (Transformer) support for text/code.
-- **Adaptive RL (v8.0 New):** PPO Agent (Gymnasium/Stable-Baselines3) integrated into the core pipeline.
-  - Dynamically predicts optimal compression weights based on data histograms.
-  - Pre-trained "MetaBrain" model (`metabrain_ppo_v2`) included for IoT optimization.
+### 🛡️ Bit-Perfect Determinism (Cross-Arch)
+- **The "Butterfly Effect" Fixed:** Replaced floating-point weights (`f32`) with **Q16.16 Fixed-Point Arithmetic** (`i32`).
+- **Guarantee:** A file compressed on an Intel Linux server will decompress *byte-for-byte identically* on an Apple Silicon MacBook. Verified by our new "Battle Royale" CI pipeline.
 
-### ⚡ Performance Tuning
-- **IoT Entropy Optimization:** Tuned `lib.rs` thresholds (Low=0.2, High=7.8) to maximize predictive engine usage.
-- **Binary Fallback:** Smart spectral graph generation for non-UTF8 binary data in Quantum Mode.
+### 🧩 Modular Architecture
+- **Workspace Split:** The monolithic `qres_rust` crate has been split:
+  - `qres_core`: A pure, lightweight library for compression/decompression (no heavy dependencies).
+  - `qres_daemon`: The full "Living Brain" application with P2P networking and AI training.
+- **Benefit:** Developers can now embed the QRES codec into other apps without pulling in the entire Swarm stack.
 
-### ⚛️ Quantum-Inspired Core
-- **Tensor Networks:** High-dimensional state representation using Matrix Product States (MPS).
-- **Quantum Simulation:** QuTiP-based noise modeling and AQC pruning (>40% efficiency gain).
+### ⚡ Delta-Gossip Protocol
+- **Bandwidth Optimization:** The P2P Swarm now uses **Delta Encoding** for model updates.
+- **Efficiency:** Instead of broadcasting the entire 50MB neural brain every few seconds, nodes only transmit the "Epiphanies" (weights that changed significantly), reducing network traffic by >90%.
 
-### 🐝 Persistent Swarm (P2P)
-- **World State Persistence:** Save/Load the global "World State" with `--save-state`.
-- **Hive Mind:** Distributed model sharing via `libp2p` GossipSub.
-- **Quantum Broadcasting:** Real-time synchronization of state tensors across the WAN.
-
-### 🚀 Starship GUI
-- **Complete Revamp:** Built with **Tauri v2** and **Svelte 5**.
-- **Visualizations:** Real-time D3.js Knowledge Graphs and Swarm Topology.
+### � Modern Python Bindings
+- **PyO3 0.22 Upgrade:** Bindings now use the latest PyO3 API with `abi3` support.
+- **Compatibility:** Native wheels now support Python 3.8 through 3.12+ seamlessly.
 
 ## 📦 Assets
-- `qres-cli` (Windows/Linux/macOS)
-- `qres_quantum_cli.py` (Research Tool)
-- `qres_quantum_receiver.py` (Swarm Node)
+- `qres_daemon` (CLI & Swarm Node)
+- `qres` (Python Codec Package)
+- `qres-studio` (GUI Dashboard)
 
-## 🛠 Upgrade Guide
-This is a major release. Previous archives (`.qres` v5/v6) require migration:
+## 🛠 Usage
 ```bash
-qres migrate --from v5 --to v8 --in old_archive.qres
+# Codec (Library)
+cargo add qres_core
+
+# Full Application
+cargo install --path qres_rust/qres_daemon
 ```

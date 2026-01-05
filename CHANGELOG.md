@@ -4,6 +4,26 @@ All notable changes to this project are documented here.
 
 ---
 
+## [10.0.0] - 2026-01-04 "Engineering Hardening"
+
+### Critical Architecture Changes
+- **Workspace Split**: `qres_rust` is now a workspace with two crates: `qres_core` (pure codec) and `qres_daemon` (brain/swarm node).
+- **Delta Gossip**: Swarm P2P now uses delta encoding for efficient model updates.
+- **Fixed-Point Arithmetic**: Predictor weights now use Q16.16 i32 format for bit-perfect cross-arch deterministic compression.
+
+### Added
+- **Cross-Arch CI**: "Battle Royale" workflow verifies Linux/x86 compression matches macOS/ARM decompression.
+- **Python Bindings**: Updated to PyO3 0.22 with `abi3` support for Python 3.8+ compatibility.
+
+### Changed
+- **CLI**: The binary is now `qres_daemon` (or use `qres` Python wrapper).
+- **Python-Rust Bridge**: Refactored to support safe threading and clearer API mapping.
+
+### Removed
+- **Bloat**: Removed direct dependencies on `libp2p` from the core compression path.
+
+---
+
 ## [9.0.0] - 2026-01-04 "Singularity Brain"
 
 ### Added
