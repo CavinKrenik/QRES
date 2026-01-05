@@ -32,6 +32,13 @@ jobs:
         working-directory: qres_rust
         run: cargo test --workspace --verbose
 
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - name: Verify WASM Build
+        working-directory: qres_rust/qres_wasm
+        run: wasm-pack build --target web
+
       - name: Verify Release Build
         working-directory: qres_rust
         run: cargo build --release --workspace

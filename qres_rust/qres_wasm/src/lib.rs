@@ -1,0 +1,22 @@
+use wasm_bindgen::prelude::*;
+use qres_core::{compress_chunk, decompress_chunk};
+
+#[wasm_bindgen]
+pub fn init_hooks() {
+    console_error_panic_hook::set_once();
+}
+
+#[wasm_bindgen]
+pub fn compress_bytes(data: &[u8]) -> Result<Vec<u8>, JsValue> {
+    // Bridges JS Uint8Array <-> Rust Vec<u8>
+    // Using default args: predictor_id=0, weights=None, lossy=None
+    compress_chunk(data, 0, None, None)
+        .map_err(|e| JsValue::from_str(&format!("Compression failed: {:?}", e)))
+}
+
+#[wasm_bindgen]
+pub fn decompress_bytes(data: &[u8]) -> Result<Vec<u8>, JsValue> {
+    // Using default args: predictor_id=0, weights=None
+    decompress_chunk(data, 0, None)
+        .map_err(|e| JsValue::from_str(&format!("Decompression failed: {:?}", e)))
+}

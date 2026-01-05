@@ -1,7 +1,8 @@
 [workspace]
 members = [
     "qres_core",
-    "qres_daemon"
+    "qres_daemon",
+    "qres_wasm"
 ]
 resolver = "2"
 

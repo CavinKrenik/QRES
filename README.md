@@ -16,6 +16,19 @@ QRES v10.5+ supports diverse build targets:
 * **wasm32-unknown-unknown:** Client-side browser compression (Core only)
 * **thumbv7em-none-eabihf:** Embedded/Bare-metal ready (Core only)
 
+### 🌍 WebAssembly Build (Client-Side)
+To compile the `qres_wasm` bridge for browser usage:
+
+```bash
+# 1. Install wasm-pack
+cargo install wasm-pack
+
+# 2. Build the WASM package
+cd qres_rust/qres_wasm
+wasm-pack build --target web
+```
+*Artifacts will be output to `qres_rust/qres_wasm/pkg` (includes .wasm binary and .js glue code).*
+
 ---
 
 ## Non-Goals & Limitations

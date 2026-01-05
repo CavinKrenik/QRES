@@ -21,9 +21,9 @@ The focus shifts from software architecture to hardware acceleration and edge de
 - [ ] **Hardware Description:** Port `Mixer` logic to Verilog/HLS.
 - [ ] **Driver Layer:** Create DMA bridge between Rust Daemon and FPGA Core.
 
-### 🌐 Phase 2: WebAssembly Core
+### 🌐 Phase 2: WebAssembly Core (Active - Validation Complete)
 > **Goal:** Run QRES entirely in the browser for client-side compression.
 
 - [x] **WASM Target:** Ensure `qres_core` compiles to `wasm32-unknown-unknown` (Core validated).
-- [ ] **JS Bindings:** `wasm-bindgen` interface for TypeScript Studio.
+- [x] **JS Bindings:** `wasm-bindgen` interface via `qres_wasm` crate.
 - [ ] **Browser Persistence:** Adapt `WorldStateManager` to use `IndexedDB` instead of file system.
