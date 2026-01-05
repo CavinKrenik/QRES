@@ -3,8 +3,8 @@
 > **Revolutionary compression for the Singularity Era**: Brain-like spiking neural networks with quantum-inspired ML and distributed P2P swarms.
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/CavinKrenik/QRES/test.yml?style=flat)](https://github.com/CavinKrenik/QRES/actions)
-[![Version](https://img.shields.io/badge/version-v10.0-brightgreen)](https://github.com/CavinKrenik/QRES/releases)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/CavinKrenik/QRES/release.yml?style=flat)](https://github.com/CavinKrenik/QRES/actions)
+[![Version](https://img.shields.io/badge/version-v10.0.1-brightgreen)](https://github.com/CavinKrenik/QRES/releases)
 [![Python](https://img.shields.io/badge/python-3.10+-blue)](https://python.org)
 [![Rust](https://img.shields.io/badge/rust-1.70+-orange)](https://rust-lang.org)
 
@@ -25,7 +25,7 @@ QRES transcends traditional compression with a **"Living Brain"** agent that pre
 ┌─────────────────────────────────────────────────────────────┐
 │                    QRES Architecture                        │
 ├─────────────────────────────────────────────────────────────┤
-│  Input Data  →  [SNN Predictor]  →  [QNN Fusion]  →  Output │
+│  Input Data  →  [SNN Predictor]  →  [TNC Fusion]  →  Output │
 │       ↑              ↓                   ↓             ↓    │
 │       └── [MetaBrain RL Agent] ←─ [Mixer Weights] ←────┘    │
 │                      ↓                                      │
@@ -52,9 +52,10 @@ QRES transcends traditional compression with a **"Living Brain"** agent that pre
 
 | Dataset | Ratio | Fidelity | Speed |
 |---------|-------|----------|-------|
-| **IoT Telemetry** | 0.537 | >0.99 | 150 MB/s |
-| **Text/Code** | ~0.19 | >0.99 | 200 MB/s |
-| **Multimodal** | ~0.6-0.9 | >0.99 | 150 MB/s |
+| **Binary Telemetry** | **~0.15** | 1.00 | 300+ MB/s |
+| **IoT (Correlated CSV)** | ~0.76 | >0.99 | 150 MB/s |
+| **Text/Code** | ~0.19 | 1.00 | 200 MB/s |
+| **Sine Wave** | **~0.19** | 1.00 | 250 MB/s |
 
 *Benchmarks on Intel Ice Lake. See [BENCHMARKS.md](docs/BENCHMARKS.md) for details.*
 
@@ -127,9 +128,10 @@ QRES/
 ## 🗺️ Roadmap
 
 - ✅ **v8.0** – MetaBrain v4, Multimodal, World State Persistence
-- ✅ **v8.1** – SNN Integration, QNN Fusion, Hive Mind
+- ✅ **v8.1** – SNN Integration, TNC Fusion, Hive Mind
 - ✅ **v9.0** – GIF Neurons, OSBC Pruning, Auto-Tuning
-- 🔮 **v10.0** – True Quantum Hardware (AWS Braket), Ratio <0.30
+- ✅ **v10.0** – Tensor Network Correlator, Deterministic Q16.16, Ratio <0.30
+- 🔮 **v10.5** – FPGA Acceleration & WebAssembly Core
 
 ---
 
