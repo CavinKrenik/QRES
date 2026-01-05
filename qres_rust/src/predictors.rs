@@ -71,7 +71,7 @@ impl GraphPredictor {
     pub fn new() -> Self {
         // Lag intervals
         let edges = [1, 2, 3, 4, 8, 16, 32, 0];
-        
+
         // Initial weights converted to Q16.16
         // 0.0, 0.05, 0.05, 0.05, 0.05, 0.1, 0.2, 0.5
         let weights = [
@@ -98,15 +98,15 @@ impl GraphPredictor {
 impl Predictor for GraphPredictor {
     fn predict_next(&self) -> u8 {
         let mut sum: i32 = 0;
-        
+
         for i in 0..7 {
             let lag = self.edges[i];
             let idx = (self.cursor + 64 - lag) % 64;
             let input = self.history[idx] as i32; // 0..255 integer
-            
+
             // Multiply: Q16.16 * Integer = Q16.16
             // e.g. 0.5 (32768) * 200 = 6,553,600 (100.0 in Q16.16)
-            sum += self.weights[i].wrapping_mul(input); 
+            sum += self.weights[i].wrapping_mul(input);
         }
 
         // Convert back to integer: (sum + 0.5) >> 16
@@ -127,7 +127,7 @@ impl Predictor for GraphPredictor {
         // BUT: We need to normalize input by 255.0 like the original f32 code did.
         // Original: delta = lr * err * (input / 255.0)
         // Fixed: delta = (lr * err * input) / 255
-        
+
         for i in 0..7 {
             let lag = self.edges[i];
             let idx = (self.cursor + 64 - lag) % 64;
@@ -137,9 +137,9 @@ impl Predictor for GraphPredictor {
             // numerator = (LR * err) * input  <-- Result is Q16.16 * int * int
             // With LR=0.015 (983), Err=255, Input=255 -> 983*255*255 = 63,919,575.
             // i32 max is 2 billion. This is safe from overflow.
-            
+
             let numerator = self.learning_rate * err * input;
-            let delta = numerator / 255; 
+            let delta = numerator / 255;
 
             self.weights[i] += delta;
 
@@ -176,7 +176,7 @@ impl LzMatchPredictor {
         let hash_size = 1 << HASH_BITS;
         LzMatchPredictor {
             table: vec![0; hash_size],
-            history: Vec::with_capacity(65536), 
+            history: Vec::with_capacity(65536),
             pos: 0,
             hash_mask: hash_size - 1,
         }

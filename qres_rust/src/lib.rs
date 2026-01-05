@@ -361,7 +361,7 @@ pub fn compress_chunk(
         let n = chunk.len().min(4096);
         let mut diff1 = 0i64;
         let mut diff2 = 0i64;
-        
+
         for i in 2..n {
             diff1 += (chunk[i] as i64 - chunk[i - 1] as i64).abs();
             diff2 += (chunk[i] as i64 - chunk[i - 2] as i64).abs();
@@ -372,7 +372,11 @@ pub fn compress_chunk(
             let mut even = Vec::with_capacity(chunk.len() / 2 + 1);
             let mut odd = Vec::with_capacity(chunk.len() / 2 + 1);
             for (i, &b) in chunk.iter().enumerate() {
-                if i % 2 == 0 { even.push(b); } else { odd.push(b); }
+                if i % 2 == 0 {
+                    even.push(b);
+                } else {
+                    odd.push(b);
+                }
             }
 
             // Recursive compression
@@ -383,7 +387,7 @@ pub fn compress_chunk(
             // Structure: [Flag] [TotalLen: 4] [EvenLen: 4] [EvenData] [OddData]
             let total_len = chunk.len() as u32;
             let even_compressed_len = c_even.len() as u32;
-            
+
             // Heuristic: Only use split if it actually compresses better than original
             if (c_even.len() + c_odd.len() + 9) < chunk.len() {
                 // Wrap with VERSIONED Header
@@ -405,11 +409,11 @@ pub fn compress_chunk(
     // 1. Smart Fallback Pre-scan (ZSTD)
     if chunk.len() > 512 {
         let entropy = calculate_sample_entropy(chunk);
-        
+
         // Use zstd if entropy is very low or very high (random)
         const LOW_ENTROPY_THRESHOLD: f32 = 0.2;
         const HIGH_ENTROPY_THRESHOLD: f32 = 7.8;
-        
+
         if entropy < LOW_ENTROPY_THRESHOLD || entropy > HIGH_ENTROPY_THRESHOLD {
             let zstd_compressed = zstd::bulk::compress(chunk, 3).map_err(io::Error::other)?;
             if zstd_compressed.len() < chunk.len() {
@@ -418,7 +422,7 @@ pub fn compress_chunk(
                 let flag_byte = (ver << 4) | 0x01;
 
                 let mut out = Vec::with_capacity(5 + zstd_compressed.len());
-                out.push(flag_byte); 
+                out.push(flag_byte);
                 out.extend_from_slice(&(chunk.len() as u32).to_le_bytes());
                 out.extend_from_slice(&zstd_compressed);
                 return Ok(out);
@@ -434,7 +438,7 @@ pub fn compress_chunk(
 
     if let Some(nw) = crate::meta_brain::predict_init_weights(chunk) {
         is_neural = true;
-         for f in nw.iter().take(NUM_PREDICTORS) {
+        for f in nw.iter().take(NUM_PREDICTORS) {
             let b = f.to_le_bytes();
             stored_init_weights.extend_from_slice(&b);
             effective_weights.extend_from_slice(&b);
@@ -445,7 +449,7 @@ pub fn compress_chunk(
             effective_weights.extend_from_slice(&b);
         }
     } else {
-         if let Some(w) = _weights {
+        if let Some(w) = _weights {
             let take = w.len().min(WEIGHTS_LEN);
             effective_weights.extend_from_slice(&w[0..take]);
             if take > 0 {
@@ -457,7 +461,7 @@ pub fn compress_chunk(
             }
         }
     }
-    
+
     // [Handling Global weights...]
     if let Some(w) = _weights {
         if w.len() >= WEIGHTS_LEN * 2 {
@@ -480,9 +484,9 @@ pub fn compress_chunk(
         // Mode 0x00: Standard
         // Mode 0x02: Neural (includes weights)
         let mode = if is_neural { 0x02 } else { 0x00 };
-        
+
         // Safety: Ensure version fits in 4 bits
-        let ver = QRES_PROTOCOL_VERSION & 0x0F; 
+        let ver = QRES_PROTOCOL_VERSION & 0x0F;
         let flag_byte = (ver << 4) | mode;
 
         let mut out = Vec::with_capacity(1 + 4 + stored_init_weights.len() + compressed_body.len());
@@ -501,7 +505,7 @@ pub fn compress_chunk(
         // We still embed version to be safe
         let ver = QRES_PROTOCOL_VERSION & 0x0F;
         let flag_byte = (ver << 4) | 0x01;
-        
+
         let zstd_compressed = zstd::bulk::compress(chunk, 3).map_err(io::Error::other)?;
         let mut out = Vec::with_capacity(1 + 4 + zstd_compressed.len());
         out.push(flag_byte);
@@ -517,7 +521,10 @@ pub fn decompress_chunk(
     _weights: Option<&[u8]>,
 ) -> io::Result<Vec<u8>> {
     if compressed.len() < 5 {
-        return Err(io::Error::new(io::ErrorKind::InvalidData, "Chunk too short"));
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "Chunk too short",
+        ));
     }
 
     let flag_byte = compressed[0];
@@ -525,14 +532,17 @@ pub fn decompress_chunk(
     let codec_mode = flag_byte & 0x0F;
 
     // 1. SAFETY CHECK: Protocol Version
-    // We can allow backward compatibility (e.g., allow v9 if we are v10), 
+    // We can allow backward compatibility (e.g., allow v9 if we are v10),
     // but for now strict matching ensures safety during dev.
     if version != (QRES_PROTOCOL_VERSION & 0x0F) {
-         // Graceful fallback for legacy files (pre-handshake) could go here
-         // But for Engineering Phase 1, we fail fast.
-         return Err(io::Error::new(
+        // Graceful fallback for legacy files (pre-handshake) could go here
+        // But for Engineering Phase 1, we fail fast.
+        return Err(io::Error::new(
             io::ErrorKind::InvalidData,
-            format!("Version Mismatch: File v{} != Library v{}", version, QRES_PROTOCOL_VERSION),
+            format!(
+                "Version Mismatch: File v{} != Library v{}",
+                version, QRES_PROTOCOL_VERSION
+            ),
         ));
     }
 
@@ -553,7 +563,7 @@ pub fn decompress_chunk(
         }
         0x02 => {
             // ANS codec with Neural Init
-            let header_size = 5 + WEIGHTS_LEN; 
+            let header_size = 5 + WEIGHTS_LEN;
             if compressed.len() < header_size {
                 return Err(io::Error::new(
                     io::ErrorKind::InvalidData,
@@ -584,8 +594,11 @@ pub fn decompress_chunk(
         }
         0x03 => {
             // Interleaved Split
-             if compressed.len() < 9 {
-                return Err(io::Error::new(io::ErrorKind::InvalidData, "Split chunk too short"));
+            if compressed.len() < 9 {
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    "Split chunk too short",
+                ));
             }
             let even_len = u32::from_le_bytes(compressed[5..9].try_into().unwrap()) as usize;
             let even_data = &compressed[9..9 + even_len];
@@ -600,10 +613,16 @@ pub fn decompress_chunk(
             let mut o_iter = odd_decomp.iter();
 
             for _ in 0..decomp_len / 2 {
-                if let Some(b) = e_iter.next() { out.push(*b); }
-                if let Some(b) = o_iter.next() { out.push(*b); }
+                if let Some(b) = e_iter.next() {
+                    out.push(*b);
+                }
+                if let Some(b) = o_iter.next() {
+                    out.push(*b);
+                }
             }
-            if let Some(b) = e_iter.next() { out.push(*b); }
+            if let Some(b) = e_iter.next() {
+                out.push(*b);
+            }
 
             Ok(out)
         }
