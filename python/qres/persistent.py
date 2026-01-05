@@ -4,7 +4,8 @@ Enables lossless serialization and persistence of complete system states
 across compression cycles, supporting continuity and proto-identity.
 """
 
-import pickle
+import json
+import base64
 import os
 import time
 import numpy as np
@@ -30,12 +31,44 @@ class WorldStateManager:
         self.states = {}  # In-memory cache (will use sled in Rust later)
         self._load_db()
         
+    def _json_encoder(self, obj):
+        if isinstance(obj, np.ndarray):
+            return {
+                "__type__": "numpy",
+                "dtype": str(obj.dtype),
+                "shape": obj.shape,
+                "data": base64.b64encode(obj.tobytes()).decode('ascii')
+            }
+        elif isinstance(obj, bytes):
+             return {
+                "__type__": "bytes",
+                "data": base64.b64encode(obj).decode('ascii')
+            }
+        elif isinstance(obj, complex):
+             return {
+                "__type__": "complex",
+                "real": obj.real,
+                "imag": obj.imag
+            }
+        raise TypeError(f"Type {type(obj)} not serializable")
+
+    def _json_decoder(self, dct):
+        if "__type__" in dct:
+            if dct["__type__"] == "numpy":
+                data = base64.b64decode(dct["data"])
+                return np.frombuffer(data, dtype=dct["dtype"]).reshape(dct["shape"])
+            elif dct["__type__"] == "bytes":
+                return base64.b64decode(dct["data"])
+            elif dct["__type__"] == "complex":
+                return complex(dct["real"], dct["imag"])
+        return dct
+
     def _load_db(self):
         """Load existing states from disk."""
         if os.path.exists(self.db_path):
             try:
-                with open(self.db_path, 'rb') as f:
-                    self.states = pickle.load(f)
+                with open(self.db_path, 'r') as f:
+                    self.states = json.load(f, object_hook=self._json_decoder)
                 print(f"[WorldState] Loaded {len(self.states)} states from {self.db_path}")
             except Exception as e:
                 print(f"[WorldState] Warning: Could not load DB: {e}")
@@ -46,8 +79,8 @@ class WorldStateManager:
     def _save_db(self):
         """Persist states to disk."""
         try:
-            with open(self.db_path, 'wb') as f:
-                pickle.dump(self.states, f)
+            with open(self.db_path, 'w') as f:
+                json.dump(self.states, f, default=self._json_encoder)
         except Exception as e:
             print(f"[WorldState] Error saving DB: {e}")
     
@@ -120,7 +153,8 @@ class WorldStateManager:
         self.states[version] = world_state
         self._save_db()
         
-        size_kb = len(pickle.dumps(world_state)) / 1024
+        # Calculate JSON size estimation
+        size_kb = len(json.dumps(world_state, default=self._json_encoder)) / 1024
         print(f"[WorldState] Persisted {version} ({size_kb:.2f} KB)")
         print(f"  - Nodes: {world_state['metadata']['num_nodes']}")
         print(f"  - Edges: {world_state['metadata']['num_edges']}")

@@ -13,6 +13,7 @@ use qres_core::tensor::MpsCompressor;
 use qres_core::{compress_chunk, decompress_chunk};
 use std::fs::{self, File};
 use std::io::{self, Read, Write};
+use tracing::{info, error};
 
 const DEFAULT_BRAIN_FILE: &str = "qres_brain.json";
 const CHUNK_SIZE: usize = 64 * 1024; // 64KB chunks
@@ -131,11 +132,11 @@ fn compress_file(input: &str, output: &str) -> io::Result<()> {
         // Progress indicator
         if total_input >= 1024 * 1024 && total_input.is_multiple_of(1024 * 1024) {
             let ratio = (total_output as f64 / total_input as f64) * 100.0;
-            eprint!(
-                "\rCompressed: {:.2} MB -> {:.2} MB ({:.1}%)",
-                total_input as f64 / 1024.0 / 1024.0,
-                total_output as f64 / 1024.0 / 1024.0,
-                ratio
+            info!(
+                current_input_mb = total_input as f64 / 1024.0 / 1024.0,
+                current_output_mb = total_output as f64 / 1024.0 / 1024.0,
+                ratio_percent = ratio,
+                "Compressing..."
             );
         }
     }
@@ -147,20 +148,17 @@ fn compress_file(input: &str, output: &str) -> io::Result<()> {
         0.0
     };
 
-    eprintln!(
-        "\n[Done] Compressed {} bytes to {} bytes ({:.2}%) in {:.2}s",
-        total_input,
-        total_output,
-        ratio,
-        elapsed.as_secs_f64()
-    );
-    eprintln!(
-        "  Throughput: {:.2} MB/s",
-        if elapsed.as_secs_f64() > 0.0 {
+    info!(
+        total_input_bytes = total_input,
+        total_output_bytes = total_output,
+        ratio_percent = ratio,
+        duration_secs = elapsed.as_secs_f64(),
+        throughput_mb_s = if elapsed.as_secs_f64() > 0.0 {
             (total_input as f64 / 1024.0 / 1024.0) / elapsed.as_secs_f64()
         } else {
             0.0
-        }
+        },
+        "Compression Complete"
     );
 
     Ok(())
@@ -219,26 +217,23 @@ fn decompress_file(input: &str, output: &str) -> io::Result<()> {
 
         // Progress indicator
         if total_output >= 1024 * 1024 && total_output.is_multiple_of(1024 * 1024) {
-            eprint!(
-                "\rDecompressed: {:.2} MB",
-                total_output as f64 / 1024.0 / 1024.0
+            info!(
+                decompressed_mb = total_output as f64 / 1024.0 / 1024.0,
+                "Decompressing..."
             );
         }
     }
 
     let elapsed = start.elapsed();
-    eprintln!(
-        "\n[Done] Decompressed {} bytes in {:.2}s",
-        total_output,
-        elapsed.as_secs_f64()
-    );
-    eprintln!(
-        "  Throughput: {:.2} MB/s",
-        if elapsed.as_secs_f64() > 0.0 {
+    info!(
+        total_output_bytes = total_output,
+        duration_secs = elapsed.as_secs_f64(),
+        throughput_mb_s = if elapsed.as_secs_f64() > 0.0 {
             (total_output as f64 / 1024.0 / 1024.0) / elapsed.as_secs_f64()
         } else {
             0.0
-        }
+        },
+        "Decompression Complete"
     );
 
     Ok(())
@@ -251,7 +246,7 @@ fn brain_export_to_file(output: &str) -> io::Result<()> {
         LivingBrain::new().to_json()
     };
     fs::write(output, json)?;
-    eprintln!("[Brain] Brain exported to {}", output);
+    info!(output_path = output, "Brain exported to file");
     Ok(())
 }
 
@@ -268,24 +263,22 @@ fn brain_import(file_path: &str) -> io::Result<()> {
         // CLI just applies the result (Overwrite confidence, keep stats).
         local.merge(&imported, 1.0);
         fs::write(DEFAULT_BRAIN_FILE, local.to_json())?;
-        eprintln!("[Brain] Brain merged successfully. Wisdom assimilated.");
+        info!("Brain merged successfully. Wisdom assimilated.");
     } else {
-        eprintln!("Failed to parse imported brain.");
+        error!("Failed to parse imported brain.");
     }
     Ok(())
 }
 
 fn swarm_mode(brain: String, port: u16) -> io::Result<()> {
-    eprintln!("[Swarm] Starting QRES P2P Swarm Node (libp2p)...");
-    eprintln!("[Swarm] Brain File: {}", brain);
-    eprintln!("[Swarm] API Port: {}", port);
+    info!(brain_file = brain, port = port, "Starting QRES P2P Swarm Node (libp2p)...");
 
     // Create Tokio Runtime for async swarm
     let rt = tokio::runtime::Runtime::new().map_err(io::Error::other)?;
 
     rt.block_on(async {
         if let Err(e) = crate::swarm_p2p::start_p2p_node(brain, port).await {
-            eprintln!("Swarm crashed: {}", e);
+            error!(error = %e, "Swarm crashed");
         }
     });
 
@@ -329,7 +322,7 @@ fn compress_tensor_file(
     }
 
     // Compress
-    eprintln!("[Tensor] Compressing {}x{} Matrix...", rows, cols);
+    info!(rows = rows, cols = cols, "Compressing Tensor Matrix...");
     let start = std::time::Instant::now();
 
     let compressor = MpsCompressor::new(10, threshold);
@@ -389,18 +382,25 @@ fn compress_tensor_file(
         0.0
     };
 
-    eprintln!(
-        "[Done] Tensor Compressed {} bytes to {} bytes ({:.2}%) in {:.2}s",
-        len,
-        compressed_size,
-        ratio,
-        elapsed.as_secs_f64()
+    info!(
+        original_bytes = len,
+        compressed_bytes = compressed_size,
+        ratio_percent = ratio,
+        duration_secs = elapsed.as_secs_f64(),
+        "Tensor Compression Complete"
     );
 
     Ok(())
 }
 
 fn main() {
+    // Initialize structured logging
+    let subscriber = tracing_subscriber::fmt()
+        .json()
+        .with_max_level(tracing::Level::INFO)
+        .finish();
+    tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
+
     let cli = Cli::parse();
 
     let result = match cli.command {
@@ -419,7 +419,7 @@ fn main() {
     };
 
     if let Err(e) = result {
-        eprintln!("Error: {}", e);
+        error!(error = %e, "Fatal Error");
         std::process::exit(1);
     }
 }

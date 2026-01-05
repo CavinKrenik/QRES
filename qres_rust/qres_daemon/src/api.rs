@@ -162,7 +162,11 @@ pub async fn run_api_server(port: u16) -> Result<(), Box<dyn std::error::Error>>
                 .allow_headers(Any),
         );
 
-    let addr = format!("0.0.0.0:{}", port);
+    let addr = if std::env::var("QRES_PUBLIC").is_ok() {
+        format!("0.0.0.0:{}", port)
+    } else {
+        format!("127.0.0.1:{}", port)
+    };
     println!("🌐 API Server listening on http://{}", addr);
 
     let listener = tokio::net::TcpListener::bind(&addr).await?;

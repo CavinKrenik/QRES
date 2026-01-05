@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "qres-studio",
-  "version": "0.1.0",
+  "version": "10.1.0",
   "identifier": "com.cavin.qres-studio",
   "build": {
     "beforeDevCommand": "npm run dev",

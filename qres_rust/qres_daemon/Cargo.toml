@@ -1,6 +1,6 @@
 [package]
 name = "qres_daemon"
-version = "0.10.1"
+version = "10.1.0"
 edition = "2021"
 
 [dependencies]
@@ -20,3 +20,5 @@ toml = "0.8"
 # P2P Stack
 libp2p = { version = "0.53", features = ["tcp", "tls", "dns", "yamux", "websocket", "noise", "macros", "tokio", "gossipsub", "mdns", "identify", "kad"] }
 axum = "0.7" # For the API
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["json"] }

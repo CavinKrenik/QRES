@@ -4,6 +4,8 @@ from typing import Union, Optional, Literal
 import numpy as np
 import io
 
+__version__ = "10.1.0"
+
 # Import the Rust extension
 # It is now built as a submodule: qres.qres_rust
 try:

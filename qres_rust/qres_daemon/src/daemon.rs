@@ -2,6 +2,7 @@ use std::fs;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use sysinfo::{Pid, System};
+use tracing::info;
 
 pub struct DaemonManager;
 
@@ -59,9 +60,9 @@ impl DaemonManager {
         fs::write(&pid_file, child.id().to_string())
             .map_err(|e| format!("Failed to write PID file: {}", e))?;
 
-        println!("🚀 Swarm Daemon started (PID: {}).", child.id());
+        info!(pid = child.id(), "Swarm Daemon started");
         if wan {
-            println!("🌍 WAN Mode Enabled (Global DHT).");
+            info!("WAN Mode Enabled (Global DHT)");
         }
         Ok(())
     }
@@ -78,7 +79,7 @@ impl DaemonManager {
 
         if let Some(process) = s.process(pid) {
             process.kill();
-            println!("🛑 Swarm Daemon (PID: {}) stopped.", pid_val);
+            info!(pid = pid_val, "Swarm Daemon stopped");
             let _ = fs::remove_file(pid_file);
             Ok(())
         } else {
@@ -95,9 +96,6 @@ impl DaemonManager {
         let pid_file = Self::get_pid_file();
         let state_file = Self::get_state_file();
 
-        println!("🔍 QRES Swarm Status");
-        println!("====================");
-
         // Check Process
         let mut running = false;
         if let Ok(content) = fs::read_to_string(&pid_file) {
@@ -105,25 +103,31 @@ impl DaemonManager {
                 let s = System::new_all();
                 let pid = Pid::from(pid_val);
                 if s.process(pid).is_some() {
-                    println!("Status:  🟢 RUNNING (PID: {})", pid_val);
+                    info!(status = "RUNNING", pid = pid_val, "Daemon Status");
                     running = true;
                 } else {
-                    println!("Status:  🔴 CRASHED/STOPPED (Stale PID)");
+                    info!(status = "CRASHED/STOPPED", reason = "Stale PID", "Daemon Status");
                 }
             } else {
-                println!("Status:  🔴 UNKNOWN (Corrupt PID)");
+                info!(status = "UNKNOWN", reason = "Corrupt PID", "Daemon Status");
             }
         } else {
-            println!("Status:  ⚪ STOPPED");
+            info!(status = "STOPPED", "Daemon Status");
         }
 
         if running {
             // Read State
             if let Ok(json) = fs::read_to_string(&state_file) {
-                println!("\n📊 Metrics:");
-                println!("{}", json); // Pretty print this later or rely on JSON formatting
+                // Parse JSON string to object to avoid double serialization if possible, or just log raw
+                // Since tracing handles JSON, we can pass it as a field or just rely on the user reading the file.
+                // But for "status", let's log it.
+                if let Ok(metrics) = serde_json::from_str::<serde_json::Value>(&json) {
+                    info!(metrics = %metrics, "Swarm Metrics");
+                } else {
+                    info!(raw_metrics = json, "Swarm Metrics (Raw)");
+                }
             } else {
-                println!("\n(Waiting for metrics report...)");
+                info!("Waiting for metrics report...");
             }
         }
     }

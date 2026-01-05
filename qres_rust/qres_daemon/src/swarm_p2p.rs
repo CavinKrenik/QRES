@@ -1,5 +1,6 @@
 use crate::living_brain::{BrainMessage, LivingBrain};
 use axum::{extract::State, routing::get, Json, Router};
+use tracing::{info, error};
 use libp2p::futures::StreamExt; // For select_next_some
 use libp2p::gossipsub::IdentTopic; // Added helper
 use libp2p::{
@@ -50,7 +51,7 @@ pub async fn start_p2p_node(
     // 1. Identity
     let id_keys = identity::Keypair::generate_ed25519();
     let peer_id = PeerId::from(id_keys.public());
-    eprintln!("[Swarm] Local Peer ID: {}", peer_id);
+    info!(peer_id = %peer_id, "Local Peer ID generated");
 
     // Shared State
     let state = Arc::new(RwLock::new(AppState {
@@ -66,11 +67,18 @@ pub async fn start_p2p_node(
         let app = Router::new()
             .route("/status", get(get_status))
             .route("/brain", get(get_brain))
+            .route("/health", get(get_health))
             .with_state(app_state);
 
-        eprintln!("[API] Server listening on http://0.0.0.0:{}", port);
-        // Bind to 0.0.0.0 to allow external access
-        let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port))
+        let addr_str = if std::env::var("QRES_PUBLIC").is_ok() {
+            format!("0.0.0.0:{}", port)
+        } else {
+            format!("127.0.0.1:{}", port)
+        };
+        
+        info!(address = addr_str, "API Server listening");
+        // Bind to localhost by default
+        let listener = tokio::net::TcpListener::bind(&addr_str)
             .await
             .unwrap();
         axum::serve(listener, app).await.unwrap();
@@ -154,17 +162,17 @@ pub async fn start_p2p_node(
                             let topic = IdentTopic::new(BRAIN_TOPIC);
                             if let Ok(payload) = serde_json::to_vec(&msg) {
                                 if let Err(e) = swarm.behaviour_mut().gossipsub.publish(topic, payload) {
-                                     eprintln!("[Swarm] Publish error: {:?}", e);
+                                     error!(error = %e, "Publish error");
                                 } else {
                                      match &msg {
-                                         BrainMessage::Delta(d) => eprintln!("[Swarm] Broadcasted Delta ({} updates).", d.updates.len()),
-                                         BrainMessage::Full(_) => eprintln!("[Swarm] Broadcasted Full Wisdom."),
+                                         BrainMessage::Delta(d) => info!(updates = d.updates.len(), "Broadcasted Delta"),
+                                         BrainMessage::Full(_) => info!("Broadcasted Full Wisdom"),
                                      }
                                      last_broadcast_brain = Some(current_brain);
                                 }
                             }
                         } else {
-                            eprintln!("[Swarm] No significant changes - skipping broadcast.");
+                            info!("No significant changes - skipping broadcast");
                         }
                     }
                 }
@@ -173,19 +181,19 @@ pub async fn start_p2p_node(
             // Swarm Events
             event = swarm.select_next_some() => match event {
                 SwarmEvent::NewListenAddr { address, .. } => {
-                    eprintln!("[Swarm] Listening on {:?}", address);
+                    info!(address = %address, "Swarm listening");
                 }
                 SwarmEvent::ConnectionEstablished { peer_id, .. } => {
-                     eprintln!("[Swarm] Connected to {:?}", peer_id);
+                     info!(peer_id = %peer_id, "Connected to peer");
                      state.write().await.connected_peers.insert(peer_id.to_string());
                 }
                 SwarmEvent::ConnectionClosed { peer_id, .. } => {
-                     eprintln!("[Swarm] Disconnected from {:?}", peer_id);
+                     info!(peer_id = %peer_id, "Disconnected from peer");
                      state.write().await.connected_peers.remove(&peer_id.to_string());
                 }
                 SwarmEvent::Behaviour(QresBehaviorEvent::Mdns(mdns::Event::Discovered(list))) => {
                     for (peer_id, multiaddr) in list {
-                        eprintln!("[Swarm] mDNS Discovered: {:?}", peer_id);
+                        info!(peer_id = %peer_id, "mDNS Discovered");
                         state.write().await.known_peers.insert(peer_id.to_string());
                         swarm.behaviour_mut().gossipsub.add_explicit_peer(&peer_id);
                         let _ = swarm.dial(multiaddr);
@@ -193,13 +201,13 @@ pub async fn start_p2p_node(
                 }
                 SwarmEvent::Behaviour(QresBehaviorEvent::Mdns(mdns::Event::Expired(list))) => {
                     for (peer_id, _multiaddr) in list {
-                        eprintln!("[Swarm] mDNS Expired: {:?}", peer_id);
+                        info!(peer_id = %peer_id, "mDNS Expired");
                         state.write().await.known_peers.remove(&peer_id.to_string());
                         swarm.behaviour_mut().gossipsub.remove_explicit_peer(&peer_id);
                     }
                 }
                 SwarmEvent::Behaviour(QresBehaviorEvent::Gossipsub(gossipsub::Event::Message { propagation_source: _, message_id: _, message })) => {
-                    eprintln!("[Swarm] Received Merge Candidate");
+                    info!("Received Merge Candidate");
                     if let Ok(json) = String::from_utf8(message.data) {
                         // Try to parse as BrainMessage (supports both Full and Delta)
                         if let Ok(msg) = serde_json::from_str::<BrainMessage>(&json) {
@@ -209,7 +217,7 @@ pub async fn start_p2p_node(
                                         if let Some(mut local_brain) = LivingBrain::from_json(&local_json) {
                                             local_brain.merge(&remote_brain, 0.1);
                                             let _ = fs::write(brain_file, local_brain.to_json());
-                                            eprintln!("[Swarm] Assimilated Full Knowledge.");
+                                            info!("Assimilated Full Knowledge");
                                             state.write().await.brain = local_brain;
                                         }
                                     }
@@ -219,7 +227,7 @@ pub async fn start_p2p_node(
                                         if let Some(mut local_brain) = LivingBrain::from_json(&local_json) {
                                             local_brain.apply_delta(&delta);
                                             let _ = fs::write(brain_file, local_brain.to_json());
-                                            eprintln!("[Swarm] Applied Knowledge Delta ({} updates).", delta.updates.len());
+                                            info!(updates = delta.updates.len(), "Applied Knowledge Delta");
                                             state.write().await.brain = local_brain;
                                         }
                                     }
@@ -248,4 +256,11 @@ async fn get_status(State(state): State<Arc<RwLock<AppState>>>) -> Json<SwarmSta
 async fn get_brain(State(state): State<Arc<RwLock<AppState>>>) -> Json<LivingBrain> {
     let s = state.read().await;
     Json(s.brain.clone())
+}
+
+async fn get_health() -> Json<serde_json::Value> {
+    Json(serde_json::json!({
+        "status": "ok",
+        "version": env!("CARGO_PKG_VERSION")
+    }))
 }
