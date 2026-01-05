@@ -29,7 +29,7 @@ class QRES:
     """
     
     @staticmethod
-    def compress(data: Union[bytes, bytearray, np.ndarray], predictor_id: int = 255) -> bytes:
+    def compress(data: Union[bytes, bytearray, np.ndarray], predictor_id: int = 0) -> bytes:
         """
         Compress data using QRES v2 (Bit-Packed + Delta).
         Supports: bytes, bytearray, memoryview, numpy.ndarray.
@@ -50,7 +50,7 @@ class QRES:
             raise QRESError(f"Compression failed: {e}")
 
     @staticmethod
-    def decompress(data: Union[bytes, bytearray], predictor_id: int = 255) -> bytes:
+    def decompress(data: Union[bytes, bytearray], predictor_id: int = 0) -> bytes:
         """
         Decompress QRES v2 data.
         """
