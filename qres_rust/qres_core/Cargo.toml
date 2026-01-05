@@ -23,4 +23,4 @@ rustfft = "6.2"
 probability = "0.20"
 walkdir = "2.3"
 blake3 = "1.5"
-pyo3 = { version = "0.22", optional = true, features = ["abi3-py38"] }
+pyo3 = { version = "0.22", optional = true, features = ["abi3-py38", "extension-module"] }
