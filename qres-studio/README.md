@@ -1,6 +1,6 @@
-# QRES Studio v4.3
+# QRES Studio v10.1
 
-**Cross-platform GUI for QRES v8 compression with P2P collective learning**
+**Cross-platform GUI for QRES v10 (Daemon + WASM) compression with P2P collective learning**
 
 Built with Tauri v2 (Rust) + Svelte 5 for maximum performance and minimal bundle size.
 
@@ -232,4 +232,4 @@ Dual-licensed under MIT OR Apache-2.0.
 
 ---
 
-**QRES Studio v4.3** - *Compression through Collective Intelligence* 🚀
+**QRES Studio v10.1** - *Compression through Collective Intelligence* 🚀

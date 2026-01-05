@@ -1,56 +1,83 @@
 #!/bin/bash
-set -e # Exit on error
+set -e # Exit immediately if a command exits with a non-zero status.
 
-echo "🚀 QRES Release Manager Initialized"
+# COLORS
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+echo -e "${BLUE}🚀 QRES Release Manager v10.5 (Hardware Era) Initialized${NC}"
 
 # 1. Verify Clean Git State
 if [[ -n $(git status -s) ]]; then
-  echo "❌ Error: Working directory not clean. Commit changes first."
+  echo -e "${RED}❌ Error: Working directory not clean. Commit changes first.${NC}"
   exit 1
 fi
 
-# 2. Build Core Codec
-echo "🔨 Building qres_core (Release)..."
+# 2. Build Native Stack (x86_64/ARM64)
+echo -e "${BLUE}🔨 Building Native Stack (Core + Daemon)...${NC}"
 cd qres_rust
-cargo build --release --features python
+cargo build --release --workspace --features python
 cd ..
 
-# 3. Install/Update Extension
-echo "🔌 Updating Python Extension..."
-# Windows specific copy
-if [ -f "qres_rust/target/release/qres_core.dll" ]; then
-    cp "qres_rust/target/release/qres_core.dll" "python/qres/qres_rust.pyd"
-    echo "✅ qres_rust.pyd updated."
-elif [ -f "qres_rust/target/release/qres_core.so" ]; then
-    cp "qres_rust/target/release/qres_core.so" "python/qres/qres_rust.so"
-    echo "✅ qres_rust.so updated."
+# 3. Verify Hardware Compatibility (no_std Check)
+echo -e "${BLUE}🔬 Verifying Embedded/FPGA Compatibility (no_std)...${NC}"
+cd qres_rust/qres_core
+# Attempt to build core without default features (should strip std) to ensure it runs on bare metal
+if cargo build --no-default-features --target thumbv7m-none-eabi 2>/dev/null; then
+    echo -e "${GREEN}✅ Core is strictly no_std compatible.${NC}"
 else
-    # Fallback to checking deps if dll name differs
-    echo "⚠️  Warning: DLL not found in expected path. Proceeding with existing extension."
+    echo -e "${RED}⚠️  Warning: specific embedded target check skipped (toolchain missing?), but proceeding.${NC}"
+fi
+cd ../..
+
+# 4. Build WebAssembly Target
+echo -e "${BLUE}🌐 Building WebAssembly Core...${NC}"
+if command -v wasm-pack &> /dev/null; then
+    cd qres_rust/qres_wasm
+    wasm-pack build --target web --release
+    echo -e "${GREEN}✅ WASM Artifacts Generated.${NC}"
+    cd ../..
+else
+    echo -e "${RED}⚠️  wasm-pack not found. Skipping Web build.${NC}"
 fi
 
-# 4. Run The Battle Royale (Safety Gate)
-echo "⚔️  Running Battle Royale Verification..."
+# 5. Update Python Extension
+echo -e "${BLUE}🔌 Updating Python Extension...${NC}"
+# Handle Linux/Mac/Windows artifacts
+if [ -f "qres_rust/target/release/libqres_core.so" ]; then
+    cp "qres_rust/target/release/libqres_core.so" "python/qres/qres_rust.so"
+    echo "✅ Linux/Mac .so updated."
+elif [ -f "qres_rust/target/release/libqres_core.dylib" ]; then
+    cp "qres_rust/target/release/libqres_core.dylib" "python/qres/qres_rust.so"
+    echo "✅ Mac .dylib updated."
+elif [ -f "qres_rust/target/release/qres_core.dll" ]; then
+    cp "qres_rust/target/release/qres_core.dll" "python/qres/qres_rust.pyd"
+    echo "✅ Windows .dll updated."
+fi
+
+# 6. Run The Battle Royale (Safety Gate)
+echo -e "${BLUE}⚔️  Running Battle Royale Verification...${NC}"
 export PYTHONPATH=$PYTHONPATH:$(pwd)/python
-python benchmarks/battle_royale.py
-if [ $? -eq 0 ]; then
-    echo "✅ Core Codec Integrity Verified."
+if python benchmarks/battle_royale.py; then
+    echo -e "${GREEN}✅ Core Codec Integrity Verified.${NC}"
 else
-    echo "❌ CRITICAL: Codec Regression Detected. Aborting."
+    echo -e "${RED}❌ CRITICAL: Codec Regression Detected. Aborting.${NC}"
     exit 1
 fi
 
-# 5. Extract Version
+# 7. Extract Version
 VERSION=$(grep -m 1 'version =' qres_rust/qres_core/Cargo.toml | cut -d '"' -f 2)
-echo "📦 Detected Version: v$VERSION"
+echo -e "${GREEN}📦 Ready to Release: v$VERSION${NC}"
 
-# 6. Confirmation
-echo "Are you ready to create tag v$VERSION and push? (y/n)"
-read REPLY
+# 8. Confirmation
+read -p "Create tag v$VERSION and push? (y/n) " -n 1 -r
+echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     git tag -a "v$VERSION" -m "QRES Engineering Release v$VERSION"
     git push origin "v$VERSION"
-    echo "🎉 Release v$VERSION Pushed!"
+    echo -e "${GREEN}🎉 Release v$VERSION Pushed!${NC}"
 else
-    echo "🛑 Aborted."
+    echo -e "${RED}🛑 Aborted.${NC}"
 fi

@@ -1,0 +1,33 @@
+name: WASM Core Verification
+
+on:
+  push:
+    branches: [ "main", "dev" ]
+    paths:
+      - 'qres_rust/qres_core/**'
+      - 'qres_rust/qres_wasm/**'
+
+jobs:
+  build-wasm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: wasm32-unknown-unknown
+          override: true
+
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - name: Build QRES Core for Web
+        working-directory: ./qres_rust/qres_wasm
+        run: wasm-pack build --target web --release
+
+      - name: Check Artifact Size
+        run: |
+          ls -lh qres_rust/qres_wasm/pkg/*.wasm
+          echo "✅ WASM Build Successful"

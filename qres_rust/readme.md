@@ -1,77 +1,55 @@
-# QRES v3.0.1 - Neural-Symbolic Meta-Compressor
+# QRES Rust Workspace (v10.1)
 
-QRES is a cutting-edge lossless data compression tool that combines adaptive ANS (Asymmetric Numeral Systems) encoding with intelligent zstd fallback, iPEPS predictors, LivingBrain swarm intelligence, and Python bindings.
+> **The Singularity Engine**: A bit-perfect, deterministic compression architecture split into a high-performance core and a biological-inspired swarm daemon.
 
-## 🚀 Key Features
+[![Cross-Arch Battle](https://github.com/CavinKrenik/QRES/actions/workflows/cross_arch_battle.yml/badge.svg)](https://github.com/CavinKrenik/QRES/actions)
+[![Crates.io](https://img.shields.io/crates/v/qres_core.svg)](https://crates.io/crates/qres_core)
 
-- **Adaptive ANS Encoding**: Real-time distribution tracking using Welford's online statistics
-- **Intelligent Fallback**: Automatic zstd compression for incompressible data
-- **Neural Predictors**: iPEPS tensor networks, LSTM, and simple order-1 context models
-- **Swarm Intelligence**: LivingBrain for distributed weight sharing and evolution
-- **High Performance**: 10 MB/s compression, 7 MB/s decompression
-- **Python Bindings**: Seamless integration with Python ecosystem
-- **CLI Tool**: Chunk-based streaming with progress indicators
+## 🏗️ Architecture
 
-## 📊 Performance Benchmarks
+This workspace contains the two pillars of QRES:
 
-| Dataset | Ratio | Throughput | Notes |
-|---------|-------|------------|-------|
-| Repetitive Text | 90.5% | 10 MB/s | Adaptive ANS excels |
-| Sine Waves | 85.2% | 10 MB/s | Neural predictors shine |
-| Constant Data | 77.7% | 10 MB/s | Near-optimal compression |
-| Random Data | 101.5% | 10 MB/s | Zstd fallback prevents expansion |
+### 1. `qres_core` (The Codec)
+* **Role:** Deterministic compression library.
+* **Tech:** Pure Rust, `no_std` compatible, Q16.16 Fixed-Point Arithmetic.
+* **Guarantee:** Compressing `file.dat` on Linux x86 produces the *exact same bitstream* as on macOS ARM64.
+* **Usage:** Embeddable in C++, Python, WASM, and Embedded systems.
 
-## 🛠️ Installation
+### 2. `qres_daemon` (The Brain)
+* **Role:** P2P Swarm Node & CLI.
+* **Tech:** Tokio (Async), Libp2p (GossipSub), SNN (Spiking Neural Networks).
+* **Function:** Manages the "Hive Mind," distributing weight epiphanies across the network without blocking the hot compression path.
 
-### From Source
+## 🚀 Quick Start
+
+### Build Everything
 ```bash
-git clone https://github.com/CavinKrenik/QRES.git
-cd QRES/qres_rust
-cargo build --release
+# Build Daemon and Core (Release Optimized)
+cargo build --release --workspace
 ```
 
-### Python Package
+### Run the Daemon
 ```bash
-pip install qres-rust
+# Start the node (Binds to 127.0.0.1 for security)
+./target/release/qres_daemon swarm --port 8080
 ```
 
-## 📖 Usage
-
-### CLI
+### Use the CLI
 ```bash
-# Compress
-./target/release/qres-cli compress input.bin output.qres
+# Compress using the Living Brain
+./target/release/qres_daemon compress input.dat output.qres
 
-# Decompress
-./target/release/qres-cli decompress output.qres restored.bin
-
-# Swarm Mode
-./target/release/qres-cli swarm
+# Decompress (Bit-Perfect)
+./target/release/qres_daemon decompress output.qres restored.dat
 ```
 
-### Python
-```python
-import qres_rust
+## 🧪 Testing & Verification
+We use a "Battle Royale" CI pipeline to ensure cross-architecture determinism.
 
-# Compress bytes
-compressed = qres_rust.encode_bytes(data)
+```bash
+# Run local test suite
+cargo test --workspace
 
-# Decompress
-original = qres_rust.decode_bytes(compressed)
+# Verify WASM compilation (for Web Clients)
+cd qres_wasm && wasm-pack build --target web
 ```
-
-## 🧠 Swarm Intelligence
-
-QRES features a distributed LivingBrain that evolves compression strategies:
-
-- **Peer-to-Peer Learning**: Nodes share predictor weights via gossip protocol
-- **Adaptive Evolution**: Brains merge and mutate based on performance
-- **Persistent State**: Brains saved as JSON for continuity
-
-## 🤝 Contributing
-
-We welcome contributions! See [CONTRIBUTING.md](../CONTRIBUTING.md) for guidelines.
-
-## 📄 License
-
-MIT OR Apache-2.0
