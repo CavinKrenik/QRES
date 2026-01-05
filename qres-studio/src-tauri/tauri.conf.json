@@ -21,6 +21,11 @@
       "csp": null
     }
   },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDQ5RTlCRkY4NUZDN0ZEQjMKUldTei9jZGYrTC9wU1hHUXNJbXV0dmV3czNTdEl2WE1pQUFvekpyYzBFd1U1TjZ1aWxtTnVYQkwK"
+    }
+  },
   "bundle": {
     "active": true,
     "targets": "all",
