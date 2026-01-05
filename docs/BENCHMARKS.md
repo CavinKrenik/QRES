@@ -56,6 +56,9 @@ Performance metrics for the Quantum-Relational Encoding System.
 - ~40% reduction on mixed archives
 - Hash-based long-term memory
 
+## Known Issues
+*   **Pure Sine Waves**: Current `qres_core` quantization (Q16.16) introduces noise in pure analog signals, limiting compression ratio to ~0.47. Future updates will enable `SpectralPredictor` direct synthesis to resolve this.
+
 ---
 
 *Benchmarks run on standardized test corpus. See `benchmarks/` for raw data.*
