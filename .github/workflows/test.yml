@@ -20,19 +20,21 @@ jobs:
           components: clippy, rustfmt
 
       - name: Check Formatting
-        run: cargo fmt --manifest-path qres_rust/Cargo.toml -- --check
+        working-directory: qres_rust
+        run: cargo fmt --check
 
       - name: Clippy Linting
+        working-directory: qres_rust
         continue-on-error: true
-        run: cargo clippy --manifest-path qres_rust/Cargo.toml -- -D warnings
+        run: cargo clippy --workspace -- -D warnings
 
-      - name: Run Core Unit Tests (Context & Spectral)
-        # Runs tests in qres_rust/src/lib.rs, including the new LzMatch checks
-        run: cargo test --manifest-path qres_rust/Cargo.toml --verbose
+      - name: Run Core Unit Tests
+        working-directory: qres_rust
+        run: cargo test --workspace --verbose
 
-      - name: Verify SIMD Compilation
-        # Ensures features compile correctly
-        run: cargo build --release --manifest-path qres_rust/Cargo.toml
+      - name: Verify Release Build
+        working-directory: qres_rust
+        run: cargo build --release --workspace
 
   integration-test:
     name: Python Integration
@@ -56,7 +58,8 @@ jobs:
           pip install maturin pytest
           # Install dependencies from pyproject.toml
           pip install .
-          maturin develop --release
+          cd qres_rust/qres_core
+          maturin develop --release --features python
 
       - name: Run Torture Test
         run: |

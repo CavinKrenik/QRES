@@ -115,7 +115,7 @@ pub async fn compress_file(
     let is_trainable = is_data_file(src_path);
 
     // Compress the file
-    qres_rust::compress_with_callback(&src, &dest, |progress, ratio, engine| {
+    qres_core::compress_with_callback(&src, &dest, |progress, ratio, engine| {
         window
             .emit(
                 "compression-progress",
@@ -161,7 +161,7 @@ async fn compress_folder(
     src: String,
     dest_folder: String,
 ) -> Result<serde_json::Value, String> {
-    use qres_rust::archive::{create_archive, ArchiveOptions};
+    use qres_core::archive::{create_archive, ArchiveOptions};
 
     let src_path = Path::new(&src);
     let folder_name = src_path
@@ -318,7 +318,7 @@ pub async fn decompress_file(window: Window, src: String, dest: String) -> Resul
         })?;
 
         // Decompress chunk
-        let decoded = qres_rust::decompress_chunk(&chunk_data, 0, None)
+        let decoded = qres_core::decompress_chunk(&chunk_data, 0, None)
             .map_err(|e| format!("Chunk {} decompression failed: {}", chunk_count, e))?;
 
         // Write decompressed data
@@ -384,7 +384,7 @@ pub async fn decompress_file(window: Window, src: String, dest: String) -> Resul
 
 #[tauri::command]
 pub async fn browse_archive(archive_path: String) -> Result<serde_json::Value, String> {
-    use qres_rust::archive::read_manifest;
+    use qres_core::archive::read_manifest;
 
     let manifest = read_manifest(archive_path.as_str())
         .map_err(|e| format!("Failed to read archive: {}", e))?;
@@ -417,7 +417,7 @@ pub async fn extract_archive(
     archive_path: String,
     output_dir: String,
 ) -> Result<String, String> {
-    use qres_rust::archive::extract_archive;
+    use qres_core::archive::extract_archive;
 
     window
         .emit(
@@ -452,7 +452,7 @@ pub async fn extract_archive_file(
     file_path: String,
     output_path: String,
 ) -> Result<String, String> {
-    use qres_rust::archive::extract_archive;
+    use qres_core::archive::extract_archive;
 
     // For now, we extract the whole archive to a temp dir and copy the file
     // In the future, we can optimize this to extract only the requested file

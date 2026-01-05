@@ -571,6 +571,93 @@ pub fn decompress_chunk(
     }
 }
 
+// --- File-Level Compression with Callback (for GUI) ---
+
+use std::fs::File;
+use std::io::{BufReader, BufWriter, Read, Write};
+use std::path::Path;
+
+const FILE_CHUNK_SIZE: usize = 64 * 1024; // 64KB chunks
+
+/// Compress a file with progress callback
+/// callback receives: (progress_percent, current_ratio, engine_name)
+pub fn compress_with_callback<P, C>(src: P, dest: P, mut callback: C) -> io::Result<()>
+where
+    P: AsRef<Path>,
+    C: FnMut(u32, f64, &str),
+{
+    let src_file = File::open(src.as_ref())?;
+    let src_size = src_file.metadata()?.len();
+    let mut reader = BufReader::new(src_file);
+
+    let dest_file = File::create(dest.as_ref())?;
+    let mut writer = BufWriter::new(dest_file);
+
+    // Write header magic
+    writer.write_all(b"QRES")?;
+
+    // Write static header placeholder (will be updated at end)
+    let _header_position = 4;
+    let header = [0u8; 27]; // Version, flags, pred_id, timestamps, sizes
+    writer.write_all(&header)?;
+
+    // Write filename
+    let filename = src
+        .as_ref()
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("data")
+        .as_bytes();
+    writer.write_all(&(filename.len() as u32).to_le_bytes())?;
+    writer.write_all(filename)?;
+
+    let mut buffer = vec![0u8; FILE_CHUNK_SIZE];
+    let mut total_read = 0u64;
+    let mut total_written = 0u64;
+
+    loop {
+        let bytes_read = reader.read(&mut buffer)?;
+        if bytes_read == 0 {
+            break;
+        }
+
+        let chunk = &buffer[..bytes_read];
+        let compressed = compress_chunk(chunk, 0, None, None)?;
+
+        // Write chunk length + data
+        writer.write_all(&(compressed.len() as u32).to_le_bytes())?;
+        writer.write_all(&compressed)?;
+
+        total_read += bytes_read as u64;
+        total_written += compressed.len() as u64 + 4;
+
+        // Calculate progress and ratio
+        let progress = if src_size > 0 {
+            ((total_read as f64 / src_size as f64) * 100.0) as u32
+        } else {
+            50
+        };
+        let ratio = if total_read > 0 {
+            total_written as f64 / total_read as f64
+        } else {
+            1.0
+        };
+
+        callback(progress, ratio, "Neural");
+    }
+
+    writer.flush()?;
+
+    // Final callback
+    callback(
+        100,
+        total_written as f64 / total_read.max(1) as f64,
+        "Neural",
+    );
+
+    Ok(())
+}
+
 // --- Python Wrapper ---
 
 #[cfg(feature = "python")]

@@ -27,14 +27,13 @@ jobs:
 
     - name: Build QRES (Release)
       working-directory: ./qres_rust
-      run: cargo build --release
+      run: cargo build --release --workspace
 
     - name: Compress Data (Linux x86)
       working-directory: ./qres_rust
       run: |
-        # Usage: target/release/qres_rust compress <input> <output>
-        # Adjust arguments based on your actual CLI structure
-        ./target/release/qres_rust compress ../golden_master.dat ../compressed.qres
+        # Binary is now qres_daemon (from the daemon crate)
+        ./target/release/qres_daemon compress ../golden_master.dat ../compressed.qres
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
@@ -59,13 +58,13 @@ jobs:
 
     - name: Build QRES (Release)
       working-directory: ./qres_rust
-      run: cargo build --release
+      run: cargo build --release --workspace
 
     - name: Decompress Data (macOS ARM)
       working-directory: ./qres_rust
       run: |
-        # Usage: target/release/qres_rust decompress <input> <output>
-        ./target/release/qres_rust decompress ../compressed.qres ../restored.dat
+        # Binary is now qres_daemon (from the daemon crate)
+        ./target/release/qres_daemon decompress ../compressed.qres ../restored.dat
 
     - name: Verify Integrity
       run: |
