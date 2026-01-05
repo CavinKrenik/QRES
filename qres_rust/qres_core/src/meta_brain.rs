@@ -97,7 +97,7 @@ impl MetaBrain {
         }
         // Pad the 6th weights (Transformer) with a neutral value if missing
         if out.len() < 6 {
-            result[5] = 0.0; 
+            result[5] = 0.0;
         }
         result
     }

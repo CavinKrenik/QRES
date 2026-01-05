@@ -41,12 +41,14 @@ impl SimplePredictor {
 
 impl Predictor for SimplePredictor {
     fn predict_next(&self) -> u8 {
-        let idx = ((self.prev3 as usize) << 16) | ((self.prev2 as usize) << 8) | (self.prev1 as usize);
+        let idx =
+            ((self.prev3 as usize) << 16) | ((self.prev2 as usize) << 8) | (self.prev1 as usize);
         self.context[idx]
     }
 
     fn update(&mut self, actual: u8) {
-        let idx = ((self.prev3 as usize) << 16) | ((self.prev2 as usize) << 8) | (self.prev1 as usize);
+        let idx =
+            ((self.prev3 as usize) << 16) | ((self.prev2 as usize) << 8) | (self.prev1 as usize);
         self.context[idx] = actual;
         self.prev3 = self.prev2;
         self.prev2 = self.prev1;

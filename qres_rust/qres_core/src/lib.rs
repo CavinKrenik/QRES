@@ -15,8 +15,8 @@ pub mod gpu;
 pub mod meta_brain; // Inference Engine (moved to Core)
 pub mod mixer;
 pub mod predictors;
-pub mod tensor;
 pub mod spectral;
+pub mod tensor;
 pub mod transformer;
 use crate::ans_coder::{AnsReader, AnsWriter};
 use crate::mixer::{Mixer, NUM_MODELS};

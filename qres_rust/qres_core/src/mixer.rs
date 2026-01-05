@@ -262,7 +262,11 @@ impl Mixer {
         // Win Streak -> Confidence -> Double LR to lock on
         let std = (self.running_var / (self.count.max(1) as f32)).sqrt();
         let base_lr = if std > 40.0 { 0.05 } else { 0.005 };
-        self.learning_rate = if self.win_streak > 32 { base_lr * 2.5 } else { base_lr };
+        self.learning_rate = if self.win_streak > 32 {
+            base_lr * 2.5
+        } else {
+            base_lr
+        };
 
         // C. Update Ensemble Weights (LMS)
         self.update_weights(y, preds);
@@ -348,7 +352,11 @@ impl Mixer {
         // 3. Adaptive Learning Rate
         let std = (self.running_var / 10.0).sqrt(); // Approx
         let base_lr = if std > 40.0 { 0.05 } else { 0.005 };
-        self.learning_rate = if self.win_streak > 32 { base_lr * 2.5 } else { base_lr };
+        self.learning_rate = if self.win_streak > 32 {
+            base_lr * 2.5
+        } else {
+            base_lr
+        };
 
         // 4. Heavy SIMD Weight Update (Run once per batch)
         self.update_weights(y, sample_preds);
