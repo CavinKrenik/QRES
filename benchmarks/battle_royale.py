@@ -20,12 +20,11 @@ def generate_synthetic_data(size_mb=10):
     data = y.astype(np.uint8).tobytes()
     return data
 
-def generate_real_world_simulation(rows=100000):
-    """Simulate a telemetry DataFrame export."""
+def generate_correlated_telemetry(rows=100000):
+    """Simulate High-Frequency Correlated Telemetry (Where QRES Wins)."""
     df = pd.DataFrame({
         'timestamp': pd.date_range(start='2024-01-01', periods=rows, freq='S').asi8,
         'sensor_a': np.cumsum(np.random.choice([-1, 0, 1], size=rows)), # Random Walk (Perfect for QRES)
-        'sensor_b': np.random.randint(0, 100, size=rows), # Noise
         'status': np.repeat([b'OK'], rows)
     })
     
@@ -34,7 +33,20 @@ def generate_real_world_simulation(rows=100000):
     df.to_csv(buffer, index=False)
     return buffer.getvalue()
 
-def run_benchmark(name, data):
+def generate_nosiy_telemetry(rows=100000):
+    """Simulate White Noise Telemetry (Where Entropy Coders Win)."""
+    df = pd.DataFrame({
+         'sensor_b': np.random.randint(0, 100, size=rows), # Pure Noise
+    })
+    
+    buffer = io.BytesIO()
+    df.to_csv(buffer, index=False)
+    return buffer.getvalue()
+
+class RegressionError(Exception):
+    pass
+
+def run_benchmark(name, data, assert_ratio_under=None):
     print(f"\n--- Benchmarking: {name} ({len(data) / 1024 / 1024:.2f} MB) ---")
     print(f"{'Algorithm':<10} | {'Ratio':<10} | {'Comp Speed':<15} | {'Decomp Speed':<15} | {'Speedup (vs Zlib)'}")
     print("-" * 85)
@@ -80,6 +92,14 @@ def run_benchmark(name, data):
 
         print(f"{algo_name:<10} | {ratio*100:6.2f}%    | {comp_speed:6.2f} MB/s    | {decomp_speed:6.2f} MB/s    | {speedup:6.2f}x")
 
+    # STRICT ASSERTIONS FOR CI
+    if assert_ratio_under is not None:
+        qres_ratio = results["QRES (v2)"]["ratio"]
+        if qres_ratio > assert_ratio_under:
+            raise RegressionError(f"QRES Performance Regression! Expected Ratio < {assert_ratio_under}, Got {qres_ratio:.4f}")
+        else:
+            print(f">>> PASS: QRES Ratio {qres_ratio:.4f} < {assert_ratio_under}")
+
 def main():
     import argparse
     parser = argparse.ArgumentParser(description="QRES Battle Royale Benchmark")
@@ -97,11 +117,20 @@ def main():
     print("generating synthetic data...")
     synthetic = generate_synthetic_data(size_mb=size_mb)
     
-    print("generating telemetry data...")
-    telemetry = generate_real_world_simulation(rows=rows)
+    print("generating correlated telemetry...")
+    telemetry_clean = generate_correlated_telemetry(rows=rows)
     
-    run_benchmark("Sine Wave (Predictable)", synthetic)
-    run_benchmark("Telemetry CSV (Mixed)", telemetry)
+    print("generating noisy telemetry...")
+    telemetry_noise = generate_nosiy_telemetry(rows=rows)
+    
+    # 1. Sine Wave: QRES should crush this (< 0.20)
+    run_benchmark("Sine Wave (Predictable)", synthetic, assert_ratio_under=0.20)
+    
+    # 2. Correlated Telemetry: QRES should win (< 0.40)
+    run_benchmark("Telemetry (Correlated)", telemetry_clean, assert_ratio_under=0.40)
+    
+    # 3. Noisy Telemetry: QRES will lose (expecting ~0.9 or worse), but we don't fail CI for it
+    run_benchmark("Telemetry (Noise)", telemetry_noise, assert_ratio_under=None)
 
 if __name__ == "__main__":
     main()

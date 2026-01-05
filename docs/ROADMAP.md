@@ -24,7 +24,7 @@ Development phases and vision for the Quantum-Relational Encoding System.
 
 ### Phase 4: Brain-Like ML (v8.1)
 - [x] Spiking Neural Networks (LIF neurons)
-- [x] Quantum VQC for entanglement detection
+- [x] Tensor Network Correlator (Quantum-Inspired VQC)
 - [x] Hive Mind with FedProx/KL-FedDis
 - [x] MetaBrain v5 (SNN+QNN hybrid)
 

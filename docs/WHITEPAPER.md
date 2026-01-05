@@ -47,7 +47,7 @@ An ensemble of specialized predictors managed by an RL agent:
 | **Graph** | 2nd-order Markov chains with SIMD |
 | **Spectral** | FFT-based periodicity detection |
 | **SNN** | Spiking temporal patterns (GIF neurons) |
-| **QNN** | Quantum entanglement detection (VQC) |
+| **QNN** | Non-linear Correlation Detection (VQC) |
 
 **The Mixer:**
 ```
@@ -58,33 +58,51 @@ W_t = \beta \cdot W_{t-1} + (1-\beta) \cdot \nabla L
 
 ---
 
-## 3. Deep Tech Implementations
+## Section A: The Codec (`qres_core`)
 
-### 3.1 Spiking Neural Networks
-Biological-inspired compression using spike timing, optimized for sparse inference:
-- **GIF Neurons**: Generalized Integrate-and-Fire with adaptive thresholds.
-- **OSBC Pruning**: 97% sparsity via second-order methods, reducing model weight overhead.
+The heart of QRES is a deterministic, high-performance codec that ensures data integrity.
 
-### 3.2 Quantum VQC
-Variational Quantum Circuits for correlation detection in high-entropy streams:
-```
-|\psi\rangle = U(\theta)|00...0\rangle
-```
-- Maps byte sequences to quantum states.
-- Finds minimal entanglement entropy basis.
-- **Hardware Agnostic**: Runs on simulated state vectors or TPU backends.
+### 1. Zero-Copy Residuals
+Deviating from traditional Arithmetic Coding, QRES writes residuals directly to the stream bit-packed.
+*   **Predictor**: Generates a hypothesis byte $P$.
+*   **Residual**: $R = P \oplus Actual$.
+*   **Storage**: If $R$ is small (high accuracy), it is stored with fewer bits using unary prefix codes.
 
-### 3.3 P2P Swarm Learning
-Distributed intelligence via `libp2p`:
-- **GossipSub**: Epiphany broadcasting for rapid model convergence.
-- **FedProx + KL-FedDis**: Federated averaging with divergence filtering.
-- **Privacy First**: Only model weights shared, never raw data.
+### 2. Fixed-Point Determinism
+To prevent "Butterfly Effect" drift between architectures (e.g., x86 vs. ARM), `qres_core` abandons floating-point math.
+*   **Q16.16 Logic**: Neural weights are stored as 32-bit signed integers (16 integer bits, 16 fractional bits).
+*   **Bit-Perfect Guarantee**: A file compressed on a Linux server is byte-for-byte identical when decompressed on an iPhone.
 
 ---
 
-## 4. Conclusion
+## Section B: The Intelligence (`qres_daemon`)
 
-QRES v10.0 bridges the gap between academic theory and industrial application. By decoupling the **Core** logic from the **Swarm** intelligence, we provide a tool that is both a standard-compliant library and a gateway to a global network of shared compression intelligence.
+The "Brain" runs as a background service, optimizing the Codec's weights without blocking the hot path.
+
+### 1. Spiking Neural Networks
+Biological-inspired compression using spike timing, optimized for sparse inference:
+- **GIF Neurons**: Generalized Integrate-and-Fire with adaptive thresholds.
+- **OSBC Pruning**: 97% sparsity via second-order methods.
+
+### 2. Tensor Network Correlator (Quantum-Inspired)
+Uses Variational Quantum Circuits (VQC) logic on classical hardware to detect non-linear correlations:
+```
+|\psi\rangle = U(\theta)|00...0\rangle
+```
+- Maps byte sequences to **High-Dimensional Hilbert Embeddings**.
+- Finds minimal entropy basis for complex patterns.
+
+### 3. Federated Swarm Learning
+Distributed intelligence via `libp2p`:
+- **GossipSub**: Epiphany broadcasting for rapid model convergence.
+- **FedProx**: Federated averaging for non-IID data.
+
+> **Disclaimer:** The AI Swarm is *advisory*. If the Daemon crashes or is unreachable, `qres_core` falls back to its robust default weights. Data integrity is never dependent on the "Living Brain."
+
+---
+
+## Conclusion
+QRES v10.0 bridges the gap between academic theory and industrial reliability. By decoupling the deterministic **Core** from the evolutionary **Swarm**, we deliver a tool that is safe for production yet ready for the Singularity.
 
 ---
 

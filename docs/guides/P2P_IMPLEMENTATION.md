@@ -5,7 +5,7 @@ This document details the architecture and implementation of the QRES P2P Swarm 
 ## Overview
 The QRES Swarm uses `libp2p` to create a decentralized network where nodes share:
 1.  **Epiphanies:** Learned model weights (small tensors, including MetaBrain v4).
-2.  **Quantum States:** Compressed "World States" for synchronization.
+2.  **Hilbert Embeddings:** Compressed "World States" (high-dimensional tensors) for synchronization.
 3.  **Discovery:** Peer finding via Kademlia DHT.
 
 *Privacy First: Only model weights and state metadata are shared. Raw file content never leaves the local node.*
@@ -59,7 +59,7 @@ To run as a stable bootstrap peer for other nodes to discover:
 qres-daemon --mode bootstrap --port 4001
 ```
 
-### Quantum Tensor Broadcasting (v10.0)
+### Tensor State Broadcasting (v10.0)
 Persistent states now include multimodal embeddings; sync with >0.99 fidelity.
 
 ## Troubleshooting

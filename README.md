@@ -10,6 +10,13 @@
 
 ---
 
+## Non-Goals & Limitations
+QRES is optimized for *structured, time-series, and predictable* data (e.g., telemetry, logs, sensor streams).
+*   **Encrypted/Random Data:** QRES will *expand* high-entropy data (like ZIP files or randomness). Use Zstd for these.
+*   **Cold Storage:** QRES requires a small "learning curve" (warmup) to build its model. It is less effective on tiny files (<1KB).
+
+---
+
 ## 🌟 Overview
 
 QRES transcends traditional compression with a **"Living Brain"** agent that predicts, adapts, and evolves data storage like human memory. Unlike static algorithms (Zstd, gzip), QRES learns from your data and gets smarter over time.
@@ -33,7 +40,7 @@ QRES transcends traditional compression with a **"Living Brain"** agent that pre
 | Feature | Description |
 |---------|-------------|
 | 🧠 **Spiking Neural Networks** | GIF neurons with 97% sparsity via OSBC pruning |
-| ⚛️ **Quantum VQC** | Variational circuits for entanglement-based correlation |
+| ⚛️ **Tensor Network Correlator** | Variational circuits for non-linear correlation |
 | 🐝 **Hive Mind** | Federated learning with KL-FedDis divergence filtering |
 | 🔄 **Auto-Tuning** | Fine-tune on your data with federated sharing |
 | 📦 **Multimodal** | Text, IoT, images, audio, PDFs |
