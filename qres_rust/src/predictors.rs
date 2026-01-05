@@ -1,20 +1,24 @@
-#[cfg(target_arch = "x86_64")]
-use std::arch::x86_64::*; // SIMD
-
 // QRES v5.0 Predictor Trait
 pub trait Predictor {
     fn predict_next(&self) -> u8;
     fn update(&mut self, actual: u8);
 }
 
-// QRES v4.0 Predictors
+// --- Constants for Fixed-Point Arithmetic (Q16.16) ---
+// 1.0 in fixed point = 1 << 16 = 65536
+const FIXED_SCALE: i32 = 1 << 16;
+const FIXED_ROUND: i32 = 1 << 15; // 0.5 for rounding
+
+fn float_to_fixed(f: f32) -> i32 {
+    (f * FIXED_SCALE as f32) as i32
+}
 
 // --- Simple Predictor (Text/Code) ---
-// Upgraded to Order-2 Markov (Context = last 2 bytes)
+// Order-2 Markov (Context = last 2 bytes)
 pub struct SimplePredictor {
     prev1: u8,
     prev2: u8,
-    context: Box<[u8; 65536]>, // Heap allocate
+    context: Box<[u8; 65536]>,
 }
 
 impl Default for SimplePredictor {
@@ -48,18 +52,13 @@ impl Predictor for SimplePredictor {
 }
 
 // --- Graph Predictor (Telemetry/Complex Patterns) ---
-#[cfg(target_arch = "x86_64")]
-type GraphWeights = __m256;
-#[cfg(not(target_arch = "x86_64"))]
-type GraphWeights = [f32; 8];
-
+// REFACTORED: Uses i32 Fixed-Point (Q16.16) for cross-platform determinism.
 pub struct GraphPredictor {
-    weights: GraphWeights,
+    weights: [i32; 8], // Q16.16 Fixed Point
     edges: [usize; 8],
-    // OPTIMIZATION: Fixed array instead of VecDeque
     history: [u8; 64],
     cursor: usize,
-    learning_rate: f32,
+    learning_rate: i32, // Q16.16 Fixed Point
 }
 
 impl Default for GraphPredictor {
@@ -69,113 +68,89 @@ impl Default for GraphPredictor {
 }
 
 impl GraphPredictor {
-    #[cfg(target_arch = "x86_64")]
     pub fn new() -> Self {
+        // Lag intervals
         let edges = [1, 2, 3, 4, 8, 16, 32, 0];
-        let weights = unsafe { _mm256_set_ps(0.0, 0.05, 0.05, 0.05, 0.05, 0.1, 0.2, 0.5) };
+        
+        // Initial weights converted to Q16.16
+        // 0.0, 0.05, 0.05, 0.05, 0.05, 0.1, 0.2, 0.5
+        let weights = [
+            0,
+            float_to_fixed(0.05),
+            float_to_fixed(0.05),
+            float_to_fixed(0.05),
+            float_to_fixed(0.05),
+            float_to_fixed(0.1),
+            float_to_fixed(0.2),
+            float_to_fixed(0.5),
+        ];
 
         GraphPredictor {
             weights,
             edges,
             history: [0; 64],
             cursor: 0,
-            learning_rate: 0.015,
-        }
-    }
-
-    #[cfg(not(target_arch = "x86_64"))]
-    pub fn new() -> Self {
-        let edges = [1, 2, 3, 4, 8, 16, 32, 0];
-        let weights = [0.5, 0.2, 0.1, 0.05, 0.05, 0.05, 0.05, 0.0];
-
-        GraphPredictor {
-            weights,
-            edges,
-            history: [0; 64],
-            cursor: 0,
-            learning_rate: 0.015,
+            learning_rate: float_to_fixed(0.015),
         }
     }
 }
 
 impl Predictor for GraphPredictor {
-    #[cfg(target_arch = "x86_64")]
     fn predict_next(&self) -> u8 {
-        let mut inputs = [0.0f32; 8];
-        for (i, input) in inputs.iter_mut().enumerate().take(7) {
-            let lag = self.edges[i];
-            // Calculate circular index
-            let idx = (self.cursor + 64 - lag) % 64;
-            *input = self.history[idx] as f32;
-        }
-        let input_simd = unsafe { _mm256_loadu_ps(inputs.as_ptr()) };
-        let product = unsafe { _mm256_mul_ps(self.weights, input_simd) };
-        let h1 = unsafe { _mm256_hadd_ps(product, product) };
-        let h2 = unsafe { _mm256_hadd_ps(h1, h1) };
-        let sum = unsafe { _mm256_cvtss_f32(h2) };
-        sum.clamp(0.0, 255.0) as u8
-    }
-
-    #[cfg(not(target_arch = "x86_64"))]
-    fn predict_next(&self) -> u8 {
-        let mut sum = 0.0;
+        let mut sum: i32 = 0;
+        
         for i in 0..7 {
             let lag = self.edges[i];
-            // Calculate circular index
             let idx = (self.cursor + 64 - lag) % 64;
-            let input = self.history[idx] as f32;
-            sum += self.weights[i] * input;
+            let input = self.history[idx] as i32; // 0..255 integer
+            
+            // Multiply: Q16.16 * Integer = Q16.16
+            // e.g. 0.5 (32768) * 200 = 6,553,600 (100.0 in Q16.16)
+            sum += self.weights[i].wrapping_mul(input); 
         }
-        sum.clamp(0.0, 255.0) as u8
+
+        // Convert back to integer: (sum + 0.5) >> 16
+        let result = (sum + FIXED_ROUND) >> 16;
+        result.clamp(0, 255) as u8
     }
 
-    #[cfg(target_arch = "x86_64")]
     fn update(&mut self, actual: u8) {
-        let pred = self.predict_next() as f32;
-        let err = actual as f32 - pred;
-        let mut inputs = [0.0f32; 8];
-        for (i, input) in inputs.iter_mut().enumerate().take(7) {
-            let lag = self.edges[i];
-            // Calculate circular index
-            let idx = (self.cursor + 64 - lag) % 64;
-            *input = self.history[idx] as f32;
-        }
-        let input_simd = unsafe { _mm256_loadu_ps(inputs.as_ptr()) };
-        let lr_simd = unsafe { _mm256_set1_ps(self.learning_rate) };
-        let err_simd = unsafe { _mm256_set1_ps(err) };
-        let norm_factor = unsafe { _mm256_set1_ps(1.0 / 255.0) };
-        let delta = unsafe {
-            _mm256_mul_ps(
-                lr_simd,
-                _mm256_mul_ps(err_simd, _mm256_mul_ps(input_simd, norm_factor)),
-            )
-        };
-        self.weights = unsafe { _mm256_add_ps(self.weights, delta) };
+        // 1. Calculate Prediction again to get error (in pure int space)
+        let pred = self.predict_next() as i32;
+        let err = actual as i32 - pred; // Integer error
 
-        let mut w_arr = [0.0f32; 8];
-        unsafe { _mm256_storeu_ps(w_arr.as_mut_ptr(), self.weights) };
-        for w in &mut w_arr {
-            *w = w.clamp(-5.0, 5.0);
-        }
-        self.weights = unsafe { _mm256_loadu_ps(w_arr.as_ptr()) };
-
-        self.history[self.cursor] = actual;
-        self.cursor = (self.cursor + 1) % 64;
-    }
-
-    #[cfg(not(target_arch = "x86_64"))]
-    fn update(&mut self, actual: u8) {
-        let pred = self.predict_next() as f32;
-        let err = actual as f32 - pred;
+        // 2. Update Weights
+        // Delta = LR * Err * Input
+        // We want Delta in Q16.16.
+        // LR is Q16.16. Err is Int. Input is Int.
+        // If we do LR * Err * Input, we get Q16.16.
+        // BUT: We need to normalize input by 255.0 like the original f32 code did.
+        // Original: delta = lr * err * (input / 255.0)
+        // Fixed: delta = (lr * err * input) / 255
+        
         for i in 0..7 {
             let lag = self.edges[i];
-            // Calculate circular index
             let idx = (self.cursor + 64 - lag) % 64;
-            let input = self.history[idx] as f32;
-            let delta = self.learning_rate * err * (input / 255.0);
+            let input = self.history[idx] as i32;
+
+            // Calculation:
+            // numerator = (LR * err) * input  <-- Result is Q16.16 * int * int
+            // With LR=0.015 (983), Err=255, Input=255 -> 983*255*255 = 63,919,575.
+            // i32 max is 2 billion. This is safe from overflow.
+            
+            let numerator = self.learning_rate * err * input;
+            let delta = numerator / 255; 
+
             self.weights[i] += delta;
-            self.weights[i] = self.weights[i].clamp(-5.0, 5.0);
+
+            // Clamp weights to [-5.0, 5.0] in Q16.16
+            // 5.0 * 65536 = 327680
+            const MAX_WEIGHT: i32 = 5 * FIXED_SCALE;
+            const MIN_WEIGHT: i32 = -5 * FIXED_SCALE;
+            self.weights[i] = self.weights[i].clamp(MIN_WEIGHT, MAX_WEIGHT);
         }
+
+        // 3. Update History
         self.history[self.cursor] = actual;
         self.cursor = (self.cursor + 1) % 64;
     }
@@ -201,7 +176,7 @@ impl LzMatchPredictor {
         let hash_size = 1 << HASH_BITS;
         LzMatchPredictor {
             table: vec![0; hash_size],
-            history: Vec::with_capacity(65536), // Buffer grows dynamically anyway
+            history: Vec::with_capacity(65536), 
             pos: 0,
             hash_mask: hash_size - 1,
         }
@@ -213,7 +188,6 @@ impl LzMatchPredictor {
             return 0;
         }
         let key = u32::from_le_bytes(data[0..4].try_into().unwrap());
-        // Multiplicative hash
         (key.wrapping_mul(0x9E3779B9)) as usize
     }
 }

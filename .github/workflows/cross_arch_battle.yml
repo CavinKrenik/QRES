@@ -1,0 +1,86 @@
+name: Cross-Arch Battle Royale
+
+on:
+  push:
+    branches: [ "main", "dev" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # 1. COMPRESS on Linux (x86_64)
+  producer-x86:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Generate Golden Master Data
+      run: |
+        # Generate 5MB of deterministic random data
+        # We use a fixed seed (openssl) to ensure consistency if we ran locally
+        openssl rand -out golden_master.dat 5242880
+        sha256sum golden_master.dat > original_hash.txt
+        echo "Original Hash:"
+        cat original_hash.txt
+
+    - name: Build QRES (Release)
+      working-directory: ./qres_rust
+      run: cargo build --release
+
+    - name: Compress Data (Linux x86)
+      working-directory: ./qres_rust
+      run: |
+        # Usage: target/release/qres_rust compress <input> <output>
+        # Adjust arguments based on your actual CLI structure
+        ./target/release/qres_rust compress ../golden_master.dat ../compressed.qres
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: battle-artifacts
+        path: |
+          compressed.qres
+          original_hash.txt
+        retention-days: 1
+
+  # 2. DECOMPRESS on macOS (ARM64 / Apple Silicon)
+  consumer-arm:
+    needs: producer-x86
+    runs-on: macos-latest # Runs on M1/M2 chips
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: battle-artifacts
+
+    - name: Build QRES (Release)
+      working-directory: ./qres_rust
+      run: cargo build --release
+
+    - name: Decompress Data (macOS ARM)
+      working-directory: ./qres_rust
+      run: |
+        # Usage: target/release/qres_rust decompress <input> <output>
+        ./target/release/qres_rust decompress ../compressed.qres ../restored.dat
+
+    - name: Verify Integrity
+      run: |
+        echo "Verifying restoration..."
+        # macOS uses shasum -a 256
+        CURRENT_HASH=$(shasum -a 256 restored.dat | awk '{print $1}')
+        EXPECTED_HASH=$(cat original_hash.txt | awk '{print $1}')
+        
+        echo "Expected: $EXPECTED_HASH"
+        echo "Actual:   $CURRENT_HASH"
+        
+        if [ "$CURRENT_HASH" != "$EXPECTED_HASH" ]; then
+          echo "❌ CRITICAL FAILURE: Architecture Drift Detected!"
+          echo "The file compressed on Linux x86 did not restore correctly on macOS ARM."
+          exit 1
+        else
+          echo "✅ SUCCESS: Bit-perfect restoration across architectures."
+        fi

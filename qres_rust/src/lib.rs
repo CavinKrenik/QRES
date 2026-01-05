@@ -93,12 +93,17 @@ impl LivingBrain {
     }
 }
 
-const CHUNK_SIZE: usize = 1024 * 1024; // 1MB Chunk for better Text/LZ context
+const CHUNK_SIZE: usize = 1024 * 1024;
 const QRES_MAGIC: &[u8] = b"QRES";
+const QRES_PROTOCOL_VERSION: u8 = 10; // v10.0 Engineering
 
-// Define constants to prevent future magic-number errors (Phantom Weight Fix)
+// Known Predictor IDs
+const PREDICTOR_ID_DEFAULT: u8 = 0;
+const PREDICTOR_ID_NEURAL: u8 = 1;
+const PREDICTOR_ID_SPLIT: u8 = 2; // Reserved for Interleaved
+
 const NUM_PREDICTORS: usize = 6;
-const WEIGHTS_LEN: usize = NUM_PREDICTORS * 4; // 24 bytes for 6 f32 weights
+const WEIGHTS_LEN: usize = NUM_PREDICTORS * 4;
 
 // --- Header Architecture (V3) ---
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -343,14 +348,20 @@ pub fn compress_chunk(
     _weights: Option<&[u8]>,
     _lossy: Option<u8>,
 ) -> io::Result<Vec<u8>> {
-    const HIGH_ENTROPY_THRESHOLD: f32 = 7.8;
+    // 1. SAFETY CHECK: Validate Predictor ID
+    if _predictor_id > PREDICTOR_ID_SPLIT {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            format!("Unsupported Predictor ID: {}", _predictor_id),
+        ));
+    }
 
     // 0. Interleave Detection (Smart Pre-Pass)
     if chunk.len() > 1024 {
         let n = chunk.len().min(4096);
         let mut diff1 = 0i64;
         let mut diff2 = 0i64;
-
+        
         for i in 2..n {
             diff1 += (chunk[i] as i64 - chunk[i - 1] as i64).abs();
             diff2 += (chunk[i] as i64 - chunk[i - 2] as i64).abs();
@@ -361,11 +372,7 @@ pub fn compress_chunk(
             let mut even = Vec::with_capacity(chunk.len() / 2 + 1);
             let mut odd = Vec::with_capacity(chunk.len() / 2 + 1);
             for (i, &b) in chunk.iter().enumerate() {
-                if i % 2 == 0 {
-                    even.push(b);
-                } else {
-                    odd.push(b);
-                }
+                if i % 2 == 0 { even.push(b); } else { odd.push(b); }
             }
 
             // Recursive compression
@@ -373,14 +380,19 @@ pub fn compress_chunk(
             let c_odd = compress_chunk(&odd, 0, _weights, _lossy)?;
 
             // Flag 0x03: Interleaved Split
-            // Structure: [0x03] [TotalLen: 4] [EvenLen: 4] [EvenData] [OddData]
+            // Structure: [Flag] [TotalLen: 4] [EvenLen: 4] [EvenData] [OddData]
             let total_len = chunk.len() as u32;
             let even_compressed_len = c_even.len() as u32;
-
+            
             // Heuristic: Only use split if it actually compresses better than original
             if (c_even.len() + c_odd.len() + 9) < chunk.len() {
+                // Wrap with VERSIONED Header
+                // Mode 0x03: Interleaved
+                let ver = QRES_PROTOCOL_VERSION & 0x0F;
+                let flag_byte = (ver << 4) | 0x03;
+
                 let mut out = Vec::with_capacity(9 + c_even.len() + c_odd.len());
-                out.push(0x03);
+                out.push(flag_byte);
                 out.extend_from_slice(&total_len.to_le_bytes());
                 out.extend_from_slice(&even_compressed_len.to_le_bytes());
                 out.extend_from_slice(&c_even);
@@ -390,29 +402,23 @@ pub fn compress_chunk(
         }
     }
 
-    // 1. Smart Fallback Pre-scan
+    // 1. Smart Fallback Pre-scan (ZSTD)
     if chunk.len() > 512 {
         let entropy = calculate_sample_entropy(chunk);
-
-        // Low entropy (constant/near-constant data) - zstd is much faster and better
+        
+        // Use zstd if entropy is very low or very high (random)
         const LOW_ENTROPY_THRESHOLD: f32 = 0.2;
-        if entropy < LOW_ENTROPY_THRESHOLD {
+        const HIGH_ENTROPY_THRESHOLD: f32 = 7.8;
+        
+        if entropy < LOW_ENTROPY_THRESHOLD || entropy > HIGH_ENTROPY_THRESHOLD {
             let zstd_compressed = zstd::bulk::compress(chunk, 3).map_err(io::Error::other)?;
             if zstd_compressed.len() < chunk.len() {
-                let mut out = Vec::with_capacity(5 + zstd_compressed.len());
-                out.push(0x01); // Flag: Zstd
-                out.extend_from_slice(&(chunk.len() as u32).to_le_bytes());
-                out.extend_from_slice(&zstd_compressed);
-                return Ok(out);
-            }
-        }
+                // Flag 0x01: Zstd
+                let ver = QRES_PROTOCOL_VERSION & 0x0F;
+                let flag_byte = (ver << 4) | 0x01;
 
-        // High entropy (random data) - also use zstd fallback
-        if entropy > HIGH_ENTROPY_THRESHOLD {
-            let zstd_compressed = zstd::bulk::compress(chunk, 3).map_err(io::Error::other)?;
-            if zstd_compressed.len() < chunk.len() {
                 let mut out = Vec::with_capacity(5 + zstd_compressed.len());
-                out.push(0x01); // Flag: Zstd
+                out.push(flag_byte); 
                 out.extend_from_slice(&(chunk.len() as u32).to_le_bytes());
                 out.extend_from_slice(&zstd_compressed);
                 return Ok(out);
@@ -421,46 +427,38 @@ pub fn compress_chunk(
     }
 
     // 2. Prepare Weights (Neural vs Static)
+    // (Assuming standard logic for effective_weights...)
     let mut effective_weights = Vec::new();
     let mut is_neural = false;
     let mut stored_init_weights = Vec::new();
 
-    // A. Init Weights
     if let Some(nw) = crate::meta_brain::predict_init_weights(chunk) {
         is_neural = true;
-        // Ensure we serialize exactly WEIGHTS_LEN (24 bytes for 6 predictors)
-        for f in nw.iter().take(NUM_PREDICTORS) {
+         for f in nw.iter().take(NUM_PREDICTORS) {
             let b = f.to_le_bytes();
             stored_init_weights.extend_from_slice(&b);
             effective_weights.extend_from_slice(&b);
         }
-        // Pad if meta_brain returned fewer weights
         while stored_init_weights.len() < WEIGHTS_LEN {
-            let b = 0.0f32.to_le_bytes();
+            let b = 0.0f32.to_le_bytes(); // NOTE: These serve as placeholders, actual math is now i32
             stored_init_weights.extend_from_slice(&b);
             effective_weights.extend_from_slice(&b);
         }
     } else {
-        // Fallback to LivingBrain init (RL Agent provided weights)
-        if let Some(w) = _weights {
-            // FIX: Take up to WEIGHTS_LEN (24 bytes), not 20
+         if let Some(w) = _weights {
             let take = w.len().min(WEIGHTS_LEN);
             effective_weights.extend_from_slice(&w[0..take]);
-
-            // If explicit weights provided, we treat it as "Neural" for storage
             if take > 0 {
                 is_neural = true;
                 stored_init_weights.extend_from_slice(&w[0..take]);
-                // Pad if necessary
                 while stored_init_weights.len() < WEIGHTS_LEN {
                     stored_init_weights.push(0);
                 }
             }
         }
     }
-
-    // B. Global Weights (FedProx) - Append if present
-    // Assuming input is [Init(24) + Global(24)]
+    
+    // [Handling Global weights...]
     if let Some(w) = _weights {
         if w.len() >= WEIGHTS_LEN * 2 {
             effective_weights.extend_from_slice(&w[WEIGHTS_LEN..WEIGHTS_LEN * 2]);
@@ -476,26 +474,37 @@ pub fn compress_chunk(
     // 3. Encode
     let compressed_body = predictive_encode_v4(chunk, _lossy, w_arg);
 
-    // 4. Wrap
+    // 4. Wrap with VERSIONED Header
     if compressed_body.len() < chunk.len() {
-        let flag = if is_neural { 0x02 } else { 0x00 };
+        // Flag Layout: [7-4: Version] [3-0: Codec Mode]
+        // Mode 0x00: Standard
+        // Mode 0x02: Neural (includes weights)
+        let mode = if is_neural { 0x02 } else { 0x00 };
+        
+        // Safety: Ensure version fits in 4 bits
+        let ver = QRES_PROTOCOL_VERSION & 0x0F; 
+        let flag_byte = (ver << 4) | mode;
+
         let mut out = Vec::with_capacity(1 + 4 + stored_init_weights.len() + compressed_body.len());
 
-        out.push(flag);
+        out.push(flag_byte);
         out.extend_from_slice(&(chunk.len() as u32).to_le_bytes());
 
         if is_neural {
-            // Flag 0x02 stores WEIGHTS_LEN (24) bytes of init weights
             out.extend_from_slice(&stored_init_weights);
         }
 
         out.extend_from_slice(&compressed_body);
         Ok(out)
     } else {
-        // Zstd Fallback
+        // Zstd Fallback (Flag 0x01)
+        // We still embed version to be safe
+        let ver = QRES_PROTOCOL_VERSION & 0x0F;
+        let flag_byte = (ver << 4) | 0x01;
+        
         let zstd_compressed = zstd::bulk::compress(chunk, 3).map_err(io::Error::other)?;
         let mut out = Vec::with_capacity(1 + 4 + zstd_compressed.len());
-        out.push(0x01);
+        out.push(flag_byte);
         out.extend_from_slice(&(chunk.len() as u32).to_le_bytes());
         out.extend_from_slice(&zstd_compressed);
         Ok(out)
@@ -508,13 +517,24 @@ pub fn decompress_chunk(
     _weights: Option<&[u8]>,
 ) -> io::Result<Vec<u8>> {
     if compressed.len() < 5 {
-        return Err(io::Error::new(
-            io::ErrorKind::InvalidData,
-            "Chunk too short",
-        ));
+        return Err(io::Error::new(io::ErrorKind::InvalidData, "Chunk too short"));
     }
 
-    let codec_flag = compressed[0];
+    let flag_byte = compressed[0];
+    let version = (flag_byte >> 4) & 0x0F;
+    let codec_mode = flag_byte & 0x0F;
+
+    // 1. SAFETY CHECK: Protocol Version
+    // We can allow backward compatibility (e.g., allow v9 if we are v10), 
+    // but for now strict matching ensures safety during dev.
+    if version != (QRES_PROTOCOL_VERSION & 0x0F) {
+         // Graceful fallback for legacy files (pre-handshake) could go here
+         // But for Engineering Phase 1, we fail fast.
+         return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!("Version Mismatch: File v{} != Library v{}", version, QRES_PROTOCOL_VERSION),
+        ));
+    }
 
     let decomp_len = u32::from_le_bytes(
         compressed[1..5]
@@ -522,7 +542,7 @@ pub fn decompress_chunk(
             .map_err(|_| io::Error::new(io::ErrorKind::InvalidData, "Invalid Header"))?,
     ) as usize;
 
-    match codec_flag {
+    match codec_mode {
         0x00 => {
             // ANS codec (V4)
             Ok(predictive_decode_v4(&compressed[5..], decomp_len, _weights))
@@ -532,18 +552,16 @@ pub fn decompress_chunk(
             zstd::bulk::decompress(&compressed[5..], decomp_len).map_err(io::Error::other)
         }
         0x02 => {
-            // ANS codec with Neural Init (V5+)
-            // FIX: Header size check must account for WEIGHTS_LEN (24), not 20
-            let header_size = 5 + WEIGHTS_LEN; // 5 + 24 = 29 bytes
+            // ANS codec with Neural Init
+            let header_size = 5 + WEIGHTS_LEN; 
             if compressed.len() < header_size {
                 return Err(io::Error::new(
                     io::ErrorKind::InvalidData,
                     "Chunk too short for Neural Header",
                 ));
             }
-            let init_w_bytes = &compressed[5..header_size]; // 6 floats * 4 bytes = 24
+            let init_w_bytes = &compressed[5..header_size];
 
-            // Reconstruct effective weights: [Neural Init] + [Global from Args]
             let mut w_vec = Vec::with_capacity(WEIGHTS_LEN * 2);
             w_vec.extend_from_slice(init_w_bytes);
 
@@ -565,45 +583,33 @@ pub fn decompress_chunk(
             ))
         }
         0x03 => {
-            // Interleaved Split (V7)
-            // Structure: [Flag] [TotalLen:4] [EvenLen:4] [EvenData] [OddData]
-            if compressed.len() < 9 {
-                return Err(io::Error::new(
-                    io::ErrorKind::InvalidData,
-                    "Split chunk too short",
-                ));
+            // Interleaved Split
+             if compressed.len() < 9 {
+                return Err(io::Error::new(io::ErrorKind::InvalidData, "Split chunk too short"));
             }
             let even_len = u32::from_le_bytes(compressed[5..9].try_into().unwrap()) as usize;
-
             let even_data = &compressed[9..9 + even_len];
             let odd_data = &compressed[9 + even_len..];
 
+            // Recursive calls must handle the header too!
             let even_decomp = decompress_chunk(even_data, 0, _weights)?;
             let odd_decomp = decompress_chunk(odd_data, 0, _weights)?;
 
-            // Re-interleave
             let mut out = Vec::with_capacity(decomp_len);
             let mut e_iter = even_decomp.iter();
             let mut o_iter = odd_decomp.iter();
 
             for _ in 0..decomp_len / 2 {
-                if let Some(b) = e_iter.next() {
-                    out.push(*b);
-                }
-                if let Some(b) = o_iter.next() {
-                    out.push(*b);
-                }
+                if let Some(b) = e_iter.next() { out.push(*b); }
+                if let Some(b) = o_iter.next() { out.push(*b); }
             }
-            // Handle residual if odd length (though IoT usually pairs)
-            if let Some(b) = e_iter.next() {
-                out.push(*b);
-            }
+            if let Some(b) = e_iter.next() { out.push(*b); }
 
             Ok(out)
         }
         _ => Err(io::Error::new(
             io::ErrorKind::InvalidData,
-            format!("Unknown codec flag: {:#x}", codec_flag),
+            format!("Unknown codec mode: {:#x}", codec_mode),
         )),
     }
 }
