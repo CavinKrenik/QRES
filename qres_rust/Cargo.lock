@@ -2759,7 +2759,7 @@ dependencies = [
 
 [[package]]
 name = "qres_core"
-version = "0.10.0"
+version = "0.10.1"
 dependencies = [
  "blake3",
  "constriction",
@@ -2776,7 +2776,7 @@ dependencies = [
 
 [[package]]
 name = "qres_daemon"
-version = "0.10.0"
+version = "0.10.1"
 dependencies = [
  "axum",
  "chrono",

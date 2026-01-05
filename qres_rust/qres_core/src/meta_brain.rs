@@ -92,13 +92,8 @@ impl MetaBrain {
 
         let mut result = [0.0; NUM_OUTPUTS];
         // Copy available weights from network (v2 has 5 outputs)
-        for i in 0..out.len().min(NUM_OUTPUTS) {
-            result[i] = out[i];
-        }
-        // Pad the 6th weights (Transformer) with a neutral value if missing
-        if out.len() < 6 {
-            result[5] = 0.0;
-        }
+        let n = out.len().min(NUM_OUTPUTS);
+        result[..n].copy_from_slice(&out[..n]);
         result
     }
 }

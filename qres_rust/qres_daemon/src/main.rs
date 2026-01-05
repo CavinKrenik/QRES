@@ -354,7 +354,7 @@ fn compress_tensor_file(
 
         // Simple RLE for Zero Runs (0x00 flag)
         for val in data {
-            let val = *val as f64;
+            let val: f64 = *val;
             if val.abs() < 1e-9 {
                 n_zeros += 1;
                 while n_zeros >= 255 {
