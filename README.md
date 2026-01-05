@@ -113,16 +113,20 @@ Explore the interactive notebook: **[examples/brain_demo.ipynb](examples/brain_d
 
 ```
 QRES/
+├── .github/               # CI/CD Workflows
 ├── ai/                    # Neural networks (SNN, QNN, Hive Mind)
-├── python/qres/           # Python API & utilities
+├── assets/                # Design assets & diagrams
+├── benchmarks/            # Performance evaluation scripts
+├── data/                  # Sample datasets & telemetry
+├── docs/                  # Documentation (Technical & Vision)
+├── examples/              # Usage examples & notebooks
+├── python/qres/           # Python API & core bindings
 ├── qres_rust/             # Rust Workspace
-│   ├── qres_core/         # Pure compression library (Codecs)
-│   └── qres_daemon/       # P2P Swarm & Training Node
-├── qres-studio/           # Svelte/Tauri GUI
-├── docs/                  # Documentation
-├── examples/              # Demo notebooks
-├── tests/                 # Test suite
-└── benchmarks/            # Performance data
+│   ├── qres_core/         # High-performance compression library
+│   └── qres_daemon/       # P2P Node & background service
+├── qres-studio/           # Svelte/Tauri Desktop Application
+├── tests/                 # Integration & unit tests
+└── utils/                 # Development utilities
 ```
 
 ---
@@ -131,6 +135,7 @@ QRES/
 
 | Document | Description |
 |----------|-------------|
+| [VISION.md](docs/VISION.md) | **Product Strategy & Vision** |
 | [WHITEPAPER.md](docs/WHITEPAPER.md) | Technical deep-dive |
 | [ROADMAP.md](docs/ROADMAP.md) | Development phases |
 | [BENCHMARKS.md](docs/BENCHMARKS.md) | Performance metrics |
