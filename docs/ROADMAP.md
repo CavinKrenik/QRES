@@ -5,7 +5,8 @@
 - ✅ **v9.0** – GIF Neurons, OSBC Pruning, Auto-Tuning
 - ✅ **v10.0** – Tensor Network Correlator, Deterministic Q16.16
 - ✅ **v10.1** – Security Hardening, JSON Persistence, Structured Logging (Stable Baseline)
-- 🚧 **v10.5** – FPGA Acceleration & WebAssembly Core (Active)
+- ✅ **v10.1** – Security Hardening, JSON Persistence, Structured Logging (Stable Baseline)
+- ✅ **v10.5** – FPGA Acceleration & WebAssembly Core (Active)
 
 ---
 
@@ -27,3 +28,4 @@ The focus shifts from software architecture to hardware acceleration and edge de
 - [x] **WASM Target:** Ensure `qres_core` compiles to `wasm32-unknown-unknown`.
 - [x] **JS Bindings:** `wasm-bindgen` interface via `qres_wasm` crate.
 - [x] **Studio Integration:** Hybrid Engine implemented in `qres-studio` (Native/WASM toggle).
+- [ ] **Browser Persistence:** Adapt `WorldStateManager` to use `IndexedDB` (Future Work).

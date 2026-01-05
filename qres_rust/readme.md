@@ -34,22 +34,7 @@ cargo build --release --workspace
 ./target/release/qres_daemon swarm --port 8080
 ```
 
-### Use the CLI
+### WASM Build (for Studio)
 ```bash
-# Compress using the Living Brain
-./target/release/qres_daemon compress input.dat output.qres
-
-# Decompress (Bit-Perfect)
-./target/release/qres_daemon decompress output.qres restored.dat
-```
-
-## 🧪 Testing & Verification
-We use a "Battle Royale" CI pipeline to ensure cross-architecture determinism.
-
-```bash
-# Run local test suite
-cargo test --workspace
-
-# Verify WASM compilation (for Web Clients)
 cd qres_wasm && wasm-pack build --target web
 ```

@@ -1,12 +1,16 @@
 # QRES Studio v10.1
 
-**Cross-platform GUI for QRES v10 (Daemon + WASM) compression with P2P collective learning**
+**Cross-platform GUI for QRES v10 (Hybrid Engine)**
 
-Built with Tauri v2 (Rust) + Svelte 5 for maximum performance and minimal bundle size.
+Built with Tauri v2 (Rust) + Svelte 5 + WebAssembly.
 
 ---
 
 ## 🎨 Features
+
+### 🌐 Hybrid Runtime (New in v10.5)
+- **Native Mode (Default):** Uses the Rust Daemon for maximum performance and P2P Swarm access.
+- **WASM Mode (Browser):** Runs `qres_core` entirely in the frontend thread. Zero system dependencies, perfect for quick client-side checks.
 
 ### 🎯 Drop Zone
 - **Drag-Drop Interface**: Files or entire folders
