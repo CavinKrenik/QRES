@@ -65,9 +65,9 @@ class TestPhase1(unittest.TestCase):
 
     def test_tensor_sim(self):
         print("\n[Test] Quantum Tensor Sim (Legacy)")
-        # Since train_tensor_v7 was refactored to use QuantumEncoder, we check that directly (or skip)
-        from qres.quantum import QuantumEncoder
-        qe = QuantumEncoder(n_qubits_per_node=2)
+        # Since train_tensor_v7 was refactored to use TensorEncoder, we check that directly (or skip)
+        from qres.tensor import TensorEncoder
+        qe = TensorEncoder(n_qubits_per_node=2)
         # Mock Graph
         import networkx as nx 
         import torch

@@ -13,7 +13,7 @@ class TestPhase2(unittest.TestCase):
 
     def test_quantum_encoder(self):
         print("\n[Test] Quantum Encoder")
-        from qres.quantum import QuantumEncoder
+        from qres.tensor import TensorEncoder
         from qres.multimodal import MultiModalMemory
         
         # 1. Setup Data
@@ -22,7 +22,7 @@ class TestPhase2(unittest.TestCase):
         mm.add_text_node("t2", "data")
         
         # 2. Encode
-        qe = QuantumEncoder(n_qubits_per_node=2)
+        qe = TensorEncoder(n_qubits_per_node=2)
         full, reduced, metrics = qe.encode_graph(mm.graph)
         
         # 3. Validation

@@ -14,7 +14,7 @@ except ImportError:
     EMBED_AVAILABLE = False
     
 from snn_predictor import SNNPredictor  # Breakthrough 1: SNN Integration
-from qnn_vqc import QNNPredictor        # Breakthrough 2: QNN Fusion
+from tensor_network import TensorPredictor
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import DummyVecEnv
 from stable_baselines3.common.callbacks import CheckpointCallback
@@ -121,8 +121,8 @@ class CompressionEnv(gym.Env):
         # SNN for sparsity reward (simulated integration)
         self.snn = SNNPredictor() 
         
-        # QNN for entangled features (simulated correlation detection)
-        self.qnn = QNNPredictor(n_qubits=4)
+        # TNC for entangled features (simulated correlation detection)
+        self.qnn = TensorPredictor(n_qubits=4)
         
         # Action: 6 continuous weights for the Mixer [0, 1]
         self.action_space = spaces.Box(low=0, high=1.0, shape=(6,), dtype=np.float32)
@@ -158,8 +158,8 @@ class CompressionEnv(gym.Env):
         # Entropy (normalized 0-1, assuming max entropy is 8 bits)
         entropy = self._calculate_entropy(chunk) / 8.0
         
-        # QNN Entangled Features
-        qnn_feats = self.qnn.get_entangled_features(chunk)
+        # TNC Correlated Features
+        qnn_feats = self.qnn.get_correlated_features(chunk)
         
         return np.concatenate([norm_hist, [entropy], qnn_feats])
         
