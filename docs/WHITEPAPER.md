@@ -1,12 +1,12 @@
 # QRES Technical Whitepaper
 
-**Version 9.0 "Singularity Brain"**
+**Version 10.0 "Singularity Engine"**
 
 ---
 
 ## Abstract
 
-QRES (Quantum-Relational Encoding System) is a paradigm shift in data compression. Unlike static algorithms that rely on fixed statistical models, QRES employs a **"Living Brain"**—an autonomous, self-organizing neural agent that adapts to data in real-time using spiking neural networks and quantum-inspired circuits.
+QRES (Quantum-Relational Encoding System) represents the culmination of predictive data compression. v10.0, the **"Singularity Engine"**, transitions from experimental research to a production-grade decoupled architecture. It employs a **"Living Brain"**—an autonomous, self-organizing neural agent that adapts to data in real-time, now separated into a high-performance core library and a resilient background daemon.
 
 ---
 
@@ -16,79 +16,75 @@ Traditional compression is reactive. QRES is **predictive**.
 
 ```
 Traditional: See symbol → Encode based on history
-QRES:        Predict symbol → Encode only the surprise
+Experimental: LLM-based → Slow, heavy resources
+QRES v10:    Predict symbol → Encode only the surprise (Zero-Copy)
 ```
 
 By maintaining a high-confidence model of the data, encoder and decoder share a "hallucinated reality." Only deviations (residuals) are transmitted.
 
 ---
 
-## 2. Architecture
+## 2. Architecture: The Decoupled Stack (v10.0)
 
-### 2.1 The Living Brain (MetaBrain v5)
+QRES v10 introduces a strict separation of concerns to maximize stability and integration potential:
 
+### 2.1 QRES Core (`qres_core`)
+- **Pure Rust Library**: `no_std` compatible, zero external runtime dependencies.
+- **Universal Bindings**: Seamlessly embeds into Python (via `pyo3` ABI-3), Node.js, and C++.
+- **Deterministic**: Guarantees bit-exact reproduction of decompression across all platforms.
+
+### 2.2 QRES Daemon (`qres_daemon`)
+- **System Service**: Runs as a background swarm node.
+- **P2P Intelligence**: Handles model exchange, federation, and distributed training.
+- **REST/RPC API**: Exposes control to GUIs (Starship) and CLI tools without blocking the core.
+
+### 2.3 The Living Brain (MetaBrain v5)
 An ensemble of specialized predictors managed by an RL agent:
 
 | Predictor | Purpose |
 |-----------|---------|
 | **Linear** | Fast arithmetic extrapolation |
-| **Graph** | 2nd-order Markov chains |
+| **Graph** | 2nd-order Markov chains with SIMD |
 | **Spectral** | FFT-based periodicity detection |
 | **SNN** | Spiking temporal patterns (GIF neurons) |
 | **QNN** | Quantum entanglement detection (VQC) |
 
 **The Mixer:**
 ```
-W_t = β·W_{t-1} + (1-β)·∇L
+W_t = \beta \cdot W_{t-1} + (1-\beta) \cdot \nabla L
 ```
 - Uses momentum AR(2) for stability
-- SIMD-accelerated (AVX2/NEON)
-
-### 2.2 Spiking Neural Networks (v8.1+)
-
-Biological-inspired compression using spike timing:
-
-- **GIF Neurons**: Generalized Integrate-and-Fire with adaptive thresholds
-- **OSBC Pruning**: 97% sparsity via second-order methods
-- **STDP Learning**: Spike-Timing Dependent Plasticity
-
-### 2.3 Quantum VQC (v8.1+)
-
-Variational Quantum Circuits for correlation detection:
-
-```
-|ψ⟩ = U(θ)|00...0⟩
-```
-
-- Maps bytes to quantum states
-- Finds minimal entanglement entropy basis
-- Collapses correlated data to simple states
-
-### 2.4 P2P Swarm Learning
-
-Distributed intelligence via `libp2p`:
-
-- **GossipSub**: Epiphany broadcasting
-- **Kademlia DHT**: Peer discovery
-- **FedProx + KL-FedDis**: Federated averaging with divergence filtering
-- **Privacy**: Only model weights shared, never raw data
+- SIMD-accelerated (AVX2/NEON/SVE)
 
 ---
 
-## 3. Key Innovations (v9.0)
+## 3. Deep Tech Implementations
 
-| Feature | Research Basis |
-|---------|----------------|
-| GIF Neurons | SpikeLLM (ICLR 2025) |
-| OSBC Pruning | OpenReview 2025 |
-| Equivariant QNN | NeurIPS 2025 |
-| Auto-Tuning | Fed2Com (ICNC 2024) |
+### 3.1 Spiking Neural Networks
+Biological-inspired compression using spike timing, optimized for sparse inference:
+- **GIF Neurons**: Generalized Integrate-and-Fire with adaptive thresholds.
+- **OSBC Pruning**: 97% sparsity via second-order methods, reducing model weight overhead.
+
+### 3.2 Quantum VQC
+Variational Quantum Circuits for correlation detection in high-entropy streams:
+```
+|\psi\rangle = U(\theta)|00...0\rangle
+```
+- Maps byte sequences to quantum states.
+- Finds minimal entanglement entropy basis.
+- **Hardware Agnostic**: Runs on simulated state vectors or TPU backends.
+
+### 3.3 P2P Swarm Learning
+Distributed intelligence via `libp2p`:
+- **GossipSub**: Epiphany broadcasting for rapid model convergence.
+- **FedProx + KL-FedDis**: Federated averaging with divergence filtering.
+- **Privacy First**: Only model weights shared, never raw data.
 
 ---
 
 ## 4. Conclusion
 
-QRES bridges fast heuristic compression (LZ4) and slow generative compression (LLMs). By treating compression as an intelligent agent, we approach the theoretical **Singularity** of optimal entropy reduction.
+QRES v10.0 bridges the gap between academic theory and industrial application. By decoupling the **Core** logic from the **Swarm** intelligence, we provide a tool that is both a standard-compliant library and a gateway to a global network of shared compression intelligence.
 
 ---
 
