@@ -62,3 +62,7 @@ Performance metrics for the Quantum-Relational Encoding System.
 ---
 
 *Benchmarks run on standardized test corpus. See `benchmarks/` for raw data.*
+
+---
+### 🌱 Sustainability Impact
+By achieving **~0.19 ratio** on high-volume log data (vs standard ~0.40), QRES effectively **halves the storage energy footprint** for large-scale telemetry clusters, directly contributing to Green Computing initiatives.

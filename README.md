@@ -48,6 +48,19 @@ QRES transcends traditional compression with a **"Living Brain"** agent that pre
 
 ---
 
+## 🎯 Real-World Use Cases
+
+### 📡 Ultra-Low Bandwidth IoT
+Sensors often produce repetitive signals (sine waves, timestamps). QRES's **Lock-On Mixer** achieves **~19% compression ratio** on these streams, allowing edge devices to transmit **5x more data** on the same bandwidth budget.
+
+### 🏛️ Bit-Perfect Archival
+Unlike floating-point based compressors which can drift across architectures, QRES uses **Q16.16 Fixed-Point Arithmetic**. A medical record or scientific dataset compressed today is guaranteed to decompress **bit-perfectly** on any future hardware (RISC-V, ARM, x86).
+
+### 🔒 Privacy-Preserving Analytics
+QRES allows systems to share "compression intelligence" (models) without sharing data. This enables **Zero-Knowledge Federated Learning**, where secure institutions can collaborate on data efficiency models without ever exposing sensitive records.
+
+---
+
 ## 📊 Performance
 
 | Dataset | Ratio | Fidelity | Speed |
