@@ -38,24 +38,30 @@ Implemented in `ai/hive_mind.py`.
 
 ## 3. Usage
 
-### Starting a Swarm Node (Receiver)
+### Starting a Swarm Node (qres-daemon)
+To start a background node that listens for model updates and contributes to the Hive Mind:
+
 ```bash
-python qres_quantum_receiver.py --dir ./quantum_inbox --port 4001
+qres-daemon --mode node --port 4001
 ```
 
 ### Broadcasting to the Swarm
+To archive data and broadcast the weight "epiphany" to the network:
+
 ```bash
-qres archive --dir ./data/other --out other.qrar --swarm  # Multimodal example
+qres pack --input ./data --out archive.qrar --swarm
 ```
 
 ### WAN Bootstrap
+To run as a stable bootstrap peer for other nodes to discover:
+
 ```bash
 qres-daemon --mode bootstrap --port 4001
 ```
 
-### Quantum Tensor Broadcasting (v8.0)
-Persistent states now include multimodal embeddings; sync with >0.98 fidelity.
+### Quantum Tensor Broadcasting (v10.0)
+Persistent states now include multimodal embeddings; sync with >0.99 fidelity.
 
 ## Troubleshooting
-*   **No Peers Found:** Ensure port 4001 is open. Use `--bootstrap <IP>`.
-*   **Version Mismatch:** Match major.minor (v8.0+ for MetaBrain support).
+*   **No Peers Found:** Ensure port 4001 is open (UDP/TCP). Use `--bootstrap <IP>` to connect to a known peer.
+*   **Version Mismatch:** Swarm protocol enforces major version compatibility (v10.x).
