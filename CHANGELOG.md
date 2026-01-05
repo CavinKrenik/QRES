@@ -4,6 +4,19 @@ All notable changes to this project are documented here.
 
 ---
 
+## [10.1.0] - 2026-01-05 "The Hybrid Era"
+
+### Added
+- **WebAssembly Core**: `qres_core` now compiles to WASM for browser-side compression.
+- **Hybrid Studio**: QRES Studio now features a runtime toggle (Native Daemon vs WASM).
+- **Security Hardening**: CI/CD pipeline now includes secret-signed releases for Tauri v2.
+
+### Changed
+- **Architecture**: Strict separation between `qres_core` (no_std) and `qres_daemon` (Tokio).
+- **Docs**: Comprehensive update to `ROADMAP.md` and component READMEs.
+
+---
+
 ## [10.0.0] - 2026-01-04 "Engineering Hardening"
 
 ### Critical Architecture Changes
