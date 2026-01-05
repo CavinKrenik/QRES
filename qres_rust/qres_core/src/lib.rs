@@ -15,7 +15,7 @@ pub mod gpu;
 pub mod meta_brain; // Inference Engine (moved to Core)
 pub mod mixer;
 pub mod predictors;
-pub mod quantum;
+pub mod tensor;
 pub mod spectral;
 pub mod transformer;
 use crate::ans_coder::{AnsReader, AnsWriter};
@@ -704,7 +704,7 @@ fn compress_matrix_v1(
     cols: usize,
     threshold: f64,
 ) -> PyResult<Vec<f64>> {
-    let compressor = quantum::MpsCompressor::new(10, threshold);
+    let compressor = tensor::MpsCompressor::new(10, threshold);
     let cores = compressor.compress_matrix(&data, rows, cols);
     if let Some(first_core) = cores.first() {
         Ok(first_core.clone())

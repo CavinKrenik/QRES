@@ -1,6 +1,6 @@
 // removed unused imports
 
-/// Quantum-Inspired MPS (Matrix Product State) Compressor
+/// Tensor Network MPS (Matrix Product State) Compressor
 /// Breaks a high-dimensional tensor into a chain of low-rank tensors (cores).
 ///
 /// Compression comes from truncating the "Bond Dimension" (chis) via SVD.
@@ -50,7 +50,7 @@ impl MpsCompressor {
         // Implementation: 2D Haar Wavelet Transform (Lossy)
         // 1. Row transform
         // 2. Column transform
-        // 3. Thresholding (Quantum-like sparsity)
+        // 3. Thresholding (Tensor sparsity)
 
         let mut matrix = vec![0.0; rows * cols];
         matrix.copy_from_slice(data);

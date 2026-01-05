@@ -1,60 +1,35 @@
 #!/bin/bash
-# QRES v5.0 Release Manager
-# Usage: ./release_manager.sh "v5.0.0" "Commit message here"
+set -e # Exit on error
 
-VERSION=$1
-MSG=$2
+echo "🚀 QRES Release Manager Initialized"
 
-if [ -z "$VERSION" ] || [ -z "$MSG" ]; then
-    echo "Usage: ./release_manager.sh <version> <commit_message>"
-    echo "Example: ./release_manager.sh v5.0.0 'Implement LzMatch and SIMD'"
+# 1. Verify Clean Git State
+if [[ -n $(git status -s) ]]; then
+  echo "❌ Error: Working directory not clean. Commit changes first."
+  exit 1
+fi
+
+# 2. Run The Battle Royale (Safety Gate)
+echo "⚔️  Running Battle Royale Verification..."
+python benchmarks/battle_royale.py
+if [ $? -eq 0 ]; then
+    echo "✅ Core Codec Integrity Verified."
+else
+    echo "❌ CRITICAL: Codec Regression Detected. Aborting."
     exit 1
 fi
 
-echo "🚀 Starting QRES Release Sequence for $VERSION..."
+# 3. Extract Version
+VERSION=$(grep -m 1 'version =' qres_rust/qres_core/Cargo.toml | cut -d '"' -f 2)
+echo "📦 Detected Version: v$VERSION"
 
-# 1. Run Local Tests
-echo "🧪 Running Rust Core Tests..."
-cd qres_rust
-cargo test
-if [ $? -ne 0 ]; then
-    echo "❌ Rust tests failed! Aborting release."
-    exit 1
-fi
-cd ..
-
-echo "🐍 Running Python Integration Tests..."
-# Assuming virtualenv is active or available
-if command -v python3 &> /dev/null; then
-    python3 benchmarks/test_final_suite.py
-    if [ $? -ne 0 ]; then
-        echo "❌ Python benchmarks failed! Aborting release."
-        exit 1
-    fi
+# 4. Confirmation
+echo "Are you ready to create tag v$VERSION and push? (y/n)"
+read REPLY
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    git tag -a "v$VERSION" -m "QRES Engineering Release v$VERSION"
+    git push origin "v$VERSION"
+    echo "🎉 Release v$VERSION Pushed!"
 else
-    echo "⚠️ Python3 not found, skipping integration tests..."
+    echo "🛑 Aborted."
 fi
-
-# 2. Update Version in Cargo.toml (Basic sed replacement)
-# Adjust path if needed
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    sed -i '' "s/^version = \".*\"/version = \"${VERSION#v}\"/" qres_rust/Cargo.toml
-else
-    sed -i "s/^version = \".*\"/version = \"${VERSION#v}\"/" qres_rust/Cargo.toml
-fi
-echo "📝 Updated Cargo.toml version to ${VERSION#v}"
-
-# 3. Git Operations
-echo "📦 Committing changes..."
-git add .
-git commit -m "feat: $MSG"
-
-echo "🏷️ Tagging $VERSION..."
-git tag -a "$VERSION" -m "Release $VERSION: $MSG"
-
-echo "📤 Pushing to GitHub..."
-git push origin main
-git push origin "$VERSION"
-
-echo "✅ Done! GitHub Action should now be building $VERSION."
-echo "Check status here: https://github.com/CavinKrenik/QRES/actions"

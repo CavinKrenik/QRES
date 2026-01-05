@@ -1,6 +1,6 @@
 """
-QRES v7.0/v7.5 Unified Python API
-integrates Multi-Modal Memory, Quantum Compression, and Neural Optimization.
+QRES v10.0 Unified Python API
+integrates Multi-Modal Memory, Tensor Network Compression, and Neural Optimization.
 """
 
 import os
@@ -11,7 +11,7 @@ import numpy as np
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from multimodal import MultiModalMemory
-from quantum import QuantumEncoder
+from tensor import TensorEncoder
 from neural import NeuralOptimizer
 from persistent import WorldStateManager
 try:
@@ -32,7 +32,7 @@ class QRES_API:
     def __init__(self, mode="hybrid", enable_persistence=True):
         self.mode = mode
         self.memory = MultiModalMemory()
-        self.quantum = QuantumEncoder(n_qubits_per_node=2)
+        self.tensor = TensorEncoder(n_qubits_per_node=2)
         self.neural = NeuralOptimizer()
         self.brain_weights = None
         
@@ -63,8 +63,8 @@ class QRES_API:
         Main compression entry point.
         Dispatches to Rust or Quantum core based on mode.
         """
-        if self.mode == "quantum":
-            return self._compress_quantum(data)
+        if self.mode == "tensor":
+            return self._compress_tensor(data)
         else:
             return self._compress_standard(data)
 
@@ -141,7 +141,7 @@ class QRES_API:
         # Get current tensor if available
         tensor = None
         if self.memory.graph.number_of_nodes() > 0:
-            full, reduced, metrics = self.quantum.encode_graph(self.memory.graph)
+            full, reduced, metrics = self.tensor.encode_graph(self.memory.graph)
             tensor = reduced if reduced is not None else full
         
         version = self.world_state.serialize_world_state(
@@ -223,11 +223,11 @@ class QRES_API:
         broadcast_data = b"QRES_WORLD_STATE" + serialized
         
         # Write to outbox for swarm broadcast
-        if not os.path.exists("quantum_outbox"):
-            os.makedirs("quantum_outbox")
+        if not os.path.exists("tensor_outbox"):
+            os.makedirs("tensor_outbox")
         
         import time
-        filename = f"quantum_outbox/world_{version}_{int(time.time()*1000)}.qws"
+        filename = f"tensor_outbox/world_{version}_{int(time.time()*1000)}.qws"
         
         with open(filename, "wb") as f:
             f.write(broadcast_data)
@@ -277,11 +277,11 @@ class QRES_API:
                 return data
         return data
 
-    def _compress_quantum(self, data: bytes) -> bytes:
+    def _compress_tensor(self, data: bytes) -> bytes:
         """
         Experimental: Maps bytes to graph -> tensor -> compressed.
         """
-        print("[API] Quantum Mode: Activating Tensor Network...")
+        print("[API] Tensor Mode: Activating Tensor Network...")
         
         # 1. Byte -> Text/Image Node (Mock classification)
         # For demo, treat data as text
@@ -318,18 +318,18 @@ class QRES_API:
             self.memory.graph = nx.compose(self.memory.graph, temp_graph)
              
         # 2. Encode Graph
-        full, reduced, metrics = self.quantum.encode_graph(self.memory.graph)
+        full, reduced, metrics = self.tensor.encode_graph(self.memory.graph)
         
         if metrics and 'ratio' in metrics:
-            print(f"[API] Quantum Compression Ratio: {metrics['ratio']:.4%}")
+            print(f"[API] Tensor Compression Ratio: {metrics['ratio']:.4%}")
             # Serialize reduced tensor (mock serialization)
-            return b"QRES_Q_TENSOR" + reduced.full().tobytes()
+            return b"QRES_T_TENSOR" + reduced.full().tobytes()
         else:
-            print("[API] Quantum Encode metrics missing or failed, fallback.")
+            print("[API] Tensor Encode metrics missing or failed, fallback.")
             return data
 
 if __name__ == "__main__":
-    api = QRES_API(mode="quantum")
+    api = QRES_API(mode="tensor")
     api.load_brain()
     
     # Prune

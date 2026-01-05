@@ -3,19 +3,19 @@ import torch.nn as nn
 import numpy as np
 import math
 
-class QuantumCircuit(nn.Module):
+class TensorNetwork(nn.Module):
     """
-    Simulates a Variational Quantum Circuit (VQC) using PyTorch.
-    Used for detecting non-local correlations via entanglement (Quantum Fusion).
+    Simulates a Matrix Product State (MPS) network using PyTorch.
+    Used for detecting non-local correlations via Tensor Fusion.
     
-    Circuit Structure:
-    1. Embedding: Encodes classical data into qubit amplitudes (R_y rotations).
-    2. Variational: Parameterized R_y, R_z gates.
-    3. Entanglement: CNOT ring to scramble info.
+    Network Structure:
+    1. Embedding: Encodes classical data into node amplitudes.
+    2. Variational: Parameterized tensor contractions.
+    3. Correlation: Node mixing to scramble info.
     4. Measurement: Pauli-Z expectation.
     """
     def __init__(self, n_qubits=4, n_layers=2):
-        super(QuantumCircuit, self).__init__()
+        super(TensorNetwork, self).__init__()
         self.n_qubits = n_qubits
         self.n_layers = n_layers
         
@@ -88,17 +88,17 @@ class QuantumCircuit(nn.Module):
         # Since we just want features for the RL agent, return the probabilities directly.
         return probs
 
-class QNNPredictor:
+class TensorPredictor:
     """
-    Quantum Neural Network Predictor.
-    Uses the QuantumCircuit to extract "Entangled Features" from the byte stream.
+    Tensor Network Predictor.
+    Uses the TensorNetwork to extract "Correlated Features" from the byte stream.
     """
     def __init__(self, n_qubits=4):
         self.device = torch.device("cpu")
-        self.circuit = QuantumCircuit(n_qubits=n_qubits).to(self.device)
+        self.net = TensorNetwork(n_qubits=n_qubits).to(self.device)
         self.n_qubits = n_qubits
         
-    def get_entangled_features(self, chunk):
+    def get_correlated_features(self, chunk):
         """
         Takes a byte chunk, samples it to fit qubits, runs QNN.
         Returns: [n_qubits] feature vector (probabilities).
@@ -121,7 +121,7 @@ class QNNPredictor:
 
         # 2. Run Circuit
         with torch.no_grad():
-            features = self.circuit(input_tensor)
+            features = self.net(input_tensor)
             
         return features.numpy()[0]
 
@@ -149,7 +149,7 @@ class QNNPredictor:
         """
         Combined entangled features + equivariant compression.
         """
-        raw_features = self.get_entangled_features(chunk)
+        raw_features = self.get_correlated_features(chunk)
         compressed = self.equivariant_lattice(raw_features)
         return compressed
 

@@ -1,6 +1,6 @@
 """
-QRES v7.5 Quantum-Inspired Tensor Core
-Leverages QuTiP to simulate quantum states for high-ratio compression of relational data.
+QRES v10.0 Tensor Network Core
+Leverages QuTiP/TensorFlow to simulate high-dimensional embeddings for high-ratio compression of relational data.
 """
 
 import numpy as np
@@ -9,17 +9,17 @@ try:
     import qutip as qt
     QUTIP_AVAILABLE = True
 except ImportError:
-    print("[QRES-Quantum] QuTiP not installed. Quantum mode disabled.")
+    print("[QRES-Tensor] QuTiP not installed. Tensor mode disabled.")
     QUTIP_AVAILABLE = False
 
-class QuantumEncoder:
+class TensorEncoder:
     def __init__(self, n_qubits_per_node=2):
         self.n_qubits = n_qubits_per_node
         self.dim = 2**self.n_qubits
         
     def encode_graph(self, graph: nx.Graph):
         """
-        Maps a NetworkX graph's node embeddings to a composite quantum state (Tensor Network).
+        Maps a NetworkX graph's node embeddings to a composite tensor state (Tensor Network).
         Returns: (full_tensor, reduced_tensor, compression_metrics)
         """
         if not QUTIP_AVAILABLE:
@@ -64,7 +64,7 @@ class QuantumEncoder:
             
             # Limit for simulation safety (Tensor product of >4 large matrices explodes memory)
             if len(states) >= 4:
-                print("[QRES-Quantum] Reached simulation batch limit (4 nodes).")
+                print("[QRES-Tensor] Reached simulation batch limit (4 nodes).")
                 break
             
         if not states:

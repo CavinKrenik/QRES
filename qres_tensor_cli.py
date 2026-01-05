@@ -7,11 +7,11 @@ import os
 from qres.api import QRES_API
 
 def main():
-    parser = argparse.ArgumentParser(description="QRES v7.5 CLI - Quantum Mode")
+    parser = argparse.ArgumentParser(description="QRES v10.0 CLI - Tensor Mode")
     parser.add_argument("input", help="Input file path", nargs='?')
-    parser.add_argument("--mode", choices=["standard", "quantum"], default="standard", help="Compression mode")
+    parser.add_argument("--mode", choices=["standard", "tensor"], default="standard", help="Compression mode")
     parser.add_argument("--optimize", action="store_true", help="Run Neural/Ethical optimization first")
-    parser.add_argument("--broadcast", action="store_true", help="Broadcast output to QRES Swarm (via quantum_outbox)")
+    parser.add_argument("--broadcast", action="store_true", help="Broadcast output to QRES Swarm (via tensor_outbox)")
     parser.add_argument("--save-state", metavar="VERSION", help="Save current world state with version name")
     parser.add_argument("--load-state", metavar="VERSION", help="Load world state (use 'latest' for most recent)")
     parser.add_argument("--broadcast-state", metavar="VERSION", help="Broadcast world state to swarm (None = current)")
@@ -63,13 +63,13 @@ def main():
         compressed = api.compress(data)
         
         if args.broadcast:
-            # Write to quantum_outbox/
-            if not os.path.exists("quantum_outbox"):
-                os.makedirs("quantum_outbox")
+            # Write to tensor_outbox/
+            if not os.path.exists("tensor_outbox"):
+                os.makedirs("tensor_outbox")
             
             # Filename needs to be unique enough to avoid collisions before processing
             import time
-            out_name = f"quantum_outbox/qv7_{int(time.time()*1000)}.qres"
+            out_name = f"tensor_outbox/tv10_{int(time.time()*1000)}.qres"
             with open(out_name, "wb") as f:
                 f.write(compressed)
             print(f"Packaged for Broadcast -> {out_name}")
