@@ -1,8 +1,12 @@
-// QRES v5.0 Predictor Trait
 pub trait Predictor {
     fn predict_next(&self) -> u8;
     fn update(&mut self, actual: u8);
 }
+
+use alloc::vec::Vec;
+use alloc::vec;
+use alloc::boxed::Box;
+use core::convert::TryInto;
 
 // --- Constants for Fixed-Point Arithmetic (Q16.16) ---
 // 1.0 in fixed point = 1 << 16 = 65536

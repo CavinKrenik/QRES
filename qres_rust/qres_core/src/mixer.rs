@@ -5,7 +5,9 @@
 // 3. Variance-based Algorithm Switching (Stable -> AR2, Chaotic -> Ensemble)
 
 #[cfg(target_arch = "x86_64")]
-use std::arch::x86_64::*;
+use core::arch::x86_64::*;
+
+use alloc::vec::Vec;
 
 pub const NUM_MODELS: usize = 6;
 
@@ -129,7 +131,7 @@ impl Mixer {
         let ar_pred = self.ar_coeffs[0] * self.history[0] + self.ar_coeffs[1] * self.history[1];
 
         // 3. Dynamic Selection
-        let std = (self.running_var / (self.count.max(1) as f32)).sqrt();
+        let std = libm::sqrtf(self.running_var / (self.count.max(1) as f32));
 
         let prediction = if self.win_streak > 32 {
             // Lock-On: One model is crushing it. Use it exclusively.
@@ -145,7 +147,7 @@ impl Mixer {
         } else if prediction < 0.0 {
             0
         } else {
-            prediction.round() as u8
+            libm::roundf(prediction) as u8
         }
     }
 
@@ -163,7 +165,7 @@ impl Mixer {
         let ar_prob = sigmoid(ar_pred / 255.0);
 
         // Dynamic blending based on variance
-        let std = (self.running_var / (self.count.max(1) as f32)).sqrt();
+        let std = libm::sqrtf(self.running_var / (self.count.max(1) as f32));
         let final_prob = if std < 45.0 {
             0.7 * ar_prob + 0.3 * weighted_prob
         } else {
@@ -171,7 +173,7 @@ impl Mixer {
         };
 
         // Convert probability back to byte value
-        (final_prob * 255.0).clamp(0.0, 255.0).round() as u8
+        libm::roundf((final_prob * 255.0).clamp(0.0, 255.0)) as u8
     }
 
     fn compute_logistic_prob(&self, preds: &[u8; NUM_MODELS]) -> f32 {
@@ -260,7 +262,7 @@ impl Mixer {
         // High variance -> Concept Drift -> Increase LR
         // Low variance -> Stable -> Decrease LR
         // Win Streak -> Confidence -> Double LR to lock on
-        let std = (self.running_var / (self.count.max(1) as f32)).sqrt();
+        let std = libm::sqrtf(self.running_var / (self.count.max(1) as f32));
         let base_lr = if std > 40.0 { 0.05 } else { 0.005 };
         self.learning_rate = if self.win_streak > 32 {
             base_lr * 2.5
@@ -350,7 +352,7 @@ impl Mixer {
         }
 
         // 3. Adaptive Learning Rate
-        let std = (self.running_var / 10.0).sqrt(); // Approx
+        let std = libm::sqrtf(self.running_var / 10.0); // Approx
         let base_lr = if std > 40.0 { 0.05 } else { 0.005 };
         self.learning_rate = if self.win_streak > 32 {
             base_lr * 2.5
@@ -465,5 +467,5 @@ impl Mixer {
 /// f(x) = 1 / (1 + e^(-x))
 #[inline]
 fn sigmoid(x: f32) -> f32 {
-    1.0 / (1.0 + (-x).exp())
+    1.0 / (1.0 + libm::expf(-x))
 }

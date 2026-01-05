@@ -1,4 +1,5 @@
-// removed unused imports
+use alloc::vec::Vec;
+use alloc::vec;
 
 /// Tensor Network MPS (Matrix Product State) Compressor
 /// Breaks a high-dimensional tensor into a chain of low-rank tensors (cores).
@@ -98,8 +99,8 @@ impl MpsCompressor {
             for i in 0..half {
                 let sum = data[start + 2 * i] + data[start + 2 * i + 1];
                 let diff = data[start + 2 * i] - data[start + 2 * i + 1];
-                temp[i] = sum * std::f64::consts::FRAC_1_SQRT_2;
-                temp[half + i] = diff * std::f64::consts::FRAC_1_SQRT_2;
+                temp[i] = sum * core::f64::consts::FRAC_1_SQRT_2;
+                temp[half + i] = diff * core::f64::consts::FRAC_1_SQRT_2;
             }
             // Copy back
             data[start..start + h].copy_from_slice(&temp[..h]);

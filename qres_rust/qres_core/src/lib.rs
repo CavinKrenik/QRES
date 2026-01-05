@@ -1,14 +1,62 @@
+#![cfg_attr(not(feature = "std"), no_std)]
+
+extern crate alloc;
+
+#[cfg(feature = "std")]
+extern crate std;
+
+use alloc::vec::Vec;
+use alloc::format;
+use alloc::string::String;
+// use alloc::boxed::Box;
+// Use #[allow(unused_imports)] or just remove.
+// Removing it.
+use core::convert::TryInto;
 use serde::{Deserialize, Serialize};
 
-use std::convert::TryInto;
-use std::io;
+#[derive(Debug)]
+pub enum QresError {
+    InvalidInput(String),
+    InvalidData(String),
+    CompressionError(String),
+    Other(String),
+}
+
+impl core::fmt::Display for QresError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            QresError::InvalidInput(s) => write!(f, "InvalidInput: {}", s),
+            QresError::InvalidData(s) => write!(f, "InvalidData: {}", s),
+            QresError::CompressionError(s) => write!(f, "CompressionError: {}", s),
+            QresError::Other(s) => write!(f, "Other: {}", s),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl From<std::io::Error> for QresError {
+    fn from(err: std::io::Error) -> Self {
+        QresError::Other(err.to_string())
+    }
+}
+
+#[cfg(feature = "std")]
+impl From<QresError> for std::io::Error {
+    fn from(err: QresError) -> Self {
+        std::io::Error::new(std::io::ErrorKind::Other, err.to_string())
+    }
+}
+
+pub type Result<T> = core::result::Result<T, QresError>;
 
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 
 // --- v3.0/v4.0 Modules ---
 pub mod ans_coder;
+#[cfg(feature = "std")]
 pub mod archive;
+#[cfg(feature = "std")]
 pub mod dedup;
 #[cfg(feature = "gpu")]
 pub mod gpu;
@@ -58,6 +106,7 @@ pub struct QresHeader {
 
 // --- V4 Encoding Logic ---
 
+#[cfg(feature = "std")]
 fn calculate_sample_entropy(data: &[u8]) -> f32 {
     let mut counts = [0usize; 256];
     let step = if data.len() > 4096 { 4 } else { 1 }; // Stride for speed
@@ -82,6 +131,7 @@ fn calculate_sample_entropy(data: &[u8]) -> f32 {
 }
 
 fn predictive_encode_v4(data: &[u8], lossy: Option<u8>, weights: Option<&[u8]>) -> Vec<u8> {
+    #[cfg(feature = "std")]
     println!("DEBUG: Running Optimized Encoder");
     // Lazy Mixer Update batch size - weights update every N bytes
     const UPDATE_BATCH_SIZE: usize = 32;
@@ -102,7 +152,7 @@ fn predictive_encode_v4(data: &[u8], lossy: Option<u8>, weights: Option<&[u8]>) 
         let f32_count = w_bytes.len() / 4;
         if f32_count > 0 {
             let ptr = w_bytes.as_ptr() as *const f32;
-            let slice = unsafe { std::slice::from_raw_parts(ptr, f32_count) };
+            let slice = unsafe { core::slice::from_raw_parts(ptr, f32_count) };
 
             if f32_count >= 2 * NUM_MODELS {
                 (
@@ -209,7 +259,7 @@ fn predictive_decode_v4(
         let f32_count = w_bytes.len() / 4;
         if f32_count > 0 {
             let ptr = w_bytes.as_ptr() as *const f32;
-            let slice = unsafe { std::slice::from_raw_parts(ptr, f32_count) };
+            let slice = unsafe { core::slice::from_raw_parts(ptr, f32_count) };
 
             if f32_count >= 2 * NUM_MODELS {
                 (
@@ -285,11 +335,10 @@ pub fn compress_chunk(
     _predictor_id: u8,
     _weights: Option<&[u8]>,
     _lossy: Option<u8>,
-) -> io::Result<Vec<u8>> {
+) -> Result<Vec<u8>> {
     // 1. SAFETY CHECK: Validate Predictor ID
     if _predictor_id > PREDICTOR_ID_SPLIT {
-        return Err(io::Error::new(
-            io::ErrorKind::InvalidInput,
+        return Err(QresError::InvalidInput(
             format!("Unsupported Predictor ID: {}", _predictor_id),
         ));
     }
@@ -345,6 +394,7 @@ pub fn compress_chunk(
     }
 
     // 1. Smart Fallback Pre-scan (ZSTD)
+    #[cfg(feature = "std")]
     if chunk.len() > 512 {
         let entropy = calculate_sample_entropy(chunk);
 
@@ -353,7 +403,7 @@ pub fn compress_chunk(
         const HIGH_ENTROPY_THRESHOLD: f32 = 7.8;
 
         if !(LOW_ENTROPY_THRESHOLD..=HIGH_ENTROPY_THRESHOLD).contains(&entropy) {
-            let zstd_compressed = zstd::bulk::compress(chunk, 3).map_err(io::Error::other)?;
+            let zstd_compressed = zstd::bulk::compress(chunk, 3).map_err(|e| QresError::CompressionError(format!("{}", e)))?;
             if zstd_compressed.len() < chunk.len() {
                 // Flag 0x01: Zstd
                 let ver = QRES_PROTOCOL_VERSION & 0x0F;
@@ -437,17 +487,40 @@ pub fn compress_chunk(
         out.extend_from_slice(&compressed_body);
         Ok(out)
     } else {
-        // Zstd Fallback (Flag 0x01)
-        // We still embed version to be safe
-        let ver = QRES_PROTOCOL_VERSION & 0x0F;
-        let flag_byte = (ver << 4) | 0x01;
+        #[cfg(feature = "std")]
+        {
+            // Zstd Fallback (Flag 0x01)
+            // We still embed version to be safe
+            let ver = QRES_PROTOCOL_VERSION & 0x0F;
+            let flag_byte = (ver << 4) | 0x01;
 
-        let zstd_compressed = zstd::bulk::compress(chunk, 3).map_err(io::Error::other)?;
-        let mut out = Vec::with_capacity(1 + 4 + zstd_compressed.len());
-        out.push(flag_byte);
-        out.extend_from_slice(&(chunk.len() as u32).to_le_bytes());
-        out.extend_from_slice(&zstd_compressed);
-        Ok(out)
+            let zstd_compressed = zstd::bulk::compress(chunk, 3).map_err(|e| QresError::CompressionError(format!("{}", e)))?;
+            let mut out = Vec::with_capacity(1 + 4 + zstd_compressed.len());
+            out.push(flag_byte);
+            out.extend_from_slice(&(chunk.len() as u32).to_le_bytes());
+            out.extend_from_slice(&zstd_compressed);
+            Ok(out)
+        }
+        #[cfg(not(feature = "std"))]
+        {
+            // No Zstd in no_std mode, rely on direct copy or error if it strictly must preserve data but can't compress?
+            // Usually we'd return original with a flag, but 'predictive_encode_v4' logic above handles regular encoding.
+            // If body > original, we can just store uncompressed if we had a flag for it.
+            // For now, let's just return the expanded compressed body to be safe or implement 0x04 Stored.
+            // But to simplify, we'll just return compressed_body even if larger.
+             let mode = if is_neural { 0x02 } else { 0x00 };
+            let ver = QRES_PROTOCOL_VERSION & 0x0F;
+            let flag_byte = (ver << 4) | mode;
+
+            let mut out = Vec::with_capacity(1 + 4 + stored_init_weights.len() + compressed_body.len());
+            out.push(flag_byte);
+            out.extend_from_slice(&(chunk.len() as u32).to_le_bytes());
+             if is_neural {
+                out.extend_from_slice(&stored_init_weights);
+            }
+            out.extend_from_slice(&compressed_body);
+            Ok(out)
+        }
     }
 }
 
@@ -455,12 +528,9 @@ pub fn decompress_chunk(
     compressed: &[u8],
     _predictor_id: u8,
     _weights: Option<&[u8]>,
-) -> io::Result<Vec<u8>> {
+) -> Result<Vec<u8>> {
     if compressed.len() < 5 {
-        return Err(io::Error::new(
-            io::ErrorKind::InvalidData,
-            "Chunk too short",
-        ));
+        return Err(QresError::InvalidData(String::from("Chunk too short")));
     }
 
     let flag_byte = compressed[0];
@@ -473,8 +543,7 @@ pub fn decompress_chunk(
     if version != (QRES_PROTOCOL_VERSION & 0x0F) {
         // Graceful fallback for legacy files (pre-handshake) could go here
         // But for Engineering Phase 1, we fail fast.
-        return Err(io::Error::new(
-            io::ErrorKind::InvalidData,
+        return Err(QresError::InvalidData(
             format!(
                 "Version Mismatch: File v{} != Library v{}",
                 version, QRES_PROTOCOL_VERSION
@@ -485,7 +554,7 @@ pub fn decompress_chunk(
     let decomp_len = u32::from_le_bytes(
         compressed[1..5]
             .try_into()
-            .map_err(|_| io::Error::new(io::ErrorKind::InvalidData, "Invalid Header"))?,
+            .map_err(|_| QresError::InvalidData(String::from("Invalid Header")))?,
     ) as usize;
 
     match codec_mode {
@@ -495,16 +564,20 @@ pub fn decompress_chunk(
         }
         0x01 => {
             // Zstd fallback
-            zstd::bulk::decompress(&compressed[5..], decomp_len).map_err(io::Error::other)
+            #[cfg(feature = "std")]
+            {
+                zstd::bulk::decompress(&compressed[5..], decomp_len).map_err(|e| QresError::CompressionError(format!("{}", e)))
+            }
+            #[cfg(not(feature = "std"))]
+            {
+                Err(QresError::CompressionError(String::from("Zstd decompression not supported in no_std")))
+            }
         }
         0x02 => {
             // ANS codec with Neural Init
             let header_size = 5 + WEIGHTS_LEN;
             if compressed.len() < header_size {
-                return Err(io::Error::new(
-                    io::ErrorKind::InvalidData,
-                    "Chunk too short for Neural Header",
-                ));
+                return Err(QresError::InvalidData(String::from("Chunk too short for Neural Header")));
             }
             let init_w_bytes = &compressed[5..header_size];
 
@@ -531,10 +604,7 @@ pub fn decompress_chunk(
         0x03 => {
             // Interleaved Split
             if compressed.len() < 9 {
-                return Err(io::Error::new(
-                    io::ErrorKind::InvalidData,
-                    "Split chunk too short",
-                ));
+                return Err(QresError::InvalidData(String::from("Split chunk too short")));
             }
             let even_len = u32::from_le_bytes(compressed[5..9].try_into().unwrap()) as usize;
             let even_data = &compressed[9..9 + even_len];
@@ -562,8 +632,7 @@ pub fn decompress_chunk(
 
             Ok(out)
         }
-        _ => Err(io::Error::new(
-            io::ErrorKind::InvalidData,
+        _ => Err(QresError::InvalidData(
             format!("Unknown codec mode: {:#x}", codec_mode),
         )),
     }
@@ -571,14 +640,21 @@ pub fn decompress_chunk(
 
 // --- File-Level Compression with Callback (for GUI) ---
 
+#[cfg(feature = "std")]
 use std::fs::File;
+#[cfg(feature = "std")]
 use std::io::{BufReader, BufWriter, Read, Write};
+#[cfg(feature = "std")]
+use std::io;
+#[cfg(feature = "std")]
 use std::path::Path;
 
+#[cfg(feature = "std")]
 const FILE_CHUNK_SIZE: usize = 64 * 1024; // 64KB chunks
 
 /// Compress a file with progress callback
 /// callback receives: (progress_percent, current_ratio, engine_name)
+#[cfg(feature = "std")]
 pub fn compress_with_callback<P, C>(src: P, dest: P, mut callback: C) -> io::Result<()>
 where
     P: AsRef<Path>,
@@ -727,18 +803,18 @@ fn qres_rust(m: &Bound<'_, PyModule>) -> PyResult<()> {
 // Removed from Core. Use qres_core::compress_chunk directly.
 
 // --- WASM Interface ---
-#[cfg(target_arch = "wasm32")]
-pub mod wasm {
-    use crate::{compress_chunk, decompress_chunk};
-    use wasm_bindgen::prelude::*;
-
-    #[wasm_bindgen]
-    pub fn compress(data: &[u8]) -> Result<Vec<u8>, JsValue> {
-        compress_chunk(data, 0, None, None).map_err(|e| JsValue::from_str(&e.to_string()))
-    }
-
-    #[wasm_bindgen]
-    pub fn decompress(data: &[u8]) -> Result<Vec<u8>, JsValue> {
-        decompress_chunk(data, 0, None).map_err(|e| JsValue::from_str(&e.to_string()))
-    }
-}
+// #[cfg(target_arch = "wasm32")]
+// pub mod wasm {
+//     use crate::{compress_chunk, decompress_chunk};
+//     use wasm_bindgen::prelude::*;
+// 
+//     #[wasm_bindgen]
+//     pub fn compress(data: &[u8]) -> Result<Vec<u8>, JsValue> {
+//         compress_chunk(data, 0, None, None).map_err(|e| JsValue::from_str(&e.to_string()))
+//     }
+// 
+//     #[wasm_bindgen]
+//     pub fn decompress(data: &[u8]) -> Result<Vec<u8>, JsValue> {
+//         decompress_chunk(data, 0, None).map_err(|e| JsValue::from_str(&e.to_string()))
+//     }
+// }
