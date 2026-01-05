@@ -1,5 +1,5 @@
-use wasm_bindgen::prelude::*;
 use qres_core::{compress_chunk, decompress_chunk};
+use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 pub fn init_hooks() {
