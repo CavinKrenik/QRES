@@ -45,19 +45,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build Binary
-        # Explicitly build the CLI bin
-        run: cargo build --release --bin qres-cli --manifest-path qres_rust/Cargo.toml
+        # Explicitly build the Daemon bin
+        run: cargo build --release --bin qres_daemon --manifest-path qres_rust/Cargo.toml
       
       - name: Package Artifacts
         shell: bash
         run: |
           mkdir -p bin
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            cp qres_rust/target/release/qres-cli.exe bin/qres-cli-windows.exe
+            cp qres_rust/target/release/qres_daemon.exe bin/qres-daemon-windows.exe
           elif [ "${{ matrix.os }}" = "macos-latest" ]; then
-            cp qres_rust/target/release/qres-cli bin/qres-cli-macos
+            cp qres_rust/target/release/qres_daemon bin/qres-daemon-macos
           else
-            cp qres_rust/target/release/qres-cli bin/qres-cli-linux
+            cp qres_rust/target/release/qres_daemon bin/qres-daemon-linux
           fi
       
       - uses: actions/upload-artifact@v4
