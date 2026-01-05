@@ -58,8 +58,8 @@ jobs:
           pip install maturin pytest
           # Install dependencies from pyproject.toml
           pip install .
-          cd qres_rust/qres_core
-          maturin develop --release --features python
+          # Build Python extension from qres_core
+          maturin develop --release
 
       - name: Run Torture Test
         run: |
