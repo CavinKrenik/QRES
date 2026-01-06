@@ -46,5 +46,4 @@
 *   **"Equivariant Quantum Operator Compression"** (NeurIPS 2025): Preserve O(3) symmetries in quantum tensors.
     *   *QRES v9.0:* Implemented in `qnn_vqc.py:equivariant_lattice()`.
 *   **"Quantum Autoencoders for Hidden Subgroup Compression"** (QuantumZeitgeist, Nov 2025): Data reduction via symmetry groups.
-    *   *Insight:* Future work for v10.0 true quantum hardware integration.
-
+    *   *Status:* TNC integrated in v10.0; True quantum hardware pending (Phase 3).

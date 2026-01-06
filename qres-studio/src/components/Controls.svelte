@@ -1,4 +1,5 @@
 <script>
+    // @ts-nocheck
     import { engine } from "../lib/compressionEngine";
     import { createEventDispatcher } from "svelte";
 
@@ -56,7 +57,7 @@
     <h3>🎛️ Hybrid Controls</h3>
 
     <div class="control-group">
-        <label>Runtime Engine:</label>
+        <span class="label">Runtime Engine:</span>
         <select bind:value={mode} disabled={isProcessing}>
             <option value="native">⚡ Native (Rust Daemon)</option>
             <option value="wasm">🌐 WebAssembly (Browser)</option>
@@ -64,7 +65,7 @@
     </div>
 
     <div class="control-group">
-        <label>Input File:</label>
+        <span class="label">Input File:</span>
         <input
             type="file"
             on:change={handleFileSelect}
@@ -110,7 +111,7 @@
         margin-bottom: 20px;
     }
 
-    label {
+    .label {
         display: block;
         color: #a8dadc;
         margin-bottom: 8px;

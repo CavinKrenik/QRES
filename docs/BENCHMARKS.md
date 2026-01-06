@@ -9,7 +9,7 @@ Performance metrics for the Quantum-Relational Encoding System.
 | Property | Value |
 |----------|-------|
 | **Hardware** | Intel Ice Lake (AWS c6i.4xlarge) |
-| **Version** | QRES v10.0 |
+| **Version** | QRES v10.5 (Hybrid Era) |
 | **Agent** | MetaBrain v5 (SNN+QNN) |
 
 ---

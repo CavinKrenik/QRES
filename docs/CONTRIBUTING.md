@@ -16,19 +16,16 @@ Thank you for your interest in contributing to the Quantum-Relational Encoding S
 
 ## Development Setup
 
-```bash
-# Python environment
-python -m venv .venv
-source .venv/bin/activate  # or .venv\Scripts\activate on Windows
-pip install -e .
-
-# Rust core
+# Rust Workspace (Core + Daemon)
 cd qres_rust
-cargo build --release
+cargo build --release --workspace
 
 # Run tests
-pytest tests/
-cargo test
+cargo test --workspace
+
+# Python Bindings (Maturin)
+pip install maturin
+maturin develop
 ```
 
 ---

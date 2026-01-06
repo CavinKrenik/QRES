@@ -26,4 +26,4 @@ QRES proves that we can train global intelligence without sharing private data. 
 Our commitment to **Fixed-Point Determinism** means QRES is one of the few formats safe for long-term civilizational archival. A file compressed today will decompress bit-perfectly on the quantum computers of 2100.
 
 ---
-*QRES v10.1: Engineering the future of information density.*
+*QRES v10.5: Engineering the future of information density.*

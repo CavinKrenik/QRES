@@ -1,6 +1,6 @@
-# QRES File Specification (v10)
+# QRES File Specification (v10.1)
 
-**Version:** 10.0
+**Version:** 10.1
 **Magic:** `QRES` (0x51 0x52 0x45 0x53)
 **Extension:** `.qres`
 

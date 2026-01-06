@@ -1,63 +1,58 @@
-# QRES Python API Reference (v10.0)
+# QRES API Reference (v10.5)
 
-## Core Class: `QRES`
+## 🏗️ Rust Core API (`qres_core`)
 
-The main entry point for compression and decompression.
+The primary interface for QRES is the Rust crate. It is `no_std` compatible and powers all other bindings.
 
-```python
-from qres import QRES, QRESError
-import numpy as np
+### `compress`
+```rust
+pub fn compress(data: &[u8], config: CompressionConfig) -> Result<Vec<u8>, QresError>
 ```
+Compresses a byte slice with deterministic behavior.
 
-### `QRES.compress(data: Union[bytes, bytearray, np.ndarray], predictor_id: int = 0) -> bytes`
+- **data**: Input byte slice.
+- **config**: Struct containing `mode` (Standard/Quantum), `threshold` (0.0-1.0), and `window_size`.
+- **Returns**: `Vec<u8>` containing the compressed bitstream.
 
-Compresses data using the QRES v10 engine (Bit-Packed + Delta).
-
-- **data**: The input data. Supports `bytes`, `bytearray`, or `numpy.ndarray`.
-- **predictor_id**: 
-  - `0`: **Previous** (Best for constant data)
-  - `1`: **Linear** (Best for sequences/timestamps)
-  - `255`: **Auto-Detect** (Smart mode - slower but optimal)
-- **Returns**: A `bytes` object containing the compressed stream.
-- **Raises**: `QRESError` if compression fails.
-
-### `QRES.decompress(data: Union[bytes, bytearray], predictor_id: int = 0) -> bytes`
-
+### `decompress`
+```rust
+pub fn decompress(data: &[u8]) -> Result<Vec<u8>, QresError>
+```
 Decompresses a QRES stream.
 
-- **data**: The compressed bytes.
-- **predictor_id**: Must match the ID used during compression (usually handled automatically by header).
-- **Returns**: The original `bytes`.
+---
+
+## 🐍 Python Bindings (`qres_core`)
+
+The Python API wraps the Rust core for high-performance usage in scripts and ML pipelines.
+
+### `qres_core.compress(data: bytes, mode: str = "standard") -> bytes`
+- **data**: Bytes to compress.
+- **mode**: `"standard"` (Linear/LZ77) or `"quantum"` (Tensor/SNN).
+
+### `qres_core.decompress(data: bytes) -> bytes`
+- **data**: Compressed QRES bytes.
 
 ---
 
-## File I/O: `QRESFile`
+## 📦 WASM / JavaScript API
 
-A file-like object for reading and writing compressed files transparently.
+The WebAssembly target allows running QRES in the browser.
 
-### `qres.open(filename: str, mode: str = "rb") -> QRESFile`
+### `compress_wasm(data: Uint8Array) -> Uint8Array`
+Sync compression running on the main thread (or worker).
 
-Opens a QRES compressed file.
+### `decompress_wasm(data: Uint8Array) -> Uint8Array`
+Sync decompression.
 
-- **filename**: Path to the file.
-- **mode**: File mode (`rb`, `wb`, etc.).
+---
 
-**Example:**
-```python
-import qres
+## 📄 File I/O (Daemon/CLI)
 
-# Write compressed
-with qres.open("data.qres", "wb") as f:
-    f.write(b"Hello Quantum World")
+For file operations, use the `qres_daemon` CLI or the `QRESFile` wrapper (if using the legacy Python helper).
 
-# Read compressed
-with qres.open("data.qres", "rb") as f:
-    content = f.read()
+### `qres_daemon`
+```bash
+qres_daemon compress <INPUT> [OUTPUT]
+qres_daemon decompress <INPUT> [OUTPUT]
 ```
-
----
-
-## Constants
-
-- `VERSION`: `10.0.0`
-- `QRES_MAGIC`: `b'QRES'`

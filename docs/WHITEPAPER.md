@@ -38,7 +38,12 @@ QRES v10 introduces a strict separation of concerns to maximize stability and in
 - **P2P Intelligence**: Handles model exchange, federation, and distributed training.
 - **REST/RPC API**: Exposes control to GUIs (Starship) and CLI tools without blocking the core.
 
-### 2.3 The Living Brain (MetaBrain v5)
+### 2.3 The Hybrid Runtime (WebAssembly)
+- **Browser-Native**: `qres_core` compiles to `wasm32-unknown-unknown`.
+- **Zero-Install**: Runs client-side in any modern browser.
+- **Privacy-Preserving**: Compresses local files without uploading them to a cloud server.
+
+### 2.4 The Living Brain (MetaBrain v5)
 An ensemble of specialized predictors managed by an RL agent:
 
 | Predictor | Purpose |
