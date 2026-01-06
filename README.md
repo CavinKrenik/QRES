@@ -1,46 +1,59 @@
-﻿# QRES: Quantum-Relational Encoding System 🧠⚛️
+﻿# QRES: Quantum-Relational Encoding System
 
-> **Revolutionary compression for the Singularity Era**: Brain-like spiking neural networks with quantum-inspired ML and distributed P2P swarms.
+> **A neural, deterministic compression engine for the IoT and Edge Computing era.**
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/CavinKrenik/QRES/release.yml?style=flat)](https://github.com/CavinKrenik/QRES/actions)
 [![Version](https://img.shields.io/badge/version-v10.5.0-brightgreen)](https://github.com/CavinKrenik/QRES/releases)
-[![Python](https://img.shields.io/badge/python-3.10+-blue)](https://python.org)
-[![Rust](https://img.shields.io/badge/rust-1.70+-orange)](https://rust-lang.org)
-[![WASM Ready](https://img.shields.io/badge/target-wasm32-blueviolet)](https://github.com/CavinKrenik/QRES)
-[![no_std](https://img.shields.io/badge/std-optional-blue)](https://docs.rust-embedded.org/book/intro/no-std.html)
+[![Docs](https://img.shields.io/badge/docs-vision-orange)](docs/VISION.md)
 
-## 🔧 Build Targets
-QRES v10.5+ supports diverse build targets:
-* **x86_64 / ARM64:** Full `std` support (Daemon + Core)
-* **wasm32-unknown-unknown:** Client-side browser compression (Core only)
-* **thumbv7em-none-eabihf:** Embedded/Bare-metal ready (Core only)
+QRES is a compression framework built for structured time-series data, leveraging Spiking Neural Networks (SNNs) and a federated P2P architecture to learn data patterns. Unlike general-purpose compressors (like Zstd or Gzip), QRES allows nodes to share "compression intelligence" (models) without sharing raw data, making it ideal for bandwidth-constrained IoT swarms and privacy-preserving analytics.
 
-### 🌍 WebAssembly Build (Client-Side)
-To compile the `qres_wasm` bridge for browser usage:
+It features a **Rust core** (`no_std` capable), **Python bindings** for ML integration, and a **WebAssembly** build for browser-based decompression.
+
+---
+
+## 🚀 Quickstart
+
+### 1. Encode your first file
+The fastest way to test QRES is via the Python CLI.
 
 ```bash
-# 1. Install wasm-pack
-cargo install wasm-pack
+# Clone the repository
+git clone https://github.com/CavinKrenik/QRES.git
+cd QRES
 
-# 2. Build the WASM package
-cd qres_rust/qres_wasm
-wasm-pack build --target web
+# Install Python package (requires Rust toolchain)
+pip install .
+
+# Compress a file
+python3 -c "import qres; print(f'Compressed size: {len(qres.compress(open(\"README.md\", \"rb\").read()))} bytes')"
 ```
-*Artifacts will be output to `qres_rust/qres_wasm/pkg` (includes .wasm binary and .js glue code).*
+
+### 2. Build the Daemon (Rust)
+For production or P2P usage, build the native daemon:
+
+```bash
+cd qres_rust
+cargo build --release --bin qres_daemon
+./target/release/qres_daemon start
+```
 
 ---
 
-## Non-Goals & Limitations
-QRES is optimized for *structured, time-series, and predictable* data (e.g., telemetry, logs, sensor streams).
-*   **Encrypted/Random Data:** QRES will *expand* high-entropy data (like ZIP files or randomness). Use Zstd for these.
-*   **Cold Storage:** QRES requires a small "learning curve" (warmup) to build its model. It is less effective on tiny files (<1KB).
+## ✨ Core Features
+
+*   **Neural Prediction Engine**: Utilizes SNNs to predict and compress repetitive data streams (telemetry, logs) more efficiently than static dictionaries.
+*   **Deterministic Architecture**: Built on **Q16.16 fixed-point arithmetic**, ensuring bit-perfect reproducibility across x86, ARM, RISC-V, and WASM targets.
+*   **Federated Learning ("Hive Mind")**: Nodes can exchange model weights to improve compression ratios on similar data types without transmitting the data itself.
+*   **Edge-Native**: Core logic is `no_std` compatible, capable of running on bare-metal embedded devices.
+*   **Hybrid Runtime**: Seamlessly switch between native performance and portable WebAssembly execution.
+
+For the full technical vision, including our "Singularity Engine" concepts, read [VISION.md](docs/VISION.md).
 
 ---
 
-## 🌟 Overview
-
-QRES transcends traditional compression with a **"Living Brain"** agent that predicts, adapts, and evolves data storage like human memory. Unlike static algorithms (Zstd, gzip), QRES learns from your data and gets smarter over time.
+## 🏗️ Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -56,137 +69,58 @@ QRES transcends traditional compression with a **"Living Brain"** agent that pre
 
 ---
 
-## ✨ Key Features
+## 🎯 When to Use QRES
 
-| Feature | Description |
-|---------|-------------|
-| 🧠 **Spiking Neural Networks** | GIF neurons with 97% sparsity via OSBC pruning |
-| ⚛️ **Tensor Network Correlator** | Variational circuits for non-linear correlation |
-| 🐝 **Hive Mind** | Federated learning with KL-FedDis divergence filtering |
-| 🔄 **Auto-Tuning** | Fine-tune on your data with federated sharing |
-| 📦 **Multimodal** | Text, IoT, images, audio, PDFs |
-| 🖥️ **GUI** | QRES Studio with D3 visualizations |
+| ✅ Use QRES For... | ❌ Do NOT Use QRES For... |
+|--------------------|---------------------------|
+| **IoT Telemetry**: Highly repetitive sensor logs. | **High-Entropy Data**: Encrypted files, random noise. |
+| **Structured Logs**: Server logs with consistent timestamps/headers. | **Existing Archives**: .zip, .jpg, .mp4 files. |
+| **Edge Networks**: Where bandwidth is more expensive than compute. | **Tiny Files**: Files < 1KB (header overhead is too high). |
+| **Archival**: Long-term storage requiring deterministic restoration. | **General Purpose**: If strictly fastest speed is needed (use LZ4). |
 
 ---
 
-## 🎯 Real-World Use Cases
+## � Mini Benchmarks
 
-### 📡 Ultra-Low Bandwidth IoT
-Sensors often produce repetitive signals (sine waves, timestamps). QRES's **Lock-On Mixer** achieves **~19% compression ratio** on these streams, allowing edge devices to transmit **5x more data** on the same bandwidth budget.
+Performance on structured data sets (Intel Ice Lake). See full details in [BENCHMARKS.md](docs/BENCHMARKS.md).
 
-### 🏛️ Bit-Perfect Archival
-Unlike floating-point based compressors which can drift across architectures, QRES uses **Q16.16 Fixed-Point Arithmetic**. A medical record or scientific dataset compressed today is guaranteed to decompress **bit-perfectly** on any future hardware (RISC-V, ARM, x86).
-
-### 🔒 Privacy-Preserving Analytics
-QRES allows systems to share "compression intelligence" (models) without sharing data. This enables **Zero-Knowledge Federated Learning**, where secure institutions can collaborate on data efficiency models without ever exposing sensitive records.
-
----
-
-## 📊 Performance
-
-| Dataset | Ratio | Fidelity | Speed |
-|---------|-------|----------|-------|
-| **Binary Telemetry** | **~0.15** | 1.00 | 300+ MB/s |
-| **IoT (Correlated CSV)** | ~0.76 | >0.99 | 150 MB/s |
-| **Text/Code** | ~0.19 | 1.00 | 200 MB/s |
-| **Sine Wave** | **~0.19** | 1.00 | 250 MB/s |
-
-*Benchmarks on Intel Ice Lake. See [BENCHMARKS.md](docs/BENCHMARKS.md) for details.*
+| Dataset | Type | Ratio | Speed |
+|---------|------|-------|-------|
+| **Sensor Stream** | IoT Telemetry | **~0.15** (6.6x) | 300+ MB/s |
+| **Server Logs** | Text/Time-series | **~0.19** (5.2x) | 200 MB/s |
+| **CSV Data** | Correlated Numerics | ~0.76 (1.3x) | 150 MB/s |
 
 ---
 
-## 🚀 Quick Start
+## � Project Structure
 
-### Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/CavinKrenik/QRES.git
-cd QRES
-
-# Install Python dependencies
-pip install -e .
-
-# Build Rust core (optimized native binary)
-cd qres_rust && cargo build --release --workspace
-```
-
-### Basic Usage
-
-**Start the Daemon (Secure by Default):**
-```bash
-# Binds to 127.0.0.1
-qres-daemon start
-```
-
-**Start for External Access (e.g., in Docker/P2P):**
-```bash
-# Binds to 0.0.0.0 (Warning: Publicly accessible)
-QRES_PUBLIC=1 qres-daemon start
-```
-
-**Python Client:**
-
-```python
-import qres
-
-# Compress
-data = open("input.dat", "rb").read()
-compressed = qres.compress(data)
-
-# Decompress
-restored = qres.decompress(compressed)
-```
-
-### Try the Demo
-
-Explore the interactive notebook: **[examples/brain_demo.ipynb](examples/brain_demo.ipynb)**
+*   `qres_rust/`: The Rust workspace containing the core engine and daemon.
+    *   `qres_core`: High-performance, `no_std` compression library.
+    *   `qres_daemon`: P2P node and API service.
+*   `python/`: Python bindings and experimental ML models.
+*   `qres-studio/`: Cross-platform GUI (Tauri/Svelte) for visualization.
+*   `docs/`: Documentation hub.
+    *   [VISION.md](docs/VISION.md): Project philosophy and long-term goals.
+    *   [WHITEPAPER.md](docs/WHITEPAPER.md): Detailed technical specification.
+    *   [RESEARCH_NOTES.md](docs/RESEARCH_NOTES.md): Academic context and citations.
+*   `benchmarks/`: Data generation and performance testing scripts.
 
 ---
 
-## 📁 Project Structure
+## 🗺️ Status & Roadmap
 
-```
-QRES/
-├── .github/               # CI/CD Workflows
-├── ai/                    # Neural networks (SNN, QNN, Hive Mind)
-├── assets/                # Design assets & diagrams
-├── benchmarks/            # Performance evaluation scripts
-├── data/                  # Sample datasets & telemetry
-├── docs/                  # Documentation (Technical & Vision)
-├── examples/              # Usage examples & notebooks
-├── python/qres/           # Python API & core bindings
-├── qres_rust/             # Rust Workspace
-│   ├── qres_core/         # High-performance compression library
-│   └── qres_daemon/       # P2P Node & background service
-├── qres-studio/           # Svelte/Tauri Desktop Application
-├── tests/                 # Integration & unit tests
-└── utils/                 # Development utilities
-```
+**Current Version:** v10.5 (Hybrid Era)
+
+*   ✅ **Production Ready**: `qres_core`, Python bindings, WASM decoder.
+*   � **Beta**: P2P Swarm APIs, Advanced Federation.
+*   📅 **Planned**: Hardware description language (HDL) implementation.
+
+See [ROADMAP.md](docs/ROADMAP.md) for the detailed timeline.
 
 ---
 
-## 📖 Documentation
+## 📄 License & Acknowledgments
 
-| Document | Description |
-|----------|-------------|
-| [VISION.md](docs/VISION.md) | **Product Strategy & Vision** |
-| [WHITEPAPER.md](docs/WHITEPAPER.md) | Technical deep-dive |
-| [ROADMAP.md](docs/ROADMAP.md) | Development phases |
-| [BENCHMARKS.md](docs/BENCHMARKS.md) | Performance metrics |
-| [RESEARCH_NOTES.md](docs/RESEARCH_NOTES.md) | Academic citations |
+This project is licensed under the Apache 2.0 License.
 
----
-
-## 🗺️ Roadmap & Status
-
-- ✅ **v8.0 - v10.0** – (Legacy milestones completed)
-- ✅ **v10.1** – Security Hardening & Workspace Split
-- 🚀 **v10.5 (Current)** – The Hybrid Era
-    - [x] **FPGA Prep:** `no_std` Refactor for `qres_core`.
-    - [x] **WebAssembly:** Client-side compression in QRES Studio.
-    - [x] **Hybrid Runtime:** Native/WASM toggling in GUI.
-
----
-
-
+**QRES** – *Building the neural pathways for a self-optimizing internet.*
