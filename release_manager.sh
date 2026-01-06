@@ -7,7 +7,7 @@ RED='\033[0;31m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}🚀 QRES Release Manager v10.5 (Hardware Era) Initialized${NC}"
+echo -e "${BLUE}🚀 QRES Release Manager v10.5 (Hybrid Era) Initialized${NC}"
 
 # 1. Verify Clean Git State
 # if [[ -n $(git status -s) ]]; then
@@ -76,7 +76,7 @@ echo -e "${GREEN}📦 Ready to Release: v$VERSION${NC}"
 read -p "Create tag v$VERSION and push? (y/n) " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    git tag -a "v$VERSION" -m "QRES Engineering Release v$VERSION"
+    git tag -a "v$VERSION" -m "QRES Release v$VERSION - The Hybrid Era"
     git push origin "v$VERSION"
     echo -e "${GREEN}🎉 Release v$VERSION Pushed!${NC}"
 else

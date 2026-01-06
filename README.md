@@ -4,7 +4,7 @@
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/CavinKrenik/QRES/release.yml?style=flat)](https://github.com/CavinKrenik/QRES/actions)
-[![Version](https://img.shields.io/badge/version-v10.1.0-brightgreen)](https://github.com/CavinKrenik/QRES/releases)
+[![Version](https://img.shields.io/badge/version-v10.5.0-brightgreen)](https://github.com/CavinKrenik/QRES/releases)
 [![Python](https://img.shields.io/badge/python-3.10+-blue)](https://python.org)
 [![Rust](https://img.shields.io/badge/rust-1.70+-orange)](https://rust-lang.org)
 [![WASM Ready](https://img.shields.io/badge/target-wasm32-blueviolet)](https://github.com/CavinKrenik/QRES)

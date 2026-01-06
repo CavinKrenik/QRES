@@ -157,7 +157,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          name: QRES ${{ github.ref_name }} - Singularity Engine
+          name: QRES ${{ github.ref_name }} - The Hybrid Era
           body_path: docs/releases/RELEASE_NOTES.md
           files: dist/*
           generate_release_notes: true

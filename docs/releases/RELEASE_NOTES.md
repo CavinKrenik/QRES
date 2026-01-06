@@ -1,39 +1,43 @@
-# QRES v10.0.0: The Engineering Release
+# QRES v10.5.0: The Hybrid Era
 
-> **Hardened. Modular. Production-Ready.**
+> **Native. WebAssembly. FPGA-Ready.**
 
-This milestone release transforms QRES from an experimental research project into a rigorous engineering standard. It introduces a modular workspace architecture, bit-perfect deterministic compression across architectures (Linux/macOS/Windows), and optimized P2P protocols.
+This milestone release marks the beginning of the **Hybrid Era**, decoupling the QRES Core from the operating system to run anywhere: from high-performance servers to web browsers and embedded silicon.
 
 ## 🌟 Major Highlights
 
-### 🛡️ Bit-Perfect Determinism (Cross-Arch)
-- **The "Butterfly Effect" Fixed:** Replaced floating-point weights (`f32`) with **Q16.16 Fixed-Point Arithmetic** (`i32`).
-- **Guarantee:** A file compressed on an Intel Linux server will decompress *byte-for-byte identically* on an Apple Silicon MacBook. Verified by our new "Battle Royale" CI pipeline.
+### 🌍 WebAssembly (WASM) Support
+- **Browser-Native Compression:** QRES now runs entirely client-side in the browser.
+- **Zero-Install:** Decompress data instantly in web apps without backend roundtrips.
+- **Performance:** Near-native speeds using `wasm32-unknown-unknown` targets.
 
-### 🧩 Modular Architecture
-- **Workspace Split:** The monolithic `qres_rust` crate has been split:
-  - `qres_core`: A pure, lightweight library for compression/decompression (no heavy dependencies).
-  - `qres_daemon`: The full "Living Brain" application with P2P networking and AI training.
-- **Benefit:** Developers can now embed the QRES codec into other apps without pulling in the entire Swarm stack.
+### 🛡️ `no_std` Architecture
+- **Embedded Ready:** The `qres_core` library has been completely refactored to support `no_std` environments.
+- **FPGA Prep:** This sets the stage for hardware synthesis (HLS) and bare-metal deployment on ARM Cortex-M and RISC-V.
+- **Pure Logic:** All OS-dependent logic (file I/O, networking) has been moved to the Daemon, leaving the Core pure and deterministic.
 
-### ⚡ Delta-Gossip Protocol
-- **Bandwidth Optimization:** The P2P Swarm now uses **Delta Encoding** for model updates.
-- **Efficiency:** Instead of broadcasting the entire 50MB neural brain every few seconds, nodes only transmit the "Epiphanies" (weights that changed significantly), reducing network traffic by >90%.
-
-### � Modern Python Bindings
-- **PyO3 0.22 Upgrade:** Bindings now use the latest PyO3 API with `abi3` support.
-- **Compatibility:** Native wheels now support Python 3.8 through 3.12+ seamlessly.
+### 🖥️ Studio Hybrid Runtime
+- **Toggle Engine:** The QRES Studio GUI now features a "Hybrid Runtime" toggle.
+  - **Native Mode:** Uses the local Rust daemon for maximum performance.
+  - **WASM Mode:** Uses the in-memory WASM module for sandboxed, portable execution.
 
 ## 📦 Assets
-- `qres_daemon` (CLI & Swarm Node)
-- `qres` (Python Codec Package)
-- `qres-studio` (GUI Dashboard)
+- `qres-daemon` (CLI & Swarm Node)
+- `qres-studio` (Cross-platform GUI)
+- `qres.js` + `qres_bg.wasm` (Web Artifacts)
 
 ## 🛠 Usage
-```bash
-# Codec (Library)
-cargo add qres_core
 
-# Full Application
-cargo install --path qres_rust/qres_daemon
+### Rust (Core)
+```toml
+[dependencies]
+qres_core = { version = "10.5", default-features = false }
+```
+
+### Web
+```javascript
+import init, { compress, decompress } from './pkg/qres_wasm.js';
+
+await init();
+const compressed = compress(data);
 ```

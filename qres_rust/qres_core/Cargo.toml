@@ -1,6 +1,6 @@
 [package]
 name = "qres_core"
-version = "10.1.0"
+version = "10.5.0"
 edition = "2021"
 
 [features]
