@@ -178,14 +178,14 @@ QRES/
 
 ---
 
-## 🗺️ Roadmap
+## 🗺️ Roadmap & Status
 
-- ✅ **v8.0** – MetaBrain v4, Multimodal, World State Persistence
-- ✅ **v8.1** – SNN Integration, TNC Fusion, Hive Mind
-- ✅ **v9.0** – GIF Neurons, OSBC Pruning, Auto-Tuning
-- ✅ **v10.0** – Tensor Network Correlator, Deterministic Q16.16
-- ✅ **v10.1** – Security Hardening, JSON Persistence, Structured Logging (Stable Baseline)
-- � **v10.5** – FPGA Acceleration & WebAssembly Core (Active)
+- ✅ **v8.0 - v10.0** – (Legacy milestones completed)
+- ✅ **v10.1** – Security Hardening & Workspace Split
+- 🚀 **v10.5 (Current)** – The Hybrid Era
+    - [x] **FPGA Prep:** `no_std` Refactor for `qres_core`.
+    - [x] **WebAssembly:** Client-side compression in QRES Studio.
+    - [x] **Hybrid Runtime:** Native/WASM toggling in GUI.
 
 ---
 

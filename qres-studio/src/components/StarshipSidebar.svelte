@@ -3,13 +3,25 @@
     import { invoke } from "@tauri-apps/api/core";
     import { save, open } from "@tauri-apps/plugin-dialog";
     import { toast } from "@zerodevx/svelte-toast";
+    import { engine } from "../lib/compressionEngine"; // Import Hybrid Engine
 
     export let updateGraph = () => {};
 
-    let mode = "standard";
+    // UI State
+    let runtimeMode = "native"; // 'native' | 'wasm'
+    let compressionMode = "standard"; // 'standard' | 'quantum'
     let threshold = 0.5;
     let selectedFile = null;
     let isProcessing = false;
+
+    // Detect environment
+    let isNative = false;
+    if (typeof window !== "undefined") {
+        // @ts-ignore
+        isNative = !!window.__TAURI__;
+        // Default to WASM if not native
+        if (!isNative) runtimeMode = "wasm";
+    }
 
     function handleFileSelect(event) {
         const file = event.target.files[0];
@@ -20,24 +32,48 @@
     }
 
     async function handleCompress() {
-        // @ts-ignore
-        if (!window.__TAURI__) {
-            toast.push('Compression not available in browser mode');
-            return;
-        }
         if (!selectedFile) {
             toast.push("Please select a file first");
             return;
         }
 
         isProcessing = true;
+        const useWasm = runtimeMode === "wasm";
 
         try {
+            // 1. Browser/WASM Mode
+            if (useWasm) {
+                toast.push("🚀 Starting WASM Compression...");
+                const buffer = await selectedFile.arrayBuffer();
+                const bytes = new Uint8Array(buffer);
+
+                const result = await engine.compress(bytes, true);
+
+                toast.push(
+                    `✅ WASM Success! Ratio: ${(result.ratio * 100).toFixed(2)}% (${result.duration_ms.toFixed(0)}ms)`,
+                );
+                updateGraph();
+                return;
+            }
+
+            // 2. Native/Daemon Mode
+            if (!isNative) {
+                toast.push(
+                    "❌ Native mode requires Tauri environment. Switching to WASM.",
+                );
+                runtimeMode = "wasm";
+                isProcessing = false;
+                return; // Let user try again or auto-retry? Let's stop and let them click again.
+            }
+
+            // Native Logic
             const fileInput = document.getElementById("file-input");
-            const filePath = fileInput.files[0].path;
+            const filePath = fileInput.files[0].path; // Tauri injected path
 
             if (!filePath) {
-                toast.push("Could not get file path");
+                toast.push(
+                    "Could not determine file path for native compression.",
+                );
                 isProcessing = false;
                 return;
             }
@@ -52,10 +88,16 @@
                 return;
             }
 
-            const outPath = await invoke("compress", { path: filePath, mode, threshold, outPath: destPath });
-            toast.push(`Compressed! Saved to ${outPath}`);
-            updateGraph();  // Refresh neural graph
+            const outPath = await invoke("compress", {
+                path: filePath,
+                mode: compressionMode,
+                threshold,
+                outPath: destPath,
+            });
+            toast.push(`⚡ Native Success! Saved to ${outPath}`);
+            updateGraph();
         } catch (error) {
+            console.error(error);
             toast.push(`Failed: ${error}`);
         } finally {
             isProcessing = false;
@@ -63,35 +105,33 @@
     }
 
     async function handleDecompress() {
-        // @ts-ignore
-        if (!window.__TAURI__) {
-            toast.push('Decompression not available in browser mode');
+        // Decompression logic (Hybrid or Native? For now keep Native-only or add WASM later if needed)
+        // The DropZone has hybrid logic, let's keep this simple for now.
+        if (!isNative) {
+            toast.push(
+                "Decompression currently only supported in Native Mode.",
+            );
             return;
         }
-        isProcessing = true;
 
+        isProcessing = true;
         try {
             const srcPath = await open({
                 filters: [{ name: "QRES Files", extensions: ["qres", "qrar"] }],
                 title: "Select file to decompress",
             });
-
-            if (!srcPath) {
-                isProcessing = false;
-                return;
-            }
+            if (!srcPath) return;
 
             const destPath = await save({
                 defaultPath: "extracted",
                 title: "Save decompressed file",
             });
+            if (!destPath) return;
 
-            if (!destPath) {
-                isProcessing = false;
-                return;
-            }
-
-            const outPath = await invoke("decompress", { path: srcPath, outFolder: destPath });
+            const outPath = await invoke("decompress", {
+                path: srcPath,
+                outFolder: destPath,
+            });
             toast.push(`Decompressed to ${outPath}`);
         } catch (error) {
             toast.push(`Failed: ${error}`);
@@ -104,18 +144,44 @@
 <aside class="sidebar">
     <h2>🎛️ Control Panel</h2>
 
+    <!-- Runtime Toggle -->
     <div class="section">
+        <span class="label">Engine Runtime</span>
         <div class="mode-toggle">
             <button
-                class:active={mode === "standard"}
-                on:click={() => (mode = "standard")}
+                class:active={runtimeMode === "native"}
+                on:click={() => (runtimeMode = "native")}
+                disabled={isProcessing || !isNative}
+                title={!isNative
+                    ? "Not available in browser"
+                    : "Use Rust Daemon"}
+            >
+                ⚡ Native
+            </button>
+            <button
+                class:active={runtimeMode === "wasm"}
+                on:click={() => (runtimeMode = "wasm")}
+                disabled={isProcessing}
+            >
+                🌐 WASM
+            </button>
+        </div>
+    </div>
+
+    <!-- Compression Mode (Only relevant for Native mostly, but we keep it) -->
+    <div class="section">
+        <span class="label">Algorithm</span>
+        <div class="mode-toggle">
+            <button
+                class:active={compressionMode === "standard"}
+                on:click={() => (compressionMode = "standard")}
                 disabled={isProcessing}
             >
                 Standard
             </button>
             <button
-                class:active={mode === "quantum"}
-                on:click={() => (mode = "quantum")}
+                class:active={compressionMode === "quantum"}
+                on:click={() => (compressionMode = "quantum")}
                 disabled={isProcessing}
             >
                 Quantum
@@ -194,10 +260,13 @@
         gap: 0.5rem;
     }
 
-    label {
+    label,
+    .label {
         color: #a8dadc;
         font-size: 0.85rem;
         text-transform: uppercase;
+        display: block; /* Ensure it behaves like block label */
+        margin-bottom: 0.5rem;
     }
 
     .mode-toggle {

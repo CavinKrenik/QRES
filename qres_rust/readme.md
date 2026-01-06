@@ -2,8 +2,8 @@
 
 > **The Singularity Engine**: A bit-perfect, deterministic compression architecture split into a high-performance core and a biological-inspired swarm daemon.
 
-[![Cross-Arch Battle](https://github.com/CavinKrenik/QRES/actions/workflows/cross_arch_battle.yml/badge.svg)](https://github.com/CavinKrenik/QRES/actions)
 [![Crates.io](https://img.shields.io/crates/v/qres_core.svg)](https://crates.io/crates/qres_core)
+[![WASM Ready](https://img.shields.io/badge/target-wasm32-blueviolet)](https://github.com/CavinKrenik/QRES)
 
 ## 🏗️ Architecture
 
@@ -13,7 +13,7 @@ This workspace contains the two pillars of QRES:
 * **Role:** Deterministic compression library.
 * **Tech:** Pure Rust, `no_std` compatible, Q16.16 Fixed-Point Arithmetic.
 * **Guarantee:** Compressing `file.dat` on Linux x86 produces the *exact same bitstream* as on macOS ARM64.
-* **Usage:** Embeddable in C++, Python, WASM, and Embedded systems.
+* **Targets:** Embedded, WASM (Browser), Desktop, Server.
 
 ### 2. `qres_daemon` (The Brain)
 * **Role:** P2P Swarm Node & CLI.
@@ -34,7 +34,8 @@ cargo build --release --workspace
 ./target/release/qres_daemon swarm --port 8080
 ```
 
-### WASM Build (for Studio)
+### Build for Web (WASM)
 ```bash
+# Generates the 'pkg' folder for qres-studio
 cd qres_wasm && wasm-pack build --target web
 ```

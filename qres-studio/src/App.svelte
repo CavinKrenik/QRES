@@ -1,9 +1,9 @@
 <script>
-    import { writable } from 'svelte/store';
-    import { invoke } from '@tauri-apps/api/core';
+    import { writable } from "svelte/store";
+    import { invoke } from "@tauri-apps/api/core";
     import { SvelteToast } from "@zerodevx/svelte-toast";
-    import { onMount } from 'svelte';
-    import { slide, fade } from 'svelte/transition';
+    import { onMount } from "svelte";
+    import { slide, fade } from "svelte/transition";
     import StarshipHeader from "./components/StarshipHeader.svelte";
     import StarshipSidebar from "./components/StarshipSidebar.svelte";
     import KnowledgeGraph from "./KnowledgeGraph.svelte";
@@ -11,7 +11,7 @@
     import HiveMind from "./HiveMind.svelte";
 
     const graphData = writable({ nodes: [], edges: [] });
-    let currentTab = 'graph';
+    let currentTab = "graph";
     let sidebarOpen = true;
 
     // Load initial data
@@ -21,10 +21,10 @@
             return;
         }
         try {
-            const stats = await invoke('load_stats');
+            const stats = await invoke("load_stats");
             // Update stores
         } catch (e) {
-            console.error('Failed to load stats:', e);
+            console.error("Failed to load stats:", e);
         }
     }
 
@@ -45,7 +45,10 @@
     <StarshipHeader />
 
     <main class="dashboard-grid">
-        <button class="sidebar-toggle" on:click={() => sidebarOpen = !sidebarOpen}>☰</button>
+        <button
+            class="sidebar-toggle"
+            on:click={() => (sidebarOpen = !sidebarOpen)}>☰</button
+        >
         {#if sidebarOpen}
             <aside class="sidebar" transition:slide={{ duration: 300 }}>
                 <StarshipSidebar {updateGraph} />
@@ -53,19 +56,28 @@
         {/if}
         <section class="central-hologram">
             <nav class="orbital-tabs">
-                <button class:active={currentTab === 'graph'} on:click={() => currentTab = 'graph'}>Neural Graph</button>
-                <button class:active={currentTab === 'swarm'} on:click={() => currentTab = 'swarm'}>Swarm</button>
-                <button class:active={currentTab === 'hive'} on:click={() => currentTab = 'hive'}>Hive Mind</button>
+                <button
+                    class:active={currentTab === "graph"}
+                    on:click={() => (currentTab = "graph")}>Neural Graph</button
+                >
+                <button
+                    class:active={currentTab === "swarm"}
+                    on:click={() => (currentTab = "swarm")}>Swarm</button
+                >
+                <button
+                    class:active={currentTab === "hive"}
+                    on:click={() => (currentTab = "hive")}>Hive Mind</button
+                >
             </nav>
-            {#if currentTab === 'graph'}
+            {#if currentTab === "graph"}
                 <div class="holo-graph" transition:fade>
                     <KnowledgeGraph />
                 </div>
-            {:else if currentTab === 'swarm'}
+            {:else if currentTab === "swarm"}
                 <div class="gauge-cluster" transition:fade>
                     <SwarmView />
                 </div>
-            {:else if currentTab === 'hive'}
+            {:else if currentTab === "hive"}
                 <div class="hive-view" transition:fade>
                     <HiveMind />
                 </div>
@@ -77,7 +89,12 @@
 <style>
     :global(body) {
         margin: 0;
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-family:
+            "Inter",
+            -apple-system,
+            BlinkMacSystemFont,
+            "Segoe UI",
+            sans-serif;
         overflow: hidden;
         background: #0a0a2a;
     }
@@ -147,12 +164,12 @@
         padding: 0.75rem 1.5rem;
         background: rgba(0, 128, 255, 0.1);
         border: 1px solid rgba(0, 128, 255, 0.3);
-        border-radius: 50%;
+        border-radius: 20px;
         color: #a8dadc;
         cursor: pointer;
         transition: all 0.3s ease;
         font-size: 0.9rem;
-        animation: orbit 10s linear infinite;
+        /* animation: orbit 10s linear infinite; */
     }
 
     .orbital-tabs button:hover {
@@ -169,14 +186,20 @@
         box-shadow: 0 0 15px rgba(0, 255, 204, 0.5);
     }
 
-    .holo-graph, .gauge-cluster, .hive-view {
+    .holo-graph,
+    .gauge-cluster,
+    .hive-view {
         height: calc(100vh - 200px);
         overflow: auto;
     }
 
     @keyframes orbit {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(360deg);
+        }
     }
 
     @media (max-width: 768px) {

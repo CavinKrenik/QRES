@@ -1,93 +1,17 @@
 <script>
-    // @ts-nocheck
-    import { quantumState, compressionStats, swarmStatus } from "../stores.js";
     import { engine } from "../lib/compressionEngine";
+    import { createEventDispatcher } from "svelte";
 
-    let mode = "standard";
-    let useWasm = false; // Default to Native
-    let threshold = 0.5;
-    let noiseLevel = 0.1;
+    // UI State
+    let mode = "native"; // 'native' | 'wasm'
     let inputFile = null;
     let isProcessing = false;
     let statusMessage = "";
+    let useWasm = false; // Internal convenience
 
-    // Simulate API call (replace with actual fetch to Python backend)
-    async function compressData() {
-        if (!inputFile) {
-            statusMessage = "⚠️ Please select a file first";
-            return;
-        }
+    const dispatch = createEventDispatcher();
 
-        isProcessing = true;
-        statusMessage = "🔄 Processing...";
-
-        try {
-            const buffer = await inputFile.arrayBuffer();
-            const bytes = new Uint8Array(buffer);
-
-            // The Hybrid Call
-            const result = await engine.compress(bytes, useWasm);
-
-            const mockResult = {
-                mode: result.engine,
-                ratio: result.ratio,
-                originalSize: bytes.length,
-                compressedSize: result.data.length,
-                timestamp: Date.now(),
-            };
-
-            compressionStats.set(mockResult);
-            statusMessage = `✅ Compressed with ${result.engine}: ${(result.ratio * 100).toFixed(2)}% in ${result.duration_ms.toFixed(0)}ms`;
-
-            // Update quantum state if in quantum mode
-            if (mode === "quantum") {
-                quantumState.update((state) => ({
-                    ...state,
-                    fidelity: useWasm ? 0.95 : 0.999, // WASM slightly less 'quantum' ;)
-                    version: `v${Date.now()}`,
-                    timestamp: Date.now(),
-                }));
-            }
-        } catch (error) {
-            console.error(error);
-            statusMessage = `❌ Error: ${error.message || error}`;
-        } finally {
-            isProcessing = false;
-        }
-    }
-
-    async function saveState() {
-        isProcessing = true;
-        statusMessage = "💾 Saving world state...";
-
-        try {
-            await new Promise((resolve) => setTimeout(resolve, 500));
-            statusMessage = "✅ State saved successfully";
-        } catch (error) {
-            statusMessage = `❌ Save failed: ${error.message}`;
-        } finally {
-            isProcessing = false;
-        }
-    }
-
-    async function broadcastState() {
-        isProcessing = true;
-        statusMessage = "📡 Broadcasting to swarm...";
-
-        try {
-            await new Promise((resolve) => setTimeout(resolve, 500));
-            swarmStatus.update((status) => ({
-                ...status,
-                lastBroadcast: Date.now(),
-            }));
-            statusMessage = "✅ Broadcast queued";
-        } catch (error) {
-            statusMessage = `❌ Broadcast failed: ${error.message}`;
-        } finally {
-            isProcessing = false;
-        }
-    }
-
+    // Handle file selection
     function handleFileSelect(event) {
         const file = event.target.files[0];
         if (file) {
@@ -95,87 +19,56 @@
             statusMessage = `📄 Selected: ${file.name}`;
         }
     }
+
+    // Real Compression Call
+    async function compressData() {
+        if (!inputFile) return;
+
+        isProcessing = true;
+        // Sync toggles
+        useWasm = mode === "wasm";
+        statusMessage = useWasm
+            ? "🚀 Compressing in Browser..."
+            : "⚡ Compressing in Daemon...";
+
+        try {
+            // Read bytes
+            const buffer = await inputFile.arrayBuffer();
+            const bytes = new Uint8Array(buffer);
+
+            // Call Hybrid Engine
+            const result = await engine.compress(bytes, useWasm);
+
+            statusMessage = `✅ Done! Ratio: ${(result.ratio * 100).toFixed(2)}% (${result.duration_ms.toFixed(0)}ms)`;
+
+            // Notify parent
+            dispatch("complete", result);
+        } catch (error) {
+            statusMessage = `❌ Error: ${error}`;
+            console.error(error);
+        } finally {
+            isProcessing = false;
+        }
+    }
 </script>
 
 <div class="controls-panel">
-    <h3>🎛️ Compression Controls</h3>
+    <h3>🎛️ Hybrid Controls</h3>
 
     <div class="control-group">
-        <div class="flex items-center justify-between mb-2">
-            <span
-                class="text-gray-300 font-medium"
-                style="color: #a8dadc; font-size: 0.95em; font-weight: 500; display: block; margin-bottom: 8px;"
-                >Engine Runtime</span
-            >
-            <label
-                class="inline-flex items-center cursor-pointer"
-                style="display: flex; align-items: center; gap: 10px; cursor: pointer;"
-            >
-                <input
-                    type="checkbox"
-                    bind:checked={useWasm}
-                    style="width: 20px; height: 20px;"
-                />
-                <span
-                    class="ms-3 text-sm font-medium text-gray-300"
-                    style="color: #f1faee;"
-                >
-                    {useWasm ? "🌐 WASM (Browser)" : "⚡ Native (Daemon)"}
-                </span>
-            </label>
-        </div>
-    </div>
-
-    <div class="control-group">
-        <label for="mode-select">Mode:</label>
-        <select id="mode-select" bind:value={mode} disabled={isProcessing}>
-            <option value="standard">Standard</option>
-            <option value="quantum">Quantum</option>
+        <label>Runtime Engine:</label>
+        <select bind:value={mode} disabled={isProcessing}>
+            <option value="native">⚡ Native (Rust Daemon)</option>
+            <option value="wasm">🌐 WebAssembly (Browser)</option>
         </select>
     </div>
 
     <div class="control-group">
-        <label for="threshold-slider"
-            >Relevance Threshold: {threshold.toFixed(2)}</label
-        >
+        <label>Input File:</label>
         <input
-            id="threshold-slider"
-            type="range"
-            bind:value={threshold}
-            min="0"
-            max="1"
-            step="0.05"
-            disabled={isProcessing}
-            aria-label="Relevance threshold for compression"
-        />
-    </div>
-
-    {#if mode === "quantum"}
-        <div class="control-group">
-            <label for="noise-slider"
-                >Noise Level: {noiseLevel.toFixed(2)}</label
-            >
-            <input
-                id="noise-slider"
-                type="range"
-                bind:value={noiseLevel}
-                min="0"
-                max="0.5"
-                step="0.05"
-                disabled={isProcessing}
-                aria-label="Quantum noise simulation level"
-            />
-        </div>
-    {/if}
-
-    <div class="control-group">
-        <label for="file-input">Input File:</label>
-        <input
-            id="file-input"
             type="file"
             on:change={handleFileSelect}
             disabled={isProcessing}
-            aria-label="Select file to compress"
         />
     </div>
 
@@ -184,34 +77,13 @@
             class="primary-btn"
             on:click={compressData}
             disabled={isProcessing || !inputFile}
-            aria-label="Start compression"
         >
             {isProcessing ? "⏳ Processing..." : "🚀 Compress"}
         </button>
-
-        {#if mode === "quantum"}
-            <button
-                class="secondary-btn"
-                on:click={saveState}
-                disabled={isProcessing}
-                aria-label="Save world state"
-            >
-                💾 Save State
-            </button>
-
-            <button
-                class="secondary-btn"
-                on:click={broadcastState}
-                disabled={isProcessing}
-                aria-label="Broadcast to swarm"
-            >
-                📡 Broadcast
-            </button>
-        {/if}
     </div>
 
     {#if statusMessage}
-        <div class="status-message" role="status" aria-live="polite">
+        <div class="status-message">
             {statusMessage}
         </div>
     {/if}
@@ -270,42 +142,6 @@
         box-shadow: 0 0 0 3px rgba(233, 69, 96, 0.2);
     }
 
-    input[type="range"] {
-        width: 100%;
-        height: 6px;
-        background: #0f3460;
-        border-radius: 3px;
-        outline: none;
-        -webkit-appearance: none;
-        appearance: none;
-    }
-
-    input[type="range"]::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        appearance: none;
-        appearance: none;
-        width: 18px;
-        height: 18px;
-        background: #e94560;
-        border-radius: 50%;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-    input[type="range"]::-webkit-slider-thumb:hover {
-        transform: scale(1.2);
-        box-shadow: 0 0 10px rgba(233, 69, 96, 0.6);
-    }
-
-    input[type="range"]::-moz-range-thumb {
-        width: 18px;
-        height: 18px;
-        background: #e94560;
-        border-radius: 50%;
-        cursor: pointer;
-        border: none;
-    }
-
     .button-group {
         display: flex;
         gap: 12px;
@@ -334,17 +170,6 @@
     .primary-btn:hover:not(:disabled) {
         transform: translateY(-2px);
         box-shadow: 0 6px 12px rgba(233, 69, 96, 0.4);
-    }
-
-    .secondary-btn {
-        background: linear-gradient(135deg, #1a5490 0%, #0f3460 100%);
-        color: #a8dadc;
-        border: 1px solid #1a5490;
-    }
-
-    .secondary-btn:hover:not(:disabled) {
-        background: linear-gradient(135deg, #1e6bb8 0%, #1a5490 100%);
-        color: white;
     }
 
     button:disabled {

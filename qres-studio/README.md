@@ -27,9 +27,7 @@ Built with Tauri v2 (Rust) + Svelte 5 + WebAssembly.
 - **Engine Usage**: Visual breakdown of predictor selection
 - **Collective Learning Banner**: Shows swarm participation status
 
-### 🌐 Hybrid Runtime (New in v10.5)
-- **Native Mode (Default):** Uses the Rust Daemon for maximum performance and P2P Swarm access.
-- **WASM Mode (Browser):** Runs `qres_core` entirely in the browser thread. Zero system dependencies, perfect for quick client-side checks.
+
 
 ### 🌐 P2P Networking
 - **Persistent State**: Swarm toggle survives app restarts

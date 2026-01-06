@@ -18,14 +18,14 @@ The focus shifts from software architecture to hardware acceleration and edge de
 > **Goal:** Offload the `SNN Predictor` and `Mixer` to FPGA logic for microsecond latency.
 
 - [x] **`no_std` Refactor:** Decouple `qres_core` from standard library. (Completed v10.5.0)
-- [ ] **Core Purification:** Move OS-dependent logic (Zstd fallback) to Daemon.
+- [x] **Core Purification:** Move OS-dependent logic (Zstd fallback) to Daemon. (Completed).
 - [ ] **Hardware Description:** Port `Mixer` logic to Verilog/HLS.
 - [ ] **Driver Layer:** Create DMA bridge between Rust Daemon and FPGA Core.
 
 ### 🌐 Phase 2: WebAssembly Core (COMPLETED)
 > **Goal:** Run QRES entirely in the browser for client-side compression.
 
-- [x] **WASM Target:** Ensure `qres_core` compiles to `wasm32-unknown-unknown`.
+- [x] **WASM Target:** Ensure `qres_core` compiles to `wasm32-unknown-unknown` (Core validated).
 - [x] **JS Bindings:** `wasm-bindgen` interface via `qres_wasm` crate.
 - [x] **Studio Integration:** Hybrid Engine implemented in `qres-studio` (Native/WASM toggle).
-- [ ] **Browser Persistence:** Adapt `WorldStateManager` to use `IndexedDB` (Future Work).
+- [ ] **Browser Persistence:** Adapt `WorldStateManager` to use `IndexedDB` (Moved to v11.0). (Future Work).
