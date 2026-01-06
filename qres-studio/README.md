@@ -1,4 +1,4 @@
-# QRES Studio v10.1
+# QRES Studio v10.5
 
 **Cross-platform GUI for QRES v10 (Hybrid Engine)**
 
@@ -164,7 +164,7 @@ Located in app data directory:
 - `swarm_config.json` - Swarm enabled/disabled state
 
 ### Compatibility
-- **QRES Backend**: Compatible with QRES v8.x
+- **QRES Backend**: Compatible with QRES v10.x
 - **Tauri**: Built with Tauri v2 API
 - **Node.js**: Requires v18+
 - **Rust**: Latest stable recommended
@@ -238,4 +238,4 @@ Dual-licensed under MIT OR Apache-2.0.
 
 ---
 
-**QRES Studio v10.1** - *Compression through Collective Intelligence* 🚀
+**QRES Studio v10.5** - *The Hybrid Era* 🚀

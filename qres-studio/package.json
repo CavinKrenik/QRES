@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json --watch",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "postinstall": "svelte-kit sync"
   },
   "license": "MIT",
   "dependencies": {
@@ -20,7 +21,7 @@
     "@types/d3": "^7.4.3",
     "@zerodevx/svelte-toast": "^0.9.6",
     "d3": "^7.9.0",
-    "qres_wasm": "file:../qres_rust/qres_wasm/pkg"
+    "qres-wasm": "file:../qres_rust/qres_wasm/pkg"
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "^3.0.6",
