@@ -18,13 +18,24 @@ Performance metrics for the Quantum-Relational Encoding System.
 
 *Lower is better. Ratio = Compressed Size / Original Size.*
 
-| Dataset | QRES v9.0 | Zstd (L19) | Notes |
-|---------|-----------|------------|-------|
-| **IoT Correlated** (20MB) | **0.760** | 0.450 | *Optimization Pending* |
-| **IoT Noise** (20MB) | 0.920 | 0.880 | *Lack of ANS backend hurts here* |
-| **Text/Code** | **~0.19** | 0.355 | 46% better than Zstd |
-| **PDF Documents** | ~0.9 | ~0.95 | Already compressed |
-| **WAV Audio** | ~0.6 | ~0.8 | Spectral benefits |
+### v11.1 Diverse IoT Benchmarks (NEW)
+
+| Dataset | Size | Compressed | Ratio | Pattern |
+|---------|------|------------|-------|---------|
+| **iot_trending.dat** | 15MB | 7.7MB | **0.489** | Sine + drift |
+| **iot_anomaly.dat** | 15MB | 11.6MB | **0.735** | Stable + spikes |
+| **iot_correlated.dat** | 15MB | 13.3MB | **0.846** | Multi-sensor |
+| **iot_mixed.dat** | 15MB | 7.4MB | **0.473** | Alternating |
+
+### v11 Benchmarks
+
+| Dataset | QRES v11 | QRES v9.0 | Zstd (L19) | Notes |
+|---------|----------|-----------|------------|-------|
+| **IoT Sample** (20MB) | **0.604** | 0.760 | 0.450 | *Optimization in Progress* |
+| **IoT Pure Noise** (20MB) | 1.0 | 0.920 | 0.880 | *Incompressible* |
+| **Text/Code** | **~0.19** | ~0.19 | 0.355 | 46% better than Zstd |
+| **PDF Documents** | ~0.9 | ~0.9 | ~0.95 | Already compressed |
+| **WAV Audio** | ~0.6 | ~0.6 | ~0.8 | Spectral benefits |
 
 ---
 

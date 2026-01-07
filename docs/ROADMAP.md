@@ -4,9 +4,10 @@
 - ✅ **v8.1** – SNN Integration, TNC Fusion, Hive Mind
 - ✅ **v9.0** – GIF Neurons, OSBC Pruning, Auto-Tuning
 - ✅ **v10.0** – Tensor Network Correlator, Deterministic Q16.16
-- ✅ **v10.1** – Security Hardening, JSON Persistence, Structured Logging (Stable Baseline)
-- ✅ **v10.1** – Security Hardening, JSON Persistence, Structured Logging (Stable Baseline)
-- ✅ **v10.5** – FPGA Acceleration & WebAssembly Core (Active)
+- ✅ **v10.5** – FPGA Acceleration & WebAssembly Core
+- ✅ **v11.0** – Fast Sigmoid, Browser Persistence (IndexedDB)
+- ✅ **v11.1** – Portable SIMD (`wide` crate), Diverse IoT Benchmarks
+- ✅ **v11.2** – QES (Quantum-Entangled Swarms), Federated Dreaming (Active)
 
 ---
 

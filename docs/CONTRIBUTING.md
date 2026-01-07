@@ -30,17 +30,35 @@ maturin develop
 
 ---
 
-## Areas of Interest
+## Areas of Interest (v11)
 
 We welcome contributions in these areas:
 
-| Area | Description |
-|------|-------------|
-| 🧠 **SNN Optimization** | Improve sparsity and efficiency |
-| ⚛️ **QNN Circuits** | Better variational designs |
-| 🐝 **P2P Swarm** | Scalability and reliability |
-| 📊 **Benchmarks** | New datasets and metrics |
-| 📝 **Documentation** | Tutorials and examples |
+| Area | Description | Priority |
+|------|-------------|----------|
+| 🚀 **Portable SIMD** | ✅ Migrate `mixer.rs` to `wide` crate for ARM/WASM | **Done** |
+| 🧠 **SNN Optimization** | Improve sparsity and efficiency | Medium |
+| ⚛️ **FPGA Acceleration** | Verilog for Mixer offload | **High** |
+| 🐝 **P2P Swarm** | Scalability and reliability | Medium |
+| 📊 **Benchmarks** | New datasets and metrics | Low |
+| 📝 **Documentation** | Tutorials and examples | Low |
+
+---
+
+## Data Contribution Guidelines (v11.1 NEW)
+
+Help us improve QRES benchmarks by contributing test datasets!
+
+### How to Contribute Data
+1. Use `benchmarks/generate_diverse_iot.py` as a template
+2. Create datasets with varied patterns (trends, anomalies, correlations)
+3. Target 10-20MB file sizes
+4. Run QRES compression and document ratios
+5. Submit via PR to `data/community/`
+
+### Dataset Naming Convention
+- `<type>_<pattern>_<size>.dat`
+- Example: `iot_sinusoidal_15mb.dat`
 
 ---
 

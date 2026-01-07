@@ -106,8 +106,21 @@ Distributed intelligence via `libp2p`:
 
 ---
 
+## 4. v11.x Innovations
+
+### 4.1 Portable SIMD (v11.1)
+Full migration from x86-only `__m256` intrinsics to portable `wide::f32x8`. Compiles for ARM NEON, x86 AVX, and WASM SIMD.
+
+### 4.2 QES — Quantum-Entangled Swarms (v11.2)
+Zero-bandwidth weight synchronization via PRNG seeds. Swarm nodes generate identical weight deltas without explicit communication.
+
+### 4.3 Federated Dreaming (v11.2)
+Idle-time hallucinatory training. Generates synthetic samples based on learned patterns for privacy-preserving weight updates.
+
+---
+
 ## Conclusion
-QRES v10.0 bridges the gap between academic theory and industrial reliability. By decoupling the deterministic **Core** from the evolutionary **Swarm**, we deliver a tool that is safe for production yet ready for the Singularity.
+QRES v11.2 bridges the gap between academic theory and industrial reliability. By decoupling the deterministic **Core** from the evolutionary **Swarm**, and enabling portable hardware deployment, we deliver a tool that is safe for production, runs on any architecture, and is ready for the Singularity.
 
 ---
 

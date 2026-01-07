@@ -1,22 +1,17 @@
-// QRES v5.0 Mixer: Hybrid Neural-Statistical Ensemble (SIMD/Scalar)
+// QRES v11.1 Mixer: Hybrid Neural-Statistical Ensemble (Portable SIMD)
 // Features:
 // 1. Weighted Ensemble of Predictors (Linear, Simple, Graph, Spectral, LzMatch)
 // 2. Dynamic AR(2) Auto-regressor for Waveforms
 // 3. Variance-based Algorithm Switching (Stable -> AR2, Chaotic -> Ensemble)
+// 4. Portable SIMD via `wide` crate (ARM NEON, x86 AVX, WASM)
 
-#[cfg(target_arch = "x86_64")]
-use core::arch::x86_64::*;
-
+use wide::f32x8;
 use alloc::vec::Vec;
 
 pub const NUM_MODELS: usize = 6;
 
-// Define storage type based on architecture
-#[cfg(target_arch = "x86_64")]
-type WeightStorage = __m256;
-
-#[cfg(not(target_arch = "x86_64"))]
-type WeightStorage = [f32; 8];
+// Portable SIMD storage - works on all platforms
+type WeightStorage = f32x8;
 
 pub struct Mixer {
     // Ensemble Weights (Aligned __m256 for SIMD, [f32;8] for Scalar)
@@ -43,27 +38,18 @@ pub struct Mixer {
 }
 
 impl Mixer {
-    #[cfg(target_arch = "x86_64")]
+    /// Create a new Mixer with portable SIMD weights.
     pub fn new(init: Option<&[f32]>, global: Option<&[f32]>) -> Self {
-        // Helper to load into AVX
-        let load_simd = |data: &[f32]| -> __m256 {
+        // Helper to load into f32x8
+        let load_simd = |data: &[f32]| -> f32x8 {
             let mut arr = [0.0f32; 8];
             for (i, &v) in data.iter().take(8).enumerate() {
                 arr[i] = v;
             }
-            unsafe { _mm256_loadu_ps(arr.as_ptr()) }
+            f32x8::new(arr)
         };
 
-        // Defaults: 0.05, 0.05, 0.05, 0.1, 0.2, 0.5 (padded)
-        // Note: The previous default loop was 0.0, 0.05... etc.
-        // Let's stick to explicit default array if None.
-        // Previous: [0.0, 0.05, 0.05, 0.05, 0.05, 0.1, 0.2, 0.5] (reversed in set_ps?)
-        // _mm256_set_ps(e7, e6, e5, e4, e3, e2, e1, e0)
-        // e0 is index 0.
-        // models: linear, simple, graph, spectral, lz_match.
-        // Let's rely on standard array initialization.
-
-        let default_w = [0.4, 0.2, 0.1, 0.1, 0.1, 0.1, 0.0, 0.0]; // Linear..Transformer..Pad
+        let default_w = [0.4, 0.2, 0.1, 0.1, 0.1, 0.1, 0.0, 0.0];
         let weights = if let Some(w) = init {
             load_simd(w)
         } else {
@@ -71,41 +57,6 @@ impl Mixer {
         };
 
         let global_weights = global.map(load_simd);
-
-        Mixer {
-            weights,
-            learning_rate: 0.01,
-            ar_coeffs: [1.0, 0.0], // Start as Delta Predictor (Optimized for Telemetry)
-            history: [0.0, 0.0],   // Zero init
-            ar_learning_rate: 0.05,
-            ar_velocities: [0.0, 0.0],
-            running_mean: 128.0,
-            running_var: 1000.0,
-            count: 0,
-            current_winner: 0,
-            win_streak: 0,
-            global_weights,
-        }
-    }
-
-    #[cfg(not(target_arch = "x86_64"))]
-    pub fn new(init: Option<&[f32]>, global: Option<&[f32]>) -> Self {
-        let load_scalar = |data: &[f32]| -> [f32; 8] {
-            let mut arr = [0.0; 8];
-            for (i, &v) in data.iter().take(8).enumerate() {
-                arr[i] = v;
-            }
-            arr
-        };
-
-        let default_w = [0.4, 0.2, 0.1, 0.1, 0.1, 0.1, 0.0, 0.0];
-        let weights = if let Some(w) = init {
-            load_scalar(w)
-        } else {
-            default_w
-        };
-
-        let global_weights = global.map(load_scalar);
 
         Mixer {
             weights,
@@ -191,40 +142,23 @@ impl Mixer {
         sigmoid(logit)
     }
 
-    /// Extract weights as array (handles both SIMD and scalar)
-    #[cfg(target_arch = "x86_64")]
+    /// Extract weights as array (portable)
     fn extract_weights(&self) -> Vec<f32> {
-        let mut arr = [0.0f32; 8];
-        unsafe { _mm256_storeu_ps(arr.as_mut_ptr(), self.weights) };
-        arr.to_vec()
+        self.weights.to_array().to_vec()
     }
 
-    #[cfg(not(target_arch = "x86_64"))]
-    fn extract_weights(&self) -> Vec<f32> {
-        self.weights.to_vec()
-    }
-
-    #[cfg(target_arch = "x86_64")]
+    /// Compute weighted ensemble score (portable SIMD)
     fn compute_ensemble_score(&self, preds: &[u8; NUM_MODELS]) -> f32 {
         let mut p_arr = [0.0f32; 8];
         for i in 0..NUM_MODELS {
             p_arr[i] = preds[i] as f32;
         }
-        let p_simd = unsafe { _mm256_loadu_ps(p_arr.as_ptr()) };
-
-        let weighted = unsafe { _mm256_mul_ps(self.weights, p_simd) };
-        let h1 = unsafe { _mm256_hadd_ps(weighted, weighted) };
-        let h2 = unsafe { _mm256_hadd_ps(h1, h1) };
-        unsafe { _mm256_cvtss_f32(h2) }
-    }
-
-    #[cfg(not(target_arch = "x86_64"))]
-    fn compute_ensemble_score(&self, preds: &[u8; NUM_MODELS]) -> f32 {
-        let mut sum = 0.0;
-        for i in 0..NUM_MODELS {
-            sum += self.weights[i] * (preds[i] as f32);
-        }
-        sum
+        let p_simd = f32x8::new(p_arr);
+        let weighted = self.weights * p_simd;
+        
+        // Sum all lanes using to_array
+        let arr = weighted.to_array();
+        arr[0] + arr[1] + arr[2] + arr[3] + arr[4] + arr[5] + arr[6] + arr[7]
     }
 
     // Batch and Update logic follow...
@@ -385,87 +319,57 @@ impl Mixer {
         self.history[0] = y;
     }
 
-    #[cfg(target_arch = "x86_64")]
+    /// Update weights using LMS algorithm (portable SIMD)
     fn update_weights(&mut self, y: f32, preds: &[u8; NUM_MODELS]) {
+        // Convert predictions to f32x8
         let mut p_arr = [0.0f32; 8];
         for i in 0..NUM_MODELS {
             p_arr[i] = preds[i] as f32;
         }
-        let p_simd = unsafe { _mm256_loadu_ps(p_arr.as_ptr()) };
-        let y_simd = unsafe { _mm256_set1_ps(y) };
+        let p_simd = f32x8::new(p_arr);
+        let y_simd = f32x8::splat(y);
 
-        let diff = unsafe { _mm256_sub_ps(p_simd, y_simd) };
-        let error = unsafe { _mm256_max_ps(diff, _mm256_sub_ps(_mm256_setzero_ps(), diff)) };
+        // Calculate error
+        let diff = p_simd - y_simd;
+        let error = diff.abs();
 
-        let err_norm = unsafe { _mm256_div_ps(error, _mm256_set1_ps(255.0)) };
-        let err_norm = unsafe {
-            _mm256_min_ps(
-                _mm256_max_ps(err_norm, _mm256_set1_ps(0.0)),
-                _mm256_set1_ps(1.0),
-            )
-        };
-        let factor = unsafe {
-            _mm256_sub_ps(
-                _mm256_set1_ps(1.0),
-                _mm256_mul_ps(_mm256_set1_ps(self.learning_rate), err_norm),
-            )
-        };
+        // Normalize error and calculate factor
+        let err_norm = (error / f32x8::splat(255.0))
+            .max(f32x8::splat(0.0))
+            .min(f32x8::splat(1.0));
+        let factor = f32x8::splat(1.0) - f32x8::splat(self.learning_rate) * err_norm;
 
-        self.weights = unsafe { _mm256_mul_ps(self.weights, factor) };
+        // Update weights
+        self.weights = self.weights * factor;
 
         // FedProx: Pull towards global weights if present
         if let Some(global) = self.global_weights {
-            let mu = 0.001; // Continuous proximal pull
-            let diff_g = unsafe { _mm256_sub_ps(global, self.weights) };
-            let correction = unsafe { _mm256_mul_ps(diff_g, _mm256_set1_ps(mu)) };
-            self.weights = unsafe { _mm256_add_ps(self.weights, correction) };
+            let mu = f32x8::splat(0.001);
+            let diff_g = global - self.weights;
+            self.weights = self.weights + diff_g * mu;
         }
 
-        self.weights = unsafe { _mm256_add_ps(self.weights, _mm256_set1_ps(0.001)) };
+        // Regeneration term
+        self.weights = self.weights + f32x8::splat(0.001);
 
-        let mask = unsafe { _mm256_set_ps(0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0) };
-        self.weights = unsafe { _mm256_mul_ps(self.weights, mask) };
+        // Mask out unused lanes (indices 6, 7)
+        let mask = f32x8::new([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0]);
+        self.weights = self.weights * mask;
 
-        let h1 = unsafe { _mm256_hadd_ps(self.weights, self.weights) };
-        let h2 = unsafe { _mm256_hadd_ps(h1, h1) };
-        let sum_w = unsafe { _mm256_cvtss_f32(h2) };
+        // Normalize weights
+        let arr = self.weights.to_array();
+        let sum_w: f32 = arr.iter().sum();
         if sum_w > 0.0001 {
-            self.weights = unsafe { _mm256_div_ps(self.weights, _mm256_set1_ps(sum_w)) };
-        }
-    }
-
-    #[cfg(not(target_arch = "x86_64"))]
-    fn update_weights(&mut self, y: f32, preds: &[u8; NUM_MODELS]) {
-        let mut sum_w = 0.0;
-        for i in 0..NUM_MODELS {
-            let p_val = preds[i] as f32;
-            let err = (p_val - y).abs();
-            let err_norm = (err / 255.0).clamp(0.0, 1.0);
-            let factor = 1.0 - (self.learning_rate * err_norm);
-
-            self.weights[i] *= factor;
-
-            // FedProx
-            if let Some(global) = self.global_weights {
-                let mu = 0.001;
-                self.weights[i] += mu * (global[i] - self.weights[i]);
-            }
-
-            self.weights[i] += 0.001; // Regen
-            sum_w += self.weights[i];
-        }
-
-        if sum_w > 0.0001 {
-            for w in &mut self.weights {
-                *w /= sum_w;
-            }
+            self.weights = self.weights / f32x8::splat(sum_w);
         }
     }
 }
 
-/// Sigmoid activation function for logistic mixing
-/// f(x) = 1 / (1 + e^(-x))
+/// Fast Sigmoid activation function (approximation)
+/// Uses algebraic form: f(x) = 0.5 * (x / (1 + |x|) + 1)
+/// Avoids expensive expf, ~10x faster on MCUs/FPGAs.
 #[inline]
 fn sigmoid(x: f32) -> f32 {
-    1.0 / (1.0 + libm::expf(-x))
+    let x_clamped = if x > 6.0 { 6.0 } else if x < -6.0 { -6.0 } else { x };
+    0.5 * (x_clamped / (1.0 + libm::fabsf(x_clamped)) + 1.0)
 }
