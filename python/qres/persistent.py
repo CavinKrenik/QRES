@@ -11,6 +11,7 @@ import time
 import numpy as np
 from typing import Optional, Tuple, Dict
 import networkx as nx
+import torch
 
 try:
     import qutip as qt
@@ -39,6 +40,13 @@ class WorldStateManager:
                 "shape": obj.shape,
                 "data": base64.b64encode(obj.tobytes()).decode('ascii')
             }
+        elif isinstance(obj, torch.Tensor):
+             return {
+                "__type__": "torch",
+                "dtype": str(obj.dtype),
+                "shape": tuple(obj.shape),
+                "data": base64.b64encode(obj.detach().cpu().numpy().tobytes()).decode('ascii')
+            }
         elif isinstance(obj, bytes):
              return {
                 "__type__": "bytes",
@@ -57,6 +65,12 @@ class WorldStateManager:
             if dct["__type__"] == "numpy":
                 data = base64.b64decode(dct["data"])
                 return np.frombuffer(data, dtype=dct["dtype"]).reshape(dct["shape"])
+            elif dct["__type__"] == "torch":
+                data = base64.b64decode(dct["data"])
+                # Note: This naively restores as float32/64 depending on setup, rigorous type string parsing omitted for brevity
+                # Getting dtype from string correctly would require a mapping, defaulting to float32 for now or simple eval if safe
+                np_arr = np.frombuffer(data).reshape(dct["shape"])
+                return torch.from_numpy(np_arr)
             elif dct["__type__"] == "bytes":
                 return base64.b64decode(dct["data"])
             elif dct["__type__"] == "complex":

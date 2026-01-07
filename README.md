@@ -4,7 +4,7 @@
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/CavinKrenik/QRES/release.yml?style=flat)](https://github.com/CavinKrenik/QRES/actions)
-[![Version](https://img.shields.io/badge/version-v10.5.0-brightgreen)](https://github.com/CavinKrenik/QRES/releases)
+[![Version](https://img.shields.io/badge/version-v12.0.0-brightgreen)](https://github.com/CavinKrenik/QRES/releases)
 [![Docs](https://img.shields.io/badge/docs-vision-orange)](docs/VISION.md)
 
 QRES is a compression framework built for structured time-series data, leveraging Spiking Neural Networks (SNNs) and a federated P2P architecture to learn data patterns. Unlike general-purpose compressors (like Zstd or Gzip), QRES allows nodes to share "compression intelligence" (models) without sharing raw data, making it ideal for bandwidth-constrained IoT swarms and privacy-preserving analytics.
@@ -109,10 +109,11 @@ Performance on structured data sets (Intel Ice Lake). See full details in [BENCH
 
 ## 🗺️ Status & Roadmap
 
-**Current Version:** v10.5 (Hybrid Era)
+**Current Version:** v12.0 (Swarm Scaling Era)
 
 *   ✅ **Production Ready**: `qres_core`, Python bindings, WASM decoder.
-*   � **Beta**: P2P Swarm APIs, Advanced Federation.
+*   ✅ **Stable**: QES (Quantum-Entangled Swarms), Federated Dreaming.
+*   ✅ **Verified**: Portable SIMD (ARM/x86/WASM via `wide` crate).
 *   📅 **Planned**: Hardware description language (HDL) implementation.
 
 See [ROADMAP.md](docs/ROADMAP.md) for the detailed timeline.

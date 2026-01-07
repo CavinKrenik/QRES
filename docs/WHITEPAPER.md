@@ -1,6 +1,6 @@
 # QRES Technical Whitepaper
 
-**Version 10.0 "Singularity Engine"**
+**Version 12.0 "Swarm Scaling Era"**
 
 ---
 
