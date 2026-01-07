@@ -30,6 +30,8 @@ class QesSyncManager:
 
 def run_swarm_test(num_nodes: int = 3, num_epochs: int = 5, seed: int = 42):
     """Run QES swarm synchronization test."""
+    import time
+    
     print("=== QES Swarm Test ===\n")
     print(f"Nodes: {num_nodes}")
     print(f"Shared Seed: {seed}")
@@ -39,33 +41,35 @@ def run_swarm_test(num_nodes: int = 3, num_epochs: int = 5, seed: int = 42):
     nodes = [QesSyncManager(seed) for _ in range(num_nodes)]
     
     all_passed = True
+    total_time = 0
     
     for epoch in range(1, num_epochs + 1):
-        print(f"--- Epoch {epoch} ---")
+        start = time.perf_counter()
         
         # Generate deltas for each node
         all_deltas = [node.generate_weight_deltas(6) for node in nodes]
         
+        elapsed = time.perf_counter() - start
+        total_time += elapsed
+        
         # Display first node's deltas
         d = all_deltas[0]
-        print(f"  Deltas: [{d[0]:.4f}, {d[1]:.4f}, {d[2]:.4f}, ...]")
+        print(f"Epoch {epoch:2d}: [{d[0]:+.4f}, {d[1]:+.4f}, ...] ({elapsed*1000:.2f}ms)")
         
         # Check synchronization
         first = all_deltas[0]
         synced = all(d == first for d in all_deltas[1:])
         
-        if synced:
-            print("  ✅ All nodes synchronized!")
-        else:
-            print("  ❌ Synchronization FAILED!")
+        if not synced:
+            print("  ❌ DESYNC!")
             all_passed = False
-        print()
     
-    print("=== Test Complete ===")
-    if all_passed:
-        print(f"Result: PASSED - {num_epochs} epochs, {num_nodes} nodes in sync")
-    else:
-        print("Result: FAILED - Nodes fell out of sync")
+    print(f"\n=== Results ===")
+    print(f"Nodes: {num_nodes}")
+    print(f"Epochs: {num_epochs}")
+    print(f"Total Time: {total_time*1000:.2f}ms")
+    print(f"Avg/Epoch: {total_time/num_epochs*1000:.2f}ms")
+    print(f"Sync Rate: {'100%' if all_passed else 'FAILED'}")
     
     return all_passed
 

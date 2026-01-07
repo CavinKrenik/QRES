@@ -1,0 +1,46 @@
+# Build Artifacts
+target/
+qres_rust/target/
+qres-studio/target/
+titan_data/
+results/
+/dist
+*.so
+*.dll
+*.dylib
+*.pyd
+*.p12
+src-tauri/target
+
+# GUI / Node
+qres-studio/node_modules/
+qres-studio/ui/node_modules/
+qres-studio/ui/dist/
+qres-studio/dist/
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# QRES Output & Test Data
+*.qres
+*.bin
+
+# Editor / IDE
+.vscode/
+.idea/
+.DS_Store
+
+# Generated test data
+data/iot/*.dat
+iot_telemetry.dat
+iot_telemetry.dat.zst
+ai/rl_logs/
+.agent/
+
+# Environment
+.env
