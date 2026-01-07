@@ -340,27 +340,27 @@ impl Mixer {
         let factor = f32x8::splat(1.0) - f32x8::splat(self.learning_rate) * err_norm;
 
         // Update weights
-        self.weights = self.weights * factor;
+        self.weights *= factor;
 
         // FedProx: Pull towards global weights if present
         if let Some(global) = self.global_weights {
             let mu = f32x8::splat(0.001);
             let diff_g = global - self.weights;
-            self.weights = self.weights + diff_g * mu;
+            self.weights += diff_g * mu;
         }
 
         // Regeneration term
-        self.weights = self.weights + f32x8::splat(0.001);
+        self.weights += f32x8::splat(0.001);
 
         // Mask out unused lanes (indices 6, 7)
         let mask = f32x8::new([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0]);
-        self.weights = self.weights * mask;
+        self.weights *= mask;
 
         // Normalize weights
         let arr = self.weights.to_array();
         let sum_w: f32 = arr.iter().sum();
         if sum_w > 0.0001 {
-            self.weights = self.weights / f32x8::splat(sum_w);
+            self.weights /= f32x8::splat(sum_w);
         }
     }
 }
@@ -370,12 +370,6 @@ impl Mixer {
 /// Avoids expensive expf, ~10x faster on MCUs/FPGAs.
 #[inline]
 fn sigmoid(x: f32) -> f32 {
-    let x_clamped = if x > 6.0 {
-        6.0
-    } else if x < -6.0 {
-        -6.0
-    } else {
-        x
-    };
+    let x_clamped = x.clamp(-6.0, 6.0);
     0.5 * (x_clamped / (1.0 + libm::fabsf(x_clamped)) + 1.0)
 }
