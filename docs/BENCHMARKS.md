@@ -9,8 +9,20 @@ Performance metrics for the Quantum-Relational Encoding System.
 | Property | Value |
 |----------|-------|
 | **Hardware** | Intel Ice Lake (AWS c6i.4xlarge) |
-| **Version** | QRES v10.5 (Hybrid Era) |
+| **Version** | QRES v12.0 (Swarm Scaling Era) |
 | **Agent** | MetaBrain v5 (SNN+QNN) |
+
+---
+
+## v12.0 QES Swarm Metrics (NEW)
+
+| Nodes | Epochs | Total Time | Avg/Epoch | Sync Rate |
+|-------|--------|-----------|-----------|-----------|
+| **10** | 50 | 0.50ms | 0.01ms | **100%** |
+| **10** | 20 | 0.44ms | 0.02ms | **100%** |
+| **3** | 10 | 0.15ms | 0.02ms | **100%** |
+
+*Zero-bandwidth model synchronization via PRNG-seeded weight deltas.*
 
 ---
 
@@ -18,7 +30,7 @@ Performance metrics for the Quantum-Relational Encoding System.
 
 *Lower is better. Ratio = Compressed Size / Original Size.*
 
-### v11.1 Diverse IoT Benchmarks (NEW)
+### v11.1 Diverse IoT Benchmarks
 
 | Dataset | Size | Compressed | Ratio | Pattern |
 |---------|------|------------|-------|---------|
