@@ -5,8 +5,8 @@
 // 3. Variance-based Algorithm Switching (Stable -> AR2, Chaotic -> Ensemble)
 // 4. Portable SIMD via `wide` crate (ARM NEON, x86 AVX, WASM)
 
-use wide::f32x8;
 use alloc::vec::Vec;
+use wide::f32x8;
 
 pub const NUM_MODELS: usize = 6;
 
@@ -155,7 +155,7 @@ impl Mixer {
         }
         let p_simd = f32x8::new(p_arr);
         let weighted = self.weights * p_simd;
-        
+
         // Sum all lanes using to_array
         let arr = weighted.to_array();
         arr[0] + arr[1] + arr[2] + arr[3] + arr[4] + arr[5] + arr[6] + arr[7]
@@ -370,6 +370,12 @@ impl Mixer {
 /// Avoids expensive expf, ~10x faster on MCUs/FPGAs.
 #[inline]
 fn sigmoid(x: f32) -> f32 {
-    let x_clamped = if x > 6.0 { 6.0 } else if x < -6.0 { -6.0 } else { x };
+    let x_clamped = if x > 6.0 {
+        6.0
+    } else if x < -6.0 {
+        -6.0
+    } else {
+        x
+    };
     0.5 * (x_clamped / (1.0 + libm::fabsf(x_clamped)) + 1.0)
 }

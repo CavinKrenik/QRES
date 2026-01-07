@@ -77,7 +77,7 @@ mod tests {
         let sample = mgr.generate_dream_sample(128);
         assert_eq!(sample.len(), 1024);
         assert_eq!(mgr.dream_count(), 1);
-        
+
         // All values should be in valid range
         for &byte in &sample {
             assert!(byte <= 255);
