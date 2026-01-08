@@ -84,6 +84,44 @@ compromised = [(n + p) / 2 for n, p in zip(normal_weights, poisoned_weights)]
 # Model remains: [0.1, 0.2, 0.3]
 ```
 
+## Assumed Adversaries
+
+This section documents the threat actors QRES is designed to defend against, their capabilities, and the limitations of current defenses.
+
+### Byzantine Adversary
+| Aspect | Details |
+|--------|---------|
+| **Capability** | Send arbitrary malicious gradients/weights to poison the global model |
+| **Example Attack** | Submit `[1e6, -1e6, 0]` to maximize damage via averaging |
+| **Defense** | Krum algorithm rejects outlier updates based on pairwise distances |
+| **Limitation** | Breaks if >20% of nodes collude (f < n/2 - 1 for Krum) |
+
+### Honest-but-Curious Aggregator
+| Aspect | Details |
+|--------|---------|
+| **Capability** | Observe all model updates to infer private training data |
+| **Example Attack** | Gradient inversion to reconstruct images/text from updates |
+| **Defense** | Differential Privacy (ε-DP noise) + Secure Aggregation (pairwise masking) |
+| **Limitation** | Colluding majority can reconstruct individual updates |
+
+### Sybil Attacker
+| Aspect | Details |
+|--------|---------|
+| **Capability** | Create multiple fake identities to gain disproportionate influence |
+| **Example Attack** | Register 100 fake nodes to dominate aggregation |
+| **Defense** | PKI with trusted seed nodes; ed25519 identity verification |
+| **Limitation** | Open networks without identity authority are vulnerable |
+
+### Out of Scope
+
+The following are **not** addressed by current QRES defenses:
+
+- **Side-channel attacks** (timing, power analysis)
+- **Supply chain compromise** (malicious dependencies)
+- **Quantum adversaries** (post-quantum crypto planned for v16+)
+- **Physical access** to nodes
+- **Social engineering** of node operators
+
 ## Timeline
 
 | Phase | Target | Status |
