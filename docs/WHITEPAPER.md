@@ -10,6 +10,7 @@ QRES implements a layered defense strategy:
 1.  **Authentication:** ed25519 signatures verify origin and integrity.
 2.  **Robust Aggregation:** Krum algorithm rejects poisoned updates.
 3.  **Differential Privacy:** Gaussian noise injection ensures (ε, δ)-privacy for individual node contributions.
+4.  **Secure Aggregation:** Pairwise additive masking utilizing X25519 shared secrets to hide raw updates from peers.
 
 ---
 

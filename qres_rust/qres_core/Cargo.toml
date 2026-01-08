@@ -29,6 +29,11 @@ wide = "0.7"
 num-traits = { version = "0.2", default-features = false, features = ["libm"] }
 pyo3 = { version = "0.22", optional = true, features = ["abi3-py38", "extension-module"] }
 
+# Secure Aggregation dependencies
+x25519-dalek = { version = "2.0", default-features = false, features = ["static_secrets"] }
+rand_chacha = { version = "0.3", default-features = false }
+rand_core = { version = "0.6", default-features = false }
+
 # Privacy features
 opendp = { version = "0.10", optional = true }
 

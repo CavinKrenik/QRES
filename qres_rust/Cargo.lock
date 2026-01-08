@@ -3189,11 +3189,14 @@ dependencies = [
  "probability",
  "pyo3",
  "rand 0.8.5",
+ "rand_chacha 0.3.1",
+ "rand_core 0.6.4",
  "rustfft",
  "serde",
  "serde_json",
  "walkdir",
  "wide",
+ "x25519-dalek",
 ]
 
 [[package]]

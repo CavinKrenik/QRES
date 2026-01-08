@@ -16,6 +16,9 @@ pub struct PrivacyConfig {
     /// L2 clipping threshold
     #[serde(default = "default_clipping")]
     pub clipping_threshold: f32,
+    /// Whether secure aggregation (pairwise masking) is enabled
+    #[serde(default)]
+    pub secure_aggregation: bool,
 }
 
 impl Default for PrivacyConfig {
@@ -25,6 +28,7 @@ impl Default for PrivacyConfig {
             epsilon: 1.0,
             delta: 1e-5,
             clipping_threshold: 1.0,
+            secure_aggregation: false,
         }
     }
 }
