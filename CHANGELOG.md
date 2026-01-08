@@ -4,6 +4,21 @@ All notable changes to this project are documented here.
 
 ---
 
+## [15.0.0] - 2026-01-08 "Privacy"
+
+### Added
+- **Phase 3 Security - Privacy:**
+  - `privacy.rs`: Differential Privacy with Gaussian mechanism (Box-Muller fallback for no_std)
+  - `secure_agg.rs`: Pairwise masking via X25519 ECDH + ChaCha20 RNG
+  - `zk_proofs.rs`: Pedersen Commitments + Proof of Norm via EdwardsPoint
+  - Config options: `privacy.enabled`, `epsilon`, `delta`, `clipping_threshold`, `secure_aggregation`
+
+### Security
+- Model updates now have provable privacy (ε-DP) and aggregation masking
+- Outlier rejection + norm proofs defend against poisoning attacks
+
+---
+
 ## [13.0.0] - 2026-01-08 "Security Hardening"
 
 ### Added
