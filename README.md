@@ -12,7 +12,7 @@ What if we compressed data the way brains compress memories—by predicting patt
 
 QRES started with a simple question: **Can you compress data using only three comparisons: `<`, `>`, `=`?**
 
-That question led to a multi-year exploration of predictive compression, deterministic neural networks, and distributed model synchronization.
+That question led to the exploration of predictive compression, deterministic neural networks, and distributed model synchronization.
 
 ## How It Works
 
