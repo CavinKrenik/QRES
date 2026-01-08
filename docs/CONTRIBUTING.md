@@ -1,6 +1,6 @@
 # Contributing to QRES
 
-Thank you for your interest in contributing to the Quantum-Relational Encoding System!
+Thank you for your interest in contributing to QRES!
 
 ---
 

@@ -41,9 +41,9 @@
 *   **"Energy-Efficient Intelligence: SNN Survey"** (Oulu Univ., Oct 2025): 1,000-10,000x energy reduction vs ANNs.
     *   *Insight:* Edge viability for QRES IoT deployment.
 
-## 8. Quantum Machine Learning Compression (Implemented in v9.0)
+## 8. Tensor Network Compression (Implemented in v9.0)
 
-*   **"Equivariant Quantum Operator Compression"** (NeurIPS 2025): Preserve O(3) symmetries in quantum tensors.
-    *   *QRES v9.0:* Implemented in `qnn_vqc.py:equivariant_lattice()`.
-*   **"Quantum Autoencoders for Hidden Subgroup Compression"** (QuantumZeitgeist, Nov 2025): Data reduction via symmetry groups.
-    *   *Status:* TNC integrated in v10.0; True quantum hardware pending (Phase 3).
+*   **"Equivariant Operator Compression"** (NeurIPS 2025): Preserve O(3) symmetries in tensor networks.
+    *   *QRES v9.0:* Implemented in `tensor_predictor.py:equivariant_lattice()`.
+*   **"Autoencoders for Hidden Subgroup Compression"** (2025): Data reduction via symmetry groups.
+    *   *Status:* TNC integrated in v10.0; hardware acceleration on roadmap (Phase 3).

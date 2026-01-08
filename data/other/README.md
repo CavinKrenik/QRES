@@ -14,5 +14,5 @@ Files here should not be assumed to contain recoverable structure.
 ### Testing Focus
 
 - **Fidelity Check**: `python verify_fidelity.py` should show 100% matches.
-- **Quantum Mode**: `python qres_quantum_cli.py data/other/sample.pdf --mode quantum` should likely fallback to binary/spectral graph.
+- **Tensor Mode**: `python qres_tensor_cli.py data/other/sample.pdf --mode tensor` should likely fallback to binary/spectral graph.
 - **MetaBrain Training**: These files provide negative examples (high entropy or opaque structure) to teach the agent when *not* to use expensive strategies.

@@ -7,7 +7,7 @@
 - ✅ **v10.5** – FPGA Acceleration & WebAssembly Core
 - ✅ **v11.0** – Fast Sigmoid, Browser Persistence (IndexedDB)
 - ✅ **v11.1** – Portable SIMD (`wide` crate), Diverse IoT Benchmarks
-- ✅ **v11.2** – QES (Quantum-Entangled Swarms), Federated Dreaming (Active)
+- ✅ **v11.2** – Federated Swarms, Federated Dreaming (Active)
 
 ---
 

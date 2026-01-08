@@ -15,6 +15,6 @@ This directory contains diverse sample data for training the QRES MetaBrain and 
 Use these files for benchmarking or training:
 
 ```bash
-python qres_quantum_cli.py data/iot/iot_telemetry_sample.dat --mode standard
+python qres_tensor_cli.py data/iot/iot_telemetry_sample.dat --mode standard
 python ai/train_compression_ppo.py --data-dir data/
 ```

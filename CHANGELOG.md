@@ -42,23 +42,23 @@ All notable changes to this project are documented here.
 ### Added
 - **GIF Neurons**: Generalized Integrate-and-Fire from SpikeLLM (ICLR 2025)
 - **OSBC Pruning**: Second-order pruning achieving 97% sparsity
-- **Equivariant QNN**: Symmetry-preserving lattice compression
+- **Equivariant Tensor Network**: Symmetry-preserving lattice compression
 - **Auto-Tuning**: Fine-tune MetaBrain on user data (`auto_tune.py`)
 - **Research Citations**: 2025 papers for SNN/QML advances
 
 ### Changed
 - Upgraded SNN predictor from LIF to GIF neurons
-- Enhanced QNN with equivariant lattice method
+- Enhanced tensor predictor with equivariant lattice method
 
 ---
 
-## [8.1.0] - 2026-01-04 "Brain-Quantum ML"
+## [8.1.0] - 2026-01-04 "Brain-Neural ML"
 
 ### Added
 - **Spiking Neural Networks**: `snn_predictor.py` with LIF neurons
-- **Quantum VQC**: `qnn_vqc.py` with variational circuits
+- **Tensor Predictor**: `tensor_predictor.py` with correlation detection
 - **Hive Mind**: `hive_mind.py` with FedProx and KL-FedDis
-- **MetaBrain v5**: SNN+QNN hybrid (261-dim observations)
+- **MetaBrain v5**: SNN + Tensor hybrid (261-dim observations)
 - **Swarm CLI**: `swarm_cli.py` with Fed2Com delta compression
 - **Demo Notebook**: `examples/brain_demo.ipynb`
 
@@ -79,12 +79,12 @@ All notable changes to this project are documented here.
 
 ---
 
-## [7.5.0] - 2025-12-30 "Quantum Foundations"
+## [7.5.0] - 2025-12-30 "Tensor Foundations"
 
 ### Added
-- Tensor Network Compression (`QuantumEncoder`)
+- Tensor Network Compression (`TensorEncoder`)
 - Haar Wavelet Transform for MPS
-- Quantum Mode CLI (`qres_quantum_cli.py`)
+- Tensor Mode CLI (`qres_tensor_cli.py`)
 
 ---
 

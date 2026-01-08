@@ -11,7 +11,7 @@ pub fn compress(data: &[u8], config: CompressionConfig) -> Result<Vec<u8>, QresE
 Compresses a byte slice with deterministic behavior.
 
 - **data**: Input byte slice.
-- **config**: Struct containing `mode` (Standard/Quantum), `threshold` (0.0-1.0), and `window_size`.
+- **config**: Struct containing `mode` (Standard/Tensor), `threshold` (0.0-1.0), and `window_size`.
 - **Returns**: `Vec<u8>` containing the compressed bitstream.
 
 ### `decompress`
@@ -28,7 +28,7 @@ The Python API wraps the Rust core for high-performance usage in scripts and ML 
 
 ### `qres_core.compress(data: bytes, mode: str = "standard") -> bytes`
 - **data**: Bytes to compress.
-- **mode**: `"standard"` (Linear/LZ77) or `"quantum"` (Tensor/SNN).
+- **mode**: `"standard"` (Linear/LZ77) or `"tensor"` (Tensor/SNN).
 
 ### `qres_core.decompress(data: bytes) -> bytes`
 - **data**: Compressed QRES bytes.

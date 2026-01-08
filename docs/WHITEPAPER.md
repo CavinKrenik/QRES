@@ -6,7 +6,7 @@
 
 ## Abstract
 
-QRES (Quantum-Relational Encoding System) represents the culmination of predictive data compression. v10.0, the **"Singularity Engine"**, transitions from experimental research to a production-grade decoupled architecture. It employs a **"Living Brain"**—an autonomous, self-organizing neural agent that adapts to data in real-time, now separated into a high-performance core library and a resilient background daemon.
+QRES represents the culmination of predictive data compression. v10.0, the **"Singularity Engine"**, transitions from experimental research to a production-grade decoupled architecture. It employs a **"Living Brain"**—an autonomous, self-organizing neural agent that adapts to data in real-time, now separated into a high-performance core library and a resilient background daemon.
 
 ---
 
@@ -52,11 +52,11 @@ An ensemble of specialized predictors managed by an RL agent:
 | **Graph** | 2nd-order Markov chains with SIMD |
 | **Spectral** | FFT-based periodicity detection |
 | **SNN** | Spiking temporal patterns (GIF neurons) |
-| **QNN** | Non-linear Correlation Detection (VQC) |
+| **High-Dimensional** | Non-linear correlation detection via tensor networks |
 
 **The Mixer:**
 ```
-W_t = \beta \cdot W_{t-1} + (1-\beta) \cdot \nabla L
+W_t = β · W_{t-1} + (1-β) · ∇L
 ```
 - Uses momentum AR(2) for stability
 - SIMD-accelerated (AVX2/NEON/SVE)
@@ -89,10 +89,10 @@ Biological-inspired compression using spike timing, optimized for sparse inferen
 - **GIF Neurons**: Generalized Integrate-and-Fire with adaptive thresholds.
 - **OSBC Pruning**: 97% sparsity via second-order methods.
 
-### 2. Tensor Network Correlator (Quantum-Inspired)
-Uses Variational Quantum Circuits (VQC) logic on classical hardware to detect non-linear correlations:
+### 2. Tensor Network Correlator
+Uses tensor-based correlation detection on classical hardware to find non-linear patterns:
 ```
-|\psi\rangle = U(\theta)|00...0\rangle
+|ψ⟩ = U(θ)|00...0⟩
 ```
 - Maps byte sequences to **High-Dimensional Hilbert Embeddings**.
 - Finds minimal entropy basis for complex patterns.
@@ -111,7 +111,7 @@ Distributed intelligence via `libp2p`:
 ### 4.1 Portable SIMD (v11.1)
 Full migration from x86-only `__m256` intrinsics to portable `wide::f32x8`. Compiles for ARM NEON, x86 AVX, and WASM SIMD.
 
-### 4.2 QES — Quantum-Entangled Swarms (v11.2)
+### 4.2 Federated Swarms (v11.2)
 Zero-bandwidth weight synchronization via PRNG seeds. Swarm nodes generate identical weight deltas without explicit communication.
 
 ### 4.3 Federated Dreaming (v11.2)
@@ -120,7 +120,7 @@ Idle-time hallucinatory training. Generates synthetic samples based on learned p
 ---
 
 ## Conclusion
-QRES v11.2 bridges the gap between academic theory and industrial reliability. By decoupling the deterministic **Core** from the evolutionary **Swarm**, and enabling portable hardware deployment, we deliver a tool that is safe for production, runs on any architecture, and is ready for the Singularity.
+QRES v11.2 bridges the gap between academic theory and industrial reliability. By decoupling the deterministic **Core** from the evolutionary **Swarm**, and enabling portable hardware deployment, we deliver a tool that is safe for production, runs on any architecture, and continues to evolve.
 
 ---
 
