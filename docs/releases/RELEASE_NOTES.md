@@ -1,93 +1,71 @@
-# QRES v13.0.0 "Security Hardening"
+# QRES v15.0.0 "Privacy"
 
-**Release Date:** 2026-01-08
-
----
-
-## 🔐 Overview
-
-v13.0.0 marks a major security milestone for QRES, completing **Phase 1 (Authentication)** and **Phase 2 (Robust Aggregation)** of the security roadmap. Federated swarms are now protected against:
-
-- **Unauthorized updates** via ed25519 signatures
-- **Replay attacks** via timestamped nonces
-- **Byzantine/poisoning attacks** via Krum aggregation
+**Release Date:** January 8, 2026
 
 ---
 
-## ✨ Key Features
+## Overview
 
-### Phase 1: Authentication
-| Feature | Module | Description |
-|---------|--------|-------------|
-| ed25519 Signatures | `security.rs` | All brain updates are signed before broadcast |
-| Node Identity (PKI) | `peer_keys.rs` | Peer public keys verified via libp2p Identify |
-| Replay Prevention | `security.rs` | Nonces + timestamps prevent replay attacks |
-| P2P Integration | `swarm_p2p.rs` | Signed broadcasts, verified receives |
-
-### Phase 2: Robust Aggregation
-| Algorithm | Description |
-|-----------|-------------|
-| **Krum** | Selects most representative update (outlier rejection) |
-| **Multi-Krum** | Averages k best updates |
-| **Trimmed Mean** | Removes outliers per coordinate |
-| **Median** | Coordinate-wise median (Byzantine-tolerant) |
+v15.0.0 completes **Phase 3: Privacy** of the QRES security roadmap. This release adds provable privacy guarantees to federated swarms, defending against inference attacks and enabling aggregation without revealing individual contributions.
 
 ---
 
-## ⚙️ New Configuration Options
+## Key Features
+
+### Differential Privacy (`privacy.rs`)
+- **Gaussian Mechanism:** Adds calibrated noise to model updates before sharing.
+- **Provable Parameters:** Epsilon (ε) and Delta (δ) configurable via `[privacy]` section.
+- **no_std Compatible:** Uses Box-Muller fallback for WASM/embedded.
+
+### Secure Aggregation (`secure_agg.rs`)
+- **Pairwise Masking:** Updates are masked via X25519 shared secrets + ChaCha20 RNG.
+- **Zero-Sum Masks:** Masks cancel out upon aggregation, revealing only the global sum.
+- **Privacy Guarantee:** Hides individual updates from honest-but-curious aggregators.
+
+### Zero-Knowledge Proofs (`zk_proofs.rs`)
+- **Pedersen Commitments:** Binds values without revealing them.
+- **Proof of Norm:** Proves `||update||_2 <= threshold` without revealing the update.
+- **Poisoning Defense:** Prevents malicious nodes from submitting extreme updates.
+
+---
+
+## Configuration
 
 ```toml
-[security]
-require_signatures = true              # Reject unsigned messages
-key_path = "/path/to/node_key"          # ed25519 private key
-trusted_peers = ["12D3KooW..."]         # Whitelisted peer IDs
-trusted_pubkeys = ["hex32bytes..."]     # Trusted public keys
+[privacy]
+enabled = true
+epsilon = 1.0
+delta = 1e-5
+clipping_threshold = 1.0
+secure_aggregation = false  # Enable for pairwise masking
 
-[aggregation]
-mode = "krum"                           # mean | krum | multi_krum | trimmed_mean | median
-expected_byzantines_fraction = 0.2      # Expected malicious fraction
-buffer_size = 5                         # Updates to buffer before aggregating
-trim_fraction = 0.2                 # For trimmed mean
+[security]
+# See v13.0.0 for authentication settings
 ```
 
 ---
 
-## 📦 New Files
+## Dependencies
 
-| File | Purpose |
-|------|---------|
-| `qres_daemon/src/security.rs` | ed25519 signing, verification, replay prevention |
-| `qres_daemon/src/peer_keys.rs` | PeerKeyStore with libp2p Identify integration |
-| `qres_daemon/src/brain_aggregator.rs` | Buffered updates with robust aggregation |
-| `qres_core/src/aggregation.rs` | Krum, Multi-Krum, Trimmed Mean, Median algorithms |
-| `docs/guides/SECURITY_IMPLEMENTATION_GUIDE.md` | Implementation reference |
+- **Pinned:** `curve25519-dalek =4.1.3` with `rand_core`, `zeroize` features.
+- **Added:** `x25519-dalek 2.0`, `rand_chacha 0.3`, `blake3 1.5`.
 
 ---
 
-## 🧪 Tests
+## Upgrade Notes
 
-- **security** module: 3 tests (sign/verify, invalid sig, replay prevention)
-- **peer_keys** module: 3 tests (add/lookup, whitelist, key mismatch)
-- **brain_aggregator** module: 2 tests (buffering, krum mode)
-- **aggregation** module: 6 tests (mean, krum, multi-krum, trimmed, median)
-
----
-
-## 🚀 Upgrade Notes
-
-1. **Backward Compatible**: Existing nodes work without changes if `require_signatures = false` (default)
-2. **Enable Security**: Set `require_signatures = true` in `~/.qres/config.toml`
-3. **Key Generation**: Keys auto-generate on first run if not specified
-4. **Aggregation**: Default mode is `mean` for compatibility; switch to `krum` for Byzantine tolerance
+1. Update `Cargo.toml` to use `qres_core = "15.0"` and `qres_daemon = "15.0"`.
+2. Add `[privacy]` section to your `qres_daemon.toml` to configure DP/SecAgg.
+3. Existing configurations remain compatible with defaults.
 
 ---
 
-## 📊 What's Next (Phase 3: Privacy)
+## What's Next (v15.1)
 
-- Differential privacy (ε-DP guarantees)
-- Secure aggregation (sum without revealing individual contributions)
-- Zero-knowledge proofs of model quality
+- **Pluggable Aggregators:** Trait abstraction for custom aggregation strategies.
+- **PRNG Seed Sync:** Drift mitigation for deterministic swarm replay.
+- **Architecture Decision Records (ADRs):** Documenting key design choices.
 
 ---
 
-[Full Changelog →](../../CHANGELOG.md) | [Security Roadmap →](../SECURITY_ROADMAP.md)
+*See [CHANGELOG.md](../CHANGELOG.md) for the full list of changes.*

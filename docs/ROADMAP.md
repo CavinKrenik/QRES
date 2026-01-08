@@ -11,12 +11,15 @@
 - ✅ **v11.1** – Portable SIMD (`wide` crate), Diverse IoT Benchmarks
 - ✅ **v11.2** – Federated Swarms, Federated Dreaming
 - ✅ **v12.0** – Swarm Scaling Era, Zero-Bandwidth Sync, Documentation Overhaul
+- ✅ **v13.0** – Security Hardening: ed25519 Signatures, PKI
+- ✅ **v14.0** – Robust Aggregation: Krum, Multi-Krum, Trimmed Mean
+- ✅ **v15.0** – Privacy: Differential Privacy, Secure Aggregation, ZK Proofs
 
 ---
 
 ## 🏗️ Current Focus (v12.x - Swarm Scaling Era)
 
-### Phase 1: Security Hardening (v13 Target) ✅ COMPLETE
+### Phase 1-2: Security Hardening (v13-v14) ✅ COMPLETE
 > **Goal:** Make federated swarms safe for adversarial environments.
 
 - [x] **Authentication:** ed25519 signatures for model updates (`security.rs`)
@@ -32,12 +35,12 @@
 - [x] **Trimmed Mean/Median:** Robust aggregation alternatives
 - [x] **Buffered Aggregation:** Brain updates buffer before aggregating (`brain_aggregator.rs`)
 
-### Phase 3: Privacy (v15 Target)
+### Phase 3: Privacy (v15) ✅ COMPLETE
 > **Goal:** Differential privacy and secure aggregation.
 
-- [ ] **ε-DP Guarantees:** Differential privacy for shared weights
-- [ ] **Secure Aggregation:** Sum weights without revealing individual contributions
-- [ ] **ZK Proofs:** Zero-knowledge proofs of model quality
+- [x] **ε-DP Guarantees:** Differential privacy for shared weights (`privacy.rs`)
+- [x] **Secure Aggregation:** Pairwise masking via X25519 (`secure_agg.rs`)
+- [x] **ZK Proofs:** Pedersen Commitments + Proof of Norm (`zk_proofs.rs`)
 
 ---
 

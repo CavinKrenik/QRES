@@ -88,9 +88,9 @@ compromised = [(n + p) / 2 for n, p in zip(normal_weights, poisoned_weights)]
 
 | Phase | Target | Status |
 |-------|--------|--------|
-| Authentication | v13 | 📋 Planned |
-| Robust Aggregation | v14 | 📋 Planned |
-| Privacy | v15 | 📋 Planned |
+| Authentication | v13 | ✅ Complete |
+| Robust Aggregation | v14 | ✅ Complete |
+| Privacy | v15 | ✅ Complete |
 
 ---
 

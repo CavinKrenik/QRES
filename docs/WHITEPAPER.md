@@ -1,6 +1,6 @@
 # QRES Technical Whitepaper
 
-**Version 13.0 "Security Hardening"**
+**Version 15.0 "Privacy"**
 
 ---
 

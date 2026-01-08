@@ -4,7 +4,7 @@
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/CavinKrenik/QRES/release.yml?style=flat)](https://github.com/CavinKrenik/QRES/actions)
-[![Version](https://img.shields.io/badge/version-v13.0.0-brightgreen)](https://github.com/CavinKrenik/QRES/releases)
+[![Version](https://img.shields.io/badge/version-v15.0.0-brightgreen)](https://github.com/CavinKrenik/QRES/releases)
 
 ## The Core Idea
 
@@ -76,6 +76,8 @@ This project evolved through 13 major iterations:
 | v10 | Tensor network correlators, Q16.16 determinism |
 | v12 | Federated swarms, zero-bandwidth synchronization |
 | v13 | Security hardening: ed25519 signatures, Krum aggregation |
+| v14 | Robust aggregation: Multi-Krum, Trimmed Mean, Median |
+| v15 | Privacy: Differential Privacy, Secure Aggregation, ZK Proofs |
 
 [Read the full story →](docs/PHILOSOPHY.md)
 
