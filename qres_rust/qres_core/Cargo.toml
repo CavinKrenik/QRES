@@ -33,7 +33,8 @@ pyo3 = { version = "0.22", optional = true, features = ["abi3-py38", "extension-
 x25519-dalek = { version = "2.0", default-features = false, features = ["static_secrets"] }
 rand_chacha = { version = "0.3", default-features = false }
 rand_core = { version = "0.6", default-features = false }
-# curve25519-dalek = { version = "4.1.3", default-features = false, features = ["alloc", "ristretto", "group", "rand_core", "digest"] }
+# ZK Proofs dependencies (pinned for workspace compat)
+curve25519-dalek = { version = "=4.1.3", default-features = false, features = ["alloc", "zeroize", "rand_core"] }
 
 # Privacy features
 opendp = { version = "0.10", optional = true }

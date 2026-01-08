@@ -20,6 +20,7 @@ This document clarifies what's production-ready vs. experimental vs. roadmap.
 - **Federated Dreaming**: Synthetic sample generation for weight updates during idle time
 - **Regime Change Adaptation**: Dynamic predictor reweighting via momentum updates
 - **Differential Privacy:** Gaussian noise injection for model updates (v15 alpha).
+- **Zero-Knowledge Proofs:** Pedersen Commitments + Proof of Norm (v15).
 - **Unary VLQ Encoding**: Simple variable-length residual encoding
 
 ## 📋 Roadmap (Not Yet Implemented)
