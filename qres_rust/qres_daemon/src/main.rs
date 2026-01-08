@@ -4,6 +4,7 @@ pub mod config;
 pub mod daemon;
 pub mod dreaming;
 pub mod living_brain;
+pub mod peer_keys;
 pub mod qes;
 pub mod security;
 pub mod stats;

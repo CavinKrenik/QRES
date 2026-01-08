@@ -1,4 +1,6 @@
 use crate::living_brain::{BrainMessage, LivingBrain};
+use crate::config::Config;
+use crate::peer_keys::PeerKeyStore;
 use axum::{extract::State, routing::get, Json, Router};
 use libp2p::futures::StreamExt; // For select_next_some
 use libp2p::gossipsub::IdentTopic; // Added helper
@@ -16,7 +18,7 @@ use std::io; // Added
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::RwLock;
-use tracing::{error, info};
+use tracing::{error, info, warn};
 
 // Topic for brain synchronization
 const BRAIN_TOPIC: &str = "qres-brain-sync";
@@ -34,6 +36,7 @@ pub struct AppState {
     pub connected_peers: HashSet<String>,
     pub known_peers: HashSet<String>,
     pub brain: LivingBrain,
+    pub peer_keys: PeerKeyStore,
 }
 
 // Custom Behavior Struct
@@ -53,12 +56,20 @@ pub async fn start_p2p_node(
     let peer_id = PeerId::from(id_keys.public());
     info!(peer_id = %peer_id, "Local Peer ID generated");
 
+    // Load config for security settings
+    let config = Config::load().unwrap_or_default();
+    let peer_keys = PeerKeyStore::new(
+        &config.security.trusted_peers,
+        &config.security.trusted_pubkeys,
+    );
+
     // Shared State
     let state = Arc::new(RwLock::new(AppState {
         local_peer_id: peer_id.to_string(),
         connected_peers: HashSet::new(),
         known_peers: HashSet::new(),
         brain: LivingBrain::default(),
+        peer_keys,
     }));
 
     // Spawn API
@@ -203,6 +214,20 @@ pub async fn start_p2p_node(
                         state.write().await.known_peers.remove(&peer_id.to_string());
                         swarm.behaviour_mut().gossipsub.remove_explicit_peer(&peer_id);
                     }
+                }
+                // Handle Identify events - store public keys from peers
+                SwarmEvent::Behaviour(QresBehaviorEvent::Identify(identify::Event::Received { peer_id, info })) => {
+                    info!(peer_id = %peer_id, agent = %info.agent_version, "Received Identify from peer");
+                    let mut app_state = state.write().await;
+                    if app_state.peer_keys.add_peer_key(peer_id, info.public_key) {
+                        info!(peer_id = %peer_id, known_keys = app_state.peer_keys.peer_count(), "Peer key verified and stored");
+                    }
+                }
+                SwarmEvent::Behaviour(QresBehaviorEvent::Identify(identify::Event::Sent { peer_id })) => {
+                    info!(peer_id = %peer_id, "Sent Identify to peer");
+                }
+                SwarmEvent::Behaviour(QresBehaviorEvent::Identify(identify::Event::Error { peer_id, error })) => {
+                    warn!(peer_id = %peer_id, error = %error, "Identify error");
                 }
                 SwarmEvent::Behaviour(QresBehaviorEvent::Gossipsub(gossipsub::Event::Message { propagation_source: _, message_id: _, message })) => {
                     info!("Received Merge Candidate");

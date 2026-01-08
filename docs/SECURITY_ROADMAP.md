@@ -27,8 +27,8 @@ In production IoT deployments, malicious nodes could:
 ### Phase 1: Authentication (v13)
 
 - ✅ **ed25519 signatures** for all model updates (Implemented in `qres_daemon/src/security.rs`)
-- **Node identity verification** via public key infrastructure
-- **Replay attack prevention** with nonces and timestamps (Implemented with signature module)
+- ✅ **Node identity verification** via public key infrastructure (Implemented in `qres_daemon/src/peer_keys.rs`)
+- ✅ **Replay attack prevention** with nonces and timestamps (Implemented with signature module)
 
 ### Phase 2: Robust Aggregation (v14)
 

@@ -24,6 +24,12 @@ pub struct SecurityConfig {
     pub require_signatures: bool,
     /// Path to the ed25519 private key file
     pub key_path: Option<String>,
+    /// List of trusted peer IDs (e.g., "12D3KooW...")
+    #[serde(default)]
+    pub trusted_peers: Vec<String>,
+    /// List of trusted public keys in hex format (32-byte ed25519)
+    #[serde(default)]
+    pub trusted_pubkeys: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -45,6 +51,8 @@ impl Default for Config {
                 max_violations: 2,
                 require_signatures: false, // Disabled by default for backward compat
                 key_path: None,
+                trusted_peers: Vec::new(),
+                trusted_pubkeys: Vec::new(),
             },
             api: ApiConfig {
                 port: 3030,
