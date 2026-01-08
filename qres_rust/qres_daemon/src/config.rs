@@ -33,9 +33,15 @@ impl Default for PrivacyConfig {
     }
 }
 
-fn default_epsilon() -> f32 { 1.0 }
-fn default_delta() -> f32 { 1e-5 }
-fn default_clipping() -> f32 { 1.0 }
+fn default_epsilon() -> f32 {
+    1.0
+}
+fn default_delta() -> f32 {
+    1e-5
+}
+fn default_clipping() -> f32 {
+    1.0
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {

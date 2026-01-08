@@ -55,9 +55,6 @@ use pyo3::prelude::*;
 
 // --- v3.0/v4.0 Modules ---
 pub mod aggregation;
-pub mod privacy;
-pub mod secure_agg;
-pub mod zk_proofs; // Phase 2 Security: Byzantine-tolerant aggregation
 pub mod ans_coder;
 #[cfg(feature = "std")]
 pub mod archive;
@@ -68,9 +65,12 @@ pub mod gpu;
 pub mod meta_brain; // Inference Engine (moved to Core)
 pub mod mixer;
 pub mod predictors;
+pub mod privacy;
+pub mod secure_agg;
 pub mod spectral;
 pub mod tensor;
 pub mod transformer;
+pub mod zk_proofs; // Phase 2 Security: Byzantine-tolerant aggregation
 use crate::ans_coder::{AnsReader, AnsWriter};
 use crate::mixer::{Mixer, NUM_MODELS};
 use crate::predictors::{GraphPredictor, LzMatchPredictor, Predictor, SimplePredictor};

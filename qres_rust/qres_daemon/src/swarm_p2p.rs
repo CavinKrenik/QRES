@@ -217,7 +217,7 @@ pub async fn start_p2p_node(
                                 privacy_config.delta as f64,
                                 privacy_config.clipping_threshold as f64,
                             );
-                            
+
                             // Apply clipping and noise
                             dp.clip_update(&mut outgoing_brain.confidence);
                             if let Err(e) = dp.add_noise(&mut outgoing_brain.confidence) {

@@ -14,26 +14,34 @@ use alloc::string::String;
 use std::string::String;
 
 #[cfg(feature = "dp")]
+use opendp::domains::{AtomDomain, VectorDomain};
+#[cfg(feature = "dp")]
 use opendp::measurements::make_gaussian;
 #[cfg(feature = "dp")]
 use opendp::metrics::L2Distance;
-#[cfg(feature = "dp")]
-use opendp::domains::{AtomDomain, VectorDomain};
 
 #[cfg(not(feature = "dp"))]
-use rand::{Rng, thread_rng};
+use rand::{thread_rng, Rng};
 
 // Math imports for no_std manual implementation
 #[cfg(not(feature = "std"))]
-use libm::{sqrt, log as ln, cos, sin};
+use libm::{cos, log as ln, sin, sqrt};
 #[cfg(feature = "std")]
-fn sqrt(x: f64) -> f64 { x.sqrt() }
+fn sqrt(x: f64) -> f64 {
+    x.sqrt()
+}
 #[cfg(feature = "std")]
-fn ln(x: f64) -> f64 { x.ln() }
+fn ln(x: f64) -> f64 {
+    x.ln()
+}
 #[cfg(feature = "std")]
-fn cos(x: f64) -> f64 { x.cos() }
+fn cos(x: f64) -> f64 {
+    x.cos()
+}
 #[cfg(feature = "std")]
-fn sin(x: f64) -> f64 { x.sin() }
+fn sin(x: f64) -> f64 {
+    x.sin()
+}
 
 /// Differential Privacy configuration and mechanism
 #[derive(Clone, Debug)]
@@ -89,27 +97,26 @@ impl DifferentialPrivacy {
 
             let domain = VectorDomain::new(AtomDomain::<f64>::default());
             let metric = L2Distance::default();
-            
+
             // Sensitivity is the clipping threshold (L2 sensitivity)
             let sensitivity = self.clipping_threshold;
-            
+
             // Create measurement
             let meas = make_gaussian(domain, metric, sensitivity, self.epsilon, Some(self.delta))
                 .map_err(|e| e.to_string())?;
 
             // Invoke measurement
-            let noisy = meas.invoke(&data_f64)
-                .map_err(|e| e.to_string())?;
+            let noisy = meas.invoke(&data_f64).map_err(|e| e.to_string())?;
 
             // Copy back to update vector
             if noisy.len() != update.len() {
                 return Err("Noise generation changed vector length".into());
             }
-            
+
             for (i, &val) in noisy.iter().enumerate() {
                 update[i] = val as f32;
             }
-            
+
             Ok(())
         }
 
@@ -120,53 +127,53 @@ impl DifferentialPrivacy {
             let c = 2.0 * ln(1.25 / self.delta);
             let sigma = (self.clipping_threshold * sqrt(c)) / self.epsilon;
 
-            // In no_std, we need an RNG. 
+            // In no_std, we need an RNG.
             // Warning: secure noise generation in no_std is hard without OS TRNG.
             // We use standard rand interface, assuming user supplies a seeded RNG or global RNG is available.
             // Since `rand` 0.8 supports some no_std (getrandom with custom impl), we assume
-            // we can get random u64s. 
+            // we can get random u64s.
             // For this implementation, we'll try to use ThreadRng if available (std)
             // or a fallback seeded RNG if test/no_std.
-            
+
             #[cfg(feature = "std")]
             let mut rng = thread_rng();
-            
+
             #[cfg(not(feature = "std"))]
             let mut rng = rand::rngs::mock::StepRng::new(0, 1); // Mock for compilation check
-            
+
             // Box-Muller requires two uniform random numbers [0, 1)
             // We process pair-wise
             let len = update.len();
             let mut i = 0;
-            
+
             while i < len {
                 // Generate two independent standard normal variables N(0,1)
                 let u1: f64 = rng.gen();
                 let u2: f64 = rng.gen();
-                
+
                 // Avoid log(0)
                 let u1 = if u1 < 1e-10 { 1e-10 } else { u1 };
-                
+
                 let r = sqrt(-2.0 * ln(u1));
                 let theta = 2.0 * core::f64::consts::PI * u2;
-                
+
                 let z0 = r * cos(theta);
                 let z1 = r * sin(theta);
-                
+
                 // Scale by sigma and add to update
                 update[i] += (z0 * sigma) as f32;
-                
+
                 if i + 1 < len {
                     update[i + 1] += (z1 * sigma) as f32;
                 }
-                
+
                 i += 2;
             }
-            
+
             Ok(())
         }
     }
-    
+
     /// Calculate the theoretical noise scale (sigma)
     pub fn sigma(&self) -> f64 {
         let c = 2.0 * ln(1.25 / self.delta);
@@ -178,7 +185,7 @@ impl DifferentialPrivacy {
 mod tests {
     use super::*;
 
-    #[cfg(feature = "std")] 
+    #[cfg(feature = "std")]
     #[test]
     fn test_sigma_calculation() {
         let dp = DifferentialPrivacy::new(1.0, 1e-5, 1.0);
@@ -193,7 +200,7 @@ mod tests {
     fn test_clipping() {
         let dp = DifferentialPrivacy::new(1.0, 1e-5, 1.0);
         // Vector with norm 2.0 (sqrt(2^2))
-        let mut update = vec![2.0f32]; 
+        let mut update = vec![2.0f32];
         assert!(dp.clip_update(&mut update));
         assert!((update[0] - 1.0).abs() < 1e-6);
 
@@ -209,23 +216,25 @@ mod tests {
         // High epsilon (low noise) to check mean
         let dp = DifferentialPrivacy::new(100.0, 1e-5, 1.0);
         let mut data = vec![0.0f32; 1000];
-        
+
         dp.add_noise(&mut data).expect("Failed to add noise");
 
         let sum: f32 = data.iter().sum();
         let mean = sum / 1000.0;
-        
+
         // Mean should be close to 0
         assert!(mean.abs() < 0.1, "Mean noise should be ~0, got {}", mean);
-        
+
         // Variance check
         let variance: f32 = data.iter().map(|x| x * x).sum::<f32>() / 1000.0;
         let sigma = dp.sigma() as f32;
         let expected_var = sigma * sigma;
-        
+
         assert!(
-            (variance - expected_var).abs() < expected_var * 0.5, 
-            "Variance {} vs expected {}", variance, expected_var
+            (variance - expected_var).abs() < expected_var * 0.5,
+            "Variance {} vs expected {}",
+            variance,
+            expected_var
         );
     }
 }

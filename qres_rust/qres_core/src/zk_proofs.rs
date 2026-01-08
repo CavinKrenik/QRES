@@ -8,10 +8,10 @@ use alloc::vec::Vec;
 #[cfg(feature = "std")]
 use std::vec::Vec;
 
+use blake3::Hasher;
+use curve25519_dalek::constants::ED25519_BASEPOINT_POINT;
 use curve25519_dalek::edwards::{CompressedEdwardsY, EdwardsPoint};
 use curve25519_dalek::scalar::Scalar;
-use curve25519_dalek::constants::ED25519_BASEPOINT_POINT;
-use blake3::Hasher;
 
 /// Generators for Pedersen Commitments: C = v*H + r*G
 #[derive(Clone)]
@@ -94,11 +94,17 @@ impl Default for ZkNormProver {
 
 impl ZkNormProver {
     pub fn new() -> Self {
-        Self { gens: PedersenGens::default() }
+        Self {
+            gens: PedersenGens::default(),
+        }
     }
 
     /// Generate a proof that the L2 norm squared of `weights` is below `threshold_sq`.
-    pub fn generate_proof(&self, weights: &[f32], threshold_sq: f32) -> Option<(NormProof, Scalar)> {
+    pub fn generate_proof(
+        &self,
+        weights: &[f32],
+        threshold_sq: f32,
+    ) -> Option<(NormProof, Scalar)> {
         let norm_sq: f32 = weights.iter().map(|w| w * w).sum();
 
         if norm_sq > threshold_sq {
@@ -125,7 +131,13 @@ impl ZkNormProver {
 
         let response = blinding + challenge * value;
 
-        Some((NormProof { commitment, response }, blinding))
+        Some((
+            NormProof {
+                commitment,
+                response,
+            },
+            blinding,
+        ))
     }
 
     /// Verify the proof structure (placeholder for full range proof).
@@ -151,19 +163,19 @@ mod tests {
     #[test]
     fn test_commitment_homomorphism() {
         let gens = PedersenGens::default();
-        
+
         let v1 = Scalar::from(10u64);
         let r1 = Scalar::from(100u64);
-        
+
         let v2 = Scalar::from(20u64);
         let r2 = Scalar::from(200u64);
-        
+
         let c1 = gens.commit(v1, r1);
         let c2 = gens.commit(v2, r2);
-        
+
         let c_sum = c1 + c2;
         let c_expected = gens.commit(v1 + v2, r1 + r2);
-        
+
         assert_eq!(c_sum, c_expected, "Homomorphism C(a)+C(b) = C(a+b) failed");
     }
 
@@ -185,10 +197,10 @@ mod tests {
         let prover = ZkNormProver::new();
         let weights = vec![0.1, 0.2, 0.3];
         let threshold = 1.0;
-        
+
         let result = prover.generate_proof(&weights, threshold);
         assert!(result.is_some());
-        
+
         let (proof, _) = result.unwrap();
         assert!(prover.verify_proof(&proof, threshold));
     }
@@ -198,7 +210,7 @@ mod tests {
         let prover = ZkNormProver::new();
         let weights = vec![10.0, 10.0, 10.0];
         let threshold = 1.0;
-        
+
         let result = prover.generate_proof(&weights, threshold);
         assert!(result.is_none());
     }

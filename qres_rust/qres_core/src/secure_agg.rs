@@ -13,9 +13,9 @@ use alloc::collections::BTreeMap;
 #[cfg(feature = "std")]
 use std::collections::BTreeMap;
 
-use x25519_dalek::{PublicKey, StaticSecret};
+use rand_chacha::rand_core::{RngCore, SeedableRng};
 use rand_chacha::ChaCha20Rng;
-use rand_chacha::rand_core::{SeedableRng, RngCore};
+use x25519_dalek::{PublicKey, StaticSecret};
 
 /// Handles secure aggregation via pairwise masking
 pub struct SecureAggregator {
@@ -30,23 +30,23 @@ pub struct SecureAggregator {
 
 impl SecureAggregator {
     /// Create a new SecureAggregator with a random secret
-    /// 
+    ///
     /// In a real P2P system, the secret should ideally persist for the round
     /// or be derived from a session key.
     pub fn new() -> Self {
-        // We need a CSPRNG. In no_std, the caller typically provides one, 
+        // We need a CSPRNG. In no_std, the caller typically provides one,
         // but StaticSecret::random_from_rng requires rand_core::CryptoRng.
         // For simplicity in this library, we'll assume we can use OsRng in std
         // or a passed-in seed.
-        // 
-        // CRITICAL TODO: effectively handling RNG in strict no_std environments 
+        //
+        // CRITICAL TODO: effectively handling RNG in strict no_std environments
         // without OS entropy is tricky. Here we use a standard approach if available.
-        
+
         #[cfg(feature = "std")]
         let secret = StaticSecret::random_from_rng(rand::rngs::OsRng);
 
         #[cfg(not(feature = "std"))]
-        // In no_std tests/wasm, usage might differ. 
+        // In no_std tests/wasm, usage might differ.
         // For now, we allow creating from a seed to support deterministic testing/embedded usage.
         let secret = StaticSecret::from([0u8; 32]); // Placeholder for strictly manual init, usually requires seed
 
@@ -98,27 +98,27 @@ impl SecureAggregator {
         for (peer_pk_bytes, peer_pk) in &self.peers {
             // Compute shared secret using ECDH
             let shared_secret = self.my_secret.diffie_hellman(peer_pk);
-            
+
             // Expand shared secret into a mask vector using ChaCha20
             // We use the shared secret bytes as the seed
             let mut rng = ChaCha20Rng::from_seed(*shared_secret.as_bytes());
-            
+
             // Apply mask
             // If MyID < PeerID: Add Mask
             // If MyID > PeerID: Subtract Mask
             // Lexicographical comparison of public keys serves as consistent ordering
             let add_mask = my_pk_bytes < *peer_pk_bytes;
-            
+
             for val in masked_update.iter_mut() {
                 // Generate a random float roughly in range [-1, 1] or similar
                 // We generate u32 and cast to ensure identical generation on all platforms
                 let rnd_u32 = rng.next_u32();
                 // Map u32 to f32 roughly centered
-                let rnd_f32 = (rnd_u32 as f32) / (u32::MAX as f32); 
+                let rnd_f32 = (rnd_u32 as f32) / (u32::MAX as f32);
 
                 // Scale mask to be significant but not overflow f32 precision easily
                 // For model weights ~0.1, mask ~1.0 is fine.
-                let mask_val = rnd_f32; 
+                let mask_val = rnd_f32;
 
                 if add_mask {
                     *val += mask_val;
@@ -176,9 +176,12 @@ mod tests {
         let pk2 = p2.get_public_key();
         let pk3 = p3.get_public_key();
 
-        p1.add_peer(pk2); p1.add_peer(pk3);
-        p2.add_peer(pk1); p2.add_peer(pk3);
-        p3.add_peer(pk1); p3.add_peer(pk2);
+        p1.add_peer(pk2);
+        p1.add_peer(pk3);
+        p2.add_peer(pk1);
+        p2.add_peer(pk3);
+        p3.add_peer(pk1);
+        p3.add_peer(pk2);
 
         // Create dummy updates
         let u1 = vec![1.0, 2.0, 3.0];
@@ -197,7 +200,7 @@ mod tests {
 
         // Aggregate
         let agg_masked = p1.aggregate(&[m1, m2, m3]).unwrap();
-        
+
         // Calculate expected sum of original updates
         let expected = vec![12.0, 15.0, 18.0];
 
@@ -212,12 +215,12 @@ mod tests {
         // If one peer drops out, the masks shouldn't cancel, and the result should be garbage/unusable.
         // This is a property of the protocol: it's fragile to dropouts without recovery phases (Shamir Secret Sharing).
         // For Phase 3 Item 2, we implement basic masking. The fact that it fails on dropout is expected behavior for this simple version.
-        
+
         let seed1 = [1u8; 32];
         let seed2 = [2u8; 32];
         let mut p1 = SecureAggregator::from_seed(seed1);
         let mut p2 = SecureAggregator::from_seed(seed2);
-        
+
         p1.add_peer(p2.get_public_key());
         p2.add_peer(p1.get_public_key());
 
