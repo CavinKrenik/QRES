@@ -1,6 +1,6 @@
 # QRES Technical Whitepaper
 
-**Version 12.0 "Swarm Scaling Era"**
+**Version 13.0 "Security Hardening"**
 
 ---
 

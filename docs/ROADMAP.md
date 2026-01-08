@@ -16,19 +16,21 @@
 
 ## 🏗️ Current Focus (v12.x - Swarm Scaling Era)
 
-### Phase 1: Security Hardening (v13 Target)
+### Phase 1: Security Hardening (v13 Target) ✅ COMPLETE
 > **Goal:** Make federated swarms safe for adversarial environments.
 
-- [ ] **Authentication:** ed25519 signatures for model updates
-- [ ] **Node Identity:** Public key infrastructure for peer verification
-- [ ] **Replay Prevention:** Nonces and timestamps for update validation
+- [x] **Authentication:** ed25519 signatures for model updates (`security.rs`)
+- [x] **Node Identity:** Public key infrastructure for peer verification (`peer_keys.rs`)
+- [x] **Replay Prevention:** Nonces and timestamps for update validation
+- [x] **P2P Integration:** Signed broadcasts, verified receives in `swarm_p2p.rs`
 
-### Phase 2: Robust Aggregation (v14 Target)
+### Phase 2: Robust Aggregation (v14 Target) ✅ COMPLETE
 > **Goal:** Defend against weight poisoning attacks.
 
-- [ ] **Krum Algorithm:** Outlier rejection in federated averaging
-- [ ] **Trimmed Mean:** Robust aggregation alternatives
-- [ ] **Local Validation:** Pre-merge testing before accepting updates
+- [x] **Krum Algorithm:** Outlier rejection in federated averaging (`aggregation.rs`)
+- [x] **Multi-Krum:** k-best updates averaging
+- [x] **Trimmed Mean/Median:** Robust aggregation alternatives
+- [x] **Buffered Aggregation:** Brain updates buffer before aggregating (`brain_aggregator.rs`)
 
 ### Phase 3: Privacy (v15 Target)
 > **Goal:** Differential privacy and secure aggregation.

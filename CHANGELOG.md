@@ -4,6 +4,30 @@ All notable changes to this project are documented here.
 
 ---
 
+## [13.0.0] - 2026-01-08 "Security Hardening"
+
+### Added
+- **Phase 1 Security - Authentication:**
+  - `security.rs`: ed25519 signing/verification with replay prevention (nonces + timestamps)
+  - `peer_keys.rs`: PeerKeyStore with libp2p Identify protocol integration
+  - Signed brain broadcasts and verified receives in `swarm_p2p.rs`
+  - Config options: `require_signatures`, `key_path`, `trusted_peers`, `trusted_pubkeys`
+
+- **Phase 2 Security - Robust Aggregation:**
+  - `aggregation.rs`: Krum, Multi-Krum, Trimmed Mean, Median algorithms
+  - `brain_aggregator.rs`: Buffered updates with Byzantine-tolerant aggregation
+  - Config options: `aggregation.mode`, `expected_byzantines_fraction`, `buffer_size`
+
+### Changed
+- Brain updates now buffer before aggregation (configurable via `buffer_size`)
+- Deltas apply immediately; Full brains wait for Krum/Median aggregation
+
+### Security
+- Unsigned messages rejected when `require_signatures = true`
+- Outlier updates rejected by Krum algorithm (defends against poisoning attacks)
+
+---
+
 ## [10.1.0] - 2026-01-05 "The Hybrid Era"
 
 ### Added

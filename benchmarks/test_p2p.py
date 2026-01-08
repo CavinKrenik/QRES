@@ -9,7 +9,7 @@ import urllib.error
 # Setup
 BRAIN_1 = "benchmarks/results/brain_node_1.json"
 BRAIN_2 = "benchmarks/results/brain_node_2.json"
-CLI = "qres_rust/target/release/qres-cli.exe"
+CLI = "qres_rust/target/release/qres_daemon.exe"
 PORT_1 = 8081
 PORT_2 = 8082
 

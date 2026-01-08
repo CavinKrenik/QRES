@@ -4,7 +4,7 @@
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/CavinKrenik/QRES/release.yml?style=flat)](https://github.com/CavinKrenik/QRES/actions)
-[![Version](https://img.shields.io/badge/version-v12.0.0-brightgreen)](https://github.com/CavinKrenik/QRES/releases)
+[![Version](https://img.shields.io/badge/version-v13.0.0-brightgreen)](https://github.com/CavinKrenik/QRES/releases)
 
 ## The Core Idea
 
@@ -64,7 +64,7 @@ python3 -c "import qres; print(f'Size: {len(qres.compress(open(\"README.md\", \"
 
 ## The Journey
 
-This project evolved through 12 major iterations:
+This project evolved through 13 major iterations:
 
 | Version | Milestone |
 |---------|-----------|
@@ -75,6 +75,7 @@ This project evolved through 12 major iterations:
 | v8 | P2P swarm architecture |
 | v10 | Tensor network correlators, Q16.16 determinism |
 | v12 | Federated swarms, zero-bandwidth synchronization |
+| v13 | Security hardening: ed25519 signatures, Krum aggregation |
 
 [Read the full story →](docs/PHILOSOPHY.md)
 
