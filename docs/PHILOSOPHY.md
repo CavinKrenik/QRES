@@ -14,12 +14,18 @@ Even in its most primitive form, this was already predictive: compression existe
 
 From there, expectation stopped being static and became learned:
 
-| Stage | Approach |
-|-------|----------|
+| Version | Approach |
+|---------|----------|
 | **v1** | Static comparison (current == expected?) |
 | **v2** | Learned predictor (what SHOULD come next?) |
 | **v3** | Synchronized predictors (encoder/decoder share model) |
-| **v4** | Federated model sharing (swarm learns together) |
+| **v4** | Spiking Neural Networks for edge compatibility |
+| **v7** | Multimodal memory, PPO agent for adaptive weighting |
+| **v8** | P2P swarm architecture, Hive Mind federation |
+| **v9** | GIF neurons, 97% sparsity via OSBC pruning |
+| **v10** | Q16.16 fixed-point determinism, architecture decoupling |
+| **v11** | Portable SIMD (ARM/x86/WASM), browser support |
+| **v12** | Zero-bandwidth swarm sync, federated dreaming |
 
 Instead of comparing against a fixed value, the system began predicting what should come next based on time, patterns, and prior behavior. Differences shrank into residuals, and residuals became the only thing transmitted.
 
