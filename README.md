@@ -64,7 +64,7 @@ python3 -c "import qres; print(f'Size: {len(qres.compress(open(\"README.md\", \"
 
 ## The Journey
 
-This project evolved through 13 major iterations:
+This project evolved through 15 major iterations:
 
 | Version | Milestone |
 |---------|-----------|
@@ -116,7 +116,8 @@ Benchmarks on structured datasets (Intel Ice Lake):
 |--------|------------|
 | ✅ **Production Ready** | Core engine, Python bindings, WASM decoder |
 | 🧪 **Experimental** | Federated dreaming, regime adaptation |
-| 📋 **Roadmap** | Security defenses, arithmetic coding, FPGA |
+| ✅ **Security Complete** | Authentication (v13), Robust Aggregation (v14), Privacy (v15) |
+| 📋 **Roadmap** | Arithmetic coding, FPGA acceleration |
 
 [Detailed status →](docs/IMPLEMENTATION_STATUS.md)
 
@@ -140,7 +141,7 @@ Benchmarks on structured datasets (Intel Ice Lake):
 ## Frequently Asked Questions
 
 **Q: Is this production-ready?**  
-A: The core engine is stable and deterministic. Federated learning is experimental. Security features are on the roadmap. See [Implementation Status](docs/IMPLEMENTATION_STATUS.md).
+A: The core engine is stable and deterministic. Federated learning is experimental. Security features (authentication, Byzantine-tolerant aggregation, privacy) are **complete** as of v15. See [Implementation Status](docs/IMPLEMENTATION_STATUS.md).
 
 **Q: How does this compare to Zstd/Gzip?**  
 A: QRES is specialized for repetitive time-series data. For general-purpose compression, use Zstd. QRES shines when data patterns are predictable and bandwidth is constrained.
@@ -152,7 +153,7 @@ A: No. QRES runs on classical hardware. Early versions had misleading naming tha
 A: For basic use (compress/decompress): low, similar to any compression tool. For federated swarm deployment: moderate, requires understanding of distributed systems.
 
 **Q: Can I use this in production?**  
-A: The compression engine is solid. The P2P/federated features assume trusted nodes (no Byzantine defenses yet). Safe for private networks, not public/adversarial environments.
+A: The compression engine is solid. The P2P/federated features now include ed25519 authentication (v13), Byzantine-tolerant Krum aggregation (v14), and differential privacy with ZK proofs (v15). Safe for most environments; production hardening is ongoing.
 
 ## License
 
