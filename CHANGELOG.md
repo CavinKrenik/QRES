@@ -4,6 +4,34 @@ All notable changes to this project are documented here.
 
 ---
 
+## [15.2.0] - 2026-01-08 "Publication"
+
+### Added
+- **Documentation:**
+  - `THEORY.md`: Privacy composition, Byzantine tolerance proofs, convergence analysis
+  - `RELATED_WORK.md`: 30+ citations, FL framework comparison table
+  - `references.bib`: BibTeX for paper submission
+  - ADRs: SNN vs ANN, ed25519 vs Dilithium, PRNG Sync
+
+- **Benchmarks:**
+  - Baseline comparisons (FedAvg/FedProx vs QRES)
+  - Scalability analysis (10-100 nodes)
+  - Long-term stability (24hr tests)
+  - Energy consumption estimates
+
+- **Reproducibility:**
+  - Docker environment (`Dockerfile.qres`, `docker-compose.yml`)
+  - Benchmark scripts (`run_all_benchmarks.sh`)
+  - Paper figure generation (`generate_paper_plots.py`)
+
+- **Code:**
+  - `Aggregator` trait for pluggable aggregation strategies
+
+### Changed
+- `PAPER_DRAFT.md`: Full structure for FLICS 2026 submission
+
+---
+
 ## [15.0.0] - 2026-01-08 "Privacy"
 
 ### Added
