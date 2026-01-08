@@ -2,12 +2,49 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PrivacyConfig {
+    /// Whether differential privacy is enabled
+    #[serde(default)]
+    pub enabled: bool,
+    /// Privacy budget (epsilon)
+    #[serde(default = "default_epsilon")]
+    pub epsilon: f32,
+    /// Failure probability (delta)
+    #[serde(default = "default_delta")]
+    pub delta: f32,
+    /// L2 clipping threshold
+    #[serde(default = "default_clipping")]
+    pub clipping_threshold: f32,
+}
+
+impl Default for PrivacyConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            epsilon: 1.0,
+            delta: 1e-5,
+            clipping_threshold: 1.0,
+        }
+    }
+}
+
+fn default_epsilon() -> f32 { 1.0 }
+fn default_delta() -> f32 { 1e-5 }
+fn default_clipping() -> f32 { 1.0 }
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
+    #[serde(default)]
     pub swarm: SwarmConfig,
+    #[serde(default)]
     pub security: SecurityConfig,
+    #[serde(default)]
     pub aggregation: AggregationConfig,
+    #[serde(default)]
     pub api: ApiConfig,
+    #[serde(default)]
+    pub privacy: PrivacyConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -15,6 +52,16 @@ pub struct SwarmConfig {
     pub gossip_interval: u64,
     pub wan_mode: bool,
     pub max_peers: usize,
+}
+
+impl Default for SwarmConfig {
+    fn default() -> Self {
+        Self {
+            gossip_interval: 600,
+            wan_mode: false,
+            max_peers: 50,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -33,10 +80,32 @@ pub struct SecurityConfig {
     pub trusted_pubkeys: Vec<String>,
 }
 
+impl Default for SecurityConfig {
+    fn default() -> Self {
+        Self {
+            ban_duration: 3600,
+            max_violations: 2,
+            require_signatures: false,
+            key_path: None,
+            trusted_peers: Vec::new(),
+            trusted_pubkeys: Vec::new(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ApiConfig {
     pub port: u16,
     pub enabled: bool,
+}
+
+impl Default for ApiConfig {
+    fn default() -> Self {
+        Self {
+            port: 3030,
+            enabled: true,
+        }
+    }
 }
 
 /// Aggregation settings for robust federated averaging
@@ -82,24 +151,11 @@ impl Default for AggregationConfig {
 impl Default for Config {
     fn default() -> Self {
         Config {
-            swarm: SwarmConfig {
-                gossip_interval: 600,
-                wan_mode: false,
-                max_peers: 50,
-            },
-            security: SecurityConfig {
-                ban_duration: 3600,
-                max_violations: 2,
-                require_signatures: false, // Disabled by default for backward compat
-                key_path: None,
-                trusted_peers: Vec::new(),
-                trusted_pubkeys: Vec::new(),
-            },
+            swarm: SwarmConfig::default(),
+            security: SecurityConfig::default(),
             aggregation: AggregationConfig::default(),
-            api: ApiConfig {
-                port: 3030,
-                enabled: true,
-            },
+            api: ApiConfig::default(),
+            privacy: PrivacyConfig::default(),
         }
     }
 }

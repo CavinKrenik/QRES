@@ -43,6 +43,7 @@ pub struct AppState {
     pub security: Option<SecurityManager>,
     pub require_signatures: bool,
     pub aggregator: BrainAggregator,
+    pub config: Config,
 }
 
 // Custom Behavior Struct
@@ -114,7 +115,8 @@ pub async fn start_p2p_node(
         peer_keys,
         security,
         require_signatures: config.security.require_signatures,
-        aggregator: BrainAggregator::new(config.aggregation),
+        aggregator: BrainAggregator::new(config.aggregation.clone()),
+        config,
     }));
 
     // Spawn API
@@ -205,11 +207,31 @@ pub async fn start_p2p_node(
                         // Update RAM state
                         state.write().await.brain = current_brain.clone();
 
-                        // Delta Encoding Logic
+                        // Prepare outgoing brain (potentially with privacy noise)
+                        let mut outgoing_brain = current_brain.clone();
+                        let privacy_config = { state.read().await.config.privacy.clone() };
+
+                        if privacy_config.enabled {
+                            let dp = qres_core::privacy::DifferentialPrivacy::new(
+                                privacy_config.epsilon as f64,
+                                privacy_config.delta as f64,
+                                privacy_config.clipping_threshold as f64,
+                            );
+                            
+                            // Apply clipping and noise
+                            dp.clip_update(&mut outgoing_brain.confidence);
+                            if let Err(e) = dp.add_noise(&mut outgoing_brain.confidence) {
+                                tracing::error!("Failed to apply privacy noise: {}", e);
+                            } else {
+                                tracing::debug!(epsilon = privacy_config.epsilon, "Applied differential privacy to update");
+                            }
+                        }
+
+                        // Delta Encoding Logic using the (potentially noisy) outgoing brain
                         let message = if let Some(last) = &last_broadcast_brain {
-                            current_brain.diff(last).map(BrainMessage::Delta)
+                            outgoing_brain.diff(last).map(BrainMessage::Delta)
                         } else {
-                            Some(BrainMessage::Full(current_brain.clone()))
+                            Some(BrainMessage::Full(outgoing_brain.clone()))
                         };
 
                         if let Some(msg) = message {
@@ -218,23 +240,23 @@ pub async fn start_p2p_node(
                                 // Sign the message if security is enabled
                                 let final_payload = {
                                     let app_state = state.read().await;
-                                    if let Some(ref sec) = app_state.security {
-                                        // Wrap in SignedPayload
-                                        let signed = sec.sign(&brain_payload);
+                                    if let Some(sec_mgr) = &app_state.security {
+                                        let signed = sec_mgr.sign(&brain_payload);
                                         serde_json::to_vec(&signed).unwrap_or(brain_payload.clone())
                                     } else {
-                                        brain_payload.clone()
+                                        brain_payload
                                     }
                                 };
 
                                 if let Err(e) = swarm.behaviour_mut().gossipsub.publish(topic, final_payload) {
-                                     error!(error = %e, "Publish error");
+                                    tracing::error!("P2P publish error: {:?}", e);
                                 } else {
-                                     match &msg {
-                                         BrainMessage::Delta(d) => info!(updates = d.updates.len(), signed = state.read().await.security.is_some(), "Broadcasted Delta"),
-                                         BrainMessage::Full(_) => info!(signed = state.read().await.security.is_some(), "Broadcasted Full Wisdom"),
-                                     }
-                                     last_broadcast_brain = Some(current_brain);
+                                    match &msg {
+                                        BrainMessage::Delta(d) => info!(updates = d.updates.len(), signed = state.read().await.security.is_some(), "Broadcasted Delta"),
+                                        BrainMessage::Full(_) => info!(signed = state.read().await.security.is_some(), "Broadcasted Full Wisdom"),
+                                    }
+                                    // Update last broadcast to the one we actually sent (noisy)
+                                    last_broadcast_brain = Some(outgoing_brain);
                                 }
                             }
                         } else {

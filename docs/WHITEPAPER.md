@@ -4,6 +4,15 @@
 
 ---
 
+### 4.2 Security & Privacy
+
+QRES implements a layered defense strategy:
+1.  **Authentication:** ed25519 signatures verify origin and integrity.
+2.  **Robust Aggregation:** Krum algorithm rejects poisoned updates.
+3.  **Differential Privacy:** Gaussian noise injection ensures (ε, δ)-privacy for individual node contributions.
+
+---
+
 ## Abstract
 
 QRES represents the culmination of predictive data compression. v12.0, the **"Swarm Scaling Era"**, introduces zero-bandwidth model synchronization and federated intelligence. It employs a **"Living Brain"**—an autonomous, self-organizing neural agent that adapts to data in real-time, separated into a high-performance core library and a resilient background daemon.

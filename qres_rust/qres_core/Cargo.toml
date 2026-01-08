@@ -5,8 +5,9 @@ edition = "2021"
 
 [features]
 default = ["std"]
-std = ["serde/std", "rand/std", "dep:walkdir", "constriction/std"]
+std = ["serde/std", "rand/std", "rand/std_rng", "dep:walkdir", "constriction/std"]
 python = ["pyo3", "std"]
+dp = ["dep:opendp", "std"]
 gpu = []
 
 [lib]
@@ -27,6 +28,9 @@ libm = "0.2"
 wide = "0.7"
 num-traits = { version = "0.2", default-features = false, features = ["libm"] }
 pyo3 = { version = "0.22", optional = true, features = ["abi3-py38", "extension-module"] }
+
+# Privacy features
+opendp = { version = "0.10", optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 getrandom = { version = "0.2", features = ["js"] }

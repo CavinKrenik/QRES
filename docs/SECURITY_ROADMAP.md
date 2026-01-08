@@ -40,7 +40,7 @@ In production IoT deployments, malicious nodes could:
 
 ### Phase 3: Privacy (v15)
 
-- **Differential privacy** for shared weights (ε-DP guarantees)
+- ✅ **Differential Privacy** for shared weights (ε-DP guarantees, Gaussian mechanism)
 - Secure aggregation protocols (sum of weights without revealing individual)
 - Zero-knowledge proofs of model quality
 

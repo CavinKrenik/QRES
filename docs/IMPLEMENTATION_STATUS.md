@@ -19,11 +19,12 @@ This document clarifies what's production-ready vs. experimental vs. roadmap.
 - **Phase 2 Security (Robust Aggregation)**: Krum, Multi-Krum, Trimmed Mean, Median algorithms for Byzantine-tolerant federated averaging (`qres_core/src/aggregation.rs`)
 - **Federated Dreaming**: Synthetic sample generation for weight updates during idle time
 - **Regime Change Adaptation**: Dynamic predictor reweighting via momentum updates
+- **Differential Privacy:** Gaussian noise injection for model updates (v15 alpha).
 - **Unary VLQ Encoding**: Simple variable-length residual encoding
 
 ## 📋 Roadmap (Not Yet Implemented)
 
-- **Security Defenses**: Robust aggregation (Krum), differential privacy, reputation scoring
+- **Security Defenses**: Robust aggregation (Krum), reputation scoring
 - **Arithmetic Coding**: Advanced entropy coding for 10-20% better ratios
 - **Explicit Fallback Modes**: Graceful degradation during phase shifts
 - **FPGA Acceleration**: Hardware implementation of Mixer logic
