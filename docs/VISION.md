@@ -33,4 +33,4 @@ QRES proves that we can train global intelligence without sharing private data. 
 Our commitment to **Fixed-Point Determinism** means QRES is one of the few formats safe for long-term civilizational archival. A file compressed today will decompress bit-perfectly on any future hardware—preserving AI training datasets and robot memory banks for future generations.
 
 ---
-**QRES v10.5:** Engineering brain-like data intelligence for the robotics era.
+**QRES v12.0:** Engineering brain-like data intelligence for the robotics era.

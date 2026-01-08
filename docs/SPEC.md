@@ -1,12 +1,12 @@
-# QRES File Specification (v10.1)
+# QRES File Specification (v12.0)
 
-**Version:** 10.1
+**Version:** 12.0
 **Magic:** `QRES` (0x51 0x52 0x45 0x53)
 **Extension:** `.qres`
 
 ## 1. Core Philosophy: Determinism
 
-QRES v10 guarantees bit-perfect reproduction of decompressed data across all platforms (different OS, CPU, Endianness).
+QRES v12 guarantees bit-perfect reproduction of decompressed data across all platforms (different OS, CPU, Endianness).
 
 To achieve this:
 *   **No Floating Point:** All internal math (predictors, neural weights, mixing) is performed using **Q16.16 Fixed Point** integers (`i32`).
@@ -20,7 +20,7 @@ To achieve this:
 | Offset | Length | Type | Description |
 | :--- | :--- | :--- | :--- |
 | 0 | 4 | `[u8; 4]` | Magic Bytes (`QRES`) |
-| 4 | 2 | `u16` | Major Version (10) |
+| 4 | 2 | `u16` | Major Version (12) |
 | 6 | 2 | `u16` | Minor Version (0) |
 | 8 | 4 | `u32` | Flags (Bitmask) |
 | 12 | 8 | `u64` | Total Uncompressed Size |

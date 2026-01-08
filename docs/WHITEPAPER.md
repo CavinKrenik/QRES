@@ -6,7 +6,7 @@
 
 ## Abstract
 
-QRES represents the culmination of predictive data compression. v10.0, the **"Singularity Engine"**, transitions from experimental research to a production-grade decoupled architecture. It employs a **"Living Brain"**—an autonomous, self-organizing neural agent that adapts to data in real-time, now separated into a high-performance core library and a resilient background daemon.
+QRES represents the culmination of predictive data compression. v12.0, the **"Swarm Scaling Era"**, introduces zero-bandwidth model synchronization and federated intelligence. It employs a **"Living Brain"**—an autonomous, self-organizing neural agent that adapts to data in real-time, separated into a high-performance core library and a resilient background daemon.
 
 ---
 
