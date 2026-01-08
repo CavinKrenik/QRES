@@ -16,6 +16,7 @@ This document clarifies what's production-ready vs. experimental vs. roadmap.
 ## 🧪 Experimental (Works But Not Hardened)
 
 - **Phase 1 Security (Authentication)**: ed25519 signatures, PKI identity verification, replay prevention - fully integrated into P2P
+- **Phase 2 Security (Robust Aggregation)**: Krum, Multi-Krum, Trimmed Mean, Median algorithms for Byzantine-tolerant federated averaging (`qres_core/src/aggregation.rs`)
 - **Federated Dreaming**: Synthetic sample generation for weight updates during idle time
 - **Regime Change Adaptation**: Dynamic predictor reweighting via momentum updates
 - **Unary VLQ Encoding**: Simple variable-length residual encoding

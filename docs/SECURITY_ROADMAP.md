@@ -33,9 +33,10 @@ In production IoT deployments, malicious nodes could:
 
 ### Phase 2: Robust Aggregation (v14)
 
-- **Krum algorithm** for outlier rejection in federated averaging
-- Median/trimmed mean weight averaging instead of simple mean
-- Pre-merge validation on local test sets before accepting updates
+- ✅ **Krum algorithm** for outlier rejection in federated averaging (Implemented in `qres_core/src/aggregation.rs`)
+- ✅ **Multi-Krum** - averages the k most representative updates
+- ✅ **Median/trimmed mean** weight averaging instead of simple mean
+- **Pre-merge validation** on local test sets before accepting updates
 
 ### Phase 3: Privacy (v15)
 

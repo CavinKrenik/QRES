@@ -1,0 +1,327 @@
+//! Robust Aggregation Module for Federated Learning
+//!
+//! Implements Byzantine-tolerant aggregation algorithms for model updates:
+//! - Simple mean averaging (baseline)
+//! - Krum algorithm (Phase 2 Item 1 of security roadmap)
+//! - Trimmed mean (Phase 2 Item 2, planned)
+//! - Median (Phase 2 Item 2, planned)
+//!
+//! Reference: Blanchard et al., "Machine Learning with Adversaries: Byzantine Tolerant Gradient Descent"
+
+use alloc::vec::Vec;
+use core::cmp::Ordering;
+
+#[cfg(feature = "std")]
+use std::io::Write;
+
+/// Aggregation mode for combining model updates
+#[derive(Clone, Debug, Default)]
+pub enum AggregationMode {
+    /// Simple arithmetic mean (baseline, not robust)
+    #[default]
+    SimpleMean,
+    /// Krum algorithm - selects most representative update
+    /// `expected_byz` is the maximum number of Byzantine (malicious) updates expected
+    Krum { expected_byz: usize },
+    /// Multi-Krum - averages the k most representative updates
+    MultiKrum { expected_byz: usize, k: usize },
+    /// Coordinate-wise trimmed mean (remove outliers before averaging)
+    TrimmedMean { trim_fraction: f32 },
+    /// Coordinate-wise median
+    Median,
+}
+
+/// Result of aggregation with metadata
+#[derive(Clone, Debug)]
+pub struct AggregationResult {
+    /// The aggregated weights
+    pub weights: Vec<f32>,
+    /// Indices of updates that were selected (for Krum) or used (for others)
+    pub selected_indices: Vec<usize>,
+    /// Any updates that were rejected as potential outliers
+    pub rejected_indices: Vec<usize>,
+}
+
+/// Aggregate multiple model updates using the specified mode
+///
+/// # Arguments
+/// * `updates` - Vector of model weight updates (each is a flattened Vec<f32>)
+/// * `mode` - The aggregation algorithm to use
+///
+/// # Returns
+/// Aggregation result containing the combined weights and metadata
+pub fn aggregate_updates(updates: &[Vec<f32>], mode: &AggregationMode) -> AggregationResult {
+    if updates.is_empty() {
+        return AggregationResult {
+            weights: Vec::new(),
+            selected_indices: Vec::new(),
+            rejected_indices: Vec::new(),
+        };
+    }
+
+    let n = updates.len();
+    let d = updates[0].len();
+
+    match mode {
+        AggregationMode::SimpleMean => simple_mean(updates, n, d),
+        AggregationMode::Krum { expected_byz } => krum(updates, n, d, *expected_byz, 1),
+        AggregationMode::MultiKrum { expected_byz, k } => krum(updates, n, d, *expected_byz, *k),
+        AggregationMode::TrimmedMean { trim_fraction } => trimmed_mean(updates, n, d, *trim_fraction),
+        AggregationMode::Median => median_agg(updates, n, d),
+    }
+}
+
+/// Simple arithmetic mean (baseline)
+fn simple_mean(updates: &[Vec<f32>], n: usize, d: usize) -> AggregationResult {
+    let mut sum = vec![0.0f32; d];
+    for update in updates {
+        for (i, &val) in update.iter().enumerate() {
+            if i < d {
+                sum[i] += val;
+            }
+        }
+    }
+    
+    let inv_n = 1.0 / n as f32;
+    for x in sum.iter_mut() {
+        *x *= inv_n;
+    }
+    
+    AggregationResult {
+        weights: sum,
+        selected_indices: (0..n).collect(),
+        rejected_indices: Vec::new(),
+    }
+}
+
+/// Krum algorithm for Byzantine-tolerant aggregation
+///
+/// For each update, compute the sum of squared distances to its n-q-2 nearest neighbors.
+/// Select the update with the smallest sum (most representative).
+///
+/// For Multi-Krum (k > 1), select the k most representative and average them.
+fn krum(updates: &[Vec<f32>], n: usize, d: usize, expected_byz: usize, k: usize) -> AggregationResult {
+    let q = expected_byz;
+    
+    // Krum requires n > 2q + 2
+    if n <= 2 * q + 2 || n < 3 {
+        // Fallback to simple mean when we don't have enough updates
+        #[cfg(feature = "std")]
+        eprintln!("Warning: Too few updates for Krum (n={}, q={}), falling back to mean", n, q);
+        return simple_mean(updates, n, d);
+    }
+    
+    // Compute pairwise squared Euclidean distances
+    let mut distances = vec![vec![0.0f32; n]; n];
+    for i in 0..n {
+        for j in (i + 1)..n {
+            let dist = squared_euclidean(&updates[i], &updates[j]);
+            distances[i][j] = dist;
+            distances[j][i] = dist;
+        }
+    }
+    
+    // For each update, compute Krum score: sum of distances to n-q-2 nearest neighbors
+    let neighbors_count = n - q - 2;
+    let mut scores: Vec<(usize, f32)> = Vec::with_capacity(n);
+    
+    for i in 0..n {
+        let mut neighbor_dists: Vec<f32> = distances[i]
+            .iter()
+            .enumerate()
+            .filter(|&(j, _)| j != i)
+            .map(|(_, &d)| d)
+            .collect();
+        
+        neighbor_dists.sort_by(|a, b| a.partial_cmp(b).unwrap_or(Ordering::Equal));
+        
+        // Sum the smallest n-q-2 distances
+        let score: f32 = neighbor_dists.iter().take(neighbors_count).sum();
+        scores.push((i, score));
+    }
+    
+    // Sort by score (ascending - smaller is better)
+    scores.sort_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(Ordering::Equal));
+    
+    // Select k best updates
+    let k = k.min(n);
+    let selected_indices: Vec<usize> = scores.iter().take(k).map(|(idx, _)| *idx).collect();
+    let rejected_indices: Vec<usize> = scores.iter().skip(k).map(|(idx, _)| *idx).collect();
+    
+    // Average the selected updates
+    let mut result = vec![0.0f32; d];
+    for &idx in &selected_indices {
+        for (i, &val) in updates[idx].iter().enumerate() {
+            if i < d {
+                result[i] += val;
+            }
+        }
+    }
+    
+    let inv_k = 1.0 / k as f32;
+    for x in result.iter_mut() {
+        *x *= inv_k;
+    }
+    
+    AggregationResult {
+        weights: result,
+        selected_indices,
+        rejected_indices,
+    }
+}
+
+/// Coordinate-wise trimmed mean - removes outliers before averaging
+fn trimmed_mean(updates: &[Vec<f32>], n: usize, d: usize, trim_fraction: f32) -> AggregationResult {
+    let trim_count = ((n as f32 * trim_fraction) / 2.0).floor() as usize;
+    
+    if trim_count * 2 >= n {
+        // Can't trim that much, fallback to mean
+        return simple_mean(updates, n, d);
+    }
+    
+    let mut result = vec![0.0f32; d];
+    let remaining = n - 2 * trim_count;
+    
+    for dim in 0..d {
+        // Collect values for this dimension
+        let mut values: Vec<f32> = updates.iter().map(|u| u.get(dim).copied().unwrap_or(0.0)).collect();
+        values.sort_by(|a, b| a.partial_cmp(b).unwrap_or(Ordering::Equal));
+        
+        // Trim extremes and average
+        let sum: f32 = values[trim_count..(n - trim_count)].iter().sum();
+        result[dim] = sum / remaining as f32;
+    }
+    
+    AggregationResult {
+        weights: result,
+        selected_indices: (0..n).collect(), // All contribute partially
+        rejected_indices: Vec::new(),
+    }
+}
+
+/// Coordinate-wise median aggregation
+fn median_agg(updates: &[Vec<f32>], n: usize, d: usize) -> AggregationResult {
+    let mut result = vec![0.0f32; d];
+    
+    for dim in 0..d {
+        let mut values: Vec<f32> = updates.iter().map(|u| u.get(dim).copied().unwrap_or(0.0)).collect();
+        values.sort_by(|a, b| a.partial_cmp(b).unwrap_or(Ordering::Equal));
+        
+        result[dim] = if n % 2 == 1 {
+            values[n / 2]
+        } else {
+            (values[n / 2 - 1] + values[n / 2]) / 2.0
+        };
+    }
+    
+    AggregationResult {
+        weights: result,
+        selected_indices: (0..n).collect(),
+        rejected_indices: Vec::new(),
+    }
+}
+
+/// Squared Euclidean distance between two vectors
+#[inline]
+fn squared_euclidean(a: &[f32], b: &[f32]) -> f32 {
+    a.iter()
+        .zip(b.iter())
+        .map(|(&x, &y)| {
+            let diff = x - y;
+            diff * diff
+        })
+        .sum()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_simple_mean() {
+        let updates = vec![
+            vec![1.0, 2.0, 3.0],
+            vec![2.0, 3.0, 4.0],
+            vec![3.0, 4.0, 5.0],
+        ];
+        let result = aggregate_updates(&updates, &AggregationMode::SimpleMean);
+        assert_eq!(result.weights, vec![2.0, 3.0, 4.0]);
+        assert_eq!(result.selected_indices.len(), 3);
+    }
+
+    #[test]
+    fn test_krum_rejects_outlier() {
+        // Need n > 2q+2, so for q=1, need n > 4 (n >= 5)
+        let updates = vec![
+            vec![1.0, 1.0],   // Good
+            vec![1.1, 1.1],   // Good
+            vec![0.9, 0.9],   // Good
+            vec![1.05, 1.05], // Good
+            vec![100.0, 100.0], // Poison/Byzantine
+        ];
+        let result = aggregate_updates(&updates, &AggregationMode::Krum { expected_byz: 1 });
+        
+        // Krum should select one of the good ones (not the outlier at index 4)
+        assert!(result.weights[0] < 10.0, "Krum should reject outlier");
+        assert!(result.weights[1] < 10.0, "Krum should reject outlier");
+        assert!(!result.selected_indices.contains(&4), 
+                "Outlier at index 4 should not be selected");
+    }
+
+    #[test]
+    fn test_krum_fallback_small_n() {
+        // Only 2 updates with q=1, should fallback to mean
+        let updates = vec![
+            vec![1.0, 2.0],
+            vec![3.0, 4.0],
+        ];
+        let result = aggregate_updates(&updates, &AggregationMode::Krum { expected_byz: 1 });
+        assert_eq!(result.weights, vec![2.0, 3.0]); // Falls back to mean
+    }
+
+    #[test]
+    fn test_multi_krum() {
+        let updates = vec![
+            vec![1.0, 1.0],
+            vec![1.2, 1.2],
+            vec![1.1, 1.1],
+            vec![100.0, 100.0], // Outlier
+            vec![0.9, 0.9],
+        ];
+        let result = aggregate_updates(&updates, &AggregationMode::MultiKrum { expected_byz: 1, k: 3 });
+        
+        // Should average the 3 best (excluding outlier)
+        assert!(result.weights[0] < 2.0, "Multi-Krum should average good updates");
+        assert_eq!(result.selected_indices.len(), 3);
+    }
+
+    #[test]
+    fn test_trimmed_mean() {
+        let updates = vec![
+            vec![0.0],   // Low outlier
+            vec![1.0],
+            vec![1.1],
+            vec![0.9],
+            vec![100.0], // High outlier
+        ];
+        let result = aggregate_updates(&updates, &AggregationMode::TrimmedMean { trim_fraction: 0.4 });
+        
+        // With 40% trim, we remove 1 from each side, averaging the middle 3
+        assert!((result.weights[0] - 1.0).abs() < 0.2, "Trimmed mean should be ~1.0");
+    }
+
+    #[test]
+    fn test_median() {
+        let updates = vec![
+            vec![0.0],   // Low outlier
+            vec![1.0],
+            vec![1.1],
+            vec![0.9],
+            vec![100.0], // High outlier
+        ];
+        let result = aggregate_updates(&updates, &AggregationMode::Median);
+        
+        // Median of [0, 0.9, 1.0, 1.1, 100] = 1.0
+        assert_eq!(result.weights[0], 1.0);
+    }
+}
