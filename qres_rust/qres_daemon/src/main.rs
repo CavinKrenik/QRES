@@ -1,5 +1,6 @@
 pub mod analytics;
 pub mod api;
+pub mod brain_aggregator;
 pub mod config;
 pub mod daemon;
 pub mod dreaming;

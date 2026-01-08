@@ -6,6 +6,7 @@ use std::path::PathBuf;
 pub struct Config {
     pub swarm: SwarmConfig,
     pub security: SecurityConfig,
+    pub aggregation: AggregationConfig,
     pub api: ApiConfig,
 }
 
@@ -38,6 +39,46 @@ pub struct ApiConfig {
     pub enabled: bool,
 }
 
+/// Aggregation settings for robust federated averaging
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AggregationConfig {
+    /// Aggregation mode: "mean", "krum", "multi_krum", "trimmed_mean", "median"
+    #[serde(default = "default_agg_mode")]
+    pub mode: String,
+    /// Expected fraction of Byzantine (malicious) nodes (for Krum)
+    #[serde(default = "default_expected_byz")]
+    pub expected_byzantines_fraction: f32,
+    /// Number of updates to buffer before aggregating (for Multi-Krum)
+    #[serde(default = "default_buffer_size")]
+    pub buffer_size: usize,
+    /// Trim fraction for trimmed mean (e.g., 0.2 = trim 10% from each side)
+    #[serde(default)]
+    pub trim_fraction: f32,
+}
+
+fn default_agg_mode() -> String {
+    "mean".to_string()
+}
+
+fn default_expected_byz() -> f32 {
+    0.2
+}
+
+fn default_buffer_size() -> usize {
+    5
+}
+
+impl Default for AggregationConfig {
+    fn default() -> Self {
+        Self {
+            mode: default_agg_mode(),
+            expected_byzantines_fraction: default_expected_byz(),
+            buffer_size: default_buffer_size(),
+            trim_fraction: 0.2,
+        }
+    }
+}
+
 impl Default for Config {
     fn default() -> Self {
         Config {
@@ -54,6 +95,7 @@ impl Default for Config {
                 trusted_peers: Vec::new(),
                 trusted_pubkeys: Vec::new(),
             },
+            aggregation: AggregationConfig::default(),
             api: ApiConfig {
                 port: 3030,
                 enabled: true,

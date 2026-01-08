@@ -1,4 +1,5 @@
 use crate::living_brain::{BrainMessage, LivingBrain};
+use crate::brain_aggregator::{BrainAggregator, apply_aggregated_confidence};
 use crate::config::Config;
 use crate::peer_keys::PeerKeyStore;
 use crate::security::{SecurityManager, SignedPayload};
@@ -41,6 +42,7 @@ pub struct AppState {
     pub peer_keys: PeerKeyStore,
     pub security: Option<SecurityManager>,
     pub require_signatures: bool,
+    pub aggregator: BrainAggregator,
 }
 
 // Custom Behavior Struct
@@ -108,6 +110,7 @@ pub async fn start_p2p_node(
         peer_keys,
         security,
         require_signatures: config.security.require_signatures,
+        aggregator: BrainAggregator::new(config.aggregation),
     }));
 
     // Spawn API
@@ -329,16 +332,29 @@ pub async fn start_p2p_node(
                             if let Ok(msg) = serde_json::from_str::<BrainMessage>(&json) {
                                 match msg {
                                     BrainMessage::Full(remote_brain) => {
-                                        if let Ok(local_json) = fs::read_to_string(brain_file) {
-                                            if let Some(mut local_brain) = LivingBrain::from_json(&local_json) {
-                                                local_brain.merge(&remote_brain, 0.1);
-                                                let _ = fs::write(brain_file, local_brain.to_json());
-                                                info!("Assimilated Full Knowledge (verified)");
-                                                state.write().await.brain = local_brain;
+                                        // Buffer the update for robust aggregation
+                                        let aggregated = {
+                                            let mut app_state = state.write().await;
+                                            app_state.aggregator.add_update(&remote_brain)
+                                        };
+                                        
+                                        // If we have enough updates, apply aggregated result
+                                        if let Some(agg_confidence) = aggregated {
+                                            if let Ok(local_json) = fs::read_to_string(brain_file) {
+                                                if let Some(mut local_brain) = LivingBrain::from_json(&local_json) {
+                                                    // Apply aggregated confidence with alpha blend
+                                                    apply_aggregated_confidence(&mut local_brain, &agg_confidence, 0.1);
+                                                    let _ = fs::write(brain_file, local_brain.to_json());
+                                                    info!("Assimilated Aggregated Knowledge (robust)");
+                                                    state.write().await.brain = local_brain;
+                                                }
                                             }
+                                        } else {
+                                            info!(buffered = state.read().await.aggregator.buffer_len(), "Buffered update for aggregation");
                                         }
                                     }
                                     BrainMessage::Delta(delta) => {
+                                        // Deltas are applied immediately (already small incremental updates)
                                         if let Ok(local_json) = fs::read_to_string(brain_file) {
                                             if let Some(mut local_brain) = LivingBrain::from_json(&local_json) {
                                                 local_brain.apply_delta(&delta);
