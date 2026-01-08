@@ -94,6 +94,39 @@ Dataset: Sine wave with frequency shift at midpoint
 | QRES (solo) | 5.8x | -60% (2.3x) | 48 hours |
 | QRES (swarm) | 6.2x | -40% (3.7x) | 12 hours |
 
+### Regime Change Severity Analysis (v15.1)
+
+| Severity | Description | Pre-Shift Accuracy | Post-Shift (initial) | Recovery Rounds |
+|----------|-------------|-------------------|---------------------|-----------------|
+| **Gradual** | Amplitude drift 1%/round | 95% | 88% | 5 rounds |
+| **Abrupt** | Phase shift at round 5 | 95% | 62% | 12 rounds |
+| **Oscillating** | Pattern flip every 3 rounds | 95% | 71% | 8 rounds (avg) |
+
+*Dataset: Synthetic sine-spike + real `iot_anomaly.dat` with drift/spikes.*
+
+---
+
+## Privacy Overhead (v15.1)
+
+Impact of privacy features on model utility, runtime, and memory.
+
+| Privacy Stack | Utility Loss | Runtime Overhead | Memory (per node) |
+|---------------|-------------|-----------------|-------------------|
+| **Baseline** (no privacy) | 0% | 1.0x | 0 KB |
+| **DP Only** (ε=1.0) | 2-5% | 1.1x | ~1 KB |
+| **Secure Agg Only** | 0% | 1.3x | ~32 KB (masks) |
+| **Full Stack** (DP + SA + ZK) | 3-6% | 1.8x | ~48 KB |
+
+### Memory Breakdown
+
+| Component | Memory Usage |
+|-----------|-------------|
+| Noise buffer (DP) | O(d) floats |
+| Pairwise masks (SA) | O(n) × 32 bytes |
+| ZK proof state | ~1 KB per proof |
+
+*d = model dimension, n = peer count*
+
 ---
 
 ## Deduplication

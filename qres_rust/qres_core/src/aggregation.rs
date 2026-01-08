@@ -15,6 +15,97 @@ use alloc::vec::Vec;
 #[cfg(feature = "std")]
 use std::vec::Vec;
 
+/// Trait for pluggable aggregation strategies
+///
+/// Allows swapping aggregation algorithms at runtime or compile-time.
+/// Implementations should be stateless (configuration stored in struct fields).
+pub trait Aggregator {
+    /// Aggregate multiple model updates into a single update
+    fn aggregate(&self, updates: &[Vec<f32>]) -> AggregationResult;
+
+    /// Human-readable name for logging/debugging
+    fn name(&self) -> &'static str;
+}
+
+/// FedAvg (simple mean) aggregator
+#[derive(Clone, Debug, Default)]
+pub struct FedAvgAggregator;
+
+impl Aggregator for FedAvgAggregator {
+    fn aggregate(&self, updates: &[Vec<f32>]) -> AggregationResult {
+        aggregate_updates(updates, &AggregationMode::SimpleMean)
+    }
+
+    fn name(&self) -> &'static str {
+        "FedAvg"
+    }
+}
+
+/// Krum aggregator for Byzantine tolerance
+#[derive(Clone, Debug)]
+pub struct KrumAggregator {
+    pub expected_byz: usize,
+    pub multi_k: Option<usize>,
+}
+
+impl Default for KrumAggregator {
+    fn default() -> Self {
+        Self {
+            expected_byz: 1,
+            multi_k: None,
+        }
+    }
+}
+
+impl Aggregator for KrumAggregator {
+    fn aggregate(&self, updates: &[Vec<f32>]) -> AggregationResult {
+        let mode = match self.multi_k {
+            Some(k) => AggregationMode::MultiKrum {
+                expected_byz: self.expected_byz,
+                k,
+            },
+            None => AggregationMode::Krum {
+                expected_byz: self.expected_byz,
+            },
+        };
+        aggregate_updates(updates, &mode)
+    }
+
+    fn name(&self) -> &'static str {
+        match self.multi_k {
+            Some(_) => "MultiKrum",
+            None => "Krum",
+        }
+    }
+}
+
+/// Trimmed Mean aggregator
+#[derive(Clone, Debug)]
+pub struct TrimmedMeanAggregator {
+    pub trim_fraction: f32,
+}
+
+impl Default for TrimmedMeanAggregator {
+    fn default() -> Self {
+        Self { trim_fraction: 0.1 }
+    }
+}
+
+impl Aggregator for TrimmedMeanAggregator {
+    fn aggregate(&self, updates: &[Vec<f32>]) -> AggregationResult {
+        aggregate_updates(
+            updates,
+            &AggregationMode::TrimmedMean {
+                trim_fraction: self.trim_fraction,
+            },
+        )
+    }
+
+    fn name(&self) -> &'static str {
+        "TrimmedMean"
+    }
+}
+
 /// Aggregation mode for combining model updates
 #[derive(Clone, Debug, Default)]
 pub enum AggregationMode {
