@@ -10,7 +10,10 @@
 
 use core::cmp::Ordering;
 
-// use std::io::Write; // Unused
+#[cfg(not(feature = "std"))]
+use alloc::vec::Vec;
+#[cfg(feature = "std")]
+use std::vec::Vec;
 
 /// Aggregation mode for combining model updates
 #[derive(Clone, Debug, Default)]
@@ -142,7 +145,7 @@ fn krum(
             .map(|(_, &d)| d)
             .collect();
 
-        neighbor_dists.sort_by(|a, b| a.partial_cmp(b).unwrap_or(Ordering::Equal));
+        neighbor_dists.sort_by(|a: &f32, b: &f32| a.partial_cmp(b).unwrap_or(Ordering::Equal));
 
         // Sum the smallest n-q-2 distances
         let score: f32 = neighbor_dists.iter().take(neighbors_count).sum();
@@ -197,7 +200,7 @@ fn trimmed_mean(updates: &[Vec<f32>], n: usize, d: usize, trim_fraction: f32) ->
             .iter()
             .map(|u| u.get(dim).copied().unwrap_or(0.0))
             .collect();
-        values.sort_by(|a, b| a.partial_cmp(b).unwrap_or(Ordering::Equal));
+        values.sort_by(|a: &f32, b: &f32| a.partial_cmp(b).unwrap_or(Ordering::Equal));
 
         // Trim extremes and average
         let sum: f32 = values[trim_count..(n - trim_count)].iter().sum();
@@ -220,7 +223,7 @@ fn median_agg(updates: &[Vec<f32>], n: usize, d: usize) -> AggregationResult {
             .iter()
             .map(|u| u.get(dim).copied().unwrap_or(0.0))
             .collect();
-        values.sort_by(|a, b| a.partial_cmp(b).unwrap_or(Ordering::Equal));
+        values.sort_by(|a: &f32, b: &f32| a.partial_cmp(b).unwrap_or(Ordering::Equal));
 
         *res_val = if n % 2 == 1 {
             values[n / 2]

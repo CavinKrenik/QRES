@@ -2792,6 +2792,7 @@ version = "13.0.0"
 dependencies = [
  "blake3",
  "constriction",
+ "getrandom 0.2.16",
  "lazy_static",
  "libm",
  "num-traits",
