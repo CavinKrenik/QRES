@@ -56,7 +56,8 @@ use pyo3::prelude::*;
 // --- v3.0/v4.0 Modules ---
 pub mod aggregation;
 pub mod privacy;
-pub mod secure_agg; // Phase 2 Security: Byzantine-tolerant aggregation
+pub mod secure_agg;
+pub mod zk_proofs; // Phase 2 Security: Byzantine-tolerant aggregation
 pub mod ans_coder;
 #[cfg(feature = "std")]
 pub mod archive;

@@ -42,7 +42,7 @@ In production IoT deployments, malicious nodes could:
 
 - ✅ **Differential Privacy** for shared weights (ε-DP guarantees, Gaussian mechanism)
 - ✅ **Secure Aggregation** protocols (Pairwise masking via X25519 + ChaCha20)
-- Zero-knowledge proofs of model quality
+- ✅ **Zero-knowledge proofs** infrastructure (Transcript + Pedersen interfaces implemented, crypto stubbed)
 
 ## Current Best Practices
 
