@@ -1,6 +1,6 @@
-use crate::living_brain::{BrainMessage, LivingBrain};
-use crate::brain_aggregator::{BrainAggregator, apply_aggregated_confidence};
+use crate::brain_aggregator::{apply_aggregated_confidence, BrainAggregator};
 use crate::config::Config;
+use crate::living_brain::{BrainMessage, LivingBrain};
 use crate::peer_keys::PeerKeyStore;
 use crate::security::{SecurityManager, SignedPayload};
 use axum::{extract::State, routing::get, Json, Router};
@@ -72,7 +72,9 @@ pub async fn start_p2p_node(
 
     // Initialize SecurityManager
     // Priority: 1. CLI Override, 2. Config Key Path, 3. Auto-generate if required
-    let security = if let Some(key_path_str) = key_path_override.or(config.security.key_path.clone()) {
+    let security = if let Some(key_path_str) =
+        key_path_override.or(config.security.key_path.clone())
+    {
         let key_path = PathBuf::from(key_path_str);
         match SecurityManager::new(&key_path, config.security.require_signatures) {
             Ok(mgr) => {
@@ -290,7 +292,7 @@ pub async fn start_p2p_node(
                     // Try to extract the brain message - either from SignedPayload or raw
                     let brain_data: Option<Vec<u8>> = {
                         let mut app_state = state.write().await;
-                        
+
                         // First, try to parse as SignedPayload
                         if let Ok(signed) = serde_json::from_slice::<SignedPayload>(&message.data) {
                             // Verify the signature if required
@@ -339,7 +341,7 @@ pub async fn start_p2p_node(
                                             let mut app_state = state.write().await;
                                             app_state.aggregator.add_update(&remote_brain)
                                         };
-                                        
+
                                         // If we have enough updates, apply aggregated result
                                         if let Some(agg_confidence) = aggregated {
                                             if let Ok(local_json) = fs::read_to_string(brain_file) {

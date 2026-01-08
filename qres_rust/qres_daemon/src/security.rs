@@ -40,7 +40,10 @@ pub struct SecurityManager {
 
 impl SecurityManager {
     /// Create a new SecurityManager, loading or generating keys
-    pub fn new(key_path: &PathBuf, require_signatures: bool) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new(
+        key_path: &PathBuf,
+        require_signatures: bool,
+    ) -> Result<Self, Box<dyn std::error::Error>> {
         let signing_key = if key_path.exists() {
             // Load existing key
             let key_bytes = fs::read(key_path)?;
@@ -130,8 +133,8 @@ impl SecurityManager {
         }
 
         // Decode public key
-        let pubkey_bytes = hex::decode(&payload.signer_pubkey)
-            .map_err(|_| SecurityError::InvalidPublicKey)?;
+        let pubkey_bytes =
+            hex::decode(&payload.signer_pubkey).map_err(|_| SecurityError::InvalidPublicKey)?;
 
         if pubkey_bytes.len() != 32 {
             return Err(SecurityError::InvalidPublicKey);
@@ -140,8 +143,8 @@ impl SecurityManager {
         let mut pubkey_arr = [0u8; 32];
         pubkey_arr.copy_from_slice(&pubkey_bytes);
 
-        let verifying_key = VerifyingKey::from_bytes(&pubkey_arr)
-            .map_err(|_| SecurityError::InvalidPublicKey)?;
+        let verifying_key =
+            VerifyingKey::from_bytes(&pubkey_arr).map_err(|_| SecurityError::InvalidPublicKey)?;
 
         // Reconstruct signed message
         let mut message = payload.data.clone();
@@ -149,8 +152,8 @@ impl SecurityManager {
         message.extend_from_slice(&payload.nonce.to_le_bytes());
 
         // Verify signature
-        let sig_bytes = hex::decode(&payload.signature)
-            .map_err(|_| SecurityError::InvalidSignature)?;
+        let sig_bytes =
+            hex::decode(&payload.signature).map_err(|_| SecurityError::InvalidSignature)?;
         if sig_bytes.len() != SIGNATURE_SIZE {
             return Err(SecurityError::InvalidSignature);
         }

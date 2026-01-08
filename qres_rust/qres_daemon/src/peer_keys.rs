@@ -43,11 +43,13 @@ impl PeerKeyStore {
             if let Ok(pubkey_bytes) = hex::decode(pubkey_hex) {
                 // Try to parse as ed25519 public key (32 bytes)
                 if pubkey_bytes.len() == 32 {
-                    if let Ok(ed_key) = libp2p::identity::ed25519::PublicKey::try_from_bytes(&pubkey_bytes) {
+                    if let Ok(ed_key) =
+                        libp2p::identity::ed25519::PublicKey::try_from_bytes(&pubkey_bytes)
+                    {
                         let public_key = PublicKey::from(ed_key);
                         let peer_id = PeerId::from_public_key(&public_key);
-                        store.keys.insert(peer_id.clone(), public_key);
-                        store.trusted_peer_ids.insert(peer_id.clone());
+                        store.keys.insert(peer_id, public_key);
+                        store.trusted_peer_ids.insert(peer_id);
                         info!(peer_id = %peer_id, "Added trusted pubkey from config");
                     } else {
                         warn!(hex = %pubkey_hex, "Invalid ed25519 public key");
@@ -82,14 +84,14 @@ impl PeerKeyStore {
             return false;
         }
 
-        self.keys.insert(peer_id.clone(), public_key);
+        self.keys.insert(peer_id, public_key);
         info!(peer_id = %peer_id, "Added verified peer key");
         true
     }
 
     /// Get the public key for a peer
-    pub fn get_key(&self, peer_id: &PeerId) -> Option<&PublicKey> {
-        self.keys.get(peer_id)
+    pub fn get_key(&self, peer_id: &PeerId) -> Option<PublicKey> {
+        self.keys.get(peer_id).cloned()
     }
 
     /// Check if a peer is trusted
