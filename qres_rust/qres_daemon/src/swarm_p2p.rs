@@ -1,6 +1,7 @@
 use crate::living_brain::{BrainMessage, LivingBrain};
 use crate::config::Config;
 use crate::peer_keys::PeerKeyStore;
+use crate::security::{SecurityManager, SignedPayload};
 use axum::{extract::State, routing::get, Json, Router};
 use libp2p::futures::StreamExt; // For select_next_some
 use libp2p::gossipsub::IdentTopic; // Added helper
@@ -15,6 +16,7 @@ use std::collections::HashSet;
 use std::fs;
 use std::hash::{Hash, Hasher};
 use std::io; // Added
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::RwLock;
@@ -37,6 +39,8 @@ pub struct AppState {
     pub known_peers: HashSet<String>,
     pub brain: LivingBrain,
     pub peer_keys: PeerKeyStore,
+    pub security: Option<SecurityManager>,
+    pub require_signatures: bool,
 }
 
 // Custom Behavior Struct
@@ -63,6 +67,38 @@ pub async fn start_p2p_node(
         &config.security.trusted_pubkeys,
     );
 
+    // Initialize SecurityManager if key_path is configured
+    let security = if let Some(key_path_str) = &config.security.key_path {
+        let key_path = PathBuf::from(key_path_str);
+        match SecurityManager::new(&key_path, config.security.require_signatures) {
+            Ok(mgr) => {
+                info!(pubkey = %mgr.public_key_hex(), "Security manager initialized");
+                Some(mgr)
+            }
+            Err(e) => {
+                warn!(error = %e, "Failed to initialize SecurityManager, running without signatures");
+                None
+            }
+        }
+    } else if config.security.require_signatures {
+        // Auto-generate key if signatures required but no path specified
+        let key_path = dirs::home_dir()
+            .map(|p| p.join(".qres").join("node_key"))
+            .unwrap_or_else(|| PathBuf::from("node_key"));
+        match SecurityManager::new(&key_path, true) {
+            Ok(mgr) => {
+                info!(pubkey = %mgr.public_key_hex(), key_path = ?key_path, "Security manager auto-initialized");
+                Some(mgr)
+            }
+            Err(e) => {
+                warn!(error = %e, "Failed to auto-initialize SecurityManager");
+                None
+            }
+        }
+    } else {
+        None
+    };
+
     // Shared State
     let state = Arc::new(RwLock::new(AppState {
         local_peer_id: peer_id.to_string(),
@@ -70,6 +106,8 @@ pub async fn start_p2p_node(
         known_peers: HashSet::new(),
         brain: LivingBrain::default(),
         peer_keys,
+        security,
+        require_signatures: config.security.require_signatures,
     }));
 
     // Spawn API
@@ -169,13 +207,25 @@ pub async fn start_p2p_node(
 
                         if let Some(msg) = message {
                             let topic = IdentTopic::new(BRAIN_TOPIC);
-                            if let Ok(payload) = serde_json::to_vec(&msg) {
-                                if let Err(e) = swarm.behaviour_mut().gossipsub.publish(topic, payload) {
+                            if let Ok(brain_payload) = serde_json::to_vec(&msg) {
+                                // Sign the message if security is enabled
+                                let final_payload = {
+                                    let app_state = state.read().await;
+                                    if let Some(ref sec) = app_state.security {
+                                        // Wrap in SignedPayload
+                                        let signed = sec.sign(&brain_payload);
+                                        serde_json::to_vec(&signed).unwrap_or(brain_payload.clone())
+                                    } else {
+                                        brain_payload.clone()
+                                    }
+                                };
+
+                                if let Err(e) = swarm.behaviour_mut().gossipsub.publish(topic, final_payload) {
                                      error!(error = %e, "Publish error");
                                 } else {
                                      match &msg {
-                                         BrainMessage::Delta(d) => info!(updates = d.updates.len(), "Broadcasted Delta"),
-                                         BrainMessage::Full(_) => info!("Broadcasted Full Wisdom"),
+                                         BrainMessage::Delta(d) => info!(updates = d.updates.len(), signed = state.read().await.security.is_some(), "Broadcasted Delta"),
+                                         BrainMessage::Full(_) => info!(signed = state.read().await.security.is_some(), "Broadcasted Full Wisdom"),
                                      }
                                      last_broadcast_brain = Some(current_brain);
                                 }
@@ -231,27 +281,71 @@ pub async fn start_p2p_node(
                 }
                 SwarmEvent::Behaviour(QresBehaviorEvent::Gossipsub(gossipsub::Event::Message { propagation_source: _, message_id: _, message })) => {
                     info!("Received Merge Candidate");
-                    if let Ok(json) = String::from_utf8(message.data) {
-                        // Try to parse as BrainMessage (supports both Full and Delta)
-                        if let Ok(msg) = serde_json::from_str::<BrainMessage>(&json) {
-                            match msg {
-                                BrainMessage::Full(remote_brain) => {
-                                    if let Ok(local_json) = fs::read_to_string(brain_file) {
-                                        if let Some(mut local_brain) = LivingBrain::from_json(&local_json) {
-                                            local_brain.merge(&remote_brain, 0.1);
-                                            let _ = fs::write(brain_file, local_brain.to_json());
-                                            info!("Assimilated Full Knowledge");
-                                            state.write().await.brain = local_brain;
+
+                    // Try to extract the brain message - either from SignedPayload or raw
+                    let brain_data: Option<Vec<u8>> = {
+                        let mut app_state = state.write().await;
+                        
+                        // First, try to parse as SignedPayload
+                        if let Ok(signed) = serde_json::from_slice::<SignedPayload>(&message.data) {
+                            // Verify the signature if required
+                            if app_state.require_signatures {
+                                if let Some(ref mut sec) = app_state.security {
+                                    match sec.verify(&signed) {
+                                        Ok(data) => {
+                                            info!(signer = %signed.signer_pubkey[..16], "Signature verified");
+                                            Some(data)
+                                        }
+                                        Err(e) => {
+                                            warn!(error = %e, signer = %signed.signer_pubkey[..16], "Rejecting message: signature verification failed");
+                                            None
                                         }
                                     }
+                                } else {
+                                    // No SecurityManager but signatures required - reject
+                                    warn!("Rejecting signed message: no SecurityManager configured");
+                                    None
                                 }
-                                BrainMessage::Delta(delta) => {
-                                    if let Ok(local_json) = fs::read_to_string(brain_file) {
-                                        if let Some(mut local_brain) = LivingBrain::from_json(&local_json) {
-                                            local_brain.apply_delta(&delta);
-                                            let _ = fs::write(brain_file, local_brain.to_json());
-                                            info!(updates = delta.updates.len(), "Applied Knowledge Delta");
-                                            state.write().await.brain = local_brain;
+                            } else {
+                                // Signatures not required - accept signed payload data without verification
+                                info!("Accepting signed payload (verification not required)");
+                                Some(signed.data)
+                            }
+                        } else {
+                            // Not a SignedPayload - check if we require signatures
+                            if app_state.require_signatures {
+                                warn!("Rejecting unsigned message: signatures required");
+                                None
+                            } else {
+                                // Accept raw message for backward compatibility
+                                Some(message.data.clone())
+                            }
+                        }
+                    };
+
+                    // Process the brain message if we have verified data
+                    if let Some(data) = brain_data {
+                        if let Ok(json) = String::from_utf8(data) {
+                            if let Ok(msg) = serde_json::from_str::<BrainMessage>(&json) {
+                                match msg {
+                                    BrainMessage::Full(remote_brain) => {
+                                        if let Ok(local_json) = fs::read_to_string(brain_file) {
+                                            if let Some(mut local_brain) = LivingBrain::from_json(&local_json) {
+                                                local_brain.merge(&remote_brain, 0.1);
+                                                let _ = fs::write(brain_file, local_brain.to_json());
+                                                info!("Assimilated Full Knowledge (verified)");
+                                                state.write().await.brain = local_brain;
+                                            }
+                                        }
+                                    }
+                                    BrainMessage::Delta(delta) => {
+                                        if let Ok(local_json) = fs::read_to_string(brain_file) {
+                                            if let Some(mut local_brain) = LivingBrain::from_json(&local_json) {
+                                                local_brain.apply_delta(&delta);
+                                                let _ = fs::write(brain_file, local_brain.to_json());
+                                                info!(updates = delta.updates.len(), "Applied Knowledge Delta (verified)");
+                                                state.write().await.brain = local_brain;
+                                            }
                                         }
                                     }
                                 }

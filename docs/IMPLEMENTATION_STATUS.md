@@ -15,8 +15,7 @@ This document clarifies what's production-ready vs. experimental vs. roadmap.
 
 ## 🧪 Experimental (Works But Not Hardened)
 
-- **ed25519 Signatures**: Model update signing and verification with replay prevention (`security.rs`)
-- **Node Identity (PKI)**: Peer public key verification via libp2p Identify protocol (`peer_keys.rs`)
+- **Phase 1 Security (Authentication)**: ed25519 signatures, PKI identity verification, replay prevention - fully integrated into P2P
 - **Federated Dreaming**: Synthetic sample generation for weight updates during idle time
 - **Regime Change Adaptation**: Dynamic predictor reweighting via momentum updates
 - **Unary VLQ Encoding**: Simple variable-length residual encoding
