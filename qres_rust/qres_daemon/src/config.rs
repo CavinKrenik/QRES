@@ -43,7 +43,7 @@ fn default_clipping() -> f32 {
     1.0
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Config {
     #[serde(default)]
     pub swarm: SwarmConfig,
@@ -154,18 +154,6 @@ impl Default for AggregationConfig {
             expected_byzantines_fraction: default_expected_byz(),
             buffer_size: default_buffer_size(),
             trim_fraction: 0.2,
-        }
-    }
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        Config {
-            swarm: SwarmConfig::default(),
-            security: SecurityConfig::default(),
-            aggregation: AggregationConfig::default(),
-            api: ApiConfig::default(),
-            privacy: PrivacyConfig::default(),
         }
     }
 }

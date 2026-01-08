@@ -3,9 +3,10 @@
 //! Implements mechanisms to add noise to model updates, providing (epsilon, delta)-differential privacy.
 //! Supports `opendp` for rigorous accounting (optional feature) and a manual fallback.
 
-#[cfg(not(feature = "std"))]
+// Vec is only needed when dp feature is enabled (for OpenDP implementation)
+#[cfg(all(not(feature = "std"), feature = "dp"))]
 use alloc::vec::Vec;
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", feature = "dp"))]
 use std::vec::Vec;
 
 #[cfg(not(feature = "std"))]
@@ -66,7 +67,7 @@ impl DifferentialPrivacy {
 
     /// Clip the L2 norm of the update vector to the threshold
     /// Returns true if clipping was applied
-    pub fn clip_update(&self, update: &mut Vec<f32>) -> bool {
+    pub fn clip_update(&self, update: &mut [f32]) -> bool {
         // Calculate L2 norm
         let mut sum_sq = 0.0;
         for &x in update.iter() {
@@ -88,7 +89,7 @@ impl DifferentialPrivacy {
     /// Add Gaussian noise to the update vector
     ///
     /// Uses OpenDP if the "dp" feature is enabled, otherwise falls back to manual Box-Muller.
-    pub fn add_noise(&self, update: &mut Vec<f32>) -> Result<(), String> {
+    pub fn add_noise(&self, update: &mut [f32]) -> Result<(), String> {
         #[cfg(feature = "dp")]
         {
             // OpenDP Implementation

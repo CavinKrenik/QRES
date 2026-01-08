@@ -21,7 +21,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::RwLock;
-use tracing::{error, info, warn};
+use tracing::{info, warn};
 
 // Topic for brain synchronization
 const BRAIN_TOPIC: &str = "qres-brain-sync";

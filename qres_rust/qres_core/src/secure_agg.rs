@@ -28,6 +28,12 @@ pub struct SecureAggregator {
     peers: BTreeMap<[u8; 32], PublicKey>,
 }
 
+impl Default for SecureAggregator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SecureAggregator {
     /// Create a new SecureAggregator with a random secret
     ///
@@ -202,7 +208,7 @@ mod tests {
         let agg_masked = p1.aggregate(&[m1, m2, m3]).unwrap();
 
         // Calculate expected sum of original updates
-        let expected = vec![12.0, 15.0, 18.0];
+        let expected = [12.0, 15.0, 18.0];
 
         // Assert equality with small epsilon for float precision
         for (a, e) in agg_masked.iter().zip(expected.iter()) {
@@ -224,8 +230,8 @@ mod tests {
         p1.add_peer(p2.get_public_key());
         p2.add_peer(p1.get_public_key());
 
-        let u1 = vec![10.0];
-        let u2 = vec![20.0];
+        let u1 = [10.0f32];
+        let _u2 = [20.0f32];
 
         let m1 = p1.mask_update(&u1);
         // p2 fails to send m2
