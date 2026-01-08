@@ -5,6 +5,7 @@ pub mod daemon;
 pub mod dreaming;
 pub mod living_brain;
 pub mod qes;
+pub mod security;
 pub mod stats;
 pub mod swarm;
 pub mod swarm_p2p;

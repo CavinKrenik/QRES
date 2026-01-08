@@ -19,6 +19,8 @@ clap = { version = "4.4", features = ["derive"] }
 toml = "0.8"
 rand = "0.8"
 rand_chacha = "0.3"
+ed25519-dalek = { version = "2.1", features = ["rand_core"] }
+hex = "0.4"
 
 # P2P Stack
 libp2p = { version = "0.53", features = ["tcp", "tls", "dns", "yamux", "websocket", "noise", "macros", "tokio", "gossipsub", "mdns", "identify", "kad"] }

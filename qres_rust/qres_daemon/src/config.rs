@@ -20,6 +20,10 @@ pub struct SwarmConfig {
 pub struct SecurityConfig {
     pub ban_duration: u64,
     pub max_violations: u8,
+    /// Whether to require ed25519 signatures on model updates
+    pub require_signatures: bool,
+    /// Path to the ed25519 private key file
+    pub key_path: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -39,6 +43,8 @@ impl Default for Config {
             security: SecurityConfig {
                 ban_duration: 3600,
                 max_violations: 2,
+                require_signatures: false, // Disabled by default for backward compat
+                key_path: None,
             },
             api: ApiConfig {
                 port: 3030,
