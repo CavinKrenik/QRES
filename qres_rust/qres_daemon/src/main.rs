@@ -66,6 +66,9 @@ enum Commands {
         /// API Port
         #[arg(long, default_value = "8080")]
         port: u16,
+        /// Path to node private key
+        #[arg(long)]
+        key: Option<String>,
     },
     /// Compress structured data using Tensor MPS
     TensorCompress {
@@ -318,10 +321,11 @@ fn brain_import(file_path: &str) -> io::Result<()> {
     Ok(())
 }
 
-fn swarm_mode(brain: String, port: u16) -> io::Result<()> {
+fn swarm_mode(brain: String, port: u16, key_path: Option<String>) -> io::Result<()> {
     info!(
         brain_file = brain,
         port = port,
+        key_path = ?key_path,
         "Starting QRES P2P Swarm Node (libp2p)..."
     );
 
@@ -329,7 +333,7 @@ fn swarm_mode(brain: String, port: u16) -> io::Result<()> {
     let rt = tokio::runtime::Runtime::new().map_err(io::Error::other)?;
 
     rt.block_on(async {
-        if let Err(e) = crate::swarm_p2p::start_p2p_node(brain, port).await {
+        if let Err(e) = crate::swarm_p2p::start_p2p_node(brain, port, key_path).await {
             error!(error = %e, "Swarm crashed");
         }
     });
@@ -460,7 +464,7 @@ fn main() {
         Commands::Decompress { input, output } => decompress_file(&input, &output),
         Commands::ExportBrain { output } => brain_export_to_file(&output),
         Commands::ImportBrain { input } => brain_import(&input),
-        Commands::Swarm { brain, port } => swarm_mode(brain, port),
+        Commands::Swarm { brain, port, key } => swarm_mode(brain, port, key),
         Commands::TensorCompress {
             input,
             output,

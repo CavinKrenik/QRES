@@ -56,6 +56,7 @@ pub struct QresBehavior {
 pub async fn start_p2p_node(
     brain_path: String,
     port: u16,
+    key_path_override: Option<String>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     // 1. Identity
     let id_keys = identity::Keypair::generate_ed25519();
@@ -69,12 +70,13 @@ pub async fn start_p2p_node(
         &config.security.trusted_pubkeys,
     );
 
-    // Initialize SecurityManager if key_path is configured
-    let security = if let Some(key_path_str) = &config.security.key_path {
+    // Initialize SecurityManager
+    // Priority: 1. CLI Override, 2. Config Key Path, 3. Auto-generate if required
+    let security = if let Some(key_path_str) = key_path_override.or(config.security.key_path.clone()) {
         let key_path = PathBuf::from(key_path_str);
         match SecurityManager::new(&key_path, config.security.require_signatures) {
             Ok(mgr) => {
-                info!(pubkey = %mgr.public_key_hex(), "Security manager initialized");
+                info!(pubkey = %mgr.public_key_hex(), path = ?key_path, "Security manager initialized");
                 Some(mgr)
             }
             Err(e) => {

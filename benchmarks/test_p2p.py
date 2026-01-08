@@ -33,11 +33,20 @@ brain2 = {
 with open(BRAIN_1, "w") as f: json.dump(brain1, f)
 with open(BRAIN_2, "w") as f: json.dump(brain2, f)
 
+# Helper keys
+KEY_1 = "benchmarks/results/node1.key"
+KEY_2 = "benchmarks/results/node2.key"
+
+# Clean up keys if exist (force regen by daemon if it did it, 
+# but daemon won't auto-regen if file provided. We rely on SecurityManager creating it)
+if os.path.exists(KEY_1): os.remove(KEY_1)
+if os.path.exists(KEY_2): os.remove(KEY_2)
+
 print(f"[Sim] Launching Node 1 on port {PORT_1}...")
-p1 = subprocess.Popen([CLI, "swarm", "--brain", BRAIN_1, "--port", str(PORT_1)], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+p1 = subprocess.Popen([CLI, "swarm", "--brain", BRAIN_1, "--port", str(PORT_1), "--key", KEY_1], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
 print(f"[Sim] Launching Node 2 on port {PORT_2}...")
-p2 = subprocess.Popen([CLI, "swarm", "--brain", BRAIN_2, "--port", str(PORT_2)], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+p2 = subprocess.Popen([CLI, "swarm", "--brain", BRAIN_2, "--port", str(PORT_2), "--key", KEY_2], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
 def get_status(port):
     try:
