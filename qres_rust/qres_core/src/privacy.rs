@@ -21,7 +21,7 @@ use opendp::measurements::make_gaussian;
 #[cfg(feature = "dp")]
 use opendp::metrics::L2Distance;
 
-#[cfg(not(feature = "dp"))]
+#[cfg(all(not(feature = "dp"), feature = "std"))]
 use rand::{thread_rng, Rng};
 
 // Math imports for no_std manual implementation
@@ -121,38 +121,21 @@ impl DifferentialPrivacy {
             Ok(())
         }
 
-        #[cfg(not(feature = "dp"))]
+        #[cfg(all(not(feature = "dp"), feature = "std"))]
         {
-            // Manual Fallback Implementation (Box-Muller Transform)
-            // Sigma = sensitivity * sqrt(2 * ln(1.25/delta)) / epsilon
+            // Manual Fallback Implementation (Box-Muller Transform) - std version
             let c = 2.0 * ln(1.25 / self.delta);
             let sigma = (self.clipping_threshold * sqrt(c)) / self.epsilon;
 
-            // In no_std, we need an RNG.
-            // Warning: secure noise generation in no_std is hard without OS TRNG.
-            // We use standard rand interface, assuming user supplies a seeded RNG or global RNG is available.
-            // Since `rand` 0.8 supports some no_std (getrandom with custom impl), we assume
-            // we can get random u64s.
-            // For this implementation, we'll try to use ThreadRng if available (std)
-            // or a fallback seeded RNG if test/no_std.
-
-            #[cfg(feature = "std")]
             let mut rng = thread_rng();
 
-            #[cfg(not(feature = "std"))]
-            let mut rng = rand::rngs::mock::StepRng::new(0, 1); // Mock for compilation check
-
-            // Box-Muller requires two uniform random numbers [0, 1)
-            // We process pair-wise
             let len = update.len();
             let mut i = 0;
 
             while i < len {
-                // Generate two independent standard normal variables N(0,1)
                 let u1: f64 = rng.gen();
                 let u2: f64 = rng.gen();
 
-                // Avoid log(0)
                 let u1 = if u1 < 1e-10 { 1e-10 } else { u1 };
 
                 let r = sqrt(-2.0 * ln(u1));
@@ -161,7 +144,49 @@ impl DifferentialPrivacy {
                 let z0 = r * cos(theta);
                 let z1 = r * sin(theta);
 
-                // Scale by sigma and add to update
+                update[i] += (z0 * sigma) as f32;
+
+                if i + 1 < len {
+                    update[i + 1] += (z1 * sigma) as f32;
+                }
+
+                i += 2;
+            }
+
+            Ok(())
+        }
+
+        #[cfg(all(not(feature = "dp"), not(feature = "std")))]
+        {
+            // no_std fallback: Use a simple seeded PRNG
+            // WARNING: This is NOT cryptographically secure!
+            // In production, the caller should provide entropy.
+            use rand_chacha::rand_core::{RngCore, SeedableRng};
+            use rand_chacha::ChaCha20Rng;
+
+            let c = 2.0 * ln(1.25 / self.delta);
+            let sigma = (self.clipping_threshold * sqrt(c)) / self.epsilon;
+
+            // Use a deterministic seed for reproducibility in no_std
+            // In real use, seed should come from external entropy source
+            let mut rng = ChaCha20Rng::from_seed([42u8; 32]);
+
+            let len = update.len();
+            let mut i = 0;
+
+            while i < len {
+                // Generate uniform [0, 1) from u64
+                let u1: f64 = (rng.next_u64() as f64) / (u64::MAX as f64);
+                let u2: f64 = (rng.next_u64() as f64) / (u64::MAX as f64);
+
+                let u1 = if u1 < 1e-10 { 1e-10 } else { u1 };
+
+                let r = sqrt(-2.0 * ln(u1));
+                let theta = 2.0 * core::f64::consts::PI * u2;
+
+                let z0 = r * cos(theta);
+                let z1 = r * sin(theta);
+
                 update[i] += (z0 * sigma) as f32;
 
                 if i + 1 < len {
