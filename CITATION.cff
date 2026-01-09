@@ -15,7 +15,7 @@ abstract: >
   QRES is a deterministic, edge-native neural compression
   and federated learning system for time-series data. By treating
   compression as shared prediction and transmitting only residuals,
-  TensorSwarm achieves high compression ratios while providing strong
+  QRES achieves high compression ratios while providing strong
   privacy guarantees through differential privacy, secure aggregation,
   and zero-knowledge proofs. The system is implemented in Rust with
   bit-perfect fixed-point determinism and targets constrained IoT

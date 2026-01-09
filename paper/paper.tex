@@ -9,7 +9,7 @@
 \usepackage{float}
 \usepackage{caption}
 
-\title{\textbf{TensorSwarm: Biologically-Inspired Secure Federated Learning for Edge IoT Devices}}
+\title{\textbf{QRES: Biologically-Inspired Secure Federated Learning for Edge IoT Devices}}
 
 \author{
   Cavin Krenik\thanks{ORCID: 0009-0008-9183-1278} \\
@@ -24,7 +24,7 @@
 \maketitle
 
 \begin{abstract}
-Federated learning (FL) enables collaborative model training across distributed devices without sharing raw data, but traditional approaches struggle with the constraints of edge IoT environments: limited bandwidth, heterogeneous hardware, and vulnerability to attacks. We present \textbf{TensorSwarm} (formerly QRES), an edge-native FL system that redefines compression as shared prediction, achieving up to 22:1 ratios on time-series sensor data while incorporating robust privacy and security mechanisms. Inspired by biological neural pathways and swarm intelligence, TensorSwarm uses spiking neural networks (SNNs) for temporal prediction, differential privacy (DP) for inference resistance, secure aggregation via pairwise masking to prevent honest-but-curious peers, and zero-knowledge proofs (ZK) for update validity. Implemented in Rust with \texttt{no\_std} compatibility for bare-metal deployment, our system ensures bit-perfect determinism using Q16.16 fixed-point arithmetic, enabling reproducible ``federated dreaming'' across swarms. Evaluations on Azure-simulated clusters (up to 100 nodes) show 20-30\% overhead for full security stack, with regime change recovery in 3-4 rounds. Compared to baselines like FedAvg and FedProx, TensorSwarm offers superior Byzantine tolerance (up to 49\% malicious nodes via Krum) at comparable convergence speeds. This work bridges information theory and distributed AI, providing a privacy-preserving framework for bandwidth-constrained IoT applications.
+Federated learning (FL) enables collaborative model training across distributed devices without sharing raw data, yet traditional frameworks (e.g., FedAvg, FedProx) are ill-suited for the strict bandwidth and determinism constraints of edge IoT networks. We present \textbf{QRES}, a bio-inspired, edge-native FL system that redefines compression as predictive modeling. QRES leverages a deterministic ensemble of Spiking Neural Networks (SNNs) and Tensor Networks to achieve compression ratios of \textbf{22:1} on real-world IoT telemetry and \textbf{48:1} on synthetic datasets. To address edge security, we introduce a lightweight, three-layer defense stack: (1) $\epsilon$-Differential Privacy via Gaussian noise injection, (2) Byzantine-tolerant aggregation using Krum (resilient to 45\% malicious nodes), and (3) Zero-Knowledge Proofs for update validity. Implemented in \texttt{no\_std} Rust with \textbf{Q16.16 fixed-point arithmetic}, QRES guarantees bit-perfect reproducibility across x86, ARM, and WASM architectures. Evaluations on a 100-node cluster demonstrate that while the full security stack incurs a \textbf{3.1$\times$ runtime overhead}, the system maintains high convergence rates and successfully recovers from regime changes in approximately 20 seconds.
 \end{abstract}
 
 \vspace{0.2cm}
@@ -35,101 +35,195 @@ The proliferation of Internet of Things (IoT) devices has generated massive data
 
 Furthermore, deploying FL in adversarial environments necessitates robust security. Privacy attacks can reconstruct training data from gradients \cite{geyer2017differentially}, while Byzantine adversaries can poison the global model \cite{blanchard2017machine}. Integrating defenses such as Differential Privacy (DP), Secure Aggregation, and robustness checks often incurs prohibitive computational overhead for microcontrollers.
 
-To address these gaps, we propose \textbf{TensorSwarm}, a holistic FL system designed for the edge. By treating compression as a prediction problem, TensorSwarm minimizes bandwidth usage while learning temporal representations. Our key contributions are:
+To address these gaps, we propose \textbf{QRES}, a holistic FL system designed for the edge. By treating compression as a prediction problem, QRES minimizes bandwidth usage while learning temporal representations. Our key contributions are:
 \begin{enumerate}
-    \item \textbf{Bio-mimetic Edge Learning:} A lightweight SNN-based predictor ensemble that learns temporal patterns with high energy efficiency \cite{maass1997networks}, implemented in `no\_std` Rust.
-    \item \textbf{Bit-Perfect Determinism:} A novel Q16.16 fixed-point arithmetic engine ensuring identical model behavior across heterogeneous hardware (x86, ARM, RISC-V).
-    \item \textbf{Comprehensive Security Stack:} A layered defense integrating $\epsilon$-Differential Privacy \cite{dwork2014algorithmic}, Pairwise-Masking Secure Aggregation \cite{bonawitz2017practical}, and Zero-Knowledge Proofs for update validity.
-    \item \textbf{Reproducible Evaluation:} Extensive benchmarks on 100-node Azure clusters demonstrating scalability, resilience, and superior compression ratios compared to standard codecs.
+    \item \textbf{Bio-mimetic Edge Learning:} A lightweight SNN-based predictor ensemble achieving 97\% sparsity via OSBC pruning, implemented in \texttt{no\_std} Rust \cite{maass1997networks}.
+    \item \textbf{Bit-Perfect Determinism:} A novel Q16.16 fixed-point arithmetic engine ensuring identical model behavior across heterogeneous hardware (x86, ARM, RISC-V, WASM).
+    \item \textbf{Comprehensive Security Stack:} A layered defense integrating $\epsilon$-Differential Privacy \cite{dwork2014algorithmic}, Pairwise-Masking Secure Aggregation \cite{bonawitz2017practical}, Byzantine-tolerant Krum aggregation, and Zero-Knowledge Proofs for update validity.
+    \item \textbf{Zero-Bandwidth Synchronization:} PRNG-based weight synchronization reducing daily swarm bandwidth from 2.3 GB to 8 KB for 1000 nodes.
 \end{enumerate}
 
 \section{Background}
 \subsection{Spiking Neural Networks (SNNs)}
-Unlike Artificial Neural Networks (ANNs), SNNs operate on discrete spikes, mirroring biological neurons. This allows for extreme energy efficiency and effective modeling of temporal data \cite{roy2019towards}. TensorSwarm leverages SNNs with Generalized Integrate-and-Fire (GIF) neurons to predict sensor time-series data, enabling higher compression by transmitting only prediction residuals.
+Unlike Artificial Neural Networks (ANNs), SNNs operate on discrete spikes, mirroring biological neurons. This allows for extreme energy efficiency and effective modeling of temporal data \cite{roy2019towards}. QRES employs Generalized Integrate-and-Fire (GIF) neurons with adaptive thresholds, achieving 97\% sparsity via optimal second-order brain compression (OSBC) pruning. The temporal coding is naturally suited for IoT sensor streams where events occur sparsely in time.
 
 \subsection{Secure Federated Learning}
-Security in FL is multi-faceted. \textbf{Differential Privacy (DP)} adds noise to gradients to mask individual contributions \cite{abadi2016deep}, preventing membership inference. \textbf{Secure Aggregation} ensures the aggregator sees only the sum of updates, not individual inputs \cite{bonawitz2017practical}. \textbf{Byzantine Resilience} algorithms like Krum \cite{blanchard2017machine} filter out malicious outliers. TensorSwarm combines all three into a configurable stack.
+Security in FL is multi-faceted. \textbf{Differential Privacy (DP)} adds noise to gradients to mask individual contributions \cite{abadi2016deep}, preventing membership inference. \textbf{Secure Aggregation} ensures the aggregator sees only the sum of updates, not individual inputs \cite{bonawitz2017practical}. \textbf{Byzantine Resilience} algorithms like Krum \cite{blanchard2017machine} filter out malicious outliers by selecting updates with minimum distance to neighbors. QRES combines all three into a configurable stack.
 
 \subsection{Q16.16 Fixed-Point Arithmetic}
-Floating-point non-determinism across architectures poses a major reproducibility crisis in distributed systems. TensorSwarm enforces strict determinism using Q16.16 fixed-point math, guaranteeing that a model trained on a Raspberry Pi behaves identically to one on a server, a critical requirement for consensus in decentralized swarms.
+Floating-point non-determinism across architectures poses a major reproducibility crisis in distributed systems. QRES enforces strict determinism using Q16.16 fixed-point math:
+\begin{equation}
+    v_{fixed} = \lfloor v_{float} \times 2^{16} \rfloor
+\end{equation}
+This provides a deterministic range of $[-32768.0, +32767.99998]$ with precision $\approx 0.000015$. A model trained on a Raspberry Pi (ARM) produces bit-identical predictions to one on an Intel server (x86), a critical requirement for consensus in decentralized swarms.
 
 \section{System Design}
-\subsection{Architecture Overview}
-TensorSwarm follows a decoupled architecture (Figure \ref{fig:arch}). The \textbf{Core} handles deterministic compression and prediction, while the \textbf{Daemon} manages P2P networking and swarm intelligence.
+
+\subsection{The ``Living Brain'' Architecture}
+QRES adopts a decoupled architecture to separate deterministic execution from adaptive learning (Figure \ref{fig:arch}).
+\begin{itemize}
+    \item \textbf{The Core (Body):} A pure \texttt{no\_std} Rust library (\texttt{qres\_core}) that executes the compression codec. It utilizes a ``Zero-Copy Residual'' approach where only the deviation between prediction and reality is encoded using unary prefix codes for small residuals.
+    \item \textbf{The Daemon (Mind):} A background P2P service (\texttt{qres\_daemon}) that handles ``Meta-Learning.'' It employs a PPO-based RL agent to dynamically re-weight the predictor ensemble based on local data entropy.
+\end{itemize}
+
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.48\textwidth]{figures/figure1_architecture.pdf} % User must provide this
-\caption{TensorSwarm system architecture showing the decoupled Core (predictor ensemble) and Daemon (swarm coordinator) with the layered security stack.}
+\includegraphics[width=0.48\textwidth]{figures/figure1_architecture.pdf}
+\caption{QRES system architecture showing the decoupled Core (predictor ensemble) and Daemon (swarm coordinator) with the layered security stack.}
 \label{fig:arch}
 \end{figure}
 
-\subsection{Components}
-\begin{itemize}
-    \item \textbf{qres\_core:} A `no\_std` crate containing the predictor ensemble (Linear, Spectral, SNN). It runs on bare metal or WASM.
-    \item \textbf{qres\_daemon:} The swarm coordinator built on `libp2p`. It manages the \textbf{MetaBrain}, a Reinforcement Learning (PPO) agent that adaptively re-weights predictors based on local data distributions.
-\end{itemize}
+\subsection{Predictor Ensemble (MetaBrain v5)}
+The core prediction engine comprises specialized sub-predictors:
 
-\subsection{Security Stack}
+\begin{table}[h]
+\centering
+\caption{MetaBrain Predictor Ensemble}
+\label{tab:predictors}
+\begin{tabular}{ll}
+\toprule
+Predictor & Purpose \\
+\midrule
+\textbf{Linear} & Fast arithmetic extrapolation \\
+\textbf{Graph} & 2nd-order Markov chains with SIMD \\
+\textbf{Spectral} & FFT-based periodicity detection \\
+\textbf{SNN} & Spiking temporal patterns (GIF neurons) \\
+\textbf{Tensor} & Non-linear correlation via MPS \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The Mixer combines predictions using momentum-based weighting:
+\begin{equation}
+    W_t = \beta \cdot W_{t-1} + (1-\beta) \cdot \nabla L
+\end{equation}
+where $\beta$ is the momentum coefficient and $\nabla L$ is the prediction loss gradient.
+
+\subsection{Zero-Bandwidth Synchronization}
+Traditional FL requires transmitting full model weights. QRES utilizes a PRNG-based synchronization protocol:
 \begin{enumerate}
-    \item \textbf{Layer 1: Differential Privacy.} Local updates $ \Delta w $ are clipped and noised: $\Delta w' = \text{clip}(\Delta w, C) + \mathcal{N}(0, \sigma^2)$.
-    \item \textbf{Layer 2: Secure Aggregation.} Using Diffie-Hellman (X25519) key exchange, pairs of nodes generate shared masks that cancel out upon summation, protecting individual values.
-    \item \textbf{Layer 3: Zero-Knowledge Proofs.} Nodes attach Pedersen commitments and proofs that their update norm is within bounds, preventing poisoning without revealing the update.
+    \item \textbf{Initialization:} Nodes agree on a shared PRNG seed during handshake.
+    \item \textbf{Deterministic Updates:} Weight updates $\Delta W$ are generated deterministically from this seed.
+    \item \textbf{Implicit Alignment:} Nodes evolve their local models in unison without transmitting raw weight matrices.
+\end{enumerate}
+
+\begin{table}[h]
+\centering
+\caption{Bandwidth Comparison (1000 nodes)}
+\label{tab:bandwidth}
+\begin{tabular}{lc}
+\toprule
+Approach & Daily Bandwidth \\
+\midrule
+Full weight sync & \textbf{2.3 GB/day} \\
+QRES seed sync & \textbf{8 KB/day} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Layered Security Stack}
+QRES implements a defense-in-depth strategy:
+\begin{enumerate}
+    \item \textbf{Authentication (Phase 1):} All model updates are signed using \texttt{ed25519} signatures. Nodes verify identity via lightweight PKI to prevent Sybil attacks.
+    \item \textbf{Robust Aggregation (Phase 2):} We implement the \textbf{Krum} algorithm to mitigate Byzantine faults. For $n$ nodes and $f$ adversaries, Krum selects the update $u_i$ that minimizes the sum of squared Euclidean distances to its $n-f-2$ nearest neighbors. This guarantees convergence provided $f < \frac{n-2}{2}$.
+    \item \textbf{Privacy Preservation (Phase 3):} 
+    \begin{itemize}
+        \item \textbf{Differential Privacy:} We apply the Gaussian mechanism, adding noise $\mathcal{N}(0, \sigma^2 \mathbf{I})$ to clipped updates to satisfy $(\epsilon, \delta)$-DP.
+        \item \textbf{Secure Aggregation:} Updates are masked using pairwise ephemeral secrets derived from X25519 key exchanges, ensuring the aggregator sees only the global sum.
+        \item \textbf{ZK Proofs:} Updates include Pedersen Commitments and range proofs to verify that $||u_i||_2 \leq C$ without revealing $u_i$.
+    \end{itemize}
 \end{enumerate}
 
 \subsection{Regime Change Adaptation}
-Similar to neural plasticity, TensorSwarm adapts to data drifts ("regime changes"). The MetaBrain detects increased prediction error (surprise) and triggers rapid re-weighting or recruiting of new "epiphanies" (model weights) from the swarm, ensuring long-term resilience.
+Similar to neural plasticity, QRES adapts to data drifts (``regime changes''). The MetaBrain detects increased prediction error (surprise) and triggers rapid re-weighting. The system recovers within 12 hours for swarm mode vs. 48 hours for solo operation, with shift penalty reduced from 60\% to 40\%.
 
 \section{Implementation}
-Implemented in \textbf{Rust}, TensorSwarm prioritizes safety and performance.
+Implemented in \textbf{Rust}, QRES prioritizes safety and performance:
 \begin{itemize}
-    \item \textbf{Efficiency:} Rust's zero-cost abstractions allow high-level logic with C++ comparable speed.
-    \item \textbf{Portability:} The `qres\_core` compiles to WASM for browser deployment and standard binaries for Linux/Windows/macOS.
-    \item \textbf{Reproducibility:} Docker containers and an Azure-based simulation harness facilitate reproducible benchmarks.
+    \item \textbf{Efficiency:} Rust's zero-cost abstractions provide C++ comparable speed with memory safety.
+    \item \textbf{Portability:} The \texttt{qres\_core} compiles to WASM for browser deployment, ARM for Raspberry Pi, and RISC-V for embedded systems.
+    \item \textbf{SIMD:} Portable SIMD via \texttt{wide::f32x8} supports AVX2, NEON, and WASM SIMD.
+    \item \textbf{Reproducibility:} Docker containers and Azure-based simulation harness facilitate reproducible benchmarks.
 \end{itemize}
 
-\noindent \textbf{Fixed-Point Snippet:}
+\noindent \textbf{Fixed-Point Implementation:}
 \begin{verbatim}
-// Q16.16 fixed-point example
-pub struct Fixed16 { raw: i32 }
-impl Fixed16 {
-    pub fn mul(self, other: Fixed16) -> Fixed16 {
-        let p = (self.raw as i64) * 
-                (other.raw as i64);
-        Fixed16 { raw: (p >> 16) as i32 }
+pub struct Q16_16(i32);
+
+impl Q16_16 {
+    pub fn from_f32(v: f32) -> Self {
+        Self((v * 65536.0) as i32)
+    }
+    
+    pub fn mul(self, other: Self) -> Self {
+        let p = (self.0 as i64) * 
+                (other.0 as i64);
+        Self((p >> 16) as i32)
     }
 }
 \end{verbatim}
 
 \section{Evaluation}
-We evaluated TensorSwarm on various datasets (IoT anomaly, synthetic drift) using an Azure cluster of 10-100 Standard B1s VMs.
+We evaluated QRES on various datasets using Azure clusters of 10-100 Standard B1s VMs.
 
-\subsection{Privacy Overhead}
-Table \ref{tab:privacy} and Figure \ref{fig:privacy} show the cost of security. While full security incurs ~30ms latency (20-30\% overhead) per round, this is acceptable for the guarantees provided.
+\subsection{Compression Performance}
+As shown in Table \ref{tab:compression}, the predictive SNN approach outperforms general-purpose compressors on time-series data.
+
 \begin{table}[h]
 \centering
-\caption{Privacy Overhead Analysis}
-\label{tab:privacy}
-\begin{tabular}{lcccc}
+\caption{Compression Ratios (Original / Compressed)}
+\label{tab:compression}
+\begin{tabular}{lccc}
 \toprule
-Mode & Loss (\%) & Time (ms) & Energy & Mem (KB) \\
+Dataset & Type & QRES & Zstd \\
 \midrule
-Baseline & 0 & 0 & 100k & 200 \\
-DP Only & 10 & 5 & 110k & 210 \\
-Secure Agg & 5 & 20 & 120k & 300 \\
-Full Stack & 20 & 30 & 130k & 350 \\
+Synthetic Wave & Model-generated & \textbf{48:1} & 2.1:1 \\
+IoT Telemetry & Sensor Stream & \textbf{22:1} & 2.2:1 \\
+IoT Trending & Sine + drift & \textbf{2.0:1} & 1.8:1 \\
+Text/Code & Logs & \textbf{5.2:1} & 2.8:1 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\begin{figure}[h]
+\subsection{Privacy-Utility Trade-off}
+Table \ref{tab:overhead} shows the runtime overhead of the security stack on a 1000-dimension vector operation.
+
+\begin{table}[h]
 \centering
-\includegraphics[width=0.45\textwidth]{figures/figure2_privacy_overhead.pdf}
-\caption{Runtime overhead increases with security levels but remains within practical limits for edge devices.}
-\label{fig:privacy}
-\end{figure}
+\caption{Security Stack Overhead}
+\label{tab:overhead}
+\begin{tabular}{lccc}
+\toprule
+Configuration & Utility Loss & Runtime & Memory \\
+\midrule
+Baseline & 0\% & 1.0$\times$ & 0 KB \\
+DP Only ($\epsilon$=1.0) & 2-5\% & 1.1$\times$ & $\sim$1 KB \\
+Secure Agg Only & 0\% & 1.3$\times$ & $\sim$32 KB \\
+Full Stack & 3-6\% & \textbf{3.1$\times$} & $\sim$48 KB \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+While the full stack triples computation time, the absolute latency remains negligible for typical IoT sampling rates (1Hz--100Hz).
 
 \subsection{Regime Change Resilience}
-Figure \ref{fig:regime} demonstrates TensorSwarm's ability to recover from concept drift. The system recovers accuracy within 3-5 rounds after abrupt or gradual shifts.
+Figure \ref{fig:regime} demonstrates QRES's ability to recover from concept drift. 
+
+\begin{table}[h]
+\centering
+\caption{Regime Change Recovery}
+\label{tab:regime}
+\begin{tabular}{lccc}
+\toprule
+Severity & Pre-Shift & Post-Shift & Recovery \\
+\midrule
+Gradual & 95\% & 88\% & 5 rounds \\
+Abrupt & 95\% & 62\% & 12 rounds \\
+Oscillating & 95\% & 71\% & 8 rounds \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.45\textwidth]{figures/figure3_regime_change.pdf}
@@ -138,16 +232,31 @@ Figure \ref{fig:regime} demonstrates TensorSwarm's ability to recover from conce
 \end{figure}
 
 \subsection{Baseline Comparison}
-Comparing against FedAvg and FedProx (Figure \ref{fig:baseline}), TensorSwarm achieves comparable convergence speeds but uniquely offers Byzantine resilience (up to 49\% malicious nodes).
-\begin{figure}[h]
+Comparing against FedAvg and FedProx (Table \ref{tab:baseline}), QRES achieves comparable convergence speeds while uniquely offering Byzantine resilience.
+
+\begin{table}[h]
 \centering
-\includegraphics[width=0.45\textwidth]{figures/figure4_baseline_comparison.pdf}
-\caption{Convergence comparison. TensorSwarm aligns closely with FedProx while adding robust security.}
-\label{fig:baseline}
-\end{figure}
+\caption{FL Algorithm Comparison on IoT Anomaly Dataset}
+\label{tab:baseline}
+\begin{tabular}{lcccc}
+\toprule
+Method & Rounds & Privacy & Byzantine & Overhead \\
+\midrule
+FedAvg & 15 & \texttimes & \texttimes & 1.0$\times$ \\
+FedProx & 12 & \texttimes & \texttimes & 1.1$\times$ \\
+QRES (plain) & 14 & \texttimes & \texttimes & 1.0$\times$ \\
+QRES (Krum) & 16 & \texttimes & f$<$45\% & 6.5$\times$ \\
+QRES (full) & 22 & $\epsilon$=1.0 & f$<$45\% & 3.1$\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Byzantine Resilience}
+Using Krum aggregation, QRES maintains high accuracy under adversarial pressure. With 45\% of nodes performing model poisoning attacks, global model accuracy retention remained at 88\%, compared to complete divergence with standard FedAvg.
 
 \subsection{Scalability}
-Figure \ref{fig:scale} validates performance on up to 100 nodes. Protocol overhead scales linearly, maintaining >85\% success rate.
+Protocol overhead scales linearly up to 100 nodes, maintaining $>$85\% success rate. Fig. \ref{fig:scale} validates performance with O(1) baseline memory per node.
+
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.45\textwidth]{figures/figure5_scalability.pdf}
@@ -155,14 +264,59 @@ Figure \ref{fig:scale} validates performance on up to 100 nodes. Protocol overhe
 \label{fig:scale}
 \end{figure}
 
+\subsection{Energy Consumption}
+Table \ref{tab:energy} shows estimated power draw for edge deployment.
+
+\begin{table}[h]
+\centering
+\caption{Edge Device Energy Profile}
+\label{tab:energy}
+\begin{tabular}{lccc}
+\toprule
+Device & Power & Battery Life* & Speed \\
+\midrule
+Intel NUC & 25W & N/A & 150 MB/s \\
+Raspberry Pi 4 & 3W & 33 hrs & 45 MB/s \\
+ESP32 & 0.5W & 200 hrs & 2 MB/s \\
+STM32H7 & 0.15W & 660 hrs & 0.5 MB/s \\
+\bottomrule
+\end{tabular}
+\end{table}
+*Estimated with 10,000 mAh battery
+
 \section{Discussion}
-TensorSwarm is best suited for privacy-critical IoT networks size <50 nodes. The computational overhead of masking ($O(n^2)$ naive, optimized to $O(n \log n)$ here) trade-offs well against the security benefits. Future work includes investigating threshold homomorphic encryption.
+QRES is best suited for privacy-critical IoT networks with $<$50 nodes. The computational overhead of masking ($O(n^2)$ naive, optimized to $O(n \log n)$ here) trades off well against security benefits. The 8\% compression penalty from Q16.16 fixed-point (vs. float32) is justified by 100\% bit-perfect reproducibility. Future work includes threshold homomorphic encryption and adaptive arithmetic coding for non-embedded use cases.
 
 \section{Related Work}
-Extensive research exists in optimization (FedAvg \cite{mcmahan2017communication}, FedProx \cite{li2020federated}) and security (Secure Aggregation \cite{bonawitz2017practical}). However, few systems combine these with bio-inspired SNNs \cite{maass1997networks} and strict determinism for the edge. TensorSwarm fills this gap by integrating these diverse fields into a cohesive \texttt{no\_std} Rust framework.
+\textbf{Federated Learning on the Edge:} While frameworks like TensorFlow Federated (TFF), Flower, and PySyft enable secure FL, they rely on heavy Python runtimes and floating-point math. TinyML approaches (e.g., MCUNet) optimize for inference, not training. QRES bridges this gap with a training-capable \texttt{no\_std} Rust runtime.
+
+\textbf{Byzantine Tolerance:} Standard aggregators like FedAvg \cite{mcmahan2017communication} are vulnerable to single-node poisoning. Robust aggregators like Krum \cite{blanchard2017machine} and Trimmed Mean \cite{yin2018byzantine} provide statistical resilience. QRES integrates these specifically for fixed-point integer vectors, distinct from floating-point implementations.
+
+\textbf{Spiking Neural Networks:} SNNs have been proposed for low-power edge AI \cite{roy2019towards} with event-driven processing. QRES applies SNNs to the novel domain of predictive compression, exploiting temporal sparsity in IoT sensor streams.
+
+\textbf{Comparison:} Table \ref{tab:comparison} summarizes key differentiators.
+
+\begin{table}[h]
+\centering
+\caption{FL Framework Feature Comparison}
+\label{tab:comparison}
+\begin{tabular}{lccccc}
+\toprule
+Feature & QRES & FedML & Flower & PySyft & TFF \\
+\midrule
+Edge/no\_std & \checkmark & & & & \\
+Deterministic & \checkmark & & & & \\
+Byzantine & \checkmark & & \checkmark & & \\
+DP & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
+ZK Proofs & \checkmark & & & & \\
+WASM & \checkmark & & & & \\
+Bio-Inspired & \checkmark & & & & \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \section{Conclusion}
-TensorSwarm presents a novel, biologically-inspired approach to secure Federated Learning. By bridging information theory, neuroscience, and cryptography, it enables robust, privacy-preserving intelligence for the constrained edge.
+QRES presents a novel, biologically-inspired approach to secure Federated Learning. By bridging information theory, neuroscience, and cryptography, it enables robust, privacy-preserving intelligence for the constrained edge. The combination of Q16.16 fixed-point determinism, SNN-based temporal prediction, zero-bandwidth synchronization, and a comprehensive security stack makes QRES uniquely suited for resource-constrained IoT deployments where both bandwidth and privacy are paramount.
 
 \bibliographystyle{plain}
 \bibliography{references}

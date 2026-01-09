@@ -8,7 +8,7 @@
 [![Build Status](https://img.shields.io/github/actions/workflow/status/CavinKrenik/QRES/release.yml?style=flat)](https://github.com/CavinKrenik/QRES/actions)
 [![Version](https://img.shields.io/badge/version-v15.2.0-brightgreen)](https://github.com/CavinKrenik/QRES/releases)
 
-**📄 Paper:** [Download PDF](paper/TensorSwarm__Biologically_Inspired_Secure_Federated_Learning_for_Edge_IoT_Devices.pdf) | **🔗 DOI:** [10.5281/zenodo.18193906](https://doi.org/10.5281/zenodo.18193906)
+**📄 Paper:** [Download PDF](paper/QRES__Biologically_Inspired_Secure_Federated_Learning_for_Edge_IoT_Devices.pdf) | **🔗 DOI:** [10.5281/zenodo.18193906](https://doi.org/10.5281/zenodo.18193906)
 
 ## The Core Idea
 
@@ -90,7 +90,7 @@ This project evolved through 15 major iterations:
 
 ## 📄 Publication
 
-**TensorSwarm: Biologically-Inspired Secure Federated Learning for Edge IoT Devices**
+**QRES: Biologically-Inspired Secure Federated Learning for Edge IoT Devices**
 
 **Author:** Cavin Krenik [![ORCID](https://img.shields.io/badge/ORCID-0009--0008--9183--1278-green.svg)](https://orcid.org/0009-0008-9183-1278)  
 **Affiliation:** Olympic College, Shelton, WA, USA  
@@ -110,9 +110,9 @@ This project evolved through 15 major iterations:
 ### Citation
 
 ```bibtex
-@software{krenik2026tensorswarm,
+@software{krenik2026qres,
   author       = {Krenik, Cavin},
-  title        = {{TensorSwarm: Biologically-Inspired Secure
+  title        = {{QRES: Biologically-Inspired Secure
                    Federated Learning for Edge IoT Devices}},
   month        = jan,
   year         = 2026,

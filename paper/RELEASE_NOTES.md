@@ -1,12 +1,12 @@
-# 📄 TensorSwarm: Biologically-Inspired Secure Federated Learning for Edge IoT
+# 📄 QRES: Biologically-Inspired Secure Federated Learning for Edge IoT
 
 **Complete publication release** including academic paper, implementation, benchmarks, and reproducibility artifacts.
 
 ## 📖 Paper
 
-**[Download PDF →](https://github.com/CavinKrenik/QRES/raw/main/paper/TensorSwarm__Biologically_Inspired_Secure_Federated_Learning_for_Edge_IoT_Devices.pdf)**
+**[Download PDF →](https://github.com/CavinKrenik/QRES/raw/main/paper/QRES__Biologically_Inspired_Secure_Federated_Learning_for_Edge_IoT_Devices.pdf)**
 
-- **Title:** TensorSwarm: Biologically-Inspired Secure Federated Learning for Edge IoT Devices
+- **Title:** QRES: Biologically-Inspired Secure Federated Learning for Edge IoT Devices
 - **Author:** Cavin Krenik (Olympic College)
 - **Pages:** 14
 - **Keywords:** Federated Learning, Edge AI, SNNs, Differential Privacy, Secure Aggregation
@@ -35,7 +35,7 @@
 ## 📦 Contents
 ```
 paper/
-├── TensorSwarm__...pdf (Publication PDF)
+├── QRES__...pdf (Publication PDF)
 ├── paper.tex (LaTeX source)
 ├── references.bib (14+ citations)
 └── figures/ (5 publication-quality figures)
@@ -57,9 +57,9 @@ reproducibility/
 
 ## 📚 Citation
 ```bibtex
-@software{krenik2026tensorswarm,
+@software{krenik2026qres,
   author       = {Krenik, Cavin},
-  title        = {{TensorSwarm: Biologically-Inspired Secure 
+  title        = {{QRES: Biologically-Inspired Secure 
                    Federated Learning for Edge IoT Devices}},
   month        = jan,
   year         = 2026,
