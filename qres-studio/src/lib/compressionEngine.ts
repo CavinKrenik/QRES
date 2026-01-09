@@ -29,7 +29,7 @@ export class CompressionEngine {
             await this.initWasm();
 
             // Call the Rust core directly in browser memory
-            const compressed = qresWasm.compress_web(fileBytes);
+            const compressed = qresWasm.compress_bytes(fileBytes);
 
             const end = performance.now();
             return {
