@@ -9,7 +9,7 @@ date-released: "2026-01-09"
 authors:
   - family-names: Krenik
     given-names: Cavin
-    orcid: "https://orcid.org/0009-0006-4551-3031"
+    orcid: "https://orcid.org/0009-0008-9183-1278"
 
 abstract: >
   QRES is a deterministic, edge-native neural compression
@@ -41,7 +41,7 @@ preferred-citation:
   authors:
     - family-names: Krenik
       given-names: Cavin
-      orcid: "https://orcid.org/0009-0006-4551-3031"
+      orcid: "https://orcid.org/0009-0008-9183-1278"
   title: "QRES: Biologically-Inspired Secure Federated Learning for Edge IoT Devices"
   year: 2026
   version: "v15.2-paper"
