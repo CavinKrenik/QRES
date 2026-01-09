@@ -12,7 +12,11 @@ use std::time::Duration;
 
 /// Generate synthetic model updates simulating federated learning scenario
 /// Each update is a flattened weight vector with slight variations
-fn generate_model_updates(n_clients: usize, model_dim: usize, byzantine_frac: f32) -> Vec<Vec<f32>> {
+fn generate_model_updates(
+    n_clients: usize,
+    model_dim: usize,
+    byzantine_frac: f32,
+) -> Vec<Vec<f32>> {
     let n_byzantine = (n_clients as f32 * byzantine_frac) as usize;
     let mut updates = Vec::with_capacity(n_clients);
 
@@ -65,9 +69,7 @@ fn bench_aggregation_throughput(c: &mut Criterion) {
                 b.iter(|| {
                     aggregate_updates(
                         black_box(updates),
-                        &AggregationMode::Krum {
-                            expected_byz: 1,
-                        },
+                        &AggregationMode::Krum { expected_byz: 1 },
                     )
                 });
             },
@@ -98,9 +100,7 @@ fn bench_aggregation_throughput(c: &mut Criterion) {
                 b.iter(|| {
                     aggregate_updates(
                         black_box(updates),
-                        &AggregationMode::TrimmedMean {
-                            trim_fraction: 0.1,
-                        },
+                        &AggregationMode::TrimmedMean { trim_fraction: 0.1 },
                     )
                 });
             },
@@ -124,20 +124,16 @@ fn bench_byzantine_resilience(c: &mut Criterion) {
         let label = format!("{}%_byz", (*byz_frac * 100.0) as i32);
 
         // Krum should handle Byzantine nodes better
-        group.bench_with_input(
-            BenchmarkId::new("Krum", &label),
-            &updates,
-            |b, updates| {
-                b.iter(|| {
-                    aggregate_updates(
-                        black_box(updates),
-                        &AggregationMode::Krum {
-                            expected_byz: (n_clients as f32 * byz_frac) as usize,
-                        },
-                    )
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("Krum", &label), &updates, |b, updates| {
+            b.iter(|| {
+                aggregate_updates(
+                    black_box(updates),
+                    &AggregationMode::Krum {
+                        expected_byz: (n_clients as f32 * byz_frac) as usize,
+                    },
+                )
+            });
+        });
 
         // FedAvg for comparison (will fail under Byzantine)
         group.bench_with_input(
