@@ -1,6 +1,6 @@
 [package]
 name = "qres-studio"
-version = "12.0.0"
+version = "15.2.0"
 description = "A Tauri App"
 authors = ["you"]
 edition = "2021"
