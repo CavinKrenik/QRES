@@ -26,7 +26,7 @@ Basic comparison and prediction—establishing that compression is really about 
 
 ### Phase 2: Adaptive Intelligence (v4–v9)
 
-SNNs, weighting, and pruning—compression becomes neuromorphic.
+Instead of comparing against a fixed value, the system began predicting what should come next based on time, patterns, and prior behavior. Differences shrank into residuals, and residuals became the only thing transmitted.
 
 | Version | Approach |
 |---------|----------|
@@ -45,8 +45,6 @@ Swarm sync and federated dreaming—devices learn together without congesting th
 | **v11** | Portable SIMD (ARM/x86/WASM), browser support |
 | **v12** | Zero-bandwidth swarm sync, federated dreaming |
 | **v15** | Differential privacy, Byzantine fault tolerance, secure aggregation |
-
-Instead of comparing against a fixed value, the system began predicting what should come next based on time, patterns, and prior behavior. Differences shrank into residuals, and residuals became the only thing transmitted.
 
 ## Design Principles
 
