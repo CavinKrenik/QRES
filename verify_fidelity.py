@@ -21,7 +21,7 @@ from qres.persistent import WorldStateManager
 from qres.api import QRES_API
 
 print("="*60)
-print("QRES v8.1 - Final Fidelity Verification")
+print("QRES v15.2 - Final Fidelity Verification")
 print("="*60)
 
 # Test 1: Quantum Tensor Fidelity
@@ -195,4 +195,4 @@ print("\n" + "="*60)
 print("VERIFICATION COMPLETE")
 print("="*60)
 print("\nAll key claims have been independently verified.")
-print("QRES v8.1 fidelity guarantees: ✅ CONFIRMED")
+print("QRES v15.2 fidelity guarantees: ✅ CONFIRMED")

@@ -7,7 +7,7 @@ import os
 from qres.api import QRES_API
 
 def main():
-    parser = argparse.ArgumentParser(description="QRES v10.0 CLI - Tensor Mode")
+    parser = argparse.ArgumentParser(description="QRES v15.2 CLI - Tensor Mode")
     parser.add_argument("input", help="Input file path", nargs='?')
     parser.add_argument("--mode", choices=["standard", "tensor"], default="standard", help="Compression mode")
     parser.add_argument("--optimize", action="store_true", help="Run Neural/Ethical optimization first")
