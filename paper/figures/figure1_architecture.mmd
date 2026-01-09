@@ -1,0 +1,17 @@
+graph TD
+    Data[Raw IoT Data] --> Core[qres_core]
+    subgraph Core
+        Ensemble[Predictor Ensemble]
+        SNN[SNN Predictor]
+        Linear[Linear Predictor]
+    end
+    Core -->|Residuals| Daemon[qres_daemon]
+    subgraph Daemon
+        P2P[P2P Swarm]
+        MetaBrain[MetaBrain RL Agent]
+        Security[Security Stack]
+    end
+    Security -->|Layer 1| DP[Differential Privacy]
+    DP -->|Layer 2| SA[Secure Aggregation]
+    SA -->|Layer 3| ZK[ZK Proofs]
+    Daemon -->|Secure Updates| Agg[Aggregation / Cloud]
