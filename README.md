@@ -1,10 +1,13 @@
-﻿# QRES
+﻿# QRES (TensorSwarm)
 
 > A neural compression engine for time-series data
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18193906.svg)](https://doi.org/10.5281/zenodo.18193906)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/CavinKrenik/QRES/release.yml?style=flat)](https://github.com/CavinKrenik/QRES/actions)
 [![Version](https://img.shields.io/badge/version-v15.2.0-brightgreen)](https://github.com/CavinKrenik/QRES/releases)
+
+**📄 Paper:** [Download PDF](paper/TensorSwarm__Biologically_Inspired_Secure_Federated_Learning_for_Edge_IoT_Devices.pdf) | **🔗 DOI:** [10.5281/zenodo.18193906](https://doi.org/10.5281/zenodo.18193906)
 
 ## The Core Idea
 
@@ -81,6 +84,44 @@ This project evolved through 15 major iterations:
 | v15.2 | Publication Enhancement: Benchmarks, Reproducibility, Paper Draft |
 
 [Read the full story →](docs/PHILOSOPHY.md)
+
+---
+
+## 📄 Publication
+
+**TensorSwarm: Biologically-Inspired Secure Federated Learning for Edge IoT Devices**
+
+**Author:** Cavin Krenik (Olympic College, Shelton, WA)  
+**Published:** January 2026  
+**DOI:** [10.5281/zenodo.18193906](https://doi.org/10.5281/zenodo.18193906)
+
+### Key Results
+
+| Metric | Result |
+|--------|--------|
+| 🗜️ Compression | 22:1 ratio on IoT time-series |
+| 🔒 Privacy | DP + Secure Aggregation + ZK Proofs |
+| 🛡️ Byzantine Tolerance | Up to 49% malicious nodes |
+| ⚡ Overhead | 20-30% for full security stack |
+| 📈 Scalability | Validated 10-100 Azure VMs |
+
+### Citation
+
+```bibtex
+@software{krenik2026tensorswarm,
+  author       = {Krenik, Cavin},
+  title        = {{TensorSwarm: Biologically-Inspired Secure
+                   Federated Learning for Edge IoT Devices}},
+  month        = jan,
+  year         = 2026,
+  publisher    = {Zenodo},
+  version      = {v15.2-paper},
+  doi          = {10.5281/zenodo.18193906},
+  url          = {https://doi.org/10.5281/zenodo.18193906}
+}
+```
+
+---
 
 ## Architecture
 
