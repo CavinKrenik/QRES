@@ -1,6 +1,6 @@
-# 📄 QRES: Biologically-Inspired Secure Federated Learning for Edge IoT
+# 📄 QRES v15.2.0 - Publication Release
 
-**Complete publication release** including academic paper, implementation, benchmarks, and reproducibility artifacts.
+**Published research paper** with implementation, benchmarks, and reproducibility artifacts.
 
 ## 📖 Paper
 
@@ -8,8 +8,8 @@
 
 - **Title:** QRES: Biologically-Inspired Secure Federated Learning for Edge IoT Devices
 - **Author:** Cavin Krenik (Olympic College)
-- **Pages:** 14
-- **Keywords:** Federated Learning, Edge AI, SNNs, Differential Privacy, Secure Aggregation
+- **Pages:** 5
+- **Keywords:** Federated Learning, Edge AI, Spiking Neural Networks, Secure Aggregation, Differential Privacy, Zero-Knowledge Proofs, IoT Compression
 
 ## 🔬 Key Contributions
 
@@ -19,11 +19,11 @@
 
 ## 📊 Experimental Results
 
-- **Compression:** 22:1 ratio on time-series sensor data
-- **Privacy overhead:** 20-30% for full security stack
-- **Byzantine tolerance:** Up to 49% malicious nodes (Krum aggregation)
-- **Regime change recovery:** 3-4 rounds average
-- **Scalability:** Tested up to 100 Azure B1s VMs
+- **Compression:** 48:1 on synthetic data, 22:1 on IoT telemetry
+- **Privacy overhead:** 3.1× runtime for full security stack (DP + Secure Agg + ZK)
+- **Byzantine tolerance:** Up to 45% malicious nodes (Krum aggregation)
+- **Regime change recovery:** ~20 seconds (5-12 rounds depending on severity)
+- **Scalability:** 10-100 nodes on Azure B1s VMs, >85% success rate
 
 ## 🛠️ Implementation
 
@@ -64,9 +64,9 @@ reproducibility/
   month        = jan,
   year         = 2026,
   publisher    = {Zenodo},
-  version      = {v15.2-paper},
-  doi          = {10.5281/zenodo.18193906},
-  url          = {https://doi.org/10.5281/zenodo.18193906}
+  version      = {v15.2.0},
+  doi          = {10.5281/zenodo.18194636},
+  url          = {https://doi.org/10.5281/zenodo.18194636}
 }
 ```
 

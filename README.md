@@ -2,13 +2,13 @@
 
 > A neural compression engine for time-series data
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18193906.svg)](https://doi.org/10.5281/zenodo.18193906)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18194636.svg)](https://doi.org/10.5281/zenodo.18194636)
 [![ORCID](https://img.shields.io/badge/ORCID-0009--0008--9183--1278-green.svg)](https://orcid.org/0009-0008-9183-1278)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/CavinKrenik/QRES/release.yml?style=flat)](https://github.com/CavinKrenik/QRES/actions)
 [![Version](https://img.shields.io/badge/version-v15.2.0-brightgreen)](https://github.com/CavinKrenik/QRES/releases)
 
-**📄 Paper:** [Download PDF](paper/QRES__Biologically_Inspired_Secure_Federated_Learning_for_Edge_IoT_Devices.pdf) | **🔗 DOI:** [10.5281/zenodo.18193906](https://doi.org/10.5281/zenodo.18193906)
+**📄 Paper:** [Download PDF](paper/QRES__Biologically_Inspired_Secure_Federated_Learning_for_Edge_IoT_Devices.pdf) | **🔗 DOI:** [10.5281/zenodo.18194636](https://doi.org/10.5281/zenodo.18194636)
 
 ## The Core Idea
 
@@ -95,17 +95,17 @@ This project evolved through 15 major iterations:
 **Author:** Cavin Krenik [![ORCID](https://img.shields.io/badge/ORCID-0009--0008--9183--1278-green.svg)](https://orcid.org/0009-0008-9183-1278)  
 **Affiliation:** Olympic College, Shelton, WA, USA  
 **Published:** January 2026  
-**DOI:** [10.5281/zenodo.18193906](https://doi.org/10.5281/zenodo.18193906)
+**DOI:** [10.5281/zenodo.18194636](https://doi.org/10.5281/zenodo.18194636)
 
 ### Key Results
 
 | Metric | Result |
 |--------|--------|
-| 🗜️ Compression | 22:1 ratio on IoT time-series |
-| 🔒 Privacy | DP + Secure Aggregation + ZK Proofs |
-| 🛡️ Byzantine Tolerance | Up to 49% malicious nodes |
-| ⚡ Overhead | 20-30% for full security stack |
-| 📈 Scalability | Validated 10-100 Azure VMs |
+| 🗜️ Compression | 48:1 synthetic, 22:1 IoT telemetry |
+| 🔒 Privacy | DP (ε=1.0) + Secure Aggregation + ZK Proofs |
+| 🛡️ Byzantine Tolerance | Up to 45% malicious nodes (Krum) |
+| ⚡ Overhead | 3.1× runtime for full security stack |
+| 📈 Scalability | 10-100 nodes, >85% success rate |
 
 ### Citation
 
@@ -117,9 +117,9 @@ This project evolved through 15 major iterations:
   month        = jan,
   year         = 2026,
   publisher    = {Zenodo},
-  version      = {v15.2-paper},
-  doi          = {10.5281/zenodo.18193906},
-  url          = {https://doi.org/10.5281/zenodo.18193906}
+  version      = {v15.2.0},
+  doi          = {10.5281/zenodo.18194636},
+  url          = {https://doi.org/10.5281/zenodo.18194636}
 }
 ```
 
