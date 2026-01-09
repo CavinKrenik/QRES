@@ -1,4 +1,4 @@
-﻿# QRES (TensorSwarm)
+﻿# QRES
 
 > A neural compression engine for time-series data
 
