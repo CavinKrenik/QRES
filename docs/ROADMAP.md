@@ -14,10 +14,11 @@
 - ✅ **v13.0** – Security Hardening: ed25519 Signatures, PKI
 - ✅ **v14.0** – Robust Aggregation: Krum, Multi-Krum, Trimmed Mean
 - ✅ **v15.0** – Privacy: Differential Privacy, Secure Aggregation, ZK Proofs
+- ✅ **v15.2** – Benchmarks, Reproducibility, Publication Prep
 
 ---
 
-## 🏗️ Current Focus (v12.x - Swarm Scaling Era)
+## 🏗️ Current Focus (v15.x - Publication Era)
 
 ### Phase 1-2: Security Hardening (v13-v14) ✅ COMPLETE
 > **Goal:** Make federated swarms safe for adversarial environments.
@@ -41,6 +42,13 @@
 - [x] **ε-DP Guarantees:** Differential privacy for shared weights (`privacy.rs`)
 - [x] **Secure Aggregation:** Pairwise masking via X25519 (`secure_agg.rs`)
 - [x] **ZK Proofs:** Pedersen Commitments + Proof of Norm (`zk_proofs.rs`)
+
+### Phase 4: Publication Readiness (v15.2) ✅ COMPLETE
+> **Goal:** Validate performance for FLICS 2026 submission.
+
+- [x] **Benchmarks:** Baseline comparisons, scalability tests, energy metrics
+- [x] **Reproducibility:** Docker environment, deterministic run scripts
+- [x] **Documentation:** Theory, Related Work, Citations
 
 ---
 

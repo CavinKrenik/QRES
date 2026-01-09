@@ -4,7 +4,7 @@
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/CavinKrenik/QRES/release.yml?style=flat)](https://github.com/CavinKrenik/QRES/actions)
-[![Version](https://img.shields.io/badge/version-v15.0.0-brightgreen)](https://github.com/CavinKrenik/QRES/releases)
+[![Version](https://img.shields.io/badge/version-v15.2.0-brightgreen)](https://github.com/CavinKrenik/QRES/releases)
 
 ## The Core Idea
 
@@ -78,6 +78,7 @@ This project evolved through 15 major iterations:
 | v13 | Security hardening: ed25519 signatures, Krum aggregation |
 | v14 | Robust aggregation: Multi-Krum, Trimmed Mean, Median |
 | v15 | Privacy: Differential Privacy, Secure Aggregation, ZK Proofs |
+| v15.2 | Publication Enhancement: Benchmarks, Reproducibility, Paper Draft |
 
 [Read the full story →](docs/PHILOSOPHY.md)
 
@@ -104,9 +105,9 @@ Benchmarks on structured datasets (Intel Ice Lake):
 
 | Dataset | Type | Ratio | Speed |
 |---------|------|-------|-------|
-| **Sensor Stream** | IoT Telemetry | **~0.15** (6.6x) | 300+ MB/s |
+| **Sensor Stream** | IoT Telemetry | **~0.045** (22:1) | 85 MB/s |
 | **Server Logs** | Text/Time-series | **~0.19** (5.2x) | 200 MB/s |
-| **CSV Data** | Correlated Numerics | ~0.76 (1.3x) | 150 MB/s |
+| **Synthetic Wave** | Model-generated | **~0.02** (48:1) | 120 MB/s |
 
 [Full benchmarks →](docs/BENCHMARKS.md)
 
@@ -141,7 +142,7 @@ Benchmarks on structured datasets (Intel Ice Lake):
 ## Frequently Asked Questions
 
 **Q: Is this production-ready?**  
-A: The core engine is stable and deterministic. Federated learning is experimental. Security features (authentication, Byzantine-tolerant aggregation, privacy) are **complete** as of v15. See [Implementation Status](docs/IMPLEMENTATION_STATUS.md).
+A: The core engine is stable and deterministic. Federated learning is experimental. Security features (authentication, Byzantine-tolerant aggregation, privacy) are **complete** as of v15.2. See [Implementation Status](docs/IMPLEMENTATION_STATUS.md).
 
 **Q: How does this compare to Zstd/Gzip?**  
 A: QRES is specialized for repetitive time-series data. For general-purpose compression, use Zstd. QRES shines when data patterns are predictable and bandwidth is constrained.

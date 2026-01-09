@@ -16,7 +16,7 @@ This document clarifies what's production-ready vs. experimental vs. roadmap.
 ## 🧪 Experimental (Works But Not Hardened)
 
 - **Phase 1 Security (Authentication)**: ed25519 signatures, PKI identity verification, replay prevention - fully integrated into P2P
-- **Phase 2 Security (Robust Aggregation)**: Krum, Multi-Krum, Trimmed Mean, Median algorithms for Byzantine-tolerant federated averaging (`qres_core/src/aggregation.rs`)
+- **Phase 2 Security (Robust Aggregation)**: Krum, Multi-Krum, Trimmed Mean, Median algorithms for Byzantine-tolerant federated averaging - **Fully Implemented** (`qres_core/src/aggregation.rs`)
 - **Federated Dreaming**: Synthetic sample generation for weight updates during idle time
 - **Regime Change Adaptation**: Dynamic predictor reweighting via momentum updates
 - **Differential Privacy:** Gaussian noise injection for model updates (v15 alpha).
@@ -25,7 +25,7 @@ This document clarifies what's production-ready vs. experimental vs. roadmap.
 
 ## 📋 Roadmap (Not Yet Implemented)
 
-- **Security Defenses**: Robust aggregation (Krum), reputation scoring
+- **Security Defenses**: Reputation scoring
 - **Arithmetic Coding**: Advanced entropy coding for 10-20% better ratios
 - **Explicit Fallback Modes**: Graceful degradation during phase shifts
 - **FPGA Acceleration**: Hardware implementation of Mixer logic
@@ -35,7 +35,7 @@ This document clarifies what's production-ready vs. experimental vs. roadmap.
 
 | Limitation | Impact | Mitigation |
 |------------|--------|------------|
-| **Assumes trusted nodes** | No Byzantine fault tolerance | Use private networks, node whitelisting |
+| **Partially trusted nodes** | Krum tolerates <45% malicious | Use PKI + Krum for public nets |
 | **Regime change degradation** | 2-3x ratio drop during pattern shifts | Recovers via swarm learning (12-48 hours) |
 | **High-entropy data** | Cannot compress encrypted/random data | Fallback to passthrough mode |
 | **Header overhead** | Not suitable for files < 1KB | Use for larger datasets |
@@ -45,6 +45,8 @@ This document clarifies what's production-ready vs. experimental vs. roadmap.
 
 | Version | Era | Key Features |
 |---------|-----|--------------|
+| v15.2 | Publication Era | Benchmarks, Reproducibility, Paper Draft |
+| v15.0 | Privacy Era | Differential Privacy, Secure Aggregation, ZK Proofs |
 | v12.0 | Swarm Scaling | Zero-bandwidth sync, federated swarms |
 | v11.x | Portable SIMD | ARM/x86/WASM portability |
 | v10.x | Singularity Engine | Q16.16 determinism, architecture decoupling |

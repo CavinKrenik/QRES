@@ -1,6 +1,6 @@
-# QRES Studio v10.5
+# QRES Studio v15.2
 
-**Cross-platform GUI for QRES v10 (Hybrid Engine)**
+**Cross-platform GUI for QRES v15 (Publication Era)**
 
 Built with Tauri v2 (Rust) + Svelte 5 + WebAssembly.
 
@@ -212,8 +212,8 @@ Located in app data directory:
 
 ## 📚 Documentation
 
-- **[P2P_IMPLEMENTATION.md](P2P_IMPLEMENTATION.md)** - v4.2 P2P guide
-- **[STREAMLINED_RELEASE.md](STREAMLINED_RELEASE.md)** - v4.1 release notes
+- **[P2P Guide](../docs/guides/P2P_IMPLEMENTATION.md)** - P2P implementation details
+- **[Release Notes](../docs/releases/RELEASE_NOTES.md)** - Full release notes
 - **[../README.md](../README.md)** - Main QRES project README
 - **[../ROADMAP.md](../ROADMAP.md)** - Development roadmap
 
@@ -238,4 +238,4 @@ Dual-licensed under MIT OR Apache-2.0.
 
 ---
 
-**QRES Studio v10.5** - *The Hybrid Era* 🚀
+**QRES Studio v15.2** - *Publication Era* 🚀

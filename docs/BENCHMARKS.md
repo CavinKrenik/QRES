@@ -14,7 +14,7 @@ Performance metrics for QRES neural compression.
 
 ---
 
-## v12.0 Federated Swarm Metrics (NEW)
+## v12.0 Federated Swarm Metrics (Legacy)
 
 | Nodes | Epochs | Total Time | Avg/Epoch | Sync Rate |
 |-------|--------|-----------|-----------|-----------|
@@ -115,7 +115,7 @@ Impact of privacy features on model utility, runtime, and memory.
 | **Baseline** (no privacy) | 0% | 1.0x | 0 KB |
 | **DP Only** (ε=1.0) | 2-5% | 1.1x | ~1 KB |
 | **Secure Agg Only** | 0% | 1.3x | ~32 KB (masks) |
-| **Full Stack** (DP + SA + ZK) | 3-6% | 1.8x | ~48 KB |
+| **Full Stack** (DP + SA + ZK) | 3-6% | 3.1x | ~48 KB |
 
 ### Memory Breakdown
 
@@ -139,8 +139,8 @@ Comparing QRES against standard FL algorithms on `iot_anomaly.dat`.
 | **FedProx** | 12 | ❌ None | ❌ None | 1.1x |
 | **QRES (no security)** | 14 | ❌ None | ❌ None | 1.0x |
 | **QRES (DP only)** | 18 | ✅ ε=1.0 | ❌ None | 1.2x |
-| **QRES (Krum)** | 16 | ❌ None | ✅ f<20% | 1.3x |
-| **QRES (full stack)** | 22 | ✅ ε=1.0 | ✅ f<20% | 1.8x |
+| **QRES (Krum)** | 16 | ❌ None | ✅ f<45% | 6.5x |
+| **QRES (full stack)** | 22 | ✅ ε=1.0 | ✅ f<45% | 3.1x |
 
 *Security adds ~40% overhead but provides strong guarantees.*
 
@@ -150,14 +150,14 @@ Comparing QRES against standard FL algorithms on `iot_anomaly.dat`.
 
 Swarm performance at increasing node counts.
 
-| Nodes | Sync Time (ms) | Agg Time (ms) | Memory (MB) | Success Rate |
-|-------|---------------|---------------|-------------|--------------|
-| 10 | 5 | 2 | 48 | 100% |
-| 20 | 12 | 5 | 96 | 100% |
-| 50 | 45 | 18 | 240 | 98% |
-| 100 | 120 | 45 | 480 | 95% |
+| Nodes | Memory (Total MB) | Success Rate |
+|-------|-------------------|--------------|
+| 10 | 0.0 | 100% |
+| 50 | 0.0 | 100% |
+| 100 | ~9.4 | 100% |
+| 200 | ~0.0 (fluctuates) | 100% |
 
-*O(n²) scaling from pairwise secure aggregation masks.*
+*Protocol state overhead measured via `swarm_scale.rs` (mock nodes). O(1) baseline memory per node.*
 
 ---
 

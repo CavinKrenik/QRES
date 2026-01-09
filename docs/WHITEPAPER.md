@@ -1,6 +1,6 @@
 # QRES Technical Whitepaper
 
-**Version 15.0 "Privacy"**
+**Version 15.2 "Publication Era"**
 
 ---
 
@@ -16,7 +16,7 @@ QRES implements a layered defense strategy:
 
 ## Abstract
 
-QRES represents the culmination of predictive data compression. v12.0, the **"Swarm Scaling Era"**, introduces zero-bandwidth model synchronization and federated intelligence. It employs a **"Living Brain"**—an autonomous, self-organizing neural agent that adapts to data in real-time, separated into a high-performance core library and a resilient background daemon.
+QRES represents the culmination of predictive data compression. v15.2, the **"Publication Era"**, introduces comprehensive security, privacy, and reproducibility features. It employs a **"Living Brain"**—an autonomous, self-organizing neural agent that adapts to data in real-time.
 
 ---
 
@@ -127,10 +127,21 @@ Zero-bandwidth weight synchronization via PRNG seeds. Swarm nodes generate ident
 ### 4.3 Federated Dreaming (v11.2)
 Idle-time hallucinatory training. Generates synthetic samples based on learned patterns for privacy-preserving weight updates.
 
+## 5. v15 Innovations (Security & Privacy)
+
+### 5.1 Differential Privacy
+Implements (ε, δ)-DP using the Gaussian mechanism. Updates are clipped to L2 norm *C* and noise is added proportional to *σ*.
+
+### 5.2 Byzantine Tolerance (Krum)
+Rejects poisoned model updates by selecting the update with the minimum sum of distances to its nearest neighbors. Tolerates up to 45% malicious nodes.
+
+### 5.3 Zero-Knowledge Proofs
+Uses Pedersen Commitments and Bulletproofs-like range proofs to verify update norms without revealing the update itself.
+
 ---
 
 ## Conclusion
-QRES v11.2 bridges the gap between academic theory and industrial reliability. By decoupling the deterministic **Core** from the evolutionary **Swarm**, and enabling portable hardware deployment, we deliver a tool that is safe for production, runs on any architecture, and continues to evolve.
+QRES v15.2 bridges the gap between academic theory and industrial reliability. By combining bio-inspired SNNs with a robust security stack (DP + Krum + ZK), we deliver a solution that is safe for production, privacy-preserving, and runs on any edge architecture.
 
 ---
 

@@ -1,4 +1,4 @@
-# QRES Rust Workspace (v10.1)
+# QRES Rust Workspace (v15.2)
 
 > **The Singularity Engine**: A bit-perfect, deterministic compression architecture split into a high-performance core and a biological-inspired swarm daemon.
 
@@ -18,6 +18,7 @@ This workspace contains the two pillars of QRES:
 ### 2. `qres_daemon` (The Brain)
 * **Role:** P2P Swarm Node & CLI.
 * **Tech:** Tokio (Async), Libp2p (GossipSub), SNN (Spiking Neural Networks).
+* **Security:** Krum Aggregation, Differential Privacy, ZK Proofs.
 * **Function:** Manages the "Hive Mind," distributing weight epiphanies across the network without blocking the hot compression path.
 
 ## 🚀 Quick Start
