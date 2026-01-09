@@ -3,6 +3,7 @@
 > A neural compression engine for time-series data
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18193906.svg)](https://doi.org/10.5281/zenodo.18193906)
+[![ORCID](https://img.shields.io/badge/ORCID-0009--0008--9183--1278-green.svg)](https://orcid.org/0009-0008-9183-1278)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/CavinKrenik/QRES/release.yml?style=flat)](https://github.com/CavinKrenik/QRES/actions)
 [![Version](https://img.shields.io/badge/version-v15.2.0-brightgreen)](https://github.com/CavinKrenik/QRES/releases)
@@ -91,7 +92,8 @@ This project evolved through 15 major iterations:
 
 **TensorSwarm: Biologically-Inspired Secure Federated Learning for Edge IoT Devices**
 
-**Author:** Cavin Krenik (Olympic College, Shelton, WA)  
+**Author:** Cavin Krenik [![ORCID](https://img.shields.io/badge/ORCID-0009--0008--9183--1278-green.svg)](https://orcid.org/0009-0008-9183-1278)  
+**Affiliation:** Olympic College, Shelton, WA, USA  
 **Published:** January 2026  
 **DOI:** [10.5281/zenodo.18193906](https://doi.org/10.5281/zenodo.18193906)
 
