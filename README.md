@@ -71,20 +71,32 @@ npm run dev
 
 [Full installation docs →](docs/guides/P2P_IMPLEMENTATION.md)
 
-## 🎮 Hardware-in-the-Loop Simulation
+## 🎮 Hardware-in-the-Loop Simulation: "Director's Cut"
+To demonstrate QRES capabilities on real-world chaotic data, this repository includes a **Weather Replay Engine** powered by the [Jena Climate Dataset](https://www.bgc-jena.mpg.de/wetter/).
 
-To demonstrate QRES capabilities without requiring a physical cluster of 20+ IoT devices, this repository includes a **Real-World Replay Engine**.
+We curated a specific "Calm → Storm" narrative to demonstrate **Bio-inspired Adaptation**:
 
-* **Data Source:** Uses the [Jena Climate Dataset](https://www.bgc-jena.mpg.de/wetter/) (Max Planck Institute) to provide high-fidelity multivariate sensor data.
-* **The "Storm" Test:** The simulation is pre-loaded with specific time-windows where atmospheric pressure drops significantly (simulating a storm).
-* **Verification:** You can observe the **MetaBrain** adapting in real-time—as entropy increases (during the storm), the compression ratio fluctuates and the Neural Network triggers a `LEARNING` regime to compensate.
+### Phase 1: The Calm (Inference Mode)
+During high-pressure stable weather, the swarm operates in `INFERRING` mode (Green).
+- **Compression Ratio:** High (~10:1) as predictions are accurate.
+- **Neural State:** Cool colors (Blue/Cyan) indicating low computational stress.
 
-To run the simulation:
+![Calm Phase](docs/images/qres_calm_preview.png)
+
+### Phase 2: The Storm (Learning Mode)
+At the 5-minute mark, the atmospheric pressure drops significantly ("Regime Change"). The Swarm detects this anomaly immediately.
+- **Trigger:** The sensor node (`ESP32-01`) detects the anomaly first and switches to high-alert.
+- **Response:** The Swarm enters `LEARNING` mode (Red), retraining the global model to adapt to the new high-entropy pattern.
+- **Neural State:** Nodes turn Gold/Orange to visualize the intense peer-to-peer gradient sync.
+
+![Storm Phase](docs/images/qres_storm_preview.png)
+
+To run this simulation yourself:
 ```bash
-# 1. Fetch real climate data
+# 1. Fetch the curated "Director's Cut" data
 python3 scripts/fetch_weather_replay.py
 
-# 2. Launch the Edge Dashboard
+# 2. Launch real-time dashboard
 cd qres-studio && npm run dev
 ```
 
