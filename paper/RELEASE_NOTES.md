@@ -50,10 +50,9 @@ reproducibility/
 └── scripts/
 ```
 
-## 🎯 Target Venues
+## 🎯 Categories
 
-- **Primary:** FLICS 2026 (June 9-12, Valencia, Spain)
-- **Categories:** cs.DC, cs.LG, cs.CR
+- cs.DC, cs.LG, cs.CR
 
 ## 📚 Citation
 ```bibtex
@@ -78,4 +77,4 @@ reproducibility/
 
 ---
 
-**🚀 Ready for submission to FLICS 2026 and archival on Zenodo!**
+**🚀 Published research with reproducibility artifacts on Zenodo!**

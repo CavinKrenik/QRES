@@ -1,4 +1,4 @@
-# QRES v15.2.0 "Publication Era"
+# QRES v15.2.0
 
 **Release Date:** January 8, 2026
 
@@ -6,7 +6,7 @@
 
 ## Overview
 
-v15.2.0 focuses on **Scientific Reproducibility and Validation**, preparing the QRES ecosystem for publication at FLICS 2026. It includes comprehensive benchmarks, scalability analysis, and complete theoretical documentation.
+v15.2.0 focuses on **Scientific Reproducibility and Validation**. It includes comprehensive benchmarks, scalability analysis, and complete theoretical documentation.
 
 ---
 

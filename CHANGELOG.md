@@ -4,7 +4,7 @@ All notable changes to this project are documented here.
 
 ---
 
-## [15.2.0] - 2026-01-08 "Publication"
+## [15.2.0] - 2026-01-08
 
 ### Added
 - **Documentation:**
@@ -28,7 +28,7 @@ All notable changes to this project are documented here.
   - `Aggregator` trait for pluggable aggregation strategies
 
 ### Changed
-- `PAPER_DRAFT.md`: Full structure for FLICS 2026 submission
+- `PAPER_DRAFT.md`: Full structure for paper submission
 
 ---
 
@@ -71,7 +71,7 @@ All notable changes to this project are documented here.
 
 ---
 
-## [10.1.0] - 2026-01-05 "The Hybrid Era"
+## [10.1.0] - 2026-01-05
 
 ### Added
 - **WebAssembly Core**: `qres_core` now compiles to WASM for browser-side compression.
