@@ -1,69 +1,50 @@
-# QRES Studio v15.2
+# QRES Edge Monitor v15.3
 
-**Cross-platform GUI for QRES v15 (Publication Era)**
+**Real-time IoT Dashboard for the QRES Swarm**
 
 Built with Tauri v2 (Rust) + Svelte 5 + WebAssembly.
+This dashboard simulates a swarm of edge devices to demonstrate **biologically-inspired compression** on live sensor streams.
 
 ---
 
 ## 🎨 Features
 
-### 🌐 Hybrid Runtime (New in v10.5)
-- **Native Mode (Default):** Uses the Rust Daemon for maximum performance and P2P Swarm access.
-- **WASM Mode (Browser):** Runs `qres_core` entirely in the frontend thread. Zero system dependencies, perfect for quick client-side checks.
+### 📡 Live Telemetry Stream
+- **Real-time Visualization**: D3.js scrolling charts showing Raw vs. QRES bandwidth.
+- **Simulated Sensors**: Generates 10Hz vibration/temperature data to mimic industrial IoT.
+- **Bit-Perfect Accuracy**: Uses the authentic WASM-compiled Rust engine.
 
-### 🎯 Drop Zone
-- **Drag-Drop Interface**: Files or entire folders
-- **Real-time Progress**: Color-coded engine visualization
-  - 🟡 Gold = ZSTD
-  - 🔵 Blue = LINEAR
-  - 🟢 Green = IPEPS
-  - 🟣 Purple = LSTM
-- **Training Detection**: Auto-prompt for data files (CSV, JSON, TXT)
+### 🧠 Biologically-Inspired Vis
+- **SNN Spike Visualizer**: Watch the "MetaBrain" neurons fire in response to data intensity.
+- **Regime Change Simulation**: Trigger abrupt data anomalies and watch the neural network adapt in real-time.
 
-### 🐝 Hive Mind
-- **Persistent Swarm Toggle**: Enable collective learning
-- **Live Statistics**: Bytes saved, compression ratio, file count
-- **Engine Usage**: Visual breakdown of predictor selection
-- **Collective Learning Banner**: Shows swarm participation status
-
-
-
-### 🌐 P2P Networking
-- **Persistent State**: Swarm toggle survives app restarts
-- **Automatic Sync**: Shares learnings with Hive when enabled
-- **Zero-Shot Adaptation**: Benefit from collective intelligence
-
-### 📊 Knowledge Graph
-- **Interactive Visualization**: D3.js powered force-directed graph
-- **Zoom & Pan**: Navigate complex neural relationships
-- **Auto-fit**: Automatically centers and scales the graph
-- **Real-time Updates**: Reflects current brain state
+### 🕸️ Swarm Network Map
+- **Active Peers**: Monitor the status of connected edge nodes (Learning vs. Inferring).
+- **Global Efficiency**: Track collective bandwidth savings across the swarm.
 
 ---
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- **Rust**: Latest stable version
 - **Node.js**: v18 or higher
-- **Tauri CLI**: `npm install -g @tauri-apps/cli`
+- **Rust**: Latest stable (for native builds only)
 
 ### Development
 ```bash
 # Install dependencies
 npm install
 
-# Run static analysis check
-npm run check
+# Run dev server (browser mode)
+npm run dev
 
-# Run dev server
-npm run tauri dev
+# Open http://localhost:1420
 ```
 
 ### Production Build
 ```bash
-# Build for your platform
+# Build native app (requires Tauri CLI)
+npm install -g @tauri-apps/cli
 npm run tauri build
 
 # Output: src-tauri/target/release/bundle/
@@ -73,52 +54,39 @@ npm run tauri build
 
 ## 📖 Usage
 
-### Compress a File
-1. Drag file onto circular Drop Zone
-2. Choose save location via dialog
-3. Watch real-time progress
-4. Stats auto-update
+### 1. Launch the Dashboard
+Run `npm run dev` and open the local web interface.
 
-### Compress a Folder
-1. Drag folder onto Drop Zone
-2. Choose destination folder
-3. All files compressed recursively
-4. Directory structure preserved
+### 2. Connect to Swarm
+Click the **"Connect to Swarm"** toggle. The simulated sensors will begin streaming data, and the bandwidth chart will populate in real-time.
 
-### Enable Swarm Network
-1. Go to **Hive Mind** tab
-2. Toggle **"Swarm Network"** ON
-3. Status changes to 🟢 Connected
-4. All compressions now sync with Hive
-
-### Train on Data
-1. Drop CSV/JSON/TXT file
-2. Click **"Yes"** when prompted
-3. Meta-brain trains on your data
-4. Results displayed in alert
+### 3. Trigger an Anomaly
+Click the **"Trigger Regime Change"** button.
+* **Observation:** The vibration values will spike (Regime Shift).
+* **Result:** Watch the compression ratio momentarily drop, then recover as the SNN learns the new pattern (~20s recovery).
 
 ---
 
 ## 🏗️ Architecture
 
 ### Backend (Rust + Tauri v2)
-- **Tauri Commands**: Compression, decompression, stats, swarm, training
-- **P2P State**: Global state with `Arc<Mutex<P2PState>>`
-- **Persistent Storage**: JSON files in app data directory
+- **Tauri Commands**: Compression, decompression, stats
+- **WASM Core**: `qres_core` compiled to WebAssembly for browser-native operation
 - **IPC Communication**: Secure cross-process communication
 
 ### Frontend (Svelte 5 + TypeScript)
-- **App.svelte**: Main layout with tab navigation and global state
-- **DropZone.svelte**: Drag-drop interface with folder support
-- **HiveMind.svelte**: Analytics dashboard with persistent swarm toggle
-- **KnowledgeGraph.svelte**: Interactive D3.js visualization
-- **Environment Guards**: Browser vs Tauri mode detection
+- **App.svelte**: Main layout with sidebar navigation
+- **IoTDashboard.svelte**: 3-panel streaming interface (Controls | Charts | Neural Viz)
+- **LiveBandwidthChart.svelte**: D3.js real-time scrolling chart
+- **SNNSpikeVisualizer.svelte**: Canvas-based neural activity display
+- **NodeStatusPanel.svelte**: Edge device status monitoring
+- **SensorSimulator.ts**: 10Hz telemetry generation with regime change support
 
 ### Dependencies
 - **Tauri v2**: Cross-platform desktop app framework
-- **Svelte 5**: Reactive UI framework with runes
+- **Svelte 5**: Reactive UI framework
 - **D3.js v7**: Data visualization library
-- **@zerodevx/svelte-toast**: Notification system
+- **qres-wasm**: WASM-compiled compression core
 
 ---
 
@@ -128,24 +96,28 @@ npm run tauri build
 qres-studio/
 ├── src-tauri/
 │   ├── src/
-│   │   ├── commands.rs    # Tauri commands (P2P, folders, training)
+│   │   ├── commands.rs    # Tauri commands
 │   │   ├── lib.rs         # Plugin registration
 │   │   └── main.rs        # App entry point
 │   └── Cargo.toml         # Rust dependencies
 ├── src/
-│   ├── App.svelte         # Main layout with tab navigation
-│   ├── DropZone.svelte    # Compression interface
-│   ├── HiveMind.svelte    # Analytics dashboard
-│   ├── KnowledgeGraph.svelte # Neural graph visualization
-│   ├── SwarmView.svelte   # P2P network view
-│   ├── ArchiveView.svelte # Archive browser
+│   ├── App.svelte              # Main layout with sidebar nav
 │   ├── components/
-│   │   ├── StarshipHeader.svelte # Header with stats
-│   │   └── StarshipSidebar.svelte # Sidebar controls
-│   └── types.d.ts         # TypeScript declarations
+│   │   ├── IoTDashboard.svelte      # 3-panel streaming interface
+│   │   ├── LiveBandwidthChart.svelte # D3 real-time chart
+│   │   ├── SNNSpikeVisualizer.svelte # Neural activity canvas
+│   │   ├── NodeStatusPanel.svelte    # Device status list
+│   │   ├── SwarmConnectToggle.svelte # Connect/anomaly controls
+│   │   ├── StarshipHeader.svelte     # QRES branding header
+│   │   └── StarshipSidebar.svelte    # Navigation sidebar
+│   ├── lib/
+│   │   ├── SensorSimulator.ts  # 10Hz telemetry generator
+│   │   ├── iotStore.ts         # Svelte streaming stores
+│   │   └── compressionEngine.ts # WASM/Native engine bridge
+│   └── routes/
+│       └── +page.svelte   # SvelteKit entry
 ├── static/                # Static assets
 ├── package.json           # Node dependencies
-├── jsconfig.json          # JavaScript config
 └── svelte.config.js       # Svelte configuration
 ```
 
@@ -153,82 +125,41 @@ qres-studio/
 
 ## 🔧 Configuration
 
-### Persistent Files
-Located in app data directory:
-- **Windows**: `%APPDATA%\qres-studio\`
-- **macOS**: `~/Library/Application Support/qres-studio/`
-- **Linux**: `~/.local/share/qres-studio/`
-
-**Files**:
-- `stats.json` - Compression statistics
-- `swarm_config.json` - Swarm enabled/disabled state
+### Environment Detection
+- **Browser Mode**: Runs WASM compression client-side (default for `npm run dev`)
+- **Native Mode**: Uses Tauri IPC to call Rust daemon (requires `npm run tauri dev`)
 
 ### Compatibility
-- **QRES Backend**: Compatible with QRES v10.x
-- **Tauri**: Built with Tauri v2 API
+- **QRES Backend**: Compatible with QRES v15.x
 - **Node.js**: Requires v18+
-- **Rust**: Latest stable recommended
-
----
-
-## 🎯 Keyboard Shortcuts
-
-| Action | Shortcut |
-|--------|----------|
-| Switch to Drop Zone | `Ctrl+1` |
-| Switch to Hive Mind | `Ctrl+2` |
-| Switch to Knowledge Graph | `Ctrl+3` |
-| Toggle Swarm | `Ctrl+S` |
-| Refresh Stats | `F5` |
+- **Rust**: Latest stable (for native builds)
 
 ---
 
 ## 🐛 Troubleshooting
 
-### Import Resolution Errors
-- **Tauri v2 Migration**: Ensure all imports use `@tauri-apps/api/core` instead of `@tauri-apps/api/tauri`
-- **Run Check**: Use `npm run check` to verify TypeScript/svelte-check passes
-- **Clear Cache**: Delete `node_modules` and `package-lock.json` if issues persist
+### WASM 403 Error
+If you see "qres_wasm_bg.wasm" 403 errors:
+```bash
+cd ../qres_rust/qres_wasm
+wasm-pack build --target web
+```
 
-### "invoke is not defined" Error
-- **Environment Guards**: Check that Tauri API calls are wrapped in `window.__TAURI__` checks
-- **Browser Mode**: App should work in browser for development (limited functionality)
+### Chart not rendering
+- Ensure D3.js v7 is installed: `npm install d3`
+- Check browser DevTools for errors
 
-### Swarm toggle doesn't persist
-- Check app data directory permissions
-- Ensure `swarm_config.json` is writable
-
-### Folder compression fails
-- Verify destination folder exists
-- Check file permissions
-- Try smaller folders first
-
-### Graph visualization issues
-- **D3.js**: Ensure D3 v7 is properly installed
-- **Zoom/Pan**: Check browser console for JavaScript errors
-- **Auto-fit**: Graph should center automatically on load
+### Simulation not starting
+- Click "Connect to Swarm" to start the 10Hz stream
+- Check browser console for WASM initialization logs
 
 ---
 
 ## 📚 Documentation
 
-- **[P2P Guide](../docs/guides/P2P_IMPLEMENTATION.md)** - P2P implementation details
-- **[Release Notes](../docs/releases/RELEASE_NOTES.md)** - Full release notes
-- **[../README.md](../README.md)** - Main QRES project README
-- **[../ROADMAP.md](../ROADMAP.md)** - Development roadmap
-
----
-
-## 🤝 Contributing
-
-See [../CONTRIBUTING.md](../CONTRIBUTING.md) for guidelines.
-
-**Areas of Interest**:
-- UI/UX improvements
-- Performance optimization
-- Cross-platform testing
-- Documentation
-- Graph visualization enhancements
+- **[Main QRES README](../README.md)** - Project overview
+- **[Benchmarks](../docs/BENCHMARKS.md)** - Performance data
+- **[Whitepaper](../docs/WHITEPAPER.md)** - Technical details
 
 ---
 
@@ -238,4 +169,4 @@ Dual-licensed under MIT OR Apache-2.0.
 
 ---
 
-**QRES Studio v15.2** - *Publication Era* 🚀
+**QRES Edge Monitor v15.3** - *Real-time IoT Compression* 🚀

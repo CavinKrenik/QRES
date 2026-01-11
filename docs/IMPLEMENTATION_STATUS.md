@@ -7,6 +7,7 @@ This document clarifies what's production-ready vs. experimental vs. roadmap.
 - **Core Compression Engine** (`qres_core`): Q16.16 fixed-point determinism, bit-perfect across architectures
 - **Python Bindings** (PyO3): Tested on Linux/macOS/Windows
 - **WASM Decoder**: Browser-compatible decompression via `wasm-bindgen`
+- **IoT Streaming Interface** (v15.3): Real-time dashboard with D3.js visualization, SNN Spike Visualizer
 - **P2P Weight Sharing**: libp2p + GossipSub for model distribution
 - **Federated Averaging**: FedProx for non-IID data stability
 - **Swarm Synchronization**: PRNG seed-based coordination (zero-bandwidth)
@@ -45,6 +46,7 @@ This document clarifies what's production-ready vs. experimental vs. roadmap.
 
 | Version | Era | Key Features |
 |---------|-----|--------------|
+| v15.3 | Edge Visualization | IoT Dashboard, Real-time D3 Charts, SNN Spike Visualizer |
 | v15.2 | Publication Era | Benchmarks, Reproducibility, Paper Draft |
 | v15.0 | Privacy Era | Differential Privacy, Secure Aggregation, ZK Proofs |
 | v12.0 | Swarm Scaling | Zero-bandwidth sync, federated swarms |

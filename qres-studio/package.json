@@ -1,7 +1,7 @@
 {
   "name": "qres-studio",
-  "version": "15.2.0",
-  "description": "",
+  "version": "15.3.0",
+  "description": "Real-time Edge Dashboard for QRES Swarm",
   "type": "module",
   "scripts": {
     "dev": "vite dev",

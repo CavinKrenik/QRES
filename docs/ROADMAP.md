@@ -15,6 +15,7 @@
 - ✅ **v14.0** – Robust Aggregation: Krum, Multi-Krum, Trimmed Mean
 - ✅ **v15.0** – Privacy: Differential Privacy, Secure Aggregation, ZK Proofs
 - ✅ **v15.2** – Benchmarks, Reproducibility, Publication Prep
+- ✅ **v15.3** – Edge Visualization: IoT Dashboard, Real-time D3 Charts, SNN Spike Visualizer
 
 ---
 

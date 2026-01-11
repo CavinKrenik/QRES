@@ -14,6 +14,18 @@ Performance metrics for QRES neural compression.
 
 ---
 
+## Streaming Latency (v15.3)
+
+In the IoT Dashboard configuration, QRES operates on a **per-packet basis** (10Hz stream).
+
+| Metric | Value |
+|--------|-------|
+| **Processing Time** | <2ms per telemetry packet (WASM target) |
+| **Regime Recovery** | ~20 seconds to return to >90% compression efficiency after a hard signal drift |
+| **Stream Rate** | 10Hz (100ms intervals) |
+
+---
+
 ## v12.0 Federated Swarm Metrics (Legacy)
 
 | Nodes | Epochs | Total Time | Avg/Epoch | Sync Rate |

@@ -47,21 +47,26 @@ graph LR
 
 | ✅ Use QRES For | ❌ Don't Use QRES For |
 |----------------|----------------------|
-| IoT telemetry (repetitive sensor data) | High-entropy data (encryption, random) |
-| Structured logs (timestamps, patterns) | Existing archives (.zip, .jpg, .mp4) |
-| Edge networks (bandwidth > compute cost) | Files < 1KB (header overhead) |
-| Archival (deterministic restoration) | Maximum speed (use LZ4) |
+| Real-time IoT Telemetry (Sensor Streams) | High-entropy data (encryption, random) |
+| Bandwidth-Constrained Edge Networks | Existing archives (.zip, .jpg, .mp4) |
+| Structured Logs (Timestamps, patterns) | Files < 1KB (header overhead) |
+| Regime Change Adaptation (Drifting signals) | Maximum speed (use LZ4) |
 
 ## Quick Start
 
-```bash
-# Clone and install
-git clone https://github.com/CavinKrenik/QRES.git
-cd QRES
-pip install .
+Experience the **QRES Edge Dashboard** running the compression engine in real-time.
 
-# Compress a file
-python3 -c "import qres; print(f'Size: {len(qres.compress(open(\"README.md\", \"rb\").read()))} bytes')"
+```bash
+# 1. Clone the repo
+git clone https://github.com/CavinKrenik/QRES.git
+cd QRES/qres-studio
+
+# 2. Install dependencies
+npm install
+
+# 3. Launch the IoT Swarm Simulator
+npm run dev
+# Open http://localhost:1420 to watch live telemetry compression
 ```
 
 [Full installation docs →](docs/guides/P2P_IMPLEMENTATION.md)
