@@ -38,7 +38,7 @@ export class WeatherReplay {
         console.log(`[WeatherReplay] Loaded ${this.frames.length} frames from Jena Climate Dataset`);
     }
 
-    public start(frequencyHz: number = 20) { // Increased from 10Hz to 20Hz (Faster Replay)
+    public start(frequencyHz: number = 10) { // 10Hz for smooth UI
         if (this.intervalId) return;
 
         console.log(`[WeatherReplay] Starting replay at ${frequencyHz}Hz`);
@@ -57,13 +57,16 @@ export class WeatherReplay {
             const batteryLevel = 100 - (this.index / this.frames.length) * 20;
 
             // --- AUTO-TRIGGER LOGIC ---
-            // Lowered threshold from 1.5 to 0.8 for more sensitive automatic triggering
-            // This ensures "Storm Mode" triggers automatically more often
-            const isStorming = frame.vibration > 0.8;
+            // Threshold 1.0: Calm (0.0) won't trigger, Storm (15+) will
+            const isStorming = frame.vibration > 1.0;
 
-            // Debug: Prove it's automatic
-            if (isStorming && this.index % 10 === 0) {
-                console.log(`⚡ AUTO-TRIGGER: Vibration ${frame.vibration.toFixed(2)} > 0.8 → LEARNING`);
+            // Narrative phase markers for demo
+            if (this.index === 0) console.log("🎬 STARTING: Calm Phase (High Compression)");
+            if (this.index === 5000) console.log("🎬 TRANSITION: Storm Phase Arriving!");
+
+            // Debug: Log storm triggers
+            if (isStorming && this.index % 50 === 0) {
+                console.log(`⚡ STORM: Vibration ${frame.vibration.toFixed(2)} > 1.0 → LEARNING`);
             }
 
             const packet: TelemetryPacket = {

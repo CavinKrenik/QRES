@@ -25,6 +25,7 @@
         pressure_raw: 0,
         frameIndex: 0,
         compressionRatio: 0,
+        totalFrames: 0,
     };
 
     function handleData(packet: TelemetryPacket) {
@@ -58,12 +59,12 @@
             return [...history.slice(-99), newPoint];
         });
 
-        // Update node status based on weather regime
-        if (packet.status === "LEARNING") {
-            $nodeList[0].status = "LEARNING";
-        } else {
-            $nodeList[0].status = "INFERRING";
-        }
+        // Update node statuses: Only ESP32 (sensor) detects storm first
+        // Pi-4 and Jetson continue INFERRING (higher-level aggregation)
+        $nodeList[0].status =
+            packet.status === "LEARNING" ? "LEARNING" : "INFERRING";
+        $nodeList[1].status = "INFERRING"; // Pi-4 aggregator
+        $nodeList[2].status = "INFERRING"; // Jetson edge AI
     }
 
     function onToggle(event: CustomEvent<boolean>) {
@@ -82,6 +83,7 @@
 
     onMount(() => {
         simulator = new WeatherReplay(handleData);
+        debugInfo.totalFrames = simulator.getTotalFrames();
     });
 
     onDestroy(() => {
@@ -104,7 +106,7 @@
             <h4>🌡️ Weather Debug</h4>
             <div class="debug-row">
                 <span>Frame:</span>
-                <span>{debugInfo.frameIndex} / 1000</span>
+                <span>{debugInfo.frameIndex} / {debugInfo.totalFrames}</span>
             </div>
             <div class="debug-row">
                 <span>Pressure:</span>
@@ -177,7 +179,7 @@
         padding: 1rem;
         display: flex;
         flex-direction: column;
-        gap: 1rem;
+        gap: 0.5rem;
         overflow: hidden;
         min-height: 0;
     }
@@ -271,7 +273,7 @@
     }
 
     .debug-overlay {
-        margin-top: 1rem;
+        margin-top: 0.5rem;
         padding: 0.75rem;
         background: rgba(0, 0, 0, 0.3);
         border-radius: 8px;

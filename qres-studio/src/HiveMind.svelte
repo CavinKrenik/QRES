@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import * as d3 from "d3";
-    import { streamingActive } from "./lib/iotStore";
+    import { streamingActive, currentPacket } from "./lib/iotStore";
     import { fly } from "svelte/transition";
 
     // --- State ---
@@ -11,6 +11,12 @@
     let ctx: CanvasRenderingContext2D | null;
     let simulation: d3.Simulation<any, any>;
     let transform = d3.zoomIdentity;
+
+    // Track global status for visualization
+    let currentStatus = "INFERRING";
+    $: if ($currentPacket) {
+        currentStatus = $currentPacket.status;
+    }
 
     // Selected Node for HUD
     let selectedNode: any = null;
@@ -240,9 +246,20 @@
                 ctx!.shadowColor = "#fff";
             }
 
-            let color = "#4488ff";
-            if (node.group === 1) color = "#ff4444";
-            if (node.group === 2) color = "#00ffcc";
+            let color = "#4488ff"; // Default Blue (Pi4/Sensors)
+
+            if (currentStatus === "LEARNING") {
+                // STORM MODE: Everything turns 'Hot' to show computation stress
+                if (node.group === 1)
+                    color = "#ff4444"; // Root (Red)
+                else color = "#ffaa00"; // Workers/Jetsons (Gold/Orange = Learning)
+            } else {
+                // CALM MODE: Cool colors
+                if (node.group === 1) color = "#ff4444"; // Root always Red
+                if (node.group === 2) color = "#00ffcc"; // Jetson (Green)
+                if (node.group === 3) color = "#4488ff"; // Pi4 (Blue)
+                if (node.group === 4) color = "#8844ff"; // ESP32 (Purple)
+            }
 
             ctx!.fillStyle = color;
             ctx!.arc(node.x, node.y, baseSize, 0, 2 * Math.PI);

@@ -47,6 +47,8 @@
         background: rgba(5, 5, 16, 0.95);
         border: 1px solid rgba(0, 255, 204, 0.2);
         border-radius: 8px;
+        position: relative;
+        z-index: 100;
     }
 
     .nav-header {
