@@ -11,7 +11,7 @@
     <div class="logo-area">
         <div class="title-group">
             <h1>QRES STUDIO</h1>
-            <span class="version">v15.3.0 // EDGE MONITOR</span>
+            <span class="version">v15.4.0 // EDGE MONITOR</span>
         </div>
     </div>
 

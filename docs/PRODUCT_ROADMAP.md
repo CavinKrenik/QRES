@@ -1,7 +1,7 @@
 # QRES Edge - Product Roadmap
 
 **Last Updated:** January 11, 2026  
-**Current Version:** v15.3.0 (Edge Visualization)
+**Current Version:** v15.4.0 (Neural Swarm)
 
 ---
 

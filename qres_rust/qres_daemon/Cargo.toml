@@ -1,6 +1,6 @@
 [package]
 name = "qres_daemon"
-version = "15.2.0"
+version = "15.4.0"
 edition = "2021"
 
 [dependencies]

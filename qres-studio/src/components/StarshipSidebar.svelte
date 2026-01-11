@@ -35,7 +35,7 @@
     </nav>
 
     <div class="sidebar-footer">
-        <div class="version-badge">v15.3.0</div>
+        <div class="version-badge">v15.4.0</div>
     </div>
 </aside>
 
