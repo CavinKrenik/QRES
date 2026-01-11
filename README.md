@@ -212,7 +212,7 @@ graph TD
 
 - **The Daemon (Mind):** A background service (`qres_daemon`) that handles "Meta-Learning". It uses a PPO-based RL agent to dynamically re-weight predictors and manages the multi-layer security stack (Differential Privacy, Krum Aggregation, ZK Proofs).
 
-[See WHITEPAPER.md for technical details →](docs/WHITEPAPER.md)
+[See paper PDF for technical details →](paper/QRES__Biologically_Inspired_Secure_Federated_Learning_for_Edge_IoT_Devices.pdf)
 
 ### Deployment Environment (Azure)
 
@@ -280,10 +280,8 @@ Benchmarks on structured datasets (Intel Ice Lake):
 
 ## Documentation
 
-- [Philosophy & Origin Story](docs/PHILOSOPHY.md)
 - [Implementation Status](docs/IMPLEMENTATION_STATUS.md)
 - [Technical Deep Dives](docs/TECHNICAL_DEEP_DIVES.md)
-- [Security Roadmap](docs/SECURITY_ROADMAP.md)
 - [Contributing Guide](docs/CONTRIBUTING.md)
 
 ## Frequently Asked Questions
