@@ -147,6 +147,38 @@ graph TD
 
 [See WHITEPAPER.md for technical details →](docs/WHITEPAPER.md)
 
+### Cloud Infrastructure (Azure)
+
+![QRES Network Topology](assets/Networkimg.png)
+<br>
+**Figure 2:** The QRES Cloud Core architecture deployed on Azure.
+
+**Infrastructure Logic**
+The QRES Cloud Core operates within a dedicated Virtual Network (`QRES-vnet`) to ensure secure isolation of training data. The primary node (`QRES`) is protected by a Network Security Group (`QRES-nsg`) which strictly filters inbound traffic, allowing only encrypted WebSocket connections from authorized Edge Clients via the static public gateway (`QRES-ip`). This topology allows for scalable horizontal expansion—additional VM instances can be added to the subnet (default) without altering the public-facing entry point.
+
+#### Diagram Representation
+```mermaid
+graph TD
+    subgraph Azure ["Azure Cloud Resource Group"]
+        style Azure fill:#f9f9f9,stroke:#333,stroke-width:2px
+        
+        Gateway(Static Public IP<br>QRES-ip) -->|WebSocket :443| NSG
+        
+        subgraph VNet ["Virtual Network (QRES-vnet)"]
+            style VNet fill:#e3f2fd,stroke:#2196f3,stroke-width:2px,stroke-dasharray: 5 5
+            
+            NSG(Network Security Group<br>QRES-nsg) -->|Allow| VM
+            
+            subgraph Subnet ["Default Subnet"]
+                style Subnet fill:#ffffff,stroke:#90caf9,stroke-width:1px
+                VM[Virtual Machine<br>Node: QRES]
+            end
+        end
+    end
+
+    Client[Edge Client] -->|Encrypted Traffic| Gateway
+```
+
 ## Performance
 
 Benchmarks on structured datasets (Intel Ice Lake):
