@@ -90,7 +90,7 @@
     .view-container {
         height: 100%;
         width: 100%;
-        overflow: auto;
+        overflow: hidden;
     }
 
     @media (max-width: 768px) {

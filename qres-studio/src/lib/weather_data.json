@@ -1,0 +1,5002 @@
+[
+  {
+    "temp": 4.12,
+    "vibration": 7.35,
+    "pressure_raw": 990.3
+  },
+  {
+    "temp": 4.62,
+    "vibration": 7.32,
+    "pressure_raw": 990.36
+  },
+  {
+    "temp": 4.29,
+    "vibration": 7.235,
+    "pressure_raw": 990.53
+  },
+  {
+    "temp": 3.95,
+    "vibration": 7.155,
+    "pressure_raw": 990.69
+  },
+  {
+    "temp": 3.96,
+    "vibration": 7.05,
+    "pressure_raw": 990.9
+  },
+  {
+    "temp": 4.11,
+    "vibration": 6.985,
+    "pressure_raw": 991.03
+  },
+  {
+    "temp": 4.26,
+    "vibration": 6.995,
+    "pressure_raw": 991.01
+  },
+  {
+    "temp": 4.78,
+    "vibration": 6.945,
+    "pressure_raw": 991.11
+  },
+  {
+    "temp": 4.96,
+    "vibration": 6.845,
+    "pressure_raw": 991.31
+  },
+  {
+    "temp": 4.68,
+    "vibration": 6.755,
+    "pressure_raw": 991.49
+  },
+  {
+    "temp": 4.58,
+    "vibration": 6.72,
+    "pressure_raw": 991.56
+  },
+  {
+    "temp": 4.59,
+    "vibration": 6.71,
+    "pressure_raw": 991.58
+  },
+  {
+    "temp": 4.54,
+    "vibration": 6.675,
+    "pressure_raw": 991.65
+  },
+  {
+    "temp": 5.02,
+    "vibration": 6.67,
+    "pressure_raw": 991.66
+  },
+  {
+    "temp": 4.98,
+    "vibration": 6.65,
+    "pressure_raw": 991.7
+  },
+  {
+    "temp": 4.96,
+    "vibration": 6.63,
+    "pressure_raw": 991.74
+  },
+  {
+    "temp": 5.37,
+    "vibration": 6.635,
+    "pressure_raw": 991.73
+  },
+  {
+    "temp": 5.47,
+    "vibration": 6.645,
+    "pressure_raw": 991.71
+  },
+  {
+    "temp": 5.83,
+    "vibration": 6.665,
+    "pressure_raw": 991.67
+  },
+  {
+    "temp": 5.82,
+    "vibration": 6.675,
+    "pressure_raw": 991.65
+  },
+  {
+    "temp": 5.88,
+    "vibration": 6.725,
+    "pressure_raw": 991.55
+  },
+  {
+    "temp": 6.06,
+    "vibration": 6.695,
+    "pressure_raw": 991.61
+  },
+  {
+    "temp": 5.92,
+    "vibration": 6.66,
+    "pressure_raw": 991.68
+  },
+  {
+    "temp": 5.7,
+    "vibration": 6.62,
+    "pressure_raw": 991.76
+  },
+  {
+    "temp": 5.45,
+    "vibration": 6.575,
+    "pressure_raw": 991.85
+  },
+  {
+    "temp": 5.37,
+    "vibration": 6.55,
+    "pressure_raw": 991.9
+  },
+  {
+    "temp": 5.25,
+    "vibration": 6.51,
+    "pressure_raw": 991.98
+  },
+  {
+    "temp": 5.27,
+    "vibration": 6.49,
+    "pressure_raw": 992.02
+  },
+  {
+    "temp": 5.29,
+    "vibration": 6.45,
+    "pressure_raw": 992.1
+  },
+  {
+    "temp": 4.69,
+    "vibration": 6.36,
+    "pressure_raw": 992.28
+  },
+  {
+    "temp": 3.67,
+    "vibration": 6.365,
+    "pressure_raw": 992.27
+  },
+  {
+    "temp": 3.94,
+    "vibration": 6.365,
+    "pressure_raw": 992.27
+  },
+  {
+    "temp": 4.64,
+    "vibration": 6.39,
+    "pressure_raw": 992.22
+  },
+  {
+    "temp": 5.37,
+    "vibration": 6.405,
+    "pressure_raw": 992.19
+  },
+  {
+    "temp": 5.16,
+    "vibration": 6.37,
+    "pressure_raw": 992.26
+  },
+  {
+    "temp": 5.09,
+    "vibration": 6.36,
+    "pressure_raw": 992.28
+  },
+  {
+    "temp": 5.25,
+    "vibration": 6.33,
+    "pressure_raw": 992.34
+  },
+  {
+    "temp": 4.93,
+    "vibration": 6.27,
+    "pressure_raw": 992.46
+  },
+  {
+    "temp": 4.75,
+    "vibration": 6.205,
+    "pressure_raw": 992.59
+  },
+  {
+    "temp": 4.34,
+    "vibration": 6.12,
+    "pressure_raw": 992.76
+  },
+  {
+    "temp": 4.06,
+    "vibration": 6.085,
+    "pressure_raw": 992.83
+  },
+  {
+    "temp": 4.14,
+    "vibration": 6.05,
+    "pressure_raw": 992.9
+  },
+  {
+    "temp": 3.72,
+    "vibration": 5.965,
+    "pressure_raw": 993.07
+  },
+  {
+    "temp": 3.44,
+    "vibration": 5.925,
+    "pressure_raw": 993.15
+  },
+  {
+    "temp": 3.28,
+    "vibration": 5.915,
+    "pressure_raw": 993.17
+  },
+  {
+    "temp": 3.17,
+    "vibration": 5.88,
+    "pressure_raw": 993.24
+  },
+  {
+    "temp": 3.1,
+    "vibration": 5.81,
+    "pressure_raw": 993.38
+  },
+  {
+    "temp": 3.1,
+    "vibration": 5.785,
+    "pressure_raw": 993.43
+  },
+  {
+    "temp": 3.18,
+    "vibration": 5.725,
+    "pressure_raw": 993.55
+  },
+  {
+    "temp": 3.47,
+    "vibration": 5.62,
+    "pressure_raw": 993.76
+  },
+  {
+    "temp": 3.63,
+    "vibration": 5.52,
+    "pressure_raw": 993.96
+  },
+  {
+    "temp": 3.44,
+    "vibration": 5.5,
+    "pressure_raw": 994.0
+  },
+  {
+    "temp": 3.43,
+    "vibration": 5.435,
+    "pressure_raw": 994.13
+  },
+  {
+    "temp": 3.5,
+    "vibration": 5.33,
+    "pressure_raw": 994.34
+  },
+  {
+    "temp": 3.5,
+    "vibration": 5.26,
+    "pressure_raw": 994.48
+  },
+  {
+    "temp": 3.42,
+    "vibration": 5.215,
+    "pressure_raw": 994.57
+  },
+  {
+    "temp": 3.37,
+    "vibration": 5.165,
+    "pressure_raw": 994.67
+  },
+  {
+    "temp": 3.36,
+    "vibration": 5.12,
+    "pressure_raw": 994.76
+  },
+  {
+    "temp": 3.3,
+    "vibration": 5.085,
+    "pressure_raw": 994.83
+  },
+  {
+    "temp": 3.35,
+    "vibration": 5.055,
+    "pressure_raw": 994.89
+  },
+  {
+    "temp": 3.39,
+    "vibration": 5.055,
+    "pressure_raw": 994.89
+  },
+  {
+    "temp": 3.53,
+    "vibration": 5.025,
+    "pressure_raw": 994.95
+  },
+  {
+    "temp": 3.7,
+    "vibration": 5.005,
+    "pressure_raw": 994.99
+  },
+  {
+    "temp": 3.79,
+    "vibration": 4.98,
+    "pressure_raw": 995.04
+  },
+  {
+    "temp": 3.83,
+    "vibration": 4.93,
+    "pressure_raw": 995.14
+  },
+  {
+    "temp": 3.83,
+    "vibration": 4.9,
+    "pressure_raw": 995.2
+  },
+  {
+    "temp": 3.81,
+    "vibration": 4.87,
+    "pressure_raw": 995.26
+  },
+  {
+    "temp": 3.73,
+    "vibration": 4.87,
+    "pressure_raw": 995.26
+  },
+  {
+    "temp": 3.61,
+    "vibration": 4.85,
+    "pressure_raw": 995.3
+  },
+  {
+    "temp": 3.45,
+    "vibration": 4.82,
+    "pressure_raw": 995.36
+  },
+  {
+    "temp": 3.32,
+    "vibration": 4.81,
+    "pressure_raw": 995.38
+  },
+  {
+    "temp": 3.26,
+    "vibration": 4.81,
+    "pressure_raw": 995.38
+  },
+  {
+    "temp": 3.23,
+    "vibration": 4.81,
+    "pressure_raw": 995.38
+  },
+  {
+    "temp": 3.19,
+    "vibration": 4.825,
+    "pressure_raw": 995.35
+  },
+  {
+    "temp": 3.09,
+    "vibration": 4.81,
+    "pressure_raw": 995.38
+  },
+  {
+    "temp": 3.03,
+    "vibration": 4.82,
+    "pressure_raw": 995.36
+  },
+  {
+    "temp": 3.03,
+    "vibration": 4.855,
+    "pressure_raw": 995.29
+  },
+  {
+    "temp": 3.07,
+    "vibration": 4.865,
+    "pressure_raw": 995.27
+  },
+  {
+    "temp": 3.14,
+    "vibration": 4.81,
+    "pressure_raw": 995.38
+  },
+  {
+    "temp": 3.12,
+    "vibration": 4.805,
+    "pressure_raw": 995.39
+  },
+  {
+    "temp": 3.09,
+    "vibration": 4.81,
+    "pressure_raw": 995.38
+  },
+  {
+    "temp": 3.1,
+    "vibration": 4.8,
+    "pressure_raw": 995.4
+  },
+  {
+    "temp": 3.12,
+    "vibration": 4.805,
+    "pressure_raw": 995.39
+  },
+  {
+    "temp": 3.17,
+    "vibration": 4.795,
+    "pressure_raw": 995.41
+  },
+  {
+    "temp": 3.17,
+    "vibration": 4.755,
+    "pressure_raw": 995.49
+  },
+  {
+    "temp": 3.12,
+    "vibration": 4.755,
+    "pressure_raw": 995.49
+  },
+  {
+    "temp": 3.04,
+    "vibration": 4.745,
+    "pressure_raw": 995.51
+  },
+  {
+    "temp": 3.04,
+    "vibration": 4.71,
+    "pressure_raw": 995.58
+  },
+  {
+    "temp": 3.1,
+    "vibration": 4.69,
+    "pressure_raw": 995.62
+  },
+  {
+    "temp": 3.1,
+    "vibration": 4.705,
+    "pressure_raw": 995.59
+  },
+  {
+    "temp": 3.16,
+    "vibration": 4.7,
+    "pressure_raw": 995.6
+  },
+  {
+    "temp": 3.14,
+    "vibration": 4.7,
+    "pressure_raw": 995.6
+  },
+  {
+    "temp": 3.16,
+    "vibration": 4.735,
+    "pressure_raw": 995.53
+  },
+  {
+    "temp": 3.17,
+    "vibration": 4.745,
+    "pressure_raw": 995.51
+  },
+  {
+    "temp": 3.02,
+    "vibration": 4.75,
+    "pressure_raw": 995.5
+  },
+  {
+    "temp": 2.68,
+    "vibration": 4.8,
+    "pressure_raw": 995.4
+  },
+  {
+    "temp": 2.47,
+    "vibration": 4.79,
+    "pressure_raw": 995.42
+  },
+  {
+    "temp": 2.24,
+    "vibration": 4.81,
+    "pressure_raw": 995.38
+  },
+  {
+    "temp": 2.2,
+    "vibration": 4.825,
+    "pressure_raw": 995.35
+  },
+  {
+    "temp": 2.3,
+    "vibration": 4.86,
+    "pressure_raw": 995.28
+  },
+  {
+    "temp": 2.43,
+    "vibration": 4.87,
+    "pressure_raw": 995.26
+  },
+  {
+    "temp": 2.45,
+    "vibration": 4.87,
+    "pressure_raw": 995.26
+  },
+  {
+    "temp": 2.39,
+    "vibration": 4.885,
+    "pressure_raw": 995.23
+  },
+  {
+    "temp": 2.43,
+    "vibration": 4.9,
+    "pressure_raw": 995.2
+  },
+  {
+    "temp": 2.42,
+    "vibration": 4.905,
+    "pressure_raw": 995.19
+  },
+  {
+    "temp": 2.41,
+    "vibration": 4.915,
+    "pressure_raw": 995.17
+  },
+  {
+    "temp": 2.37,
+    "vibration": 4.895,
+    "pressure_raw": 995.21
+  },
+  {
+    "temp": 2.22,
+    "vibration": 4.87,
+    "pressure_raw": 995.26
+  },
+  {
+    "temp": 2.06,
+    "vibration": 4.875,
+    "pressure_raw": 995.25
+  },
+  {
+    "temp": 1.89,
+    "vibration": 4.885,
+    "pressure_raw": 995.23
+  },
+  {
+    "temp": 1.59,
+    "vibration": 4.93,
+    "pressure_raw": 995.14
+  },
+  {
+    "temp": 1.36,
+    "vibration": 4.96,
+    "pressure_raw": 995.08
+  },
+  {
+    "temp": 1.17,
+    "vibration": 4.995,
+    "pressure_raw": 995.01
+  },
+  {
+    "temp": 1.05,
+    "vibration": 4.98,
+    "pressure_raw": 995.04
+  },
+  {
+    "temp": 1.07,
+    "vibration": 4.975,
+    "pressure_raw": 995.05
+  },
+  {
+    "temp": 1.1,
+    "vibration": 4.995,
+    "pressure_raw": 995.01
+  },
+  {
+    "temp": 1.1,
+    "vibration": 4.995,
+    "pressure_raw": 995.01
+  },
+  {
+    "temp": 1.13,
+    "vibration": 5.055,
+    "pressure_raw": 994.89
+  },
+  {
+    "temp": 1.15,
+    "vibration": 5.1,
+    "pressure_raw": 994.8
+  },
+  {
+    "temp": 1.12,
+    "vibration": 5.115,
+    "pressure_raw": 994.77
+  },
+  {
+    "temp": 1.05,
+    "vibration": 5.15,
+    "pressure_raw": 994.7
+  },
+  {
+    "temp": 1.27,
+    "vibration": 5.17,
+    "pressure_raw": 994.66
+  },
+  {
+    "temp": 1.63,
+    "vibration": 5.175,
+    "pressure_raw": 994.65
+  },
+  {
+    "temp": 1.77,
+    "vibration": 5.17,
+    "pressure_raw": 994.66
+  },
+  {
+    "temp": 1.73,
+    "vibration": 5.12,
+    "pressure_raw": 994.76
+  },
+  {
+    "temp": 1.65,
+    "vibration": 5.175,
+    "pressure_raw": 994.65
+  },
+  {
+    "temp": 1.63,
+    "vibration": 5.21,
+    "pressure_raw": 994.58
+  },
+  {
+    "temp": 1.61,
+    "vibration": 5.24,
+    "pressure_raw": 994.52
+  },
+  {
+    "temp": 1.69,
+    "vibration": 5.245,
+    "pressure_raw": 994.51
+  },
+  {
+    "temp": 1.74,
+    "vibration": 5.24,
+    "pressure_raw": 994.52
+  },
+  {
+    "temp": 1.66,
+    "vibration": 5.24,
+    "pressure_raw": 994.52
+  },
+  {
+    "temp": 1.93,
+    "vibration": 5.24,
+    "pressure_raw": 994.52
+  },
+  {
+    "temp": 1.66,
+    "vibration": 5.245,
+    "pressure_raw": 994.51
+  },
+  {
+    "temp": 1.65,
+    "vibration": 5.235,
+    "pressure_raw": 994.53
+  },
+  {
+    "temp": 1.74,
+    "vibration": 5.205,
+    "pressure_raw": 994.59
+  },
+  {
+    "temp": 1.81,
+    "vibration": 5.235,
+    "pressure_raw": 994.53
+  },
+  {
+    "temp": 2.05,
+    "vibration": 5.27,
+    "pressure_raw": 994.46
+  },
+  {
+    "temp": 2.25,
+    "vibration": 5.295,
+    "pressure_raw": 994.41
+  },
+  {
+    "temp": 2.48,
+    "vibration": 5.26,
+    "pressure_raw": 994.48
+  },
+  {
+    "temp": 2.62,
+    "vibration": 5.225,
+    "pressure_raw": 994.55
+  },
+  {
+    "temp": 2.83,
+    "vibration": 5.23,
+    "pressure_raw": 994.54
+  },
+  {
+    "temp": 3.19,
+    "vibration": 5.195,
+    "pressure_raw": 994.61
+  },
+  {
+    "temp": 3.65,
+    "vibration": 5.275,
+    "pressure_raw": 994.45
+  },
+  {
+    "temp": 3.95,
+    "vibration": 5.3,
+    "pressure_raw": 994.4
+  },
+  {
+    "temp": 4.03,
+    "vibration": 5.325,
+    "pressure_raw": 994.35
+  },
+  {
+    "temp": 4.06,
+    "vibration": 5.36,
+    "pressure_raw": 994.28
+  },
+  {
+    "temp": 4.12,
+    "vibration": 5.36,
+    "pressure_raw": 994.28
+  },
+  {
+    "temp": 4.27,
+    "vibration": 5.37,
+    "pressure_raw": 994.26
+  },
+  {
+    "temp": 4.49,
+    "vibration": 5.445,
+    "pressure_raw": 994.11
+  },
+  {
+    "temp": 4.68,
+    "vibration": 5.515,
+    "pressure_raw": 993.97
+  },
+  {
+    "temp": 4.72,
+    "vibration": 5.57,
+    "pressure_raw": 993.86
+  },
+  {
+    "temp": 4.65,
+    "vibration": 5.6,
+    "pressure_raw": 993.8
+  },
+  {
+    "temp": 4.27,
+    "vibration": 5.605,
+    "pressure_raw": 993.79
+  },
+  {
+    "temp": 4.04,
+    "vibration": 5.645,
+    "pressure_raw": 993.71
+  },
+  {
+    "temp": 3.94,
+    "vibration": 5.715,
+    "pressure_raw": 993.57
+  },
+  {
+    "temp": 3.71,
+    "vibration": 5.77,
+    "pressure_raw": 993.46
+  },
+  {
+    "temp": 3.59,
+    "vibration": 5.835,
+    "pressure_raw": 993.33
+  },
+  {
+    "temp": 3.53,
+    "vibration": 5.935,
+    "pressure_raw": 993.13
+  },
+  {
+    "temp": 3.31,
+    "vibration": 6.04,
+    "pressure_raw": 992.92
+  },
+  {
+    "temp": 3.22,
+    "vibration": 6.1,
+    "pressure_raw": 992.8
+  },
+  {
+    "temp": 3.18,
+    "vibration": 6.18,
+    "pressure_raw": 992.64
+  },
+  {
+    "temp": 2.98,
+    "vibration": 6.27,
+    "pressure_raw": 992.46
+  },
+  {
+    "temp": 2.91,
+    "vibration": 6.365,
+    "pressure_raw": 992.27
+  },
+  {
+    "temp": 2.74,
+    "vibration": 6.445,
+    "pressure_raw": 992.11
+  },
+  {
+    "temp": 2.54,
+    "vibration": 6.48,
+    "pressure_raw": 992.04
+  },
+  {
+    "temp": 2.37,
+    "vibration": 6.565,
+    "pressure_raw": 991.87
+  },
+  {
+    "temp": 2.32,
+    "vibration": 6.66,
+    "pressure_raw": 991.68
+  },
+  {
+    "temp": 2.43,
+    "vibration": 6.765,
+    "pressure_raw": 991.47
+  },
+  {
+    "temp": 2.49,
+    "vibration": 6.85,
+    "pressure_raw": 991.3
+  },
+  {
+    "temp": 2.5,
+    "vibration": 6.925,
+    "pressure_raw": 991.15
+  },
+  {
+    "temp": 2.46,
+    "vibration": 6.96,
+    "pressure_raw": 991.08
+  },
+  {
+    "temp": 2.37,
+    "vibration": 7.025,
+    "pressure_raw": 990.95
+  },
+  {
+    "temp": 2.37,
+    "vibration": 7.14,
+    "pressure_raw": 990.72
+  },
+  {
+    "temp": 2.41,
+    "vibration": 7.24,
+    "pressure_raw": 990.52
+  },
+  {
+    "temp": 2.52,
+    "vibration": 7.335,
+    "pressure_raw": 990.33
+  },
+  {
+    "temp": 2.58,
+    "vibration": 7.45,
+    "pressure_raw": 990.1
+  },
+  {
+    "temp": 2.65,
+    "vibration": 7.535,
+    "pressure_raw": 989.93
+  },
+  {
+    "temp": 2.7,
+    "vibration": 7.595,
+    "pressure_raw": 989.81
+  },
+  {
+    "temp": 2.63,
+    "vibration": 7.68,
+    "pressure_raw": 989.64
+  },
+  {
+    "temp": 2.52,
+    "vibration": 7.755,
+    "pressure_raw": 989.49
+  },
+  {
+    "temp": 2.41,
+    "vibration": 7.805,
+    "pressure_raw": 989.39
+  },
+  {
+    "temp": 2.36,
+    "vibration": 7.865,
+    "pressure_raw": 989.27
+  },
+  {
+    "temp": 2.37,
+    "vibration": 7.895,
+    "pressure_raw": 989.21
+  },
+  {
+    "temp": 2.41,
+    "vibration": 7.935,
+    "pressure_raw": 989.13
+  },
+  {
+    "temp": 2.45,
+    "vibration": 7.935,
+    "pressure_raw": 989.13
+  },
+  {
+    "temp": 2.52,
+    "vibration": 7.945,
+    "pressure_raw": 989.11
+  },
+  {
+    "temp": 2.62,
+    "vibration": 7.94,
+    "pressure_raw": 989.12
+  },
+  {
+    "temp": 2.63,
+    "vibration": 7.945,
+    "pressure_raw": 989.11
+  },
+  {
+    "temp": 2.63,
+    "vibration": 7.96,
+    "pressure_raw": 989.08
+  },
+  {
+    "temp": 2.63,
+    "vibration": 8.0,
+    "pressure_raw": 989.0
+  },
+  {
+    "temp": 2.57,
+    "vibration": 8.05,
+    "pressure_raw": 988.9
+  },
+  {
+    "temp": 2.57,
+    "vibration": 8.09,
+    "pressure_raw": 988.82
+  },
+  {
+    "temp": 2.61,
+    "vibration": 8.105,
+    "pressure_raw": 988.79
+  },
+  {
+    "temp": 2.76,
+    "vibration": 8.175,
+    "pressure_raw": 988.65
+  },
+  {
+    "temp": 2.89,
+    "vibration": 8.225,
+    "pressure_raw": 988.55
+  },
+  {
+    "temp": 2.93,
+    "vibration": 8.275,
+    "pressure_raw": 988.45
+  },
+  {
+    "temp": 2.95,
+    "vibration": 8.305,
+    "pressure_raw": 988.39
+  },
+  {
+    "temp": 3.07,
+    "vibration": 8.335,
+    "pressure_raw": 988.33
+  },
+  {
+    "temp": 3.23,
+    "vibration": 8.36,
+    "pressure_raw": 988.28
+  },
+  {
+    "temp": 3.26,
+    "vibration": 8.395,
+    "pressure_raw": 988.21
+  },
+  {
+    "temp": 3.3,
+    "vibration": 8.445,
+    "pressure_raw": 988.11
+  },
+  {
+    "temp": 3.44,
+    "vibration": 8.48,
+    "pressure_raw": 988.04
+  },
+  {
+    "temp": 3.58,
+    "vibration": 8.445,
+    "pressure_raw": 988.11
+  },
+  {
+    "temp": 3.8,
+    "vibration": 8.4,
+    "pressure_raw": 988.2
+  },
+  {
+    "temp": 4.02,
+    "vibration": 8.435,
+    "pressure_raw": 988.13
+  },
+  {
+    "temp": 4.2,
+    "vibration": 8.485,
+    "pressure_raw": 988.03
+  },
+  {
+    "temp": 4.38,
+    "vibration": 8.585,
+    "pressure_raw": 987.83
+  },
+  {
+    "temp": 4.6,
+    "vibration": 8.605,
+    "pressure_raw": 987.79
+  },
+  {
+    "temp": 4.73,
+    "vibration": 8.67,
+    "pressure_raw": 987.66
+  },
+  {
+    "temp": 4.83,
+    "vibration": 8.69,
+    "pressure_raw": 987.62
+  },
+  {
+    "temp": 4.97,
+    "vibration": 8.685,
+    "pressure_raw": 987.63
+  },
+  {
+    "temp": 5.11,
+    "vibration": 8.72,
+    "pressure_raw": 987.56
+  },
+  {
+    "temp": 5.19,
+    "vibration": 8.725,
+    "pressure_raw": 987.55
+  },
+  {
+    "temp": 5.27,
+    "vibration": 8.74,
+    "pressure_raw": 987.52
+  },
+  {
+    "temp": 5.4,
+    "vibration": 8.81,
+    "pressure_raw": 987.38
+  },
+  {
+    "temp": 5.49,
+    "vibration": 8.82,
+    "pressure_raw": 987.36
+  },
+  {
+    "temp": 5.59,
+    "vibration": 8.8,
+    "pressure_raw": 987.4
+  },
+  {
+    "temp": 5.64,
+    "vibration": 8.85,
+    "pressure_raw": 987.3
+  },
+  {
+    "temp": 5.73,
+    "vibration": 8.845,
+    "pressure_raw": 987.31
+  },
+  {
+    "temp": 5.8,
+    "vibration": 8.845,
+    "pressure_raw": 987.31
+  },
+  {
+    "temp": 5.91,
+    "vibration": 8.77,
+    "pressure_raw": 987.46
+  },
+  {
+    "temp": 5.8,
+    "vibration": 8.745,
+    "pressure_raw": 987.51
+  },
+  {
+    "temp": 5.75,
+    "vibration": 8.73,
+    "pressure_raw": 987.54
+  },
+  {
+    "temp": 5.86,
+    "vibration": 8.68,
+    "pressure_raw": 987.64
+  },
+  {
+    "temp": 5.98,
+    "vibration": 8.66,
+    "pressure_raw": 987.68
+  },
+  {
+    "temp": 6.01,
+    "vibration": 8.685,
+    "pressure_raw": 987.63
+  },
+  {
+    "temp": 5.81,
+    "vibration": 8.75,
+    "pressure_raw": 987.5
+  },
+  {
+    "temp": 5.66,
+    "vibration": 8.75,
+    "pressure_raw": 987.5
+  },
+  {
+    "temp": 5.57,
+    "vibration": 8.705,
+    "pressure_raw": 987.59
+  },
+  {
+    "temp": 5.5,
+    "vibration": 8.65,
+    "pressure_raw": 987.7
+  },
+  {
+    "temp": 5.48,
+    "vibration": 8.595,
+    "pressure_raw": 987.81
+  },
+  {
+    "temp": 5.36,
+    "vibration": 8.575,
+    "pressure_raw": 987.85
+  },
+  {
+    "temp": 5.25,
+    "vibration": 8.505,
+    "pressure_raw": 987.99
+  },
+  {
+    "temp": 5.28,
+    "vibration": 8.45,
+    "pressure_raw": 988.1
+  },
+  {
+    "temp": 5.39,
+    "vibration": 8.45,
+    "pressure_raw": 988.1
+  },
+  {
+    "temp": 5.42,
+    "vibration": 8.485,
+    "pressure_raw": 988.03
+  },
+  {
+    "temp": 5.37,
+    "vibration": 8.49,
+    "pressure_raw": 988.02
+  },
+  {
+    "temp": 5.38,
+    "vibration": 8.455,
+    "pressure_raw": 988.09
+  },
+  {
+    "temp": 5.44,
+    "vibration": 8.44,
+    "pressure_raw": 988.12
+  },
+  {
+    "temp": 5.37,
+    "vibration": 8.435,
+    "pressure_raw": 988.13
+  },
+  {
+    "temp": 5.25,
+    "vibration": 8.4,
+    "pressure_raw": 988.2
+  },
+  {
+    "temp": 5.04,
+    "vibration": 8.39,
+    "pressure_raw": 988.22
+  },
+  {
+    "temp": 4.87,
+    "vibration": 8.365,
+    "pressure_raw": 988.27
+  },
+  {
+    "temp": 4.81,
+    "vibration": 8.33,
+    "pressure_raw": 988.34
+  },
+  {
+    "temp": 4.76,
+    "vibration": 8.265,
+    "pressure_raw": 988.47
+  },
+  {
+    "temp": 4.77,
+    "vibration": 8.265,
+    "pressure_raw": 988.47
+  },
+  {
+    "temp": 4.67,
+    "vibration": 8.31,
+    "pressure_raw": 988.38
+  },
+  {
+    "temp": 4.55,
+    "vibration": 8.33,
+    "pressure_raw": 988.34
+  },
+  {
+    "temp": 4.5,
+    "vibration": 8.39,
+    "pressure_raw": 988.22
+  },
+  {
+    "temp": 4.56,
+    "vibration": 8.375,
+    "pressure_raw": 988.25
+  },
+  {
+    "temp": 4.63,
+    "vibration": 8.33,
+    "pressure_raw": 988.34
+  },
+  {
+    "temp": 4.63,
+    "vibration": 8.335,
+    "pressure_raw": 988.33
+  },
+  {
+    "temp": 4.64,
+    "vibration": 8.31,
+    "pressure_raw": 988.38
+  },
+  {
+    "temp": 4.57,
+    "vibration": 8.305,
+    "pressure_raw": 988.39
+  },
+  {
+    "temp": 4.46,
+    "vibration": 8.25,
+    "pressure_raw": 988.5
+  },
+  {
+    "temp": 4.35,
+    "vibration": 8.22,
+    "pressure_raw": 988.56
+  },
+  {
+    "temp": 4.3,
+    "vibration": 8.17,
+    "pressure_raw": 988.66
+  },
+  {
+    "temp": 4.23,
+    "vibration": 8.115,
+    "pressure_raw": 988.77
+  },
+  {
+    "temp": 4.17,
+    "vibration": 8.045,
+    "pressure_raw": 988.91
+  },
+  {
+    "temp": 4.19,
+    "vibration": 8.0,
+    "pressure_raw": 989.0
+  },
+  {
+    "temp": 4.25,
+    "vibration": 7.885,
+    "pressure_raw": 989.23
+  },
+  {
+    "temp": 4.31,
+    "vibration": 7.82,
+    "pressure_raw": 989.36
+  },
+  {
+    "temp": 4.38,
+    "vibration": 7.765,
+    "pressure_raw": 989.47
+  },
+  {
+    "temp": 4.47,
+    "vibration": 7.735,
+    "pressure_raw": 989.53
+  },
+  {
+    "temp": 4.5,
+    "vibration": 7.675,
+    "pressure_raw": 989.65
+  },
+  {
+    "temp": 4.47,
+    "vibration": 7.66,
+    "pressure_raw": 989.68
+  },
+  {
+    "temp": 4.5,
+    "vibration": 7.64,
+    "pressure_raw": 989.72
+  },
+  {
+    "temp": 4.52,
+    "vibration": 7.595,
+    "pressure_raw": 989.81
+  },
+  {
+    "temp": 4.74,
+    "vibration": 7.53,
+    "pressure_raw": 989.94
+  },
+  {
+    "temp": 5.24,
+    "vibration": 7.48,
+    "pressure_raw": 990.04
+  },
+  {
+    "temp": 5.12,
+    "vibration": 7.39,
+    "pressure_raw": 990.22
+  },
+  {
+    "temp": 5.17,
+    "vibration": 7.305,
+    "pressure_raw": 990.39
+  },
+  {
+    "temp": 5.35,
+    "vibration": 7.215,
+    "pressure_raw": 990.57
+  },
+  {
+    "temp": 5.54,
+    "vibration": 7.165,
+    "pressure_raw": 990.67
+  },
+  {
+    "temp": 5.76,
+    "vibration": 7.13,
+    "pressure_raw": 990.74
+  },
+  {
+    "temp": 5.94,
+    "vibration": 7.075,
+    "pressure_raw": 990.85
+  },
+  {
+    "temp": 5.97,
+    "vibration": 6.98,
+    "pressure_raw": 991.04
+  },
+  {
+    "temp": 6.04,
+    "vibration": 6.9,
+    "pressure_raw": 991.2
+  },
+  {
+    "temp": 6.13,
+    "vibration": 6.835,
+    "pressure_raw": 991.33
+  },
+  {
+    "temp": 6.6,
+    "vibration": 6.81,
+    "pressure_raw": 991.38
+  },
+  {
+    "temp": 7.22,
+    "vibration": 6.785,
+    "pressure_raw": 991.43
+  },
+  {
+    "temp": 7.11,
+    "vibration": 6.77,
+    "pressure_raw": 991.46
+  },
+  {
+    "temp": 7.22,
+    "vibration": 6.755,
+    "pressure_raw": 991.49
+  },
+  {
+    "temp": 7.5,
+    "vibration": 6.73,
+    "pressure_raw": 991.54
+  },
+  {
+    "temp": 7.71,
+    "vibration": 6.695,
+    "pressure_raw": 991.61
+  },
+  {
+    "temp": 7.93,
+    "vibration": 6.645,
+    "pressure_raw": 991.71
+  },
+  {
+    "temp": 7.98,
+    "vibration": 6.605,
+    "pressure_raw": 991.79
+  },
+  {
+    "temp": 7.97,
+    "vibration": 6.545,
+    "pressure_raw": 991.91
+  },
+  {
+    "temp": 8.11,
+    "vibration": 6.53,
+    "pressure_raw": 991.94
+  },
+  {
+    "temp": 8.31,
+    "vibration": 6.445,
+    "pressure_raw": 992.11
+  },
+  {
+    "temp": 8.22,
+    "vibration": 6.38,
+    "pressure_raw": 992.24
+  },
+  {
+    "temp": 8.47,
+    "vibration": 6.365,
+    "pressure_raw": 992.27
+  },
+  {
+    "temp": 8.65,
+    "vibration": 6.325,
+    "pressure_raw": 992.35
+  },
+  {
+    "temp": 8.73,
+    "vibration": 6.3,
+    "pressure_raw": 992.4
+  },
+  {
+    "temp": 8.86,
+    "vibration": 6.28,
+    "pressure_raw": 992.44
+  },
+  {
+    "temp": 9.03,
+    "vibration": 6.255,
+    "pressure_raw": 992.49
+  },
+  {
+    "temp": 9.2,
+    "vibration": 6.225,
+    "pressure_raw": 992.55
+  },
+  {
+    "temp": 9.27,
+    "vibration": 6.18,
+    "pressure_raw": 992.64
+  },
+  {
+    "temp": 8.87,
+    "vibration": 6.16,
+    "pressure_raw": 992.68
+  },
+  {
+    "temp": 8.6,
+    "vibration": 6.155,
+    "pressure_raw": 992.69
+  },
+  {
+    "temp": 8.94,
+    "vibration": 6.155,
+    "pressure_raw": 992.69
+  },
+  {
+    "temp": 9.59,
+    "vibration": 6.18,
+    "pressure_raw": 992.64
+  },
+  {
+    "temp": 9.21,
+    "vibration": 6.19,
+    "pressure_raw": 992.62
+  },
+  {
+    "temp": 9.11,
+    "vibration": 6.235,
+    "pressure_raw": 992.53
+  },
+  {
+    "temp": 9.27,
+    "vibration": 6.225,
+    "pressure_raw": 992.55
+  },
+  {
+    "temp": 9.36,
+    "vibration": 6.225,
+    "pressure_raw": 992.55
+  },
+  {
+    "temp": 10.18,
+    "vibration": 6.255,
+    "pressure_raw": 992.49
+  },
+  {
+    "temp": 10.11,
+    "vibration": 6.23,
+    "pressure_raw": 992.54
+  },
+  {
+    "temp": 9.74,
+    "vibration": 6.215,
+    "pressure_raw": 992.57
+  },
+  {
+    "temp": 9.55,
+    "vibration": 6.235,
+    "pressure_raw": 992.53
+  },
+  {
+    "temp": 10.43,
+    "vibration": 6.255,
+    "pressure_raw": 992.49
+  },
+  {
+    "temp": 10.08,
+    "vibration": 6.195,
+    "pressure_raw": 992.61
+  },
+  {
+    "temp": 9.58,
+    "vibration": 6.17,
+    "pressure_raw": 992.66
+  },
+  {
+    "temp": 9.87,
+    "vibration": 6.18,
+    "pressure_raw": 992.64
+  },
+  {
+    "temp": 10.24,
+    "vibration": 6.16,
+    "pressure_raw": 992.68
+  },
+  {
+    "temp": 10.02,
+    "vibration": 6.145,
+    "pressure_raw": 992.71
+  },
+  {
+    "temp": 10.4,
+    "vibration": 6.155,
+    "pressure_raw": 992.69
+  },
+  {
+    "temp": 10.32,
+    "vibration": 6.125,
+    "pressure_raw": 992.75
+  },
+  {
+    "temp": 9.79,
+    "vibration": 6.105,
+    "pressure_raw": 992.79
+  },
+  {
+    "temp": 9.68,
+    "vibration": 6.105,
+    "pressure_raw": 992.79
+  },
+  {
+    "temp": 10.07,
+    "vibration": 6.105,
+    "pressure_raw": 992.79
+  },
+  {
+    "temp": 9.85,
+    "vibration": 6.1,
+    "pressure_raw": 992.8
+  },
+  {
+    "temp": 9.62,
+    "vibration": 6.085,
+    "pressure_raw": 992.83
+  },
+  {
+    "temp": 9.75,
+    "vibration": 6.05,
+    "pressure_raw": 992.9
+  },
+  {
+    "temp": 9.52,
+    "vibration": 6.0,
+    "pressure_raw": 993.0
+  },
+  {
+    "temp": 9.19,
+    "vibration": 5.935,
+    "pressure_raw": 993.13
+  },
+  {
+    "temp": 8.94,
+    "vibration": 5.91,
+    "pressure_raw": 993.18
+  },
+  {
+    "temp": 8.76,
+    "vibration": 5.87,
+    "pressure_raw": 993.26
+  },
+  {
+    "temp": 8.61,
+    "vibration": 5.85,
+    "pressure_raw": 993.3
+  },
+  {
+    "temp": 8.44,
+    "vibration": 5.805,
+    "pressure_raw": 993.39
+  },
+  {
+    "temp": 8.21,
+    "vibration": 5.815,
+    "pressure_raw": 993.37
+  },
+  {
+    "temp": 7.98,
+    "vibration": 5.8,
+    "pressure_raw": 993.4
+  },
+  {
+    "temp": 7.85,
+    "vibration": 5.79,
+    "pressure_raw": 993.42
+  },
+  {
+    "temp": 7.74,
+    "vibration": 5.75,
+    "pressure_raw": 993.5
+  },
+  {
+    "temp": 7.63,
+    "vibration": 5.725,
+    "pressure_raw": 993.55
+  },
+  {
+    "temp": 7.49,
+    "vibration": 5.725,
+    "pressure_raw": 993.55
+  },
+  {
+    "temp": 7.33,
+    "vibration": 5.685,
+    "pressure_raw": 993.63
+  },
+  {
+    "temp": 7.15,
+    "vibration": 5.67,
+    "pressure_raw": 993.66
+  },
+  {
+    "temp": 7.0,
+    "vibration": 5.66,
+    "pressure_raw": 993.68
+  },
+  {
+    "temp": 6.91,
+    "vibration": 5.64,
+    "pressure_raw": 993.72
+  },
+  {
+    "temp": 6.91,
+    "vibration": 5.59,
+    "pressure_raw": 993.82
+  },
+  {
+    "temp": 6.92,
+    "vibration": 5.59,
+    "pressure_raw": 993.82
+  },
+  {
+    "temp": 6.92,
+    "vibration": 5.545,
+    "pressure_raw": 993.91
+  },
+  {
+    "temp": 6.82,
+    "vibration": 5.5,
+    "pressure_raw": 994.0
+  },
+  {
+    "temp": 6.83,
+    "vibration": 5.48,
+    "pressure_raw": 994.04
+  },
+  {
+    "temp": 6.81,
+    "vibration": 5.445,
+    "pressure_raw": 994.11
+  },
+  {
+    "temp": 6.82,
+    "vibration": 5.44,
+    "pressure_raw": 994.12
+  },
+  {
+    "temp": 6.77,
+    "vibration": 5.435,
+    "pressure_raw": 994.13
+  },
+  {
+    "temp": 6.44,
+    "vibration": 5.425,
+    "pressure_raw": 994.15
+  },
+  {
+    "temp": 5.64,
+    "vibration": 5.38,
+    "pressure_raw": 994.24
+  },
+  {
+    "temp": 4.61,
+    "vibration": 5.365,
+    "pressure_raw": 994.27
+  },
+  {
+    "temp": 4.04,
+    "vibration": 5.36,
+    "pressure_raw": 994.28
+  },
+  {
+    "temp": 4.16,
+    "vibration": 5.39,
+    "pressure_raw": 994.22
+  },
+  {
+    "temp": 4.14,
+    "vibration": 5.42,
+    "pressure_raw": 994.16
+  },
+  {
+    "temp": 4.1,
+    "vibration": 5.42,
+    "pressure_raw": 994.16
+  },
+  {
+    "temp": 4.04,
+    "vibration": 5.41,
+    "pressure_raw": 994.18
+  },
+  {
+    "temp": 3.95,
+    "vibration": 5.36,
+    "pressure_raw": 994.28
+  },
+  {
+    "temp": 3.78,
+    "vibration": 5.38,
+    "pressure_raw": 994.24
+  },
+  {
+    "temp": 3.63,
+    "vibration": 5.405,
+    "pressure_raw": 994.19
+  },
+  {
+    "temp": 3.37,
+    "vibration": 5.36,
+    "pressure_raw": 994.28
+  },
+  {
+    "temp": 3.06,
+    "vibration": 5.345,
+    "pressure_raw": 994.31
+  },
+  {
+    "temp": 2.83,
+    "vibration": 5.355,
+    "pressure_raw": 994.29
+  },
+  {
+    "temp": 2.59,
+    "vibration": 5.36,
+    "pressure_raw": 994.28
+  },
+  {
+    "temp": 2.41,
+    "vibration": 5.36,
+    "pressure_raw": 994.28
+  },
+  {
+    "temp": 2.4,
+    "vibration": 5.36,
+    "pressure_raw": 994.28
+  },
+  {
+    "temp": 2.57,
+    "vibration": 5.355,
+    "pressure_raw": 994.29
+  },
+  {
+    "temp": 2.75,
+    "vibration": 5.36,
+    "pressure_raw": 994.28
+  },
+  {
+    "temp": 2.79,
+    "vibration": 5.39,
+    "pressure_raw": 994.22
+  },
+  {
+    "temp": 2.68,
+    "vibration": 5.44,
+    "pressure_raw": 994.12
+  },
+  {
+    "temp": 2.26,
+    "vibration": 5.48,
+    "pressure_raw": 994.04
+  },
+  {
+    "temp": 2.01,
+    "vibration": 5.53,
+    "pressure_raw": 993.94
+  },
+  {
+    "temp": 1.82,
+    "vibration": 5.545,
+    "pressure_raw": 993.91
+  },
+  {
+    "temp": 1.65,
+    "vibration": 5.545,
+    "pressure_raw": 993.91
+  },
+  {
+    "temp": 1.52,
+    "vibration": 5.545,
+    "pressure_raw": 993.91
+  },
+  {
+    "temp": 1.47,
+    "vibration": 5.555,
+    "pressure_raw": 993.89
+  },
+  {
+    "temp": 1.35,
+    "vibration": 5.545,
+    "pressure_raw": 993.91
+  },
+  {
+    "temp": 1.18,
+    "vibration": 5.575,
+    "pressure_raw": 993.85
+  },
+  {
+    "temp": 0.96,
+    "vibration": 5.555,
+    "pressure_raw": 993.89
+  },
+  {
+    "temp": 0.97,
+    "vibration": 5.605,
+    "pressure_raw": 993.79
+  },
+  {
+    "temp": 0.92,
+    "vibration": 5.62,
+    "pressure_raw": 993.76
+  },
+  {
+    "temp": 0.72,
+    "vibration": 5.705,
+    "pressure_raw": 993.59
+  },
+  {
+    "temp": 0.62,
+    "vibration": 5.765,
+    "pressure_raw": 993.47
+  },
+  {
+    "temp": 0.48,
+    "vibration": 5.795,
+    "pressure_raw": 993.41
+  },
+  {
+    "temp": 0.49,
+    "vibration": 5.83,
+    "pressure_raw": 993.34
+  },
+  {
+    "temp": 0.57,
+    "vibration": 5.825,
+    "pressure_raw": 993.35
+  },
+  {
+    "temp": 0.57,
+    "vibration": 5.82,
+    "pressure_raw": 993.36
+  },
+  {
+    "temp": 0.44,
+    "vibration": 5.86,
+    "pressure_raw": 993.28
+  },
+  {
+    "temp": 0.49,
+    "vibration": 5.9,
+    "pressure_raw": 993.2
+  },
+  {
+    "temp": 0.48,
+    "vibration": 5.92,
+    "pressure_raw": 993.16
+  },
+  {
+    "temp": 0.33,
+    "vibration": 5.975,
+    "pressure_raw": 993.05
+  },
+  {
+    "temp": 0.13,
+    "vibration": 6.01,
+    "pressure_raw": 992.98
+  },
+  {
+    "temp": 0.03,
+    "vibration": 6.04,
+    "pressure_raw": 992.92
+  },
+  {
+    "temp": 0.07,
+    "vibration": 6.1,
+    "pressure_raw": 992.8
+  },
+  {
+    "temp": -0.06,
+    "vibration": 6.13,
+    "pressure_raw": 992.74
+  },
+  {
+    "temp": -0.15,
+    "vibration": 6.16,
+    "pressure_raw": 992.68
+  },
+  {
+    "temp": -0.22,
+    "vibration": 6.165,
+    "pressure_raw": 992.67
+  },
+  {
+    "temp": -0.24,
+    "vibration": 6.215,
+    "pressure_raw": 992.57
+  },
+  {
+    "temp": -0.18,
+    "vibration": 6.215,
+    "pressure_raw": 992.57
+  },
+  {
+    "temp": -0.1,
+    "vibration": 6.22,
+    "pressure_raw": 992.56
+  },
+  {
+    "temp": -0.1,
+    "vibration": 6.22,
+    "pressure_raw": 992.56
+  },
+  {
+    "temp": -0.19,
+    "vibration": 6.25,
+    "pressure_raw": 992.5
+  },
+  {
+    "temp": -0.3,
+    "vibration": 6.285,
+    "pressure_raw": 992.43
+  },
+  {
+    "temp": -0.35,
+    "vibration": 6.285,
+    "pressure_raw": 992.43
+  },
+  {
+    "temp": -0.37,
+    "vibration": 6.305,
+    "pressure_raw": 992.39
+  },
+  {
+    "temp": -0.42,
+    "vibration": 6.32,
+    "pressure_raw": 992.36
+  },
+  {
+    "temp": -0.46,
+    "vibration": 6.365,
+    "pressure_raw": 992.27
+  },
+  {
+    "temp": -0.46,
+    "vibration": 6.36,
+    "pressure_raw": 992.28
+  },
+  {
+    "temp": -0.44,
+    "vibration": 6.345,
+    "pressure_raw": 992.31
+  },
+  {
+    "temp": -0.44,
+    "vibration": 6.345,
+    "pressure_raw": 992.31
+  },
+  {
+    "temp": -0.37,
+    "vibration": 6.375,
+    "pressure_raw": 992.25
+  },
+  {
+    "temp": -0.36,
+    "vibration": 6.405,
+    "pressure_raw": 992.19
+  },
+  {
+    "temp": -0.21,
+    "vibration": 6.4,
+    "pressure_raw": 992.2
+  },
+  {
+    "temp": -0.11,
+    "vibration": 6.405,
+    "pressure_raw": 992.19
+  },
+  {
+    "temp": 0.03,
+    "vibration": 6.425,
+    "pressure_raw": 992.15
+  },
+  {
+    "temp": 0.22,
+    "vibration": 6.435,
+    "pressure_raw": 992.13
+  },
+  {
+    "temp": 0.39,
+    "vibration": 6.405,
+    "pressure_raw": 992.19
+  },
+  {
+    "temp": 0.74,
+    "vibration": 6.41,
+    "pressure_raw": 992.18
+  },
+  {
+    "temp": 1.12,
+    "vibration": 6.41,
+    "pressure_raw": 992.18
+  },
+  {
+    "temp": 1.47,
+    "vibration": 6.41,
+    "pressure_raw": 992.18
+  },
+  {
+    "temp": 1.68,
+    "vibration": 6.435,
+    "pressure_raw": 992.13
+  },
+  {
+    "temp": 1.9,
+    "vibration": 6.425,
+    "pressure_raw": 992.15
+  },
+  {
+    "temp": 2.01,
+    "vibration": 6.425,
+    "pressure_raw": 992.15
+  },
+  {
+    "temp": 2.13,
+    "vibration": 6.465,
+    "pressure_raw": 992.07
+  },
+  {
+    "temp": 2.22,
+    "vibration": 6.485,
+    "pressure_raw": 992.03
+  },
+  {
+    "temp": 2.6,
+    "vibration": 6.525,
+    "pressure_raw": 991.95
+  },
+  {
+    "temp": 3.05,
+    "vibration": 6.54,
+    "pressure_raw": 991.92
+  },
+  {
+    "temp": 3.4,
+    "vibration": 6.53,
+    "pressure_raw": 991.94
+  },
+  {
+    "temp": 4.1,
+    "vibration": 6.575,
+    "pressure_raw": 991.85
+  },
+  {
+    "temp": 4.79,
+    "vibration": 6.615,
+    "pressure_raw": 991.77
+  },
+  {
+    "temp": 5.44,
+    "vibration": 6.615,
+    "pressure_raw": 991.77
+  },
+  {
+    "temp": 6.13,
+    "vibration": 6.635,
+    "pressure_raw": 991.73
+  },
+  {
+    "temp": 6.83,
+    "vibration": 6.68,
+    "pressure_raw": 991.64
+  },
+  {
+    "temp": 7.34,
+    "vibration": 6.765,
+    "pressure_raw": 991.47
+  },
+  {
+    "temp": 7.55,
+    "vibration": 6.82,
+    "pressure_raw": 991.36
+  },
+  {
+    "temp": 8.03,
+    "vibration": 6.83,
+    "pressure_raw": 991.34
+  },
+  {
+    "temp": 8.77,
+    "vibration": 6.865,
+    "pressure_raw": 991.27
+  },
+  {
+    "temp": 8.73,
+    "vibration": 6.89,
+    "pressure_raw": 991.22
+  },
+  {
+    "temp": 9.11,
+    "vibration": 6.965,
+    "pressure_raw": 991.07
+  },
+  {
+    "temp": 9.14,
+    "vibration": 7.025,
+    "pressure_raw": 990.95
+  },
+  {
+    "temp": 9.51,
+    "vibration": 7.07,
+    "pressure_raw": 990.86
+  },
+  {
+    "temp": 9.71,
+    "vibration": 7.135,
+    "pressure_raw": 990.73
+  },
+  {
+    "temp": 9.64,
+    "vibration": 7.185,
+    "pressure_raw": 990.63
+  },
+  {
+    "temp": 9.76,
+    "vibration": 7.325,
+    "pressure_raw": 990.35
+  },
+  {
+    "temp": 9.74,
+    "vibration": 7.41,
+    "pressure_raw": 990.18
+  },
+  {
+    "temp": 9.91,
+    "vibration": 7.475,
+    "pressure_raw": 990.05
+  },
+  {
+    "temp": 10.01,
+    "vibration": 7.52,
+    "pressure_raw": 989.96
+  },
+  {
+    "temp": 9.83,
+    "vibration": 7.615,
+    "pressure_raw": 989.77
+  },
+  {
+    "temp": 9.86,
+    "vibration": 7.65,
+    "pressure_raw": 989.7
+  },
+  {
+    "temp": 9.92,
+    "vibration": 7.705,
+    "pressure_raw": 989.59
+  },
+  {
+    "temp": 10.09,
+    "vibration": 7.8,
+    "pressure_raw": 989.4
+  },
+  {
+    "temp": 9.97,
+    "vibration": 7.86,
+    "pressure_raw": 989.28
+  },
+  {
+    "temp": 10.09,
+    "vibration": 7.865,
+    "pressure_raw": 989.27
+  },
+  {
+    "temp": 10.18,
+    "vibration": 7.88,
+    "pressure_raw": 989.24
+  },
+  {
+    "temp": 10.18,
+    "vibration": 7.905,
+    "pressure_raw": 989.19
+  },
+  {
+    "temp": 10.28,
+    "vibration": 7.93,
+    "pressure_raw": 989.14
+  },
+  {
+    "temp": 10.29,
+    "vibration": 7.945,
+    "pressure_raw": 989.11
+  },
+  {
+    "temp": 10.23,
+    "vibration": 7.96,
+    "pressure_raw": 989.08
+  },
+  {
+    "temp": 10.36,
+    "vibration": 7.95,
+    "pressure_raw": 989.1
+  },
+  {
+    "temp": 10.15,
+    "vibration": 7.97,
+    "pressure_raw": 989.06
+  },
+  {
+    "temp": 9.99,
+    "vibration": 7.96,
+    "pressure_raw": 989.08
+  },
+  {
+    "temp": 9.89,
+    "vibration": 7.995,
+    "pressure_raw": 989.01
+  },
+  {
+    "temp": 9.85,
+    "vibration": 8.05,
+    "pressure_raw": 988.9
+  },
+  {
+    "temp": 9.81,
+    "vibration": 8.115,
+    "pressure_raw": 988.77
+  },
+  {
+    "temp": 9.88,
+    "vibration": 8.13,
+    "pressure_raw": 988.74
+  },
+  {
+    "temp": 9.95,
+    "vibration": 8.16,
+    "pressure_raw": 988.68
+  },
+  {
+    "temp": 9.88,
+    "vibration": 8.195,
+    "pressure_raw": 988.61
+  },
+  {
+    "temp": 9.82,
+    "vibration": 8.2,
+    "pressure_raw": 988.6
+  },
+  {
+    "temp": 9.76,
+    "vibration": 8.22,
+    "pressure_raw": 988.56
+  },
+  {
+    "temp": 9.76,
+    "vibration": 8.265,
+    "pressure_raw": 988.47
+  },
+  {
+    "temp": 9.66,
+    "vibration": 8.255,
+    "pressure_raw": 988.49
+  },
+  {
+    "temp": 9.67,
+    "vibration": 8.25,
+    "pressure_raw": 988.5
+  },
+  {
+    "temp": 9.63,
+    "vibration": 8.19,
+    "pressure_raw": 988.62
+  },
+  {
+    "temp": 9.57,
+    "vibration": 8.19,
+    "pressure_raw": 988.62
+  },
+  {
+    "temp": 9.49,
+    "vibration": 8.19,
+    "pressure_raw": 988.62
+  },
+  {
+    "temp": 9.42,
+    "vibration": 8.185,
+    "pressure_raw": 988.63
+  },
+  {
+    "temp": 9.3,
+    "vibration": 8.205,
+    "pressure_raw": 988.59
+  },
+  {
+    "temp": 9.22,
+    "vibration": 8.265,
+    "pressure_raw": 988.47
+  },
+  {
+    "temp": 9.16,
+    "vibration": 8.25,
+    "pressure_raw": 988.5
+  },
+  {
+    "temp": 9.02,
+    "vibration": 8.22,
+    "pressure_raw": 988.56
+  },
+  {
+    "temp": 8.82,
+    "vibration": 8.18,
+    "pressure_raw": 988.64
+  },
+  {
+    "temp": 8.67,
+    "vibration": 8.13,
+    "pressure_raw": 988.74
+  },
+  {
+    "temp": 8.51,
+    "vibration": 8.13,
+    "pressure_raw": 988.74
+  },
+  {
+    "temp": 8.37,
+    "vibration": 8.125,
+    "pressure_raw": 988.75
+  },
+  {
+    "temp": 8.24,
+    "vibration": 8.13,
+    "pressure_raw": 988.74
+  },
+  {
+    "temp": 8.02,
+    "vibration": 8.09,
+    "pressure_raw": 988.82
+  },
+  {
+    "temp": 7.69,
+    "vibration": 8.075,
+    "pressure_raw": 988.85
+  },
+  {
+    "temp": 7.44,
+    "vibration": 8.075,
+    "pressure_raw": 988.85
+  },
+  {
+    "temp": 7.37,
+    "vibration": 8.085,
+    "pressure_raw": 988.83
+  },
+  {
+    "temp": 7.32,
+    "vibration": 8.115,
+    "pressure_raw": 988.77
+  },
+  {
+    "temp": 7.32,
+    "vibration": 8.105,
+    "pressure_raw": 988.79
+  },
+  {
+    "temp": 7.48,
+    "vibration": 8.095,
+    "pressure_raw": 988.81
+  },
+  {
+    "temp": 7.37,
+    "vibration": 8.11,
+    "pressure_raw": 988.78
+  },
+  {
+    "temp": 7.31,
+    "vibration": 8.12,
+    "pressure_raw": 988.76
+  },
+  {
+    "temp": 7.25,
+    "vibration": 8.105,
+    "pressure_raw": 988.79
+  },
+  {
+    "temp": 7.21,
+    "vibration": 8.1,
+    "pressure_raw": 988.8
+  },
+  {
+    "temp": 7.14,
+    "vibration": 8.085,
+    "pressure_raw": 988.83
+  },
+  {
+    "temp": 7.15,
+    "vibration": 8.12,
+    "pressure_raw": 988.76
+  },
+  {
+    "temp": 7.12,
+    "vibration": 8.115,
+    "pressure_raw": 988.77
+  },
+  {
+    "temp": 7.05,
+    "vibration": 8.115,
+    "pressure_raw": 988.77
+  },
+  {
+    "temp": 6.96,
+    "vibration": 8.115,
+    "pressure_raw": 988.77
+  },
+  {
+    "temp": 6.91,
+    "vibration": 8.145,
+    "pressure_raw": 988.71
+  },
+  {
+    "temp": 6.9,
+    "vibration": 8.09,
+    "pressure_raw": 988.82
+  },
+  {
+    "temp": 6.94,
+    "vibration": 8.05,
+    "pressure_raw": 988.9
+  },
+  {
+    "temp": 6.96,
+    "vibration": 8.05,
+    "pressure_raw": 988.9
+  },
+  {
+    "temp": 6.96,
+    "vibration": 8.055,
+    "pressure_raw": 988.89
+  },
+  {
+    "temp": 6.93,
+    "vibration": 8.045,
+    "pressure_raw": 988.91
+  },
+  {
+    "temp": 6.79,
+    "vibration": 8.055,
+    "pressure_raw": 988.89
+  },
+  {
+    "temp": 6.64,
+    "vibration": 8.035,
+    "pressure_raw": 988.93
+  },
+  {
+    "temp": 6.81,
+    "vibration": 7.99,
+    "pressure_raw": 989.02
+  },
+  {
+    "temp": 7.01,
+    "vibration": 7.91,
+    "pressure_raw": 989.18
+  },
+  {
+    "temp": 6.88,
+    "vibration": 7.88,
+    "pressure_raw": 989.24
+  },
+  {
+    "temp": 6.81,
+    "vibration": 7.825,
+    "pressure_raw": 989.35
+  },
+  {
+    "temp": 6.79,
+    "vibration": 7.815,
+    "pressure_raw": 989.37
+  },
+  {
+    "temp": 6.99,
+    "vibration": 7.805,
+    "pressure_raw": 989.39
+  },
+  {
+    "temp": 7.41,
+    "vibration": 7.73,
+    "pressure_raw": 989.54
+  },
+  {
+    "temp": 7.56,
+    "vibration": 7.68,
+    "pressure_raw": 989.64
+  },
+  {
+    "temp": 7.56,
+    "vibration": 7.67,
+    "pressure_raw": 989.66
+  },
+  {
+    "temp": 7.53,
+    "vibration": 7.6,
+    "pressure_raw": 989.8
+  },
+  {
+    "temp": 7.44,
+    "vibration": 7.535,
+    "pressure_raw": 989.93
+  },
+  {
+    "temp": 7.42,
+    "vibration": 7.5,
+    "pressure_raw": 990.0
+  },
+  {
+    "temp": 7.36,
+    "vibration": 7.49,
+    "pressure_raw": 990.02
+  },
+  {
+    "temp": 7.36,
+    "vibration": 7.425,
+    "pressure_raw": 990.15
+  },
+  {
+    "temp": 7.35,
+    "vibration": 7.4,
+    "pressure_raw": 990.2
+  },
+  {
+    "temp": 7.28,
+    "vibration": 7.43,
+    "pressure_raw": 990.14
+  },
+  {
+    "temp": 7.23,
+    "vibration": 7.37,
+    "pressure_raw": 990.26
+  },
+  {
+    "temp": 7.16,
+    "vibration": 7.265,
+    "pressure_raw": 990.47
+  },
+  {
+    "temp": 7.07,
+    "vibration": 7.205,
+    "pressure_raw": 990.59
+  },
+  {
+    "temp": 6.92,
+    "vibration": 7.185,
+    "pressure_raw": 990.63
+  },
+  {
+    "temp": 6.79,
+    "vibration": 7.2,
+    "pressure_raw": 990.6
+  },
+  {
+    "temp": 6.7,
+    "vibration": 7.235,
+    "pressure_raw": 990.53
+  },
+  {
+    "temp": 6.55,
+    "vibration": 7.22,
+    "pressure_raw": 990.56
+  },
+  {
+    "temp": 6.48,
+    "vibration": 7.22,
+    "pressure_raw": 990.56
+  },
+  {
+    "temp": 6.42,
+    "vibration": 7.155,
+    "pressure_raw": 990.69
+  },
+  {
+    "temp": 6.35,
+    "vibration": 7.095,
+    "pressure_raw": 990.81
+  },
+  {
+    "temp": 6.28,
+    "vibration": 6.99,
+    "pressure_raw": 991.02
+  },
+  {
+    "temp": 6.13,
+    "vibration": 6.925,
+    "pressure_raw": 991.15
+  },
+  {
+    "temp": 6.0,
+    "vibration": 6.91,
+    "pressure_raw": 991.18
+  },
+  {
+    "temp": 5.86,
+    "vibration": 6.92,
+    "pressure_raw": 991.16
+  },
+  {
+    "temp": 5.75,
+    "vibration": 6.855,
+    "pressure_raw": 991.29
+  },
+  {
+    "temp": 5.69,
+    "vibration": 6.77,
+    "pressure_raw": 991.46
+  },
+  {
+    "temp": 5.68,
+    "vibration": 6.725,
+    "pressure_raw": 991.55
+  },
+  {
+    "temp": 5.75,
+    "vibration": 6.715,
+    "pressure_raw": 991.57
+  },
+  {
+    "temp": 5.85,
+    "vibration": 6.665,
+    "pressure_raw": 991.67
+  },
+  {
+    "temp": 5.94,
+    "vibration": 6.595,
+    "pressure_raw": 991.81
+  },
+  {
+    "temp": 5.97,
+    "vibration": 6.58,
+    "pressure_raw": 991.84
+  },
+  {
+    "temp": 5.91,
+    "vibration": 6.525,
+    "pressure_raw": 991.95
+  },
+  {
+    "temp": 5.9,
+    "vibration": 6.49,
+    "pressure_raw": 992.02
+  },
+  {
+    "temp": 5.86,
+    "vibration": 6.46,
+    "pressure_raw": 992.08
+  },
+  {
+    "temp": 5.89,
+    "vibration": 6.45,
+    "pressure_raw": 992.1
+  },
+  {
+    "temp": 5.83,
+    "vibration": 6.425,
+    "pressure_raw": 992.15
+  },
+  {
+    "temp": 5.72,
+    "vibration": 6.38,
+    "pressure_raw": 992.24
+  },
+  {
+    "temp": 5.58,
+    "vibration": 6.335,
+    "pressure_raw": 992.33
+  },
+  {
+    "temp": 5.48,
+    "vibration": 6.345,
+    "pressure_raw": 992.31
+  },
+  {
+    "temp": 5.45,
+    "vibration": 6.325,
+    "pressure_raw": 992.35
+  },
+  {
+    "temp": 5.57,
+    "vibration": 6.26,
+    "pressure_raw": 992.48
+  },
+  {
+    "temp": 5.69,
+    "vibration": 6.26,
+    "pressure_raw": 992.48
+  },
+  {
+    "temp": 5.73,
+    "vibration": 6.21,
+    "pressure_raw": 992.58
+  },
+  {
+    "temp": 5.79,
+    "vibration": 6.16,
+    "pressure_raw": 992.68
+  },
+  {
+    "temp": 5.78,
+    "vibration": 6.115,
+    "pressure_raw": 992.77
+  },
+  {
+    "temp": 5.78,
+    "vibration": 6.09,
+    "pressure_raw": 992.82
+  },
+  {
+    "temp": 5.89,
+    "vibration": 6.065,
+    "pressure_raw": 992.87
+  },
+  {
+    "temp": 5.98,
+    "vibration": 6.045,
+    "pressure_raw": 992.91
+  },
+  {
+    "temp": 6.09,
+    "vibration": 6.02,
+    "pressure_raw": 992.96
+  },
+  {
+    "temp": 6.3,
+    "vibration": 5.98,
+    "pressure_raw": 993.04
+  },
+  {
+    "temp": 6.42,
+    "vibration": 5.945,
+    "pressure_raw": 993.11
+  },
+  {
+    "temp": 6.13,
+    "vibration": 5.85,
+    "pressure_raw": 993.3
+  },
+  {
+    "temp": 5.79,
+    "vibration": 5.76,
+    "pressure_raw": 993.48
+  },
+  {
+    "temp": 5.39,
+    "vibration": 5.725,
+    "pressure_raw": 993.55
+  },
+  {
+    "temp": 5.13,
+    "vibration": 5.67,
+    "pressure_raw": 993.66
+  },
+  {
+    "temp": 5.14,
+    "vibration": 5.62,
+    "pressure_raw": 993.76
+  },
+  {
+    "temp": 5.21,
+    "vibration": 5.57,
+    "pressure_raw": 993.86
+  },
+  {
+    "temp": 5.26,
+    "vibration": 5.545,
+    "pressure_raw": 993.91
+  },
+  {
+    "temp": 5.36,
+    "vibration": 5.49,
+    "pressure_raw": 994.02
+  },
+  {
+    "temp": 5.44,
+    "vibration": 5.455,
+    "pressure_raw": 994.09
+  },
+  {
+    "temp": 5.52,
+    "vibration": 5.42,
+    "pressure_raw": 994.16
+  },
+  {
+    "temp": 5.59,
+    "vibration": 5.365,
+    "pressure_raw": 994.27
+  },
+  {
+    "temp": 5.71,
+    "vibration": 5.355,
+    "pressure_raw": 994.29
+  },
+  {
+    "temp": 5.87,
+    "vibration": 5.32,
+    "pressure_raw": 994.36
+  },
+  {
+    "temp": 6.03,
+    "vibration": 5.275,
+    "pressure_raw": 994.45
+  },
+  {
+    "temp": 6.3,
+    "vibration": 5.205,
+    "pressure_raw": 994.59
+  },
+  {
+    "temp": 6.33,
+    "vibration": 5.145,
+    "pressure_raw": 994.71
+  },
+  {
+    "temp": 6.13,
+    "vibration": 5.12,
+    "pressure_raw": 994.76
+  },
+  {
+    "temp": 6.11,
+    "vibration": 5.1,
+    "pressure_raw": 994.8
+  },
+  {
+    "temp": 6.19,
+    "vibration": 5.045,
+    "pressure_raw": 994.91
+  },
+  {
+    "temp": 6.13,
+    "vibration": 5.0,
+    "pressure_raw": 995.0
+  },
+  {
+    "temp": 6.12,
+    "vibration": 4.99,
+    "pressure_raw": 995.02
+  },
+  {
+    "temp": 6.17,
+    "vibration": 4.975,
+    "pressure_raw": 995.05
+  },
+  {
+    "temp": 6.29,
+    "vibration": 4.965,
+    "pressure_raw": 995.07
+  },
+  {
+    "temp": 6.4,
+    "vibration": 4.94,
+    "pressure_raw": 995.12
+  },
+  {
+    "temp": 6.48,
+    "vibration": 4.89,
+    "pressure_raw": 995.22
+  },
+  {
+    "temp": 6.52,
+    "vibration": 4.88,
+    "pressure_raw": 995.24
+  },
+  {
+    "temp": 6.46,
+    "vibration": 4.875,
+    "pressure_raw": 995.25
+  },
+  {
+    "temp": 6.4,
+    "vibration": 4.865,
+    "pressure_raw": 995.27
+  },
+  {
+    "temp": 6.31,
+    "vibration": 4.835,
+    "pressure_raw": 995.33
+  },
+  {
+    "temp": 6.37,
+    "vibration": 4.82,
+    "pressure_raw": 995.36
+  },
+  {
+    "temp": 6.58,
+    "vibration": 4.82,
+    "pressure_raw": 995.36
+  },
+  {
+    "temp": 6.69,
+    "vibration": 4.805,
+    "pressure_raw": 995.39
+  },
+  {
+    "temp": 6.63,
+    "vibration": 4.765,
+    "pressure_raw": 995.47
+  },
+  {
+    "temp": 6.58,
+    "vibration": 4.755,
+    "pressure_raw": 995.49
+  },
+  {
+    "temp": 6.45,
+    "vibration": 4.725,
+    "pressure_raw": 995.55
+  },
+  {
+    "temp": 6.31,
+    "vibration": 4.69,
+    "pressure_raw": 995.62
+  },
+  {
+    "temp": 6.18,
+    "vibration": 4.67,
+    "pressure_raw": 995.66
+  },
+  {
+    "temp": 6.21,
+    "vibration": 4.665,
+    "pressure_raw": 995.67
+  },
+  {
+    "temp": 6.29,
+    "vibration": 4.595,
+    "pressure_raw": 995.81
+  },
+  {
+    "temp": 6.33,
+    "vibration": 4.525,
+    "pressure_raw": 995.95
+  },
+  {
+    "temp": 6.39,
+    "vibration": 4.48,
+    "pressure_raw": 996.04
+  },
+  {
+    "temp": 6.52,
+    "vibration": 4.42,
+    "pressure_raw": 996.16
+  },
+  {
+    "temp": 6.56,
+    "vibration": 4.4,
+    "pressure_raw": 996.2
+  },
+  {
+    "temp": 6.55,
+    "vibration": 4.335,
+    "pressure_raw": 996.33
+  },
+  {
+    "temp": 6.51,
+    "vibration": 4.29,
+    "pressure_raw": 996.42
+  },
+  {
+    "temp": 6.5,
+    "vibration": 4.26,
+    "pressure_raw": 996.48
+  },
+  {
+    "temp": 6.43,
+    "vibration": 4.16,
+    "pressure_raw": 996.68
+  },
+  {
+    "temp": 6.43,
+    "vibration": 4.075,
+    "pressure_raw": 996.85
+  },
+  {
+    "temp": 6.45,
+    "vibration": 4.03,
+    "pressure_raw": 996.94
+  },
+  {
+    "temp": 6.41,
+    "vibration": 3.98,
+    "pressure_raw": 997.04
+  },
+  {
+    "temp": 6.36,
+    "vibration": 3.94,
+    "pressure_raw": 997.12
+  },
+  {
+    "temp": 6.41,
+    "vibration": 3.835,
+    "pressure_raw": 997.33
+  },
+  {
+    "temp": 6.4,
+    "vibration": 3.745,
+    "pressure_raw": 997.51
+  },
+  {
+    "temp": 6.41,
+    "vibration": 3.725,
+    "pressure_raw": 997.55
+  },
+  {
+    "temp": 6.37,
+    "vibration": 3.68,
+    "pressure_raw": 997.64
+  },
+  {
+    "temp": 6.37,
+    "vibration": 3.61,
+    "pressure_raw": 997.78
+  },
+  {
+    "temp": 6.37,
+    "vibration": 3.54,
+    "pressure_raw": 997.92
+  },
+  {
+    "temp": 6.32,
+    "vibration": 3.43,
+    "pressure_raw": 998.14
+  },
+  {
+    "temp": 6.26,
+    "vibration": 3.345,
+    "pressure_raw": 998.31
+  },
+  {
+    "temp": 6.24,
+    "vibration": 3.26,
+    "pressure_raw": 998.48
+  },
+  {
+    "temp": 6.24,
+    "vibration": 3.165,
+    "pressure_raw": 998.67
+  },
+  {
+    "temp": 6.26,
+    "vibration": 3.09,
+    "pressure_raw": 998.82
+  },
+  {
+    "temp": 6.2,
+    "vibration": 3.065,
+    "pressure_raw": 998.87
+  },
+  {
+    "temp": 6.16,
+    "vibration": 3.015,
+    "pressure_raw": 998.97
+  },
+  {
+    "temp": 6.12,
+    "vibration": 2.935,
+    "pressure_raw": 999.13
+  },
+  {
+    "temp": 6.17,
+    "vibration": 2.87,
+    "pressure_raw": 999.26
+  },
+  {
+    "temp": 6.13,
+    "vibration": 2.845,
+    "pressure_raw": 999.31
+  },
+  {
+    "temp": 6.11,
+    "vibration": 2.78,
+    "pressure_raw": 999.44
+  },
+  {
+    "temp": 6.1,
+    "vibration": 2.695,
+    "pressure_raw": 999.61
+  },
+  {
+    "temp": 6.06,
+    "vibration": 2.635,
+    "pressure_raw": 999.73
+  },
+  {
+    "temp": 5.84,
+    "vibration": 2.585,
+    "pressure_raw": 999.83
+  },
+  {
+    "temp": 5.71,
+    "vibration": 2.545,
+    "pressure_raw": 999.91
+  },
+  {
+    "temp": 5.7,
+    "vibration": 2.515,
+    "pressure_raw": 999.97
+  },
+  {
+    "temp": 5.73,
+    "vibration": 2.465,
+    "pressure_raw": 1000.07
+  },
+  {
+    "temp": 5.73,
+    "vibration": 2.41,
+    "pressure_raw": 1000.18
+  },
+  {
+    "temp": 5.68,
+    "vibration": 2.375,
+    "pressure_raw": 1000.25
+  },
+  {
+    "temp": 5.64,
+    "vibration": 2.315,
+    "pressure_raw": 1000.37
+  },
+  {
+    "temp": 5.66,
+    "vibration": 2.29,
+    "pressure_raw": 1000.42
+  },
+  {
+    "temp": 5.68,
+    "vibration": 2.265,
+    "pressure_raw": 1000.47
+  },
+  {
+    "temp": 5.68,
+    "vibration": 2.175,
+    "pressure_raw": 1000.65
+  },
+  {
+    "temp": 5.7,
+    "vibration": 2.145,
+    "pressure_raw": 1000.71
+  },
+  {
+    "temp": 5.74,
+    "vibration": 2.115,
+    "pressure_raw": 1000.77
+  },
+  {
+    "temp": 5.77,
+    "vibration": 2.105,
+    "pressure_raw": 1000.79
+  },
+  {
+    "temp": 5.73,
+    "vibration": 2.065,
+    "pressure_raw": 1000.87
+  },
+  {
+    "temp": 5.69,
+    "vibration": 2.05,
+    "pressure_raw": 1000.9
+  },
+  {
+    "temp": 5.73,
+    "vibration": 2.035,
+    "pressure_raw": 1000.93
+  },
+  {
+    "temp": 5.8,
+    "vibration": 1.985,
+    "pressure_raw": 1001.03
+  },
+  {
+    "temp": 5.84,
+    "vibration": 1.95,
+    "pressure_raw": 1001.1
+  },
+  {
+    "temp": 5.85,
+    "vibration": 1.935,
+    "pressure_raw": 1001.13
+  },
+  {
+    "temp": 5.82,
+    "vibration": 1.915,
+    "pressure_raw": 1001.17
+  },
+  {
+    "temp": 5.68,
+    "vibration": 1.85,
+    "pressure_raw": 1001.3
+  },
+  {
+    "temp": 5.64,
+    "vibration": 1.795,
+    "pressure_raw": 1001.41
+  },
+  {
+    "temp": 5.69,
+    "vibration": 1.805,
+    "pressure_raw": 1001.39
+  },
+  {
+    "temp": 5.64,
+    "vibration": 1.78,
+    "pressure_raw": 1001.44
+  },
+  {
+    "temp": 5.63,
+    "vibration": 1.7,
+    "pressure_raw": 1001.6
+  },
+  {
+    "temp": 5.64,
+    "vibration": 1.645,
+    "pressure_raw": 1001.71
+  },
+  {
+    "temp": 5.64,
+    "vibration": 1.62,
+    "pressure_raw": 1001.76
+  },
+  {
+    "temp": 5.64,
+    "vibration": 1.57,
+    "pressure_raw": 1001.86
+  },
+  {
+    "temp": 5.64,
+    "vibration": 1.53,
+    "pressure_raw": 1001.94
+  },
+  {
+    "temp": 5.63,
+    "vibration": 1.52,
+    "pressure_raw": 1001.96
+  },
+  {
+    "temp": 5.57,
+    "vibration": 1.545,
+    "pressure_raw": 1001.91
+  },
+  {
+    "temp": 5.57,
+    "vibration": 1.54,
+    "pressure_raw": 1001.92
+  },
+  {
+    "temp": 5.5,
+    "vibration": 1.49,
+    "pressure_raw": 1002.02
+  },
+  {
+    "temp": 5.49,
+    "vibration": 1.485,
+    "pressure_raw": 1002.03
+  },
+  {
+    "temp": 5.44,
+    "vibration": 1.44,
+    "pressure_raw": 1002.12
+  },
+  {
+    "temp": 5.44,
+    "vibration": 1.425,
+    "pressure_raw": 1002.15
+  },
+  {
+    "temp": 5.48,
+    "vibration": 1.37,
+    "pressure_raw": 1002.26
+  },
+  {
+    "temp": 5.45,
+    "vibration": 1.285,
+    "pressure_raw": 1002.43
+  },
+  {
+    "temp": 5.33,
+    "vibration": 1.26,
+    "pressure_raw": 1002.48
+  },
+  {
+    "temp": 5.08,
+    "vibration": 1.255,
+    "pressure_raw": 1002.49
+  },
+  {
+    "temp": 4.95,
+    "vibration": 1.245,
+    "pressure_raw": 1002.51
+  },
+  {
+    "temp": 4.9,
+    "vibration": 1.215,
+    "pressure_raw": 1002.57
+  },
+  {
+    "temp": 4.91,
+    "vibration": 1.19,
+    "pressure_raw": 1002.62
+  },
+  {
+    "temp": 4.95,
+    "vibration": 1.195,
+    "pressure_raw": 1002.61
+  },
+  {
+    "temp": 4.92,
+    "vibration": 1.21,
+    "pressure_raw": 1002.58
+  },
+  {
+    "temp": 4.97,
+    "vibration": 1.19,
+    "pressure_raw": 1002.62
+  },
+  {
+    "temp": 5.02,
+    "vibration": 1.19,
+    "pressure_raw": 1002.62
+  },
+  {
+    "temp": 5.04,
+    "vibration": 1.17,
+    "pressure_raw": 1002.66
+  },
+  {
+    "temp": 5.02,
+    "vibration": 1.125,
+    "pressure_raw": 1002.75
+  },
+  {
+    "temp": 4.97,
+    "vibration": 1.08,
+    "pressure_raw": 1002.84
+  },
+  {
+    "temp": 4.97,
+    "vibration": 1.065,
+    "pressure_raw": 1002.87
+  },
+  {
+    "temp": 4.91,
+    "vibration": 1.04,
+    "pressure_raw": 1002.92
+  },
+  {
+    "temp": 4.9,
+    "vibration": 1.025,
+    "pressure_raw": 1002.95
+  },
+  {
+    "temp": 4.94,
+    "vibration": 0.96,
+    "pressure_raw": 1003.08
+  },
+  {
+    "temp": 4.9,
+    "vibration": 0.905,
+    "pressure_raw": 1003.19
+  },
+  {
+    "temp": 4.92,
+    "vibration": 0.88,
+    "pressure_raw": 1003.24
+  },
+  {
+    "temp": 4.91,
+    "vibration": 0.86,
+    "pressure_raw": 1003.28
+  },
+  {
+    "temp": 4.84,
+    "vibration": 0.84,
+    "pressure_raw": 1003.32
+  },
+  {
+    "temp": 4.84,
+    "vibration": 0.84,
+    "pressure_raw": 1003.32
+  },
+  {
+    "temp": 4.89,
+    "vibration": 0.795,
+    "pressure_raw": 1003.41
+  },
+  {
+    "temp": 4.98,
+    "vibration": 0.7,
+    "pressure_raw": 1003.6
+  },
+  {
+    "temp": 4.97,
+    "vibration": 0.635,
+    "pressure_raw": 1003.73
+  },
+  {
+    "temp": 4.92,
+    "vibration": 0.59,
+    "pressure_raw": 1003.82
+  },
+  {
+    "temp": 4.93,
+    "vibration": 0.575,
+    "pressure_raw": 1003.85
+  },
+  {
+    "temp": 4.94,
+    "vibration": 0.57,
+    "pressure_raw": 1003.86
+  },
+  {
+    "temp": 4.97,
+    "vibration": 0.465,
+    "pressure_raw": 1004.07
+  },
+  {
+    "temp": 4.96,
+    "vibration": 0.45,
+    "pressure_raw": 1004.1
+  },
+  {
+    "temp": 5.11,
+    "vibration": 0.405,
+    "pressure_raw": 1004.19
+  },
+  {
+    "temp": 5.14,
+    "vibration": 0.39,
+    "pressure_raw": 1004.22
+  },
+  {
+    "temp": 5.22,
+    "vibration": 0.345,
+    "pressure_raw": 1004.31
+  },
+  {
+    "temp": 5.27,
+    "vibration": 0.28,
+    "pressure_raw": 1004.44
+  },
+  {
+    "temp": 5.3,
+    "vibration": 0.265,
+    "pressure_raw": 1004.47
+  },
+  {
+    "temp": 5.32,
+    "vibration": 0.265,
+    "pressure_raw": 1004.47
+  },
+  {
+    "temp": 5.51,
+    "vibration": 0.22,
+    "pressure_raw": 1004.56
+  },
+  {
+    "temp": 5.78,
+    "vibration": 0.165,
+    "pressure_raw": 1004.67
+  },
+  {
+    "temp": 5.94,
+    "vibration": 0.21,
+    "pressure_raw": 1004.58
+  },
+  {
+    "temp": 5.99,
+    "vibration": 0.215,
+    "pressure_raw": 1004.57
+  },
+  {
+    "temp": 6.11,
+    "vibration": 0.195,
+    "pressure_raw": 1004.61
+  },
+  {
+    "temp": 6.37,
+    "vibration": 0.22,
+    "pressure_raw": 1004.56
+  },
+  {
+    "temp": 6.41,
+    "vibration": 0.225,
+    "pressure_raw": 1004.55
+  },
+  {
+    "temp": 6.44,
+    "vibration": 0.21,
+    "pressure_raw": 1004.58
+  },
+  {
+    "temp": 6.48,
+    "vibration": 0.195,
+    "pressure_raw": 1004.61
+  },
+  {
+    "temp": 6.54,
+    "vibration": 0.16,
+    "pressure_raw": 1004.68
+  },
+  {
+    "temp": 6.8,
+    "vibration": 0.135,
+    "pressure_raw": 1004.73
+  },
+  {
+    "temp": 6.94,
+    "vibration": 0.08,
+    "pressure_raw": 1004.84
+  },
+  {
+    "temp": 6.94,
+    "vibration": 0.04,
+    "pressure_raw": 1004.92
+  },
+  {
+    "temp": 6.94,
+    "vibration": 0.0,
+    "pressure_raw": 1005.04
+  },
+  {
+    "temp": 7.08,
+    "vibration": 0.0,
+    "pressure_raw": 1005.1
+  },
+  {
+    "temp": 6.88,
+    "vibration": 0.0,
+    "pressure_raw": 1005.01
+  },
+  {
+    "temp": 7.09,
+    "vibration": 0.025,
+    "pressure_raw": 1004.95
+  },
+  {
+    "temp": 7.09,
+    "vibration": 0.08,
+    "pressure_raw": 1004.84
+  },
+  {
+    "temp": 7.33,
+    "vibration": 0.115,
+    "pressure_raw": 1004.77
+  },
+  {
+    "temp": 7.91,
+    "vibration": 0.15,
+    "pressure_raw": 1004.7
+  },
+  {
+    "temp": 8.1,
+    "vibration": 0.165,
+    "pressure_raw": 1004.67
+  },
+  {
+    "temp": 8.17,
+    "vibration": 0.155,
+    "pressure_raw": 1004.69
+  },
+  {
+    "temp": 8.26,
+    "vibration": 0.2,
+    "pressure_raw": 1004.6
+  },
+  {
+    "temp": 8.0,
+    "vibration": 0.21,
+    "pressure_raw": 1004.58
+  },
+  {
+    "temp": 7.93,
+    "vibration": 0.205,
+    "pressure_raw": 1004.59
+  },
+  {
+    "temp": 7.88,
+    "vibration": 0.195,
+    "pressure_raw": 1004.61
+  },
+  {
+    "temp": 7.77,
+    "vibration": 0.21,
+    "pressure_raw": 1004.58
+  },
+  {
+    "temp": 7.72,
+    "vibration": 0.21,
+    "pressure_raw": 1004.58
+  },
+  {
+    "temp": 7.72,
+    "vibration": 0.205,
+    "pressure_raw": 1004.59
+  },
+  {
+    "temp": 7.59,
+    "vibration": 0.21,
+    "pressure_raw": 1004.58
+  },
+  {
+    "temp": 7.59,
+    "vibration": 0.2,
+    "pressure_raw": 1004.6
+  },
+  {
+    "temp": 7.49,
+    "vibration": 0.215,
+    "pressure_raw": 1004.57
+  },
+  {
+    "temp": 7.47,
+    "vibration": 0.21,
+    "pressure_raw": 1004.58
+  },
+  {
+    "temp": 7.4,
+    "vibration": 0.17,
+    "pressure_raw": 1004.66
+  },
+  {
+    "temp": 7.25,
+    "vibration": 0.145,
+    "pressure_raw": 1004.71
+  },
+  {
+    "temp": 7.27,
+    "vibration": 0.11,
+    "pressure_raw": 1004.78
+  },
+  {
+    "temp": 7.35,
+    "vibration": 0.105,
+    "pressure_raw": 1004.79
+  },
+  {
+    "temp": 7.38,
+    "vibration": 0.13,
+    "pressure_raw": 1004.74
+  },
+  {
+    "temp": 7.32,
+    "vibration": 0.1,
+    "pressure_raw": 1004.8
+  },
+  {
+    "temp": 7.36,
+    "vibration": 0.08,
+    "pressure_raw": 1004.84
+  },
+  {
+    "temp": 7.21,
+    "vibration": 0.035,
+    "pressure_raw": 1004.93
+  },
+  {
+    "temp": 7.06,
+    "vibration": 0.05,
+    "pressure_raw": 1004.9
+  },
+  {
+    "temp": 7.06,
+    "vibration": 0.06,
+    "pressure_raw": 1004.88
+  },
+  {
+    "temp": 7.06,
+    "vibration": 0.09,
+    "pressure_raw": 1004.82
+  },
+  {
+    "temp": 7.02,
+    "vibration": 0.16,
+    "pressure_raw": 1004.68
+  },
+  {
+    "temp": 6.96,
+    "vibration": 0.21,
+    "pressure_raw": 1004.58
+  },
+  {
+    "temp": 6.89,
+    "vibration": 0.21,
+    "pressure_raw": 1004.58
+  },
+  {
+    "temp": 6.86,
+    "vibration": 0.175,
+    "pressure_raw": 1004.65
+  },
+  {
+    "temp": 6.83,
+    "vibration": 0.16,
+    "pressure_raw": 1004.68
+  },
+  {
+    "temp": 6.83,
+    "vibration": 0.15,
+    "pressure_raw": 1004.7
+  },
+  {
+    "temp": 6.82,
+    "vibration": 0.145,
+    "pressure_raw": 1004.71
+  },
+  {
+    "temp": 6.8,
+    "vibration": 0.15,
+    "pressure_raw": 1004.7
+  },
+  {
+    "temp": 6.8,
+    "vibration": 0.15,
+    "pressure_raw": 1004.7
+  },
+  {
+    "temp": 6.7,
+    "vibration": 0.14,
+    "pressure_raw": 1004.72
+  },
+  {
+    "temp": 6.61,
+    "vibration": 0.11,
+    "pressure_raw": 1004.78
+  },
+  {
+    "temp": 6.56,
+    "vibration": 0.035,
+    "pressure_raw": 1004.93
+  },
+  {
+    "temp": 6.56,
+    "vibration": 0.0,
+    "pressure_raw": 1005.04
+  },
+  {
+    "temp": 6.55,
+    "vibration": 0.0,
+    "pressure_raw": 1005.09
+  },
+  {
+    "temp": 6.49,
+    "vibration": 0.0,
+    "pressure_raw": 1005.18
+  },
+  {
+    "temp": 6.46,
+    "vibration": 0.0,
+    "pressure_raw": 1005.13
+  },
+  {
+    "temp": 6.43,
+    "vibration": 0.0,
+    "pressure_raw": 1005.15
+  },
+  {
+    "temp": 6.44,
+    "vibration": 0.0,
+    "pressure_raw": 1005.22
+  },
+  {
+    "temp": 6.42,
+    "vibration": 0.0,
+    "pressure_raw": 1005.22
+  },
+  {
+    "temp": 6.34,
+    "vibration": 0.0,
+    "pressure_raw": 1005.32
+  },
+  {
+    "temp": 6.36,
+    "vibration": 0.0,
+    "pressure_raw": 1005.39
+  },
+  {
+    "temp": 6.45,
+    "vibration": 0.0,
+    "pressure_raw": 1005.45
+  },
+  {
+    "temp": 6.47,
+    "vibration": 0.0,
+    "pressure_raw": 1005.4
+  },
+  {
+    "temp": 6.36,
+    "vibration": 0.0,
+    "pressure_raw": 1005.35
+  },
+  {
+    "temp": 6.3,
+    "vibration": 0.0,
+    "pressure_raw": 1005.28
+  },
+  {
+    "temp": 6.3,
+    "vibration": 0.0,
+    "pressure_raw": 1005.25
+  },
+  {
+    "temp": 6.23,
+    "vibration": 0.0,
+    "pressure_raw": 1005.25
+  },
+  {
+    "temp": 6.23,
+    "vibration": 0.0,
+    "pressure_raw": 1005.25
+  },
+  {
+    "temp": 6.2,
+    "vibration": 0.0,
+    "pressure_raw": 1005.25
+  },
+  {
+    "temp": 6.16,
+    "vibration": 0.0,
+    "pressure_raw": 1005.26
+  },
+  {
+    "temp": 6.15,
+    "vibration": 0.0,
+    "pressure_raw": 1005.35
+  },
+  {
+    "temp": 6.18,
+    "vibration": 0.0,
+    "pressure_raw": 1005.37
+  },
+  {
+    "temp": 6.13,
+    "vibration": 0.0,
+    "pressure_raw": 1005.34
+  },
+  {
+    "temp": 6.05,
+    "vibration": 0.0,
+    "pressure_raw": 1005.21
+  },
+  {
+    "temp": 5.96,
+    "vibration": 0.0,
+    "pressure_raw": 1005.18
+  },
+  {
+    "temp": 5.96,
+    "vibration": 0.0,
+    "pressure_raw": 1005.09
+  },
+  {
+    "temp": 5.85,
+    "vibration": 0.0,
+    "pressure_raw": 1005.0
+  },
+  {
+    "temp": 5.79,
+    "vibration": 0.0,
+    "pressure_raw": 1005.01
+  },
+  {
+    "temp": 5.71,
+    "vibration": 0.0,
+    "pressure_raw": 1005.01
+  },
+  {
+    "temp": 5.8,
+    "vibration": 0.0,
+    "pressure_raw": 1005.04
+  },
+  {
+    "temp": 5.83,
+    "vibration": 0.0,
+    "pressure_raw": 1005.02
+  },
+  {
+    "temp": 5.8,
+    "vibration": 0.0,
+    "pressure_raw": 1005.01
+  },
+  {
+    "temp": 5.69,
+    "vibration": 0.0,
+    "pressure_raw": 1005.0
+  },
+  {
+    "temp": 5.6,
+    "vibration": 0.015,
+    "pressure_raw": 1004.97
+  },
+  {
+    "temp": 5.55,
+    "vibration": 0.005,
+    "pressure_raw": 1004.99
+  },
+  {
+    "temp": 5.56,
+    "vibration": 0.0,
+    "pressure_raw": 1005.0
+  },
+  {
+    "temp": 5.54,
+    "vibration": 0.055,
+    "pressure_raw": 1004.89
+  },
+  {
+    "temp": 5.51,
+    "vibration": 0.15,
+    "pressure_raw": 1004.7
+  },
+  {
+    "temp": 5.5,
+    "vibration": 0.255,
+    "pressure_raw": 1004.49
+  },
+  {
+    "temp": 5.5,
+    "vibration": 0.24,
+    "pressure_raw": 1004.52
+  },
+  {
+    "temp": 5.58,
+    "vibration": 0.16,
+    "pressure_raw": 1004.68
+  },
+  {
+    "temp": 5.63,
+    "vibration": 0.18,
+    "pressure_raw": 1004.64
+  },
+  {
+    "temp": 5.62,
+    "vibration": 0.19,
+    "pressure_raw": 1004.62
+  },
+  {
+    "temp": 5.61,
+    "vibration": 0.195,
+    "pressure_raw": 1004.61
+  },
+  {
+    "temp": 5.56,
+    "vibration": 0.24,
+    "pressure_raw": 1004.52
+  },
+  {
+    "temp": 5.56,
+    "vibration": 0.285,
+    "pressure_raw": 1004.43
+  },
+  {
+    "temp": 5.53,
+    "vibration": 0.35,
+    "pressure_raw": 1004.3
+  },
+  {
+    "temp": 5.49,
+    "vibration": 0.42,
+    "pressure_raw": 1004.16
+  },
+  {
+    "temp": 5.47,
+    "vibration": 0.44,
+    "pressure_raw": 1004.12
+  },
+  {
+    "temp": 5.43,
+    "vibration": 0.49,
+    "pressure_raw": 1004.02
+  },
+  {
+    "temp": 5.37,
+    "vibration": 0.525,
+    "pressure_raw": 1003.95
+  },
+  {
+    "temp": 5.31,
+    "vibration": 0.61,
+    "pressure_raw": 1003.78
+  },
+  {
+    "temp": 5.23,
+    "vibration": 0.675,
+    "pressure_raw": 1003.65
+  },
+  {
+    "temp": 5.11,
+    "vibration": 0.69,
+    "pressure_raw": 1003.62
+  },
+  {
+    "temp": 4.88,
+    "vibration": 0.715,
+    "pressure_raw": 1003.57
+  },
+  {
+    "temp": 4.82,
+    "vibration": 0.73,
+    "pressure_raw": 1003.54
+  },
+  {
+    "temp": 4.77,
+    "vibration": 0.715,
+    "pressure_raw": 1003.57
+  },
+  {
+    "temp": 4.7,
+    "vibration": 0.765,
+    "pressure_raw": 1003.47
+  },
+  {
+    "temp": 4.61,
+    "vibration": 0.775,
+    "pressure_raw": 1003.45
+  },
+  {
+    "temp": 4.54,
+    "vibration": 0.815,
+    "pressure_raw": 1003.37
+  },
+  {
+    "temp": 4.44,
+    "vibration": 0.81,
+    "pressure_raw": 1003.38
+  },
+  {
+    "temp": 4.39,
+    "vibration": 0.8,
+    "pressure_raw": 1003.4
+  },
+  {
+    "temp": 4.31,
+    "vibration": 0.815,
+    "pressure_raw": 1003.37
+  },
+  {
+    "temp": 4.28,
+    "vibration": 0.795,
+    "pressure_raw": 1003.41
+  },
+  {
+    "temp": 4.31,
+    "vibration": 0.75,
+    "pressure_raw": 1003.5
+  },
+  {
+    "temp": 4.34,
+    "vibration": 0.73,
+    "pressure_raw": 1003.54
+  },
+  {
+    "temp": 4.36,
+    "vibration": 0.695,
+    "pressure_raw": 1003.61
+  },
+  {
+    "temp": 4.42,
+    "vibration": 0.72,
+    "pressure_raw": 1003.56
+  },
+  {
+    "temp": 4.43,
+    "vibration": 0.81,
+    "pressure_raw": 1003.38
+  },
+  {
+    "temp": 4.43,
+    "vibration": 0.86,
+    "pressure_raw": 1003.28
+  },
+  {
+    "temp": 4.4,
+    "vibration": 0.94,
+    "pressure_raw": 1003.12
+  },
+  {
+    "temp": 4.43,
+    "vibration": 0.84,
+    "pressure_raw": 1003.32
+  },
+  {
+    "temp": 4.43,
+    "vibration": 0.865,
+    "pressure_raw": 1003.27
+  },
+  {
+    "temp": 4.43,
+    "vibration": 0.815,
+    "pressure_raw": 1003.37
+  },
+  {
+    "temp": 4.43,
+    "vibration": 0.76,
+    "pressure_raw": 1003.48
+  },
+  {
+    "temp": 4.43,
+    "vibration": 0.76,
+    "pressure_raw": 1003.48
+  },
+  {
+    "temp": 4.43,
+    "vibration": 0.755,
+    "pressure_raw": 1003.49
+  },
+  {
+    "temp": 4.5,
+    "vibration": 0.755,
+    "pressure_raw": 1003.49
+  },
+  {
+    "temp": 4.63,
+    "vibration": 0.72,
+    "pressure_raw": 1003.56
+  },
+  {
+    "temp": 4.64,
+    "vibration": 0.705,
+    "pressure_raw": 1003.59
+  },
+  {
+    "temp": 4.7,
+    "vibration": 0.685,
+    "pressure_raw": 1003.63
+  },
+  {
+    "temp": 4.8,
+    "vibration": 0.815,
+    "pressure_raw": 1003.37
+  },
+  {
+    "temp": 4.92,
+    "vibration": 0.77,
+    "pressure_raw": 1003.46
+  },
+  {
+    "temp": 5.07,
+    "vibration": 0.73,
+    "pressure_raw": 1003.54
+  },
+  {
+    "temp": 5.23,
+    "vibration": 0.77,
+    "pressure_raw": 1003.46
+  },
+  {
+    "temp": 5.46,
+    "vibration": 0.715,
+    "pressure_raw": 1003.57
+  },
+  {
+    "temp": 5.66,
+    "vibration": 0.65,
+    "pressure_raw": 1003.7
+  },
+  {
+    "temp": 5.8,
+    "vibration": 0.64,
+    "pressure_raw": 1003.72
+  },
+  {
+    "temp": 5.71,
+    "vibration": 0.64,
+    "pressure_raw": 1003.72
+  },
+  {
+    "temp": 5.7,
+    "vibration": 0.6,
+    "pressure_raw": 1003.8
+  },
+  {
+    "temp": 5.79,
+    "vibration": 0.625,
+    "pressure_raw": 1003.75
+  },
+  {
+    "temp": 6.02,
+    "vibration": 0.675,
+    "pressure_raw": 1003.65
+  },
+  {
+    "temp": 6.25,
+    "vibration": 0.6,
+    "pressure_raw": 1003.8
+  },
+  {
+    "temp": 6.47,
+    "vibration": 0.62,
+    "pressure_raw": 1003.76
+  },
+  {
+    "temp": 6.67,
+    "vibration": 0.63,
+    "pressure_raw": 1003.74
+  },
+  {
+    "temp": 6.81,
+    "vibration": 0.68,
+    "pressure_raw": 1003.64
+  },
+  {
+    "temp": 6.84,
+    "vibration": 0.655,
+    "pressure_raw": 1003.69
+  },
+  {
+    "temp": 6.82,
+    "vibration": 0.66,
+    "pressure_raw": 1003.68
+  },
+  {
+    "temp": 6.8,
+    "vibration": 0.66,
+    "pressure_raw": 1003.68
+  },
+  {
+    "temp": 6.83,
+    "vibration": 0.73,
+    "pressure_raw": 1003.54
+  },
+  {
+    "temp": 6.9,
+    "vibration": 0.9,
+    "pressure_raw": 1003.2
+  },
+  {
+    "temp": 7.0,
+    "vibration": 0.935,
+    "pressure_raw": 1003.13
+  },
+  {
+    "temp": 7.59,
+    "vibration": 0.855,
+    "pressure_raw": 1003.29
+  },
+  {
+    "temp": 7.97,
+    "vibration": 0.815,
+    "pressure_raw": 1003.37
+  },
+  {
+    "temp": 8.42,
+    "vibration": 0.75,
+    "pressure_raw": 1003.5
+  },
+  {
+    "temp": 8.45,
+    "vibration": 0.695,
+    "pressure_raw": 1003.61
+  },
+  {
+    "temp": 8.19,
+    "vibration": 0.575,
+    "pressure_raw": 1003.85
+  },
+  {
+    "temp": 7.58,
+    "vibration": 0.56,
+    "pressure_raw": 1003.88
+  },
+  {
+    "temp": 7.45,
+    "vibration": 0.65,
+    "pressure_raw": 1003.7
+  },
+  {
+    "temp": 7.56,
+    "vibration": 0.64,
+    "pressure_raw": 1003.72
+  },
+  {
+    "temp": 7.56,
+    "vibration": 0.64,
+    "pressure_raw": 1003.72
+  },
+  {
+    "temp": 7.61,
+    "vibration": 0.64,
+    "pressure_raw": 1003.72
+  },
+  {
+    "temp": 7.65,
+    "vibration": 0.635,
+    "pressure_raw": 1003.73
+  },
+  {
+    "temp": 7.56,
+    "vibration": 0.64,
+    "pressure_raw": 1003.72
+  },
+  {
+    "temp": 7.55,
+    "vibration": 0.67,
+    "pressure_raw": 1003.66
+  },
+  {
+    "temp": 7.74,
+    "vibration": 0.68,
+    "pressure_raw": 1003.64
+  },
+  {
+    "temp": 7.83,
+    "vibration": 0.64,
+    "pressure_raw": 1003.72
+  },
+  {
+    "temp": 7.84,
+    "vibration": 0.62,
+    "pressure_raw": 1003.76
+  },
+  {
+    "temp": 7.89,
+    "vibration": 0.62,
+    "pressure_raw": 1003.76
+  },
+  {
+    "temp": 7.92,
+    "vibration": 0.625,
+    "pressure_raw": 1003.75
+  },
+  {
+    "temp": 7.9,
+    "vibration": 0.66,
+    "pressure_raw": 1003.68
+  },
+  {
+    "temp": 8.13,
+    "vibration": 0.69,
+    "pressure_raw": 1003.62
+  },
+  {
+    "temp": 8.46,
+    "vibration": 0.72,
+    "pressure_raw": 1003.56
+  },
+  {
+    "temp": 8.78,
+    "vibration": 0.83,
+    "pressure_raw": 1003.34
+  },
+  {
+    "temp": 9.21,
+    "vibration": 0.935,
+    "pressure_raw": 1003.13
+  },
+  {
+    "temp": 9.62,
+    "vibration": 0.975,
+    "pressure_raw": 1003.05
+  },
+  {
+    "temp": 10.04,
+    "vibration": 1.035,
+    "pressure_raw": 1002.93
+  },
+  {
+    "temp": 9.58,
+    "vibration": 1.055,
+    "pressure_raw": 1002.89
+  },
+  {
+    "temp": 10.02,
+    "vibration": 1.105,
+    "pressure_raw": 1002.79
+  },
+  {
+    "temp": 10.74,
+    "vibration": 1.14,
+    "pressure_raw": 1002.72
+  },
+  {
+    "temp": 10.39,
+    "vibration": 1.15,
+    "pressure_raw": 1002.7
+  },
+  {
+    "temp": 9.47,
+    "vibration": 1.195,
+    "pressure_raw": 1002.61
+  },
+  {
+    "temp": 9.3,
+    "vibration": 1.235,
+    "pressure_raw": 1002.53
+  },
+  {
+    "temp": 9.9,
+    "vibration": 1.265,
+    "pressure_raw": 1002.47
+  },
+  {
+    "temp": 10.13,
+    "vibration": 1.265,
+    "pressure_raw": 1002.47
+  },
+  {
+    "temp": 10.58,
+    "vibration": 1.28,
+    "pressure_raw": 1002.44
+  },
+  {
+    "temp": 10.42,
+    "vibration": 1.315,
+    "pressure_raw": 1002.37
+  },
+  {
+    "temp": 10.24,
+    "vibration": 1.32,
+    "pressure_raw": 1002.36
+  },
+  {
+    "temp": 10.04,
+    "vibration": 1.355,
+    "pressure_raw": 1002.29
+  },
+  {
+    "temp": 9.72,
+    "vibration": 1.355,
+    "pressure_raw": 1002.29
+  },
+  {
+    "temp": 9.6,
+    "vibration": 1.325,
+    "pressure_raw": 1002.35
+  },
+  {
+    "temp": 9.46,
+    "vibration": 1.32,
+    "pressure_raw": 1002.36
+  },
+  {
+    "temp": 9.36,
+    "vibration": 1.275,
+    "pressure_raw": 1002.45
+  },
+  {
+    "temp": 9.21,
+    "vibration": 1.265,
+    "pressure_raw": 1002.47
+  },
+  {
+    "temp": 8.91,
+    "vibration": 1.245,
+    "pressure_raw": 1002.51
+  },
+  {
+    "temp": 8.66,
+    "vibration": 1.26,
+    "pressure_raw": 1002.48
+  },
+  {
+    "temp": 8.44,
+    "vibration": 1.285,
+    "pressure_raw": 1002.43
+  },
+  {
+    "temp": 8.26,
+    "vibration": 1.25,
+    "pressure_raw": 1002.5
+  },
+  {
+    "temp": 8.04,
+    "vibration": 1.15,
+    "pressure_raw": 1002.7
+  },
+  {
+    "temp": 7.81,
+    "vibration": 1.085,
+    "pressure_raw": 1002.83
+  },
+  {
+    "temp": 7.58,
+    "vibration": 1.09,
+    "pressure_raw": 1002.82
+  },
+  {
+    "temp": 7.32,
+    "vibration": 1.095,
+    "pressure_raw": 1002.81
+  },
+  {
+    "temp": 7.08,
+    "vibration": 1.06,
+    "pressure_raw": 1002.88
+  },
+  {
+    "temp": 6.84,
+    "vibration": 1.025,
+    "pressure_raw": 1002.95
+  },
+  {
+    "temp": 6.68,
+    "vibration": 0.995,
+    "pressure_raw": 1003.01
+  },
+  {
+    "temp": 6.52,
+    "vibration": 0.915,
+    "pressure_raw": 1003.17
+  },
+  {
+    "temp": 6.41,
+    "vibration": 0.89,
+    "pressure_raw": 1003.22
+  },
+  {
+    "temp": 6.23,
+    "vibration": 0.805,
+    "pressure_raw": 1003.39
+  },
+  {
+    "temp": 6.0,
+    "vibration": 0.7,
+    "pressure_raw": 1003.6
+  },
+  {
+    "temp": 5.9,
+    "vibration": 0.635,
+    "pressure_raw": 1003.73
+  },
+  {
+    "temp": 5.84,
+    "vibration": 0.63,
+    "pressure_raw": 1003.74
+  },
+  {
+    "temp": 5.83,
+    "vibration": 0.585,
+    "pressure_raw": 1003.83
+  },
+  {
+    "temp": 5.72,
+    "vibration": 0.515,
+    "pressure_raw": 1003.97
+  },
+  {
+    "temp": 5.63,
+    "vibration": 0.465,
+    "pressure_raw": 1004.07
+  },
+  {
+    "temp": 5.44,
+    "vibration": 0.45,
+    "pressure_raw": 1004.1
+  },
+  {
+    "temp": 5.23,
+    "vibration": 0.385,
+    "pressure_raw": 1004.23
+  },
+  {
+    "temp": 5.04,
+    "vibration": 0.34,
+    "pressure_raw": 1004.32
+  },
+  {
+    "temp": 4.84,
+    "vibration": 0.325,
+    "pressure_raw": 1004.35
+  },
+  {
+    "temp": 4.66,
+    "vibration": 0.265,
+    "pressure_raw": 1004.47
+  },
+  {
+    "temp": 4.48,
+    "vibration": 0.245,
+    "pressure_raw": 1004.51
+  },
+  {
+    "temp": 4.23,
+    "vibration": 0.225,
+    "pressure_raw": 1004.55
+  },
+  {
+    "temp": 3.98,
+    "vibration": 0.2,
+    "pressure_raw": 1004.6
+  },
+  {
+    "temp": 3.87,
+    "vibration": 0.16,
+    "pressure_raw": 1004.68
+  },
+  {
+    "temp": 3.76,
+    "vibration": 0.115,
+    "pressure_raw": 1004.77
+  },
+  {
+    "temp": 3.64,
+    "vibration": 0.03,
+    "pressure_raw": 1004.94
+  },
+  {
+    "temp": 3.33,
+    "vibration": 0.0,
+    "pressure_raw": 1005.08
+  },
+  {
+    "temp": 3.25,
+    "vibration": 0.0,
+    "pressure_raw": 1005.09
+  },
+  {
+    "temp": 3.15,
+    "vibration": 0.0,
+    "pressure_raw": 1005.17
+  },
+  {
+    "temp": 2.97,
+    "vibration": 0.0,
+    "pressure_raw": 1005.25
+  },
+  {
+    "temp": 2.82,
+    "vibration": 0.0,
+    "pressure_raw": 1005.2
+  },
+  {
+    "temp": 2.79,
+    "vibration": 0.0,
+    "pressure_raw": 1005.25
+  },
+  {
+    "temp": 2.65,
+    "vibration": 0.0,
+    "pressure_raw": 1005.32
+  },
+  {
+    "temp": 2.55,
+    "vibration": 0.0,
+    "pressure_raw": 1005.3
+  },
+  {
+    "temp": 2.46,
+    "vibration": 0.0,
+    "pressure_raw": 1005.29
+  },
+  {
+    "temp": 2.41,
+    "vibration": 0.0,
+    "pressure_raw": 1005.32
+  },
+  {
+    "temp": 2.34,
+    "vibration": 0.0,
+    "pressure_raw": 1005.33
+  },
+  {
+    "temp": 2.24,
+    "vibration": 0.0,
+    "pressure_raw": 1005.33
+  },
+  {
+    "temp": 2.17,
+    "vibration": 0.0,
+    "pressure_raw": 1005.32
+  },
+  {
+    "temp": 2.07,
+    "vibration": 0.0,
+    "pressure_raw": 1005.43
+  },
+  {
+    "temp": 1.88,
+    "vibration": 0.0,
+    "pressure_raw": 1005.49
+  },
+  {
+    "temp": 1.7,
+    "vibration": 0.0,
+    "pressure_raw": 1005.48
+  },
+  {
+    "temp": 1.56,
+    "vibration": 0.0,
+    "pressure_raw": 1005.4
+  },
+  {
+    "temp": 1.43,
+    "vibration": 0.0,
+    "pressure_raw": 1005.34
+  },
+  {
+    "temp": 1.3,
+    "vibration": 0.0,
+    "pressure_raw": 1005.28
+  },
+  {
+    "temp": 1.13,
+    "vibration": 0.0,
+    "pressure_raw": 1005.21
+  },
+  {
+    "temp": 0.9,
+    "vibration": 0.0,
+    "pressure_raw": 1005.19
+  },
+  {
+    "temp": 0.74,
+    "vibration": 0.0,
+    "pressure_raw": 1005.16
+  },
+  {
+    "temp": 0.67,
+    "vibration": 0.0,
+    "pressure_raw": 1005.09
+  },
+  {
+    "temp": 0.63,
+    "vibration": 0.0,
+    "pressure_raw": 1005.09
+  },
+  {
+    "temp": 0.61,
+    "vibration": 0.0,
+    "pressure_raw": 1005.08
+  },
+  {
+    "temp": 0.46,
+    "vibration": 0.0,
+    "pressure_raw": 1005.08
+  },
+  {
+    "temp": 0.34,
+    "vibration": 0.0,
+    "pressure_raw": 1005.06
+  },
+  {
+    "temp": 0.24,
+    "vibration": 0.0,
+    "pressure_raw": 1005.08
+  },
+  {
+    "temp": 0.18,
+    "vibration": 0.0,
+    "pressure_raw": 1005.07
+  },
+  {
+    "temp": 0.1,
+    "vibration": 0.0,
+    "pressure_raw": 1005.02
+  },
+  {
+    "temp": 0.05,
+    "vibration": 0.0,
+    "pressure_raw": 1005.07
+  },
+  {
+    "temp": -0.04,
+    "vibration": 0.0,
+    "pressure_raw": 1005.1
+  },
+  {
+    "temp": -0.13,
+    "vibration": 0.0,
+    "pressure_raw": 1005.08
+  },
+  {
+    "temp": -0.18,
+    "vibration": 0.0,
+    "pressure_raw": 1005.05
+  },
+  {
+    "temp": -0.16,
+    "vibration": 0.0,
+    "pressure_raw": 1005.09
+  },
+  {
+    "temp": -0.2,
+    "vibration": 0.0,
+    "pressure_raw": 1005.08
+  },
+  {
+    "temp": -0.22,
+    "vibration": 0.01,
+    "pressure_raw": 1004.98
+  },
+  {
+    "temp": -0.22,
+    "vibration": 0.03,
+    "pressure_raw": 1004.94
+  },
+  {
+    "temp": -0.24,
+    "vibration": 0.055,
+    "pressure_raw": 1004.89
+  },
+  {
+    "temp": -0.3,
+    "vibration": 0.02,
+    "pressure_raw": 1004.96
+  },
+  {
+    "temp": -0.33,
+    "vibration": 0.04,
+    "pressure_raw": 1004.92
+  },
+  {
+    "temp": -0.38,
+    "vibration": 0.06,
+    "pressure_raw": 1004.88
+  },
+  {
+    "temp": -0.35,
+    "vibration": 0.065,
+    "pressure_raw": 1004.87
+  },
+  {
+    "temp": -0.37,
+    "vibration": 0.095,
+    "pressure_raw": 1004.81
+  },
+  {
+    "temp": -0.4,
+    "vibration": 0.105,
+    "pressure_raw": 1004.79
+  },
+  {
+    "temp": -0.39,
+    "vibration": 0.07,
+    "pressure_raw": 1004.86
+  },
+  {
+    "temp": -0.38,
+    "vibration": 0.065,
+    "pressure_raw": 1004.87
+  },
+  {
+    "temp": -0.17,
+    "vibration": 0.055,
+    "pressure_raw": 1004.89
+  },
+  {
+    "temp": 0.1,
+    "vibration": 0.025,
+    "pressure_raw": 1004.95
+  },
+  {
+    "temp": 0.05,
+    "vibration": 0.015,
+    "pressure_raw": 1004.97
+  },
+  {
+    "temp": 0.1,
+    "vibration": 0.01,
+    "pressure_raw": 1004.98
+  },
+  {
+    "temp": 0.28,
+    "vibration": 0.0,
+    "pressure_raw": 1005.07
+  },
+  {
+    "temp": 0.58,
+    "vibration": 0.0,
+    "pressure_raw": 1005.09
+  },
+  {
+    "temp": 1.22,
+    "vibration": 0.0,
+    "pressure_raw": 1005.03
+  },
+  {
+    "temp": 1.87,
+    "vibration": 0.0,
+    "pressure_raw": 1005.1
+  },
+  {
+    "temp": 2.44,
+    "vibration": 0.0,
+    "pressure_raw": 1005.03
+  },
+  {
+    "temp": 2.55,
+    "vibration": 0.025,
+    "pressure_raw": 1004.95
+  },
+  {
+    "temp": 2.5,
+    "vibration": 0.02,
+    "pressure_raw": 1004.96
+  },
+  {
+    "temp": 2.52,
+    "vibration": 0.03,
+    "pressure_raw": 1004.94
+  },
+  {
+    "temp": 2.45,
+    "vibration": 0.025,
+    "pressure_raw": 1004.95
+  },
+  {
+    "temp": 2.64,
+    "vibration": 0.0,
+    "pressure_raw": 1005.01
+  },
+  {
+    "temp": 2.7,
+    "vibration": 0.01,
+    "pressure_raw": 1004.98
+  },
+  {
+    "temp": 2.8,
+    "vibration": 0.02,
+    "pressure_raw": 1004.96
+  }
+]

@@ -11,9 +11,9 @@
     }
 
     const navItems = [
-        { id: "iot", icon: "[~]", label: "IoT Stream" },
-        { id: "hive", icon: "[*]", label: "Network Map" },
-        { id: "graph", icon: "[+]", label: "Neural Graph" },
+        { id: "iot", label: "EDGE MONITOR" },
+        { id: "hive", label: "HIVE MIND" },
+        { id: "graph", label: "NEURAL GRAPH" },
     ];
 </script>
 
@@ -29,7 +29,6 @@
                 class:active={activeTab === item.id}
                 on:click={() => navigate(item.id)}
             >
-                <span class="nav-icon">{item.icon}</span>
                 <span class="nav-label">{item.label}</span>
             </button>
         {/each}
@@ -96,10 +95,6 @@
         background: rgba(0, 255, 204, 0.1);
         border-color: #00ffcc;
         color: #00ffcc;
-    }
-
-    .nav-icon {
-        font-size: 1.2rem;
     }
 
     .nav-label {

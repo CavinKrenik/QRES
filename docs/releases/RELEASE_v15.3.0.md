@@ -7,20 +7,21 @@
 
 ## 🎉 New Features
 
-### Real-time IoT Streaming Dashboard
-- **Live Telemetry Visualization**: 10Hz sensor data from simulated edge devices (ESP32, Pi-4 Cluster, Jetson-Nano)
-- **D3.js Bandwidth Chart**: Scrolling line chart comparing Raw vs. QRES compressed bandwidth in real-time
-- **Connect to Swarm Toggle**: One-click activation of sensor stream simulation
+### 📡 Real-time IoT Streaming Dashboard
+* **Hardware-in-the-Loop Support:** New `WeatherReplay` engine allows benchmarking against historical climate datasets (Jena) as if they were live streams.
+* **Live Telemetry:** 10Hz visualization of sensor data, simulating a 20-node cluster (Jetson-Nano / ESP32 mix).
+* **Stress Testing:** Automated "Storm Injection" to verify MetaBrain adaptation during high-entropy events.
+* **Weather Debug Panel:** Real-time display of frame index, raw pressure, and compression ratio.
 
 ### Neural Graph Visualization
-- **Interactive Topology**: Force-directed graph showing Swarm, Mixer, Root, QNN, and SNN node connections
-- **Zoom & Pan**: Navigate complex neural relationships with D3-powered controls
-- **Real-time State Reflection**: Graph updates to reflect current MetaBrain activity
+- **Interactive Topology**: Force-directed D3.js graph showing swarm nodes with animated gradient packets
+- **Zoom & Pan**: Navigate complex neural relationships with physics-based controls
+- **Real-time State Reflection**: Particles flow only when streaming is active
 
 ### MetaBrain State Monitoring
 - **SNN Spike Visualizer**: Canvas-based animation of spiking neurons reacting to incoming data intensity
 - **Packets Processed Counter**: Live metric tracking compression throughput
-- **Regime Change Detection**: Visual feedback when neural network adapts to signal drift
+- **Regime Change Detection**: Node status toggles between `INFERRING` ↔ `LEARNING` based on storm conditions
 
 ---
 

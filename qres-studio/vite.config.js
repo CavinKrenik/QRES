@@ -1,6 +1,10 @@
 import { defineConfig } from "vite";
 import { sveltekit } from "@sveltejs/kit/vite";
+import { fileURLToPath } from "url";
+import { dirname, resolve } from "path";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const host = process.env.TAURI_DEV_HOST;
 
@@ -27,6 +31,15 @@ export default defineConfig(async () => ({
     watch: {
       // 3. tell Vite to ignore watching `src-tauri`
       ignored: ["**/src-tauri/**"],
+    },
+    // 4. Allow serving the WASM file from the Rust workspace
+    fs: {
+      allow: [
+        // Default SvelteKit paths
+        ".",
+        // Allow access to the parent directory for WASM
+        resolve(__dirname, ".."),
+      ],
     },
   },
 }));

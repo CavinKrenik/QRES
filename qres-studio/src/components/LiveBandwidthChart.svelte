@@ -5,51 +5,60 @@
 
     let svgElement: SVGSVGElement;
     let container: HTMLDivElement;
-    let width = 0;
-    let height = 0;
+    let width = 600;
+    let height = 300;
+    let resizeObserver: ResizeObserver;
 
     // Chart config
     const margin = { top: 20, right: 20, bottom: 30, left: 50 };
-    const maxPoints = 50;
 
     // D3 Scales
     let x: d3.ScaleTime<number, number>;
     let y: d3.ScaleLinear<number, number>;
     let lineRaw: d3.Line<any>;
     let lineComp: d3.Line<any>;
+    let initialized = false;
 
     $: data = $bandwidthHistory;
 
     function updateChart() {
-        if (!svgElement || !data || data.length < 2) return;
+        if (!svgElement || !data || data.length < 2 || !initialized) return;
 
-        // Update domains
+        const innerWidth = width - margin.left - margin.right;
+        const innerHeight = height - margin.top - margin.bottom;
+
+        // Update scales
         const now = Date.now();
-        x.domain([now - 10000, now]); // 10 second rolling window
+        x.domain([now - 10000, now]).range([0, innerWidth]);
 
-        // Auto-scale Y with a minimum of 100 bytes
         const maxY = Math.max(100, d3.max(data, (d) => d.rawBytes) || 100);
-        y.domain([0, maxY * 1.2]);
+        y.domain([0, maxY * 1.2]).range([innerHeight, 0]);
 
         const svg = d3.select(svgElement);
 
         // Update axes
-        svg.select<SVGGElement>(".x-axis").call(d3.axisBottom(x).ticks(5));
+        svg.select<SVGGElement>(".x-axis")
+            .attr("transform", `translate(0,${innerHeight})`)
+            .call(d3.axisBottom(x).ticks(5));
         svg.select<SVGGElement>(".y-axis").call(d3.axisLeft(y).ticks(5));
 
         // Update lines
         svg.select(".line-raw").datum(data).attr("d", lineRaw);
-
         svg.select(".line-comp").datum(data).attr("d", lineComp);
     }
 
     function initChart() {
-        if (!container) return;
-        width = container.clientWidth - margin.left - margin.right;
-        height = container.clientHeight - margin.top - margin.bottom;
+        if (!container || !svgElement) return;
 
-        x = d3.scaleTime().range([0, width]);
-        y = d3.scaleLinear().range([height, 0]);
+        const rect = container.getBoundingClientRect();
+        width = rect.width || 600;
+        height = rect.height || 300;
+
+        const innerWidth = width - margin.left - margin.right;
+        const innerHeight = height - margin.top - margin.bottom;
+
+        x = d3.scaleTime().range([0, innerWidth]);
+        y = d3.scaleLinear().range([innerHeight, 0]);
 
         lineRaw = d3
             .line<any>()
@@ -63,17 +72,20 @@
             .y((d) => y(d.compressedBytes))
             .curve(d3.curveMonotoneX);
 
+        // Clear and recreate
+        d3.select(svgElement).selectAll("*").remove();
+
         const svg = d3
             .select(svgElement)
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
+            .attr("width", width)
+            .attr("height", height)
             .append("g")
             .attr("transform", `translate(${margin.left},${margin.top})`);
 
         // Add axes
         svg.append("g")
             .attr("class", "x-axis")
-            .attr("transform", `translate(0,${height})`);
+            .attr("transform", `translate(0,${innerHeight})`);
 
         svg.append("g").attr("class", "y-axis");
 
@@ -89,15 +101,44 @@
             .attr("fill", "none")
             .attr("stroke", "#00ffcc")
             .attr("stroke-width", 2);
+
+        initialized = true;
+    }
+
+    function handleResize() {
+        if (!container) return;
+        const rect = container.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+            width = rect.width;
+            height = rect.height;
+            initChart();
+            updateChart();
+        }
     }
 
     onMount(() => {
-        initChart();
-        // Resize observer could go here
+        // Wait for container to be sized
+        setTimeout(() => {
+            initChart();
+        }, 100);
+
+        // Watch for resize
+        resizeObserver = new ResizeObserver(() => {
+            handleResize();
+        });
+        if (container) {
+            resizeObserver.observe(container);
+        }
+    });
+
+    onDestroy(() => {
+        if (resizeObserver) {
+            resizeObserver.disconnect();
+        }
     });
 
     // Reactive update
-    $: if (data) {
+    $: if (data && initialized) {
         requestAnimationFrame(updateChart);
     }
 </script>
@@ -114,10 +155,17 @@
     .chart-container {
         width: 100%;
         height: 100%;
-        min-height: 250px;
+        flex: 1;
         position: relative;
         background: rgba(0, 0, 0, 0.2);
         border-radius: 8px;
+        min-height: 200px;
+    }
+
+    svg {
+        width: 100%;
+        height: 100%;
+        display: block;
     }
 
     :global(.x-axis text),

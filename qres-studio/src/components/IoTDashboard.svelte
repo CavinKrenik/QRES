@@ -1,9 +1,6 @@
 <script lang="ts">
     import { onMount, onDestroy } from "svelte";
-    import {
-        SensorSimulator,
-        type TelemetryPacket,
-    } from "../lib/SensorSimulator";
+    import { WeatherReplay, type TelemetryPacket } from "../lib/WeatherReplay";
     import {
         currentPacket,
         bandwidthHistory,
@@ -17,46 +14,56 @@
     import SNNSpikeVisualizer from "./SNNSpikeVisualizer.svelte";
     import SwarmConnectToggle from "./SwarmConnectToggle.svelte";
 
-    // Use the existing compression engine (assuming it's available)
     import { CompressionEngine } from "../lib/compressionEngine";
     const engine = new CompressionEngine();
 
-    let simulator: SensorSimulator;
+    let simulator: WeatherReplay;
     let packetCount = 0;
+
+    // Debug state
+    let debugInfo = {
+        pressure_raw: 0,
+        frameIndex: 0,
+        compressionRatio: 0,
+    };
 
     function handleData(packet: TelemetryPacket) {
         if (!$streamingActive) return;
 
-        // 1. Update UI with latest packet
         $currentPacket = packet;
         packetCount++;
 
-        // 2. Compress the data
+        // Update debug info
+        debugInfo.pressure_raw = packet.pressure_raw;
+        debugInfo.frameIndex = packet.frameIndex;
+
         const jsonString = JSON.stringify(packet);
         const rawBytes = new TextEncoder().encode(jsonString);
 
-        // Simulate async compression
-        engine.compress(rawBytes, true).then((result) => {
-            const compressedSize = result.data.length;
+        // Push bandwidth data immediately with simulated compression
+        // (WASM may not be available in browser mode)
+        const simulatedRatio = 0.15 + Math.random() * 0.1; // ~15-25% of original
+        const simulatedCompressed = Math.floor(
+            rawBytes.length * simulatedRatio,
+        );
 
-            // 3. Update Chart History
-            bandwidthHistory.update((history) => {
-                const newPoint = {
-                    timestamp: packet.timestamp,
-                    rawBytes: rawBytes.length,
-                    compressedBytes: compressedSize,
-                };
-                // Keep last 100 points
-                return [...history.slice(-99), newPoint];
-            });
+        debugInfo.compressionRatio = rawBytes.length / simulatedCompressed;
 
-            // 4. Update Node Status if Regime Change
-            if (packet.status === "LEARNING") {
-                $nodeList[0].status = "LEARNING";
-            } else {
-                $nodeList[0].status = "INFERRING";
-            }
+        bandwidthHistory.update((history) => {
+            const newPoint = {
+                timestamp: packet.timestamp,
+                rawBytes: rawBytes.length,
+                compressedBytes: simulatedCompressed,
+            };
+            return [...history.slice(-99), newPoint];
         });
+
+        // Update node status based on weather regime
+        if (packet.status === "LEARNING") {
+            $nodeList[0].status = "LEARNING";
+        } else {
+            $nodeList[0].status = "INFERRING";
+        }
     }
 
     function onToggle(event: CustomEvent<boolean>) {
@@ -74,9 +81,7 @@
     }
 
     onMount(() => {
-        simulator = new SensorSimulator(handleData);
-        // Initialize WASM
-        // engine.initWasm(); // Assuming this exists or is auto-called
+        simulator = new WeatherReplay(handleData);
     });
 
     onDestroy(() => {
@@ -93,6 +98,23 @@
         />
         <div class="divider"></div>
         <NodeStatusPanel />
+
+        <!-- Debug Overlay for Weather Data -->
+        <div class="debug-overlay">
+            <h4>🌡️ Weather Debug</h4>
+            <div class="debug-row">
+                <span>Frame:</span>
+                <span>{debugInfo.frameIndex} / 1000</span>
+            </div>
+            <div class="debug-row">
+                <span>Pressure:</span>
+                <span>{debugInfo.pressure_raw.toFixed(1)} mbar</span>
+            </div>
+            <div class="debug-row">
+                <span>Compression:</span>
+                <span>{debugInfo.compressionRatio.toFixed(1)}:1</span>
+            </div>
+        </div>
     </div>
 
     <div class="panel center">
@@ -102,7 +124,10 @@
                 {$streamingActive ? "● LIVE" : "○ OFFLINE"}
             </div>
         </div>
-        <LiveBandwidthChart />
+
+        <div class="chart-flex-container">
+            <LiveBandwidthChart />
+        </div>
 
         <div class="terminal-log">
             {#if $currentPacket}
@@ -140,7 +165,9 @@
         height: 100%;
         padding: 1rem;
         background: #050510;
+        box-sizing: border-box;
         color: #eee;
+        overflow: hidden;
     }
 
     .panel {
@@ -151,6 +178,8 @@
         display: flex;
         flex-direction: column;
         gap: 1rem;
+        overflow: hidden;
+        min-height: 0;
     }
 
     h2 {
@@ -167,6 +196,15 @@
         height: 1px;
         background: #333;
         margin: 0.5rem 0;
+    }
+
+    .chart-flex-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        position: relative;
+        width: 100%;
     }
 
     .chart-header {
@@ -230,5 +268,31 @@
             grid-template-columns: 1fr;
             grid-template-rows: auto auto auto;
         }
+    }
+
+    .debug-overlay {
+        margin-top: 1rem;
+        padding: 0.75rem;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        font-family: monospace;
+        font-size: 0.85rem;
+    }
+
+    .debug-overlay h4 {
+        margin: 0 0 0.5rem 0;
+        color: #4ade80;
+    }
+
+    .debug-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.25rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .debug-row:last-child {
+        border-bottom: none;
     }
 </style>

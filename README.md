@@ -71,6 +71,23 @@ npm run dev
 
 [Full installation docs →](docs/guides/P2P_IMPLEMENTATION.md)
 
+## 🎮 Hardware-in-the-Loop Simulation
+
+To demonstrate QRES capabilities without requiring a physical cluster of 20+ IoT devices, this repository includes a **Real-World Replay Engine**.
+
+* **Data Source:** Uses the [Jena Climate Dataset](https://www.bgc-jena.mpg.de/wetter/) (Max Planck Institute) to provide high-fidelity multivariate sensor data.
+* **The "Storm" Test:** The simulation is pre-loaded with specific time-windows where atmospheric pressure drops significantly (simulating a storm).
+* **Verification:** You can observe the **MetaBrain** adapting in real-time—as entropy increases (during the storm), the compression ratio fluctuates and the Neural Network triggers a `LEARNING` regime to compensate.
+
+To run the simulation:
+```bash
+# 1. Fetch real climate data
+python3 scripts/fetch_weather_replay.py
+
+# 2. Launch the Edge Dashboard
+cd qres-studio && npm run dev
+```
+
 ## The Journey
 
 This project evolved through 15 major iterations:

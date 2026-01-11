@@ -1,435 +1,487 @@
 <script lang="ts">
-    // @ts-nocheck
-    import { invoke } from "@tauri-apps/api/core";
     import { onMount } from "svelte";
-    import { writable } from "svelte/store";
-    import { toast } from "@zerodevx/svelte-toast";
+    import * as d3 from "d3";
+    import { streamingActive } from "./lib/iotStore";
+    import { fly } from "svelte/transition";
 
-    // Persistent swarm state
-    const swarmEnabled = writable(false);
+    // --- State ---
+    let width = 800;
+    let height = 600;
+    let canvas: HTMLCanvasElement;
+    let ctx: CanvasRenderingContext2D | null;
+    let simulation: d3.Simulation<any, any>;
+    let transform = d3.zoomIdentity;
 
-    let swarmStatus = "Offline";
-    let stats = {
-        bytes_saved: 0,
-        total_compressions: 0,
-        avg_ratio: 0,
-        engines_used: {} as Record<string, number>,
-    };
+    // Selected Node for HUD
+    let selectedNode: any = null;
 
-    async function loadData() {
-        // @ts-ignore
-        if (!window.__TAURI__) {
-            toast.push("Running in browser mode - hive features disabled");
-            return;
-        }
-        try {
-            stats = await invoke("get_stats");
+    // --- Mock Swarm Data (Enhanced) ---
+    let nodes = [
+        {
+            id: "ROOT",
+            group: 1,
+            val: 30,
+            label: "Ω ROOT",
+            ip: "192.168.1.100",
+            cpu: 12,
+            ram: "32GB",
+        },
+        {
+            id: "Jetson-01",
+            group: 2,
+            val: 15,
+            label: "Jetson A",
+            ip: "192.168.1.101",
+            cpu: 45,
+            ram: "8GB",
+        },
+        {
+            id: "Jetson-02",
+            group: 2,
+            val: 15,
+            label: "Jetson B",
+            ip: "192.168.1.102",
+            cpu: 32,
+            ram: "8GB",
+        },
+        {
+            id: "Pi-C1",
+            group: 3,
+            val: 8,
+            label: "Pi Worker",
+            ip: "192.168.1.105",
+            cpu: 88,
+            ram: "4GB",
+        },
+        {
+            id: "Pi-C2",
+            group: 3,
+            val: 8,
+            label: "Pi Worker",
+            ip: "192.168.1.106",
+            cpu: 65,
+            ram: "4GB",
+        },
+        {
+            id: "ESP-W1",
+            group: 4,
+            val: 5,
+            label: "Sensor A",
+            ip: "192.168.1.120",
+            cpu: 10,
+            ram: "512KB",
+        },
+        {
+            id: "ESP-W2",
+            group: 4,
+            val: 5,
+            label: "Sensor B",
+            ip: "192.168.1.121",
+            cpu: 12,
+            ram: "512KB",
+        },
+        {
+            id: "ESP-W3",
+            group: 4,
+            val: 5,
+            label: "Sensor C",
+            ip: "192.168.1.122",
+            cpu: 0,
+            ram: "512KB",
+        },
+    ];
 
-            // Load swarm status
-            const enabled = (await invoke("get_swarm_status")) as boolean;
-            swarmEnabled.set(enabled);
-            swarmStatus = enabled ? "Connected" : "Offline";
-        } catch (e) {
-            console.error("Failed to load data:", e);
-            toast.push(`Failed to load data: ${e}`);
-        }
-    }
+    let links = [
+        { source: "Jetson-01", target: "ROOT" },
+        { source: "Jetson-02", target: "ROOT" },
+        { source: "Pi-C1", target: "Jetson-01" },
+        { source: "Pi-C2", target: "Jetson-01" },
+        { source: "ESP-W1", target: "Pi-C1" },
+        { source: "ESP-W2", target: "Pi-C1" },
+        { source: "ESP-W3", target: "Jetson-02" },
+    ];
 
-    async function handleSwarmToggle() {
-        // @ts-ignore
-        if (!window.__TAURI__) {
-            toast.push("Swarm toggle not available in browser mode");
-            return;
-        }
-        const enabled = $swarmEnabled;
-        try {
-            const result = (await invoke("toggle_swarm", {
-                enabled,
-            })) as string;
-            swarmStatus = enabled ? "Connected" : "Offline";
-            console.log(result);
-
-            if (enabled) {
-                toast.push(
-                    "Swarm Network Enabled - sharing learnings with the collective!",
-                );
-            } else {
-                toast.push(
-                    "Swarm Network Disabled - operating in isolated mode",
-                );
-            }
-        } catch (e) {
-            console.error("Swarm toggle failed:", e);
-            swarmEnabled.set(false);
-            swarmStatus = "Offline";
-            alert("Failed to toggle swarm: " + e);
-        }
-    }
-
-    function showNotification(title: string, message: string) {
-        // Simple notification - could be enhanced with Tauri notifications
-        console.log(`${title}: ${message}`);
-    }
+    let particles: any[] = [];
 
     onMount(() => {
-        loadData();
-        const interval = setInterval(loadData, 5000);
-        return () => clearInterval(interval);
+        ctx = canvas.getContext("2d");
+        resize();
+        window.addEventListener("resize", resize);
+
+        // 1. Setup Simulation
+        simulation = d3
+            .forceSimulation(nodes as any)
+            .force(
+                "link",
+                d3
+                    .forceLink(links)
+                    .id((d: any) => d.id)
+                    .distance(100),
+            )
+            .force("charge", d3.forceManyBody().strength(-500))
+            .force("center", d3.forceCenter(width / 2, height / 2))
+            .force(
+                "collide",
+                d3.forceCollide().radius((d: any) => d.val + 10),
+            );
+
+        // 2. Setup Zoom & Drag
+        const zoom = d3
+            .zoom()
+            .scaleExtent([0.1, 8])
+            .on("zoom", (e) => {
+                transform = e.transform;
+                render();
+            });
+
+        d3.select(canvas)
+            .call(zoom as any)
+            .call(
+                d3
+                    .drag()
+                    .subject(dragSubject)
+                    .on("start", dragStarted)
+                    .on("drag", dragged)
+                    .on("end", dragEnded) as any,
+            )
+            .on("click", handleCanvasClick);
+
+        // 3. Animation Loop
+        const timer = d3.timer(() => {
+            if ($streamingActive) generateTraffic();
+            updateParticles();
+            render();
+        });
+
+        return () => {
+            timer.stop();
+            window.removeEventListener("resize", resize);
+            simulation.stop();
+        };
     });
 
-    $: hiveWisdom =
-        stats.avg_ratio > 0 ? ((1 - stats.avg_ratio) * 100).toFixed(1) : "0.0";
-    $: engineEntries = Object.entries(stats.engines_used);
-    $: totalEngineUses = engineEntries.reduce(
-        (sum, [, count]) => sum + count,
-        0,
-    );
+    function generateTraffic() {
+        if (Math.random() > 0.1) return;
+        const link: any = links[Math.floor(Math.random() * links.length)];
+        const reverse = Math.random() > 0.5;
+        particles.push({
+            source: reverse ? link.target : link.source,
+            target: reverse ? link.source : link.target,
+            progress: 0,
+            speed: 0.02 + Math.random() * 0.02,
+            color: reverse ? "#00ffcc" : "#ff4444",
+        });
+    }
 
-    // React to swarm toggle changes
-    $: if ($swarmEnabled !== undefined) {
-        handleSwarmToggle();
+    function updateParticles() {
+        for (let i = particles.length - 1; i >= 0; i--) {
+            let p = particles[i];
+            p.progress += p.speed;
+            if (p.progress >= 1) particles.splice(i, 1);
+        }
+    }
+
+    function resize() {
+        if (canvas && canvas.parentElement) {
+            width = canvas.parentElement.clientWidth;
+            height = canvas.parentElement.clientHeight;
+            canvas.width = width;
+            canvas.height = height;
+            if (simulation) {
+                simulation.force(
+                    "center",
+                    d3.forceCenter(width / 2, height / 2),
+                );
+                simulation.alpha(1).restart();
+            }
+        }
+    }
+
+    function render() {
+        if (!ctx) return;
+
+        ctx.save();
+        ctx.clearRect(0, 0, width, height);
+        ctx.translate(transform.x, transform.y);
+        ctx.scale(transform.k, transform.k);
+
+        // Draw Links
+        ctx.strokeStyle = "rgba(100, 100, 100, 0.3)";
+        ctx.lineWidth = 1;
+        links.forEach((link: any) => {
+            ctx!.beginPath();
+            ctx!.moveTo(link.source.x, link.source.y);
+            ctx!.lineTo(link.target.x, link.target.y);
+            ctx!.stroke();
+        });
+
+        // Draw Particles
+        particles.forEach((p) => {
+            const x = p.source.x + (p.target.x - p.source.x) * p.progress;
+            const y = p.source.y + (p.target.y - p.source.y) * p.progress;
+            ctx!.beginPath();
+            ctx!.fillStyle = p.color;
+            ctx!.shadowBlur = 5;
+            ctx!.shadowColor = p.color;
+            ctx!.arc(x, y, 3 / transform.k, 0, 2 * Math.PI);
+            ctx!.fill();
+            ctx!.shadowBlur = 0;
+        });
+
+        // Draw Nodes
+        nodes.forEach((node: any) => {
+            ctx!.beginPath();
+
+            const isSelected = selectedNode && selectedNode.id === node.id;
+            const baseSize = node.val;
+
+            if (isSelected) {
+                ctx!.shadowBlur = 20;
+                ctx!.shadowColor = "#fff";
+            }
+
+            let color = "#4488ff";
+            if (node.group === 1) color = "#ff4444";
+            if (node.group === 2) color = "#00ffcc";
+
+            ctx!.fillStyle = color;
+            ctx!.arc(node.x, node.y, baseSize, 0, 2 * Math.PI);
+            ctx!.fill();
+            ctx!.shadowBlur = 0;
+
+            if (transform.k > 0.8 || node.group === 1) {
+                ctx!.fillStyle = "#fff";
+                ctx!.font = `${10 / transform.k}px JetBrains Mono`;
+                ctx!.fillText(node.label, node.x + baseSize + 2, node.y + 4);
+            }
+        });
+
+        ctx.restore();
+    }
+
+    function dragSubject(event: any) {
+        const x = transform.invertX(event.x);
+        const y = transform.invertY(event.y);
+        return simulation.find(x, y, 30);
+    }
+
+    function handleCanvasClick(event: any) {
+        const [x, y] = d3.pointer(event);
+        const graphX = transform.invertX(x);
+        const graphY = transform.invertY(y);
+        const clickedNode = simulation.find(graphX, graphY, 30);
+        selectedNode = clickedNode || null;
+        render();
+    }
+
+    function dragStarted(event: any) {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        event.subject.fx = event.subject.x;
+        event.subject.fy = event.subject.y;
+        selectedNode = event.subject;
+    }
+
+    function dragged(event: any) {
+        event.subject.fx = event.x;
+        event.subject.fy = event.y;
+    }
+
+    function dragEnded(event: any) {
+        if (!event.active) simulation.alphaTarget(0);
+        event.subject.fx = null;
+        event.subject.fy = null;
     }
 </script>
 
 <div class="hive-container">
-    <div class="hive-header">
-        <h2>Hive Mind</h2>
-        <div class="swarm-toggle">
-            <label class="toggle-label">
-                <input
-                    type="checkbox"
-                    bind:checked={$swarmEnabled}
-                    class="toggle-input"
-                />
-                <span class="toggle-slider"></span>
-                <span class="toggle-text">Swarm Network</span>
-            </label>
-            <span class="status" class:connected={$swarmEnabled}>
-                {$swarmEnabled ? "🟢" : "⚪"}
-                {swarmStatus}
-            </span>
+    <div class="overlay">
+        <h2>Global Swarm State</h2>
+        <div class="stat">NODES: <span>{nodes.length}</span></div>
+        <div class="stat">ZOOM: <span>{transform.k.toFixed(1)}x</span></div>
+        <div class="stat">
+            STATUS: <span class:live={$streamingActive}
+                >{$streamingActive ? "SYNCING" : "IDLE"}</span
+            >
         </div>
     </div>
 
-    <div class="collective-banner" class:active={$swarmEnabled}>
-        {#if $swarmEnabled}
-            <div class="banner-content">
-                <span class="banner-icon">🌐</span>
-                <div class="banner-text">
-                    <strong>Collective Learning Active</strong>
-                    <small>Sharing knowledge with the swarm</small>
+    <canvas bind:this={canvas}></canvas>
+
+    {#if selectedNode}
+        <div class="node-hud" transition:fly={{ x: 20, duration: 300 }}>
+            <div class="hud-header">
+                <h3>{selectedNode.label}</h3>
+                <span class="badge" class:root={selectedNode.group === 1}>
+                    {selectedNode.group === 1 ? "CONTROLLER" : "WORKER"}
+                </span>
+            </div>
+            <div class="hud-grid">
+                <div class="hud-item">
+                    <span class="hud-label">IP ADDRESS</span>
+                    <span>{selectedNode.ip}</span>
                 </div>
-            </div>
-        {:else}
-            <div class="banner-content inactive">
-                <span class="banner-icon">💤</span>
-                <div class="banner-text">
-                    <strong>Isolated Mode</strong>
-                    <small>Enable swarm to share learnings</small>
-                </div>
-            </div>
-        {/if}
-    </div>
-
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-label">Bytes Saved Today</div>
-            <div class="stat-value">
-                {(stats.bytes_saved / 1024 / 1024).toFixed(1)}MB
-            </div>
-        </div>
-
-        <div class="stat-card highlight">
-            <div class="stat-label">Hive Wisdom</div>
-            <div class="stat-value">{hiveWisdom}%</div>
-            <div class="stat-subtitle">Compression Efficiency</div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-label">Total Compressions</div>
-            <div class="stat-value">{stats.total_compressions}</div>
-        </div>
-    </div>
-
-    <div class="engine-usage">
-        <h3>Engine Usage</h3>
-        {#if engineEntries.length > 0}
-            <div class="engine-bars">
-                {#each engineEntries as [engine, count]}
-                    {@const percentage =
-                        totalEngineUses > 0
-                            ? (count / totalEngineUses) * 100
-                            : 0}
-                    <div class="engine-bar">
-                        <div class="engine-info">
-                            <span class="engine-name"
-                                >{engine.toUpperCase()}</span
-                            >
-                            <span class="engine-count"
-                                >{count} uses ({percentage.toFixed(1)}%)</span
-                            >
-                        </div>
-                        <div class="bar-container">
-                            <div
-                                class="bar-fill"
-                                style="width: {percentage}%"
-                            ></div>
-                        </div>
+                <div class="hud-item">
+                    <span class="hud-label">CPU LOAD</span>
+                    <div class="bar-container">
+                        <div
+                            class="bar"
+                            style="width: {selectedNode.cpu}%"
+                        ></div>
                     </div>
-                {/each}
+                    <span class="val">{selectedNode.cpu}%</span>
+                </div>
+                <div class="hud-item">
+                    <span class="hud-label">MEMORY</span>
+                    <span>{selectedNode.ram}</span>
+                </div>
+                <div class="hud-item">
+                    <span class="hud-label">STATUS</span>
+                    <span class="status-ok">● ONLINE</span>
+                </div>
             </div>
-        {:else}
-            <p class="no-data">
-                No compression data yet. Start compressing files!
-            </p>
-        {/if}
-    </div>
+            <button class="action-btn" on:click={() => (selectedNode = null)}
+                >CLOSE</button
+            >
+        </div>
+    {/if}
 </div>
 
 <style>
     .hive-container {
-        padding: 1rem;
+        width: 100%;
         height: 100%;
-        overflow-y: auto;
-    }
-
-    .hive-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-    }
-
-    h2 {
-        margin: 0;
-        font-size: 1.8rem;
-        color: #a0c0ff;
-    }
-
-    .swarm-toggle {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-
-    .toggle-label {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        cursor: pointer;
-        user-select: none;
-    }
-
-    .toggle-input {
-        position: absolute;
-        opacity: 0;
-        width: 0;
-        height: 0;
-    }
-
-    .toggle-slider {
+        background: #050510;
         position: relative;
-        width: 50px;
-        height: 26px;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 26px;
-        transition: background 0.3s;
-    }
-
-    .toggle-slider::before {
-        content: "";
-        position: absolute;
-        width: 20px;
-        height: 20px;
-        left: 3px;
-        top: 3px;
-        background: white;
-        border-radius: 50%;
-        transition: transform 0.3s;
-    }
-
-    .toggle-input:checked + .toggle-slider {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    }
-
-    .toggle-input:checked + .toggle-slider::before {
-        transform: translateX(24px);
-    }
-
-    .toggle-text {
-        font-size: 0.95rem;
-        color: #e0e7ff;
-    }
-
-    .status {
-        padding: 0.5rem 1rem;
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 20px;
-        font-size: 0.9rem;
-        color: #94a3b8;
-        transition: all 0.3s;
-    }
-
-    .status.connected {
-        color: #10b981;
-        background: rgba(16, 185, 129, 0.1);
-        box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
-    }
-
-    .collective-banner {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 12px;
-        padding: 1rem 1.5rem;
-        margin-bottom: 2rem;
-        transition: all 0.3s;
-    }
-
-    .collective-banner.active {
-        background: linear-gradient(
-            135deg,
-            rgba(16, 185, 129, 0.1) 0%,
-            rgba(5, 150, 105, 0.1) 100%
-        );
-        border-color: rgba(16, 185, 129, 0.3);
-    }
-
-    .banner-content {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-
-    .banner-content.inactive {
-        opacity: 0.6;
-    }
-
-    .banner-icon {
-        font-size: 2rem;
-    }
-
-    .banner-text strong {
-        display: block;
-        font-size: 1rem;
-        color: #e0e7ff;
-        margin-bottom: 0.25rem;
-    }
-
-    .banner-text small {
-        font-size: 0.85rem;
-        color: #94a3b8;
-    }
-
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 1.5rem;
-        margin-bottom: 2rem;
-    }
-
-    .stat-card {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 12px;
-        padding: 1.5rem;
-        transition:
-            transform 0.2s,
-            box-shadow 0.2s;
-    }
-
-    .stat-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-    }
-
-    .stat-card.highlight {
-        background: linear-gradient(
-            135deg,
-            rgba(99, 102, 241, 0.1) 0%,
-            rgba(192, 132, 252, 0.1) 100%
-        );
-        border-color: rgba(99, 102, 241, 0.3);
-    }
-
-    .stat-label {
-        font-size: 0.85rem;
-        color: #94a3b8;
-        margin-bottom: 0.5rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .stat-value {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: #e0e7ff;
-    }
-
-    .stat-subtitle {
-        font-size: 0.75rem;
-        color: #64748b;
-        margin-top: 0.25rem;
-    }
-
-    .engine-usage {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 12px;
-        padding: 1.5rem;
-    }
-
-    h3 {
-        margin-top: 0;
-        margin-bottom: 1.5rem;
-        font-size: 1.2rem;
-        color: #a0c0ff;
-    }
-
-    .engine-bars {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-    }
-
-    .engine-bar {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-    .engine-info {
-        display: flex;
-        justify-content: space-between;
-        font-size: 0.9rem;
-    }
-
-    .engine-name {
-        font-weight: 600;
-        color: #e0e7ff;
-    }
-
-    .engine-count {
-        color: #94a3b8;
-    }
-
-    .bar-container {
-        height: 8px;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 4px;
         overflow: hidden;
     }
 
-    .bar-fill {
-        height: 100%;
-        background: linear-gradient(90deg, #818cf8 0%, #c084fc 100%);
-        border-radius: 4px;
-        transition: width 0.3s ease;
+    canvas {
+        display: block;
+        cursor: crosshair;
     }
 
-    .no-data {
-        text-align: center;
-        color: #64748b;
-        padding: 2rem;
-        font-style: italic;
+    .overlay {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        pointer-events: none;
+        color: #fff;
+    }
+
+    h2 {
+        margin: 0 0 10px 0;
+        font-size: 1rem;
+        color: #00ffcc;
+        text-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
+    }
+
+    .stat {
+        font-family: "JetBrains Mono", monospace;
+        color: #888;
+        font-size: 0.8rem;
+        margin-bottom: 4px;
+    }
+    .stat span {
+        color: #eee;
+    }
+    .stat span.live {
+        color: #00ffcc;
+    }
+
+    .node-hud {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 260px;
+        background: rgba(10, 15, 30, 0.95);
+        border: 1px solid #00ffcc;
+        backdrop-filter: blur(10px);
+        padding: 1rem;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+        border-radius: 4px;
+        color: #fff;
+    }
+
+    .hud-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .hud-header h3 {
+        margin: 0;
+        color: #eee;
+        font-size: 1rem;
+    }
+
+    .badge {
+        font-size: 0.6rem;
+        padding: 2px 6px;
+        background: #333;
+        border-radius: 2px;
+        color: #888;
+    }
+    .badge.root {
+        background: #ff4444;
+        color: #000;
+    }
+
+    .hud-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+
+    .hud-item {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .hud-label {
+        font-size: 0.6rem;
+        color: #666;
+        letter-spacing: 1px;
+    }
+
+    .hud-item span {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.9rem;
+    }
+
+    .status-ok {
+        color: #00ffcc;
+    }
+
+    .bar-container {
+        width: 100%;
+        height: 4px;
+        background: #222;
+        margin-top: 4px;
+    }
+    .bar {
+        height: 100%;
+        background: #00ffcc;
+        box-shadow: 0 0 10px #00ffcc;
+    }
+
+    .action-btn {
+        width: 100%;
+        margin-top: 1rem;
+        background: transparent;
+        border: 1px solid #444;
+        color: #888;
+        padding: 0.5rem;
+        cursor: pointer;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.7rem;
+        transition: all 0.2s;
+    }
+    .action-btn:hover {
+        border-color: #fff;
+        color: #fff;
     }
 </style>

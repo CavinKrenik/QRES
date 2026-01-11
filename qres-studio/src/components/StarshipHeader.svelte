@@ -1,56 +1,84 @@
 <script lang="ts">
-    // Minimal header - just the QRES branding
+    import { streamingActive } from "../lib/iotStore";
+
+    // Toggle the global store
+    function toggleConnection() {
+        streamingActive.update((n) => !n);
+    }
 </script>
 
-<header class="neon-header">
-    <h1>QRES Edge</h1>
-    <div class="brand-badge">
-        <span class="badge-text">QRES</span>
+<header class="starship-header">
+    <div class="logo-area">
+        <div class="title-group">
+            <h1>QRES STUDIO</h1>
+            <span class="version">v15.3.0 // EDGE MONITOR</span>
+        </div>
+    </div>
+
+    <div class="header-controls">
+        <div class="status-indicator">
+            <span class="label">SYSTEM STATUS:</span>
+            <span class="val" class:online={$streamingActive}>
+                {$streamingActive ? "ONLINE" : "STANDBY"}
+            </span>
+        </div>
     </div>
 </header>
 
 <style>
-    .neon-header {
-        padding: 0.6rem 1.5rem;
-        background: linear-gradient(
-            90deg,
-            #050510 0%,
-            #0a0a2a 50%,
-            #050510 100%
-        );
-        border-bottom: 1px solid rgba(0, 255, 204, 0.3);
+    .starship-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
+        padding: 0.8rem 1.5rem;
+        background: rgba(10, 10, 20, 0.95);
+        border-bottom: 1px solid rgba(0, 255, 204, 0.1);
+        backdrop-filter: blur(10px);
         flex-shrink: 0;
     }
 
-    h1 {
+    .logo-area {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .title-group h1 {
         margin: 0;
+        font-family: "JetBrains Mono", monospace;
         font-size: 1.2rem;
-        font-weight: 700;
-        font-family: "JetBrains Mono", "Consolas", monospace;
+        letter-spacing: 2px;
         background: linear-gradient(135deg, #00ffcc 0%, #0080ff 100%);
         background-clip: text;
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        letter-spacing: 2px;
     }
 
-    .brand-badge {
-        display: flex;
-        align-items: center;
-    }
-
-    .badge-text {
-        padding: 0.3rem 0.8rem;
-        background: rgba(0, 255, 204, 0.1);
-        border: 1px solid rgba(0, 255, 204, 0.4);
-        border-radius: 4px;
-        color: #00ffcc;
+    .version {
         font-family: "JetBrains Mono", monospace;
         font-size: 0.7rem;
-        font-weight: 600;
-        letter-spacing: 2px;
+        color: #666;
+    }
+
+    .header-controls {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+    }
+
+    .status-indicator {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.8rem;
+        color: #888;
+    }
+
+    .status-indicator .val {
+        color: #555;
+        margin-left: 0.5rem;
+    }
+
+    .status-indicator .val.online {
+        color: #00ffcc;
+        text-shadow: 0 0 8px rgba(0, 255, 204, 0.6);
     }
 </style>
