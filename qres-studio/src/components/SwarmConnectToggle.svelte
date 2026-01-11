@@ -45,7 +45,7 @@
             class:danger={isRegimeChanged}
             on:click={triggerRegime}
         >
-            ⚠️ {isRegimeChanged ? "NORMALIZE SIGNAL" : "TRIGGER ANOMALY"}
+            {isRegimeChanged ? "NORMALIZE SIGNAL" : "TRIGGER ANOMALY"}
         </button>
     {/if}
 </div>

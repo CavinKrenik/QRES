@@ -11,9 +11,9 @@
     }
 
     const navItems = [
-        { id: "iot", icon: "📡", label: "IoT Stream" },
-        { id: "hive", icon: "🕸️", label: "Network Map" },
-        { id: "graph", icon: "🧠", label: "Neural Graph" },
+        { id: "iot", icon: "[~]", label: "IoT Stream" },
+        { id: "hive", icon: "[*]", label: "Network Map" },
+        { id: "graph", icon: "[+]", label: "Neural Graph" },
     ];
 </script>
 
@@ -36,7 +36,7 @@
     </nav>
 
     <div class="sidebar-footer">
-        <div class="version-badge">v15.2.0</div>
+        <div class="version-badge">v15.3.0</div>
     </div>
 </aside>
 

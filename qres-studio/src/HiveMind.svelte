@@ -19,7 +19,7 @@
     async function loadData() {
         // @ts-ignore
         if (!window.__TAURI__) {
-            toast.push('Running in browser mode - hive features disabled');
+            toast.push("Running in browser mode - hive features disabled");
             return;
         }
         try {
@@ -38,7 +38,7 @@
     async function handleSwarmToggle() {
         // @ts-ignore
         if (!window.__TAURI__) {
-            toast.push('Swarm toggle not available in browser mode');
+            toast.push("Swarm toggle not available in browser mode");
             return;
         }
         const enabled = $swarmEnabled;
@@ -50,9 +50,13 @@
             console.log(result);
 
             if (enabled) {
-                toast.push("Swarm Network Enabled - sharing learnings with the collective!");
+                toast.push(
+                    "Swarm Network Enabled - sharing learnings with the collective!",
+                );
             } else {
-                toast.push("Swarm Network Disabled - operating in isolated mode");
+                toast.push(
+                    "Swarm Network Disabled - operating in isolated mode",
+                );
             }
         } catch (e) {
             console.error("Swarm toggle failed:", e);
@@ -89,7 +93,7 @@
 
 <div class="hive-container">
     <div class="hive-header">
-        <h2>🐝 Hive Mind</h2>
+        <h2>Hive Mind</h2>
         <div class="swarm-toggle">
             <label class="toggle-label">
                 <input
