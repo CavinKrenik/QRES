@@ -27,9 +27,10 @@
         const innerWidth = width - margin.left - margin.right;
         const innerHeight = height - margin.top - margin.bottom;
 
-        // Update scales
-        const now = Date.now();
-        x.domain([now - 10000, now]).range([0, innerWidth]);
+        // Update scales - use actual data range so chart fills width
+        const minTime = d3.min(data, (d) => d.timestamp) || Date.now() - 10000;
+        const maxTime = d3.max(data, (d) => d.timestamp) || Date.now();
+        x.domain([minTime, maxTime]).range([0, innerWidth]);
 
         const maxY = Math.max(100, d3.max(data, (d) => d.rawBytes) || 100);
         y.domain([0, maxY * 1.2]).range([innerHeight, 0]);

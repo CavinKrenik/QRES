@@ -38,7 +38,7 @@ export class WeatherReplay {
         console.log(`[WeatherReplay] Loaded ${this.frames.length} frames from Jena Climate Dataset`);
     }
 
-    public start(frequencyHz: number = 10) {
+    public start(frequencyHz: number = 20) { // Increased from 10Hz to 20Hz (Faster Replay)
         if (this.intervalId) return;
 
         console.log(`[WeatherReplay] Starting replay at ${frequencyHz}Hz`);
@@ -56,10 +56,15 @@ export class WeatherReplay {
             // Simulate battery drain over the replay period
             const batteryLevel = 100 - (this.index / this.frames.length) * 20;
 
-            // Determine Status:
-            // High vibration (>1.5) = Storm = LEARNING (model adapting to surprises)
-            // Low vibration = Calm = INFERRING (predictable state)
-            const isStorming = frame.vibration > 1.5;
+            // --- AUTO-TRIGGER LOGIC ---
+            // Lowered threshold from 1.5 to 0.8 for more sensitive automatic triggering
+            // This ensures "Storm Mode" triggers automatically more often
+            const isStorming = frame.vibration > 0.8;
+
+            // Debug: Prove it's automatic
+            if (isStorming && this.index % 10 === 0) {
+                console.log(`⚡ AUTO-TRIGGER: Vibration ${frame.vibration.toFixed(2)} > 0.8 → LEARNING`);
+            }
 
             const packet: TelemetryPacket = {
                 timestamp: now,
