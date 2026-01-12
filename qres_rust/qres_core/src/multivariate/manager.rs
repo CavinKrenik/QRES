@@ -1,5 +1,5 @@
-use std::collections::{HashMap, HashSet};
 use crate::multivariate::correlation::PearsonCorrelation;
+use std::collections::{HashMap, HashSet};
 
 /// A group of streams identified as highly correlated.
 #[derive(Debug, Clone)]

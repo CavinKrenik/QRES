@@ -19,19 +19,20 @@ impl PearsonCorrelation {
         }
 
         let n = x.len() as f32;
-        
+
         // Calculate means
         let mean_x = x.iter().sum::<f32>() / n;
         let mean_y = y.iter().sum::<f32>() / n;
 
         // Calculate covariance and variances using iterators
-        let (covariance, var_x, var_y) = x.iter()
-            .zip(y.iter())
-            .fold((0.0, 0.0, 0.0), |(cov, vx, vy), (&xi, &yi)| {
-                let dx = xi - mean_x;
-                let dy = yi - mean_y;
-                (cov + dx * dy, vx + dx * dx, vy + dy * dy)
-            });
+        let (covariance, var_x, var_y) =
+            x.iter()
+                .zip(y.iter())
+                .fold((0.0, 0.0, 0.0), |(cov, vx, vy), (&xi, &yi)| {
+                    let dx = xi - mean_x;
+                    let dy = yi - mean_y;
+                    (cov + dx * dy, vx + dx * dx, vy + dy * dy)
+                });
 
         if var_x == 0.0 || var_y == 0.0 {
             return 0.0;

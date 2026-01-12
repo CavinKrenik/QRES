@@ -61,20 +61,20 @@ pub mod archive;
 #[cfg(feature = "std")]
 pub mod compression;
 #[cfg(feature = "std")]
-pub mod multivariate;
-pub mod resource_management;
+pub mod dedup;
 #[cfg(feature = "std")]
 pub mod encoding;
-#[cfg(feature = "std")]
-pub mod inference;
-#[cfg(feature = "std")]
-pub mod dedup;
 #[cfg(feature = "gpu")]
 pub mod gpu;
+#[cfg(feature = "std")]
+pub mod inference;
 pub mod meta_brain; // Inference Engine (moved to Core)
 pub mod mixer;
+#[cfg(feature = "std")]
+pub mod multivariate;
 pub mod predictors;
 pub mod privacy;
+pub mod resource_management;
 pub mod secure_agg;
 pub mod spectral;
 pub mod tensor;

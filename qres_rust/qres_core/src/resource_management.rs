@@ -54,7 +54,6 @@ impl ResourceUsagePredictor {
                     );
                     None
                 }
-
             }
         } else {
             None

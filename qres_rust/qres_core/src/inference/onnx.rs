@@ -66,11 +66,8 @@ impl NeuralPredictor {
         }
 
         // Create input tensor
-        let input = tract_ndarray::Array2::from_shape_vec(
-            (1, self.window_size),
-            window.to_vec(),
-        )
-        .context("Failed to create input array")?;
+        let input = tract_ndarray::Array2::from_shape_vec((1, self.window_size), window.to_vec())
+            .context("Failed to create input array")?;
 
         let input_tensor: Tensor = input.into();
 
