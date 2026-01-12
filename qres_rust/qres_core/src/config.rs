@@ -76,9 +76,15 @@ impl QresConfig {
             PredictorType::Heuristic => {
                 alloc::boxed::Box::new(crate::predictors::SimplePredictor::new())
             }
-            PredictorType::Neural | PredictorType::Hybrid => {
-                // Placeholder: Map to GraphPredictor until Byte wrappers are ready
+            PredictorType::Neural => {
+                // Neural predictor uses GraphPredictor (learning predictor) until
+                // byte-level ONNX wrapper is implemented
+                eprintln!("⚠️ INFO: Neural mode using GraphPredictor (learning)");
                 alloc::boxed::Box::new(crate::predictors::GraphPredictor::new())
+            }
+            PredictorType::Hybrid => {
+                // Hybrid uses LzMatchPredictor for pattern matching
+                alloc::boxed::Box::new(crate::predictors::LzMatchPredictor::new())
             }
         }
     }

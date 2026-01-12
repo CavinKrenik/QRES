@@ -21,18 +21,25 @@ const PREDICTORS: [PredictorType; 4] = [
 const CODERS: [CoderType; 2] = [CoderType::Huffman, CoderType::Arithmetic];
 
 /// Load a single-column float dataset from a file.
+/// Skips header row if present and extracts the second column (index 1).
 fn load_dataset(path: &Path) -> anyhow::Result<Vec<f32>> {
     let file = File::open(path)?;
     let reader = BufReader::new(file);
     let mut data = Vec::new();
-    for line in reader.lines() {
+    let mut lines = reader.lines();
+    
+    // Skip header row
+    let _ = lines.next();
+    
+    for line in lines {
         let line = line?;
         let trimmed = line.trim();
         if trimmed.is_empty() || trimmed.starts_with('#') {
             continue;
         }
-        // Handle CSV with multiple columns: take first column
-        let value_str = trimmed.split(',').next().unwrap_or(trimmed);
+        // Handle CSV with multiple columns: extract second column (index 1)
+        let parts: Vec<&str> = trimmed.split(',').collect();
+        let value_str = if parts.len() > 1 { parts[1] } else { parts[0] };
         if let Ok(val) = value_str.trim().parse::<f32>() {
             data.push(val);
         }
@@ -40,9 +47,15 @@ fn load_dataset(path: &Path) -> anyhow::Result<Vec<f32>> {
     Ok(data)
 }
 
-/// Convert float data to bytes for compression.
+/// Convert quantized float data to bytes for compression.
+/// Uses i16 encoding (multiply by 100, clamp to i16 range) for better compression.
 fn floats_to_bytes(data: &[f32]) -> Vec<u8> {
-    data.iter().flat_map(|f| f.to_le_bytes()).collect()
+    data.iter()
+        .flat_map(|&f| {
+            let scaled = (f * 100.0).clamp(i16::MIN as f32, i16::MAX as f32) as i16;
+            scaled.to_le_bytes()
+        })
+        .collect()
 }
 
 /// Benchmark a single configuration on a dataset.
@@ -151,6 +164,9 @@ fn main() -> anyhow::Result<()> {
                 continue;
             }
         };
+
+        // [FIX] Quantize data to 2 decimal places to make it compressible!
+        let data: Vec<f32> = data.iter().map(|&x| (x * 100.0).round() / 100.0).collect();
 
         let data_bytes = floats_to_bytes(&data);
         let original_size = data_bytes.len();
