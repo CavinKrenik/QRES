@@ -140,8 +140,11 @@ fn main() -> anyhow::Result<()> {
         PathBuf::from("benchmarks/src/edge_realistic/datasets")
     };
 
+    // Gracefully handle missing data directory (for CI environments)
     if !data_dir.exists() {
-        anyhow::bail!("Data directory does not exist: {:?}", data_dir);
+        println!("WARN: Data directory not found at {:?}. Skipping benchmarks.", data_dir);
+        println!("      This is expected in CI. Download datasets locally to run benchmarks.");
+        return Ok(()); // Exit successfully, not a failure
     }
 
     // Create results directory
