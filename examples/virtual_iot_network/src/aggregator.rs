@@ -74,7 +74,10 @@ impl Aggregator {
         // Order matters: specific paths first, then root, then generic static fallthrough
         let routes = telemetry.or(metrics).or(root).or(static_files);
 
-        println!(">> Hive Aggregator online at http://127.0.0.1:{}", self.port);
+        println!(
+            ">> Hive Aggregator online at http://127.0.0.1:{}",
+            self.port
+        );
         warp::serve(routes).run(([127, 0, 0, 1], self.port)).await;
     }
 }

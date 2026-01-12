@@ -41,7 +41,7 @@ impl SensorNode {
             interval.tick().await;
 
             let elapsed_secs = start_time.elapsed().unwrap_or_default().as_secs_f64();
-            
+
             // Generate synthetic value (temperature-like)
             let value = {
                 let mut rng = rand::thread_rng();
@@ -60,7 +60,7 @@ impl SensorNode {
             // Send data
             match client.post(&self.aggregator_url).json(&data).send().await {
                 Ok(_) => {
-                     // Quiet success
+                    // Quiet success
                 }
                 Err(e) => {
                     eprintln!("Sensor {} failed to send data: {}", self.id, e);

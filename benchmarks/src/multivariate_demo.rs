@@ -10,13 +10,13 @@ fn main() {
     let n = 1000;
     let mut t_series = Vec::with_capacity(n);
     let mut humidity = Vec::with_capacity(n); // Correlated
-    let mut noise = Vec::with_capacity(n);    // Uncorrelated
+    let mut noise = Vec::with_capacity(n); // Uncorrelated
 
     for i in 0..n {
         let t = i as f32 * 0.1;
-        
+
         // Base signal (Temperature)
-        let val = t.sin(); 
+        let val = t.sin();
         t_series.push(val);
 
         // Correlated signal (Humidity - inverse relation + noise)
@@ -28,10 +28,16 @@ fn main() {
 
     // 2. Test Single Correlation
     let score = PearsonCorrelation::calculate(&t_series, &humidity);
-    println!("Correlation (Temp vs Humidity): {:.4} (Expected: High Negative)", score);
-    
+    println!(
+        "Correlation (Temp vs Humidity): {:.4} (Expected: High Negative)",
+        score
+    );
+
     let noise_score = PearsonCorrelation::calculate(&t_series, &noise);
-    println!("Correlation (Temp vs Noise):    {:.4} (Expected: Low)", noise_score);
+    println!(
+        "Correlation (Temp vs Noise):    {:.4} (Expected: Low)",
+        noise_score
+    );
 
     // 3. Test Group Finding
     println!("\n>> Detecting Groups (Threshold: 0.7)...");
@@ -46,7 +52,7 @@ fn main() {
         println!("  [Group Found] Leader: {}", group.leader);
         println!("    Members: {:?}", group.members);
     }
-    
+
     if groups.is_empty() {
         println!("  No groups found (Unexpected!).");
     }

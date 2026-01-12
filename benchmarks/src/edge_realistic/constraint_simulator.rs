@@ -53,7 +53,10 @@ impl ConstraintSimulator {
             1.0
         };
 
-        println!("Starting task '{}' on device '{}'...", task_name, self.profile.name);
+        println!(
+            "Starting task '{}' on device '{}'...",
+            task_name, self.profile.name
+        );
 
         // Execute value
         let result = work_fn();
@@ -106,10 +109,10 @@ impl ConstraintSimulator {
     /// Args:
     ///     amount_mb: Amount of memory to free in MB.
     pub fn free_memory(&self, amount_mb: usize) {
-        let _ = self
-            .current_memory_usage_mb
-            .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |val| {
-                Some(val.saturating_sub(amount_mb))
-            });
+        let _ =
+            self.current_memory_usage_mb
+                .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |val| {
+                    Some(val.saturating_sub(amount_mb))
+                });
     }
 }

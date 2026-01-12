@@ -21,9 +21,9 @@ impl BenchmarkRunner {
     pub fn from_profile<P: AsRef<Path>>(profile_path: P) -> Result<Self> {
         let profile = DeviceProfile::load_from_yaml(&profile_path)
             .with_context(|| "Failed to load device profile for runner")?;
-        
+
         println!("Initializing BenchmarkRunner for device: {}", profile.name);
-        
+
         Ok(Self {
             simulator: ConstraintSimulator::new(profile),
         })
@@ -37,7 +37,7 @@ impl BenchmarkRunner {
     ///     Result indicating success.
     pub fn run_dummy_benchmark(&self) -> Result<()> {
         let task_name = "Dummy Compression";
-        
+
         self.simulator.run_cpu_constrained(task_name, || {
             // Simulate memory allocation for a buffer (e.g., 50MB)
             let alloc_size_mb = 50;
@@ -49,11 +49,11 @@ impl BenchmarkRunner {
             // The simulator will add EXTRA sleep on top of this.
             // Let's pretend the work takes 100ms on a reference machine.
             thread::sleep(Duration::from_millis(100));
-            
+
             // Clean up
             self.simulator.free_memory(alloc_size_mb);
             println!("Freed {} MB.", alloc_size_mb);
-            
+
             Ok(())
         })
     }

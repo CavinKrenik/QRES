@@ -9,7 +9,7 @@ fn main() -> std::io::Result<()> {
     // 1. Load Model
     let mut model_path = PathBuf::from("qres_rust/qres_core/assets/predictor_v2.onnx");
     if !model_path.exists() {
-         model_path = PathBuf::from("../qres_rust/qres_core/assets/predictor_v2.onnx");
+        model_path = PathBuf::from("../qres_rust/qres_core/assets/predictor_v2.onnx");
     }
     // Fallback if running from benchmarks dir
     if !model_path.exists() {
@@ -17,7 +17,7 @@ fn main() -> std::io::Result<()> {
     }
     // One more try for absolute path
     if !model_path.exists() {
-         model_path = PathBuf::from("C:/Dev/QRES/qres_rust/qres_core/assets/predictor_v2.onnx");
+        model_path = PathBuf::from("C:/Dev/QRES/qres_rust/qres_core/assets/predictor_v2.onnx");
     }
 
     println!("Loading model from: {:?}", model_path);
@@ -54,7 +54,7 @@ fn main() -> std::io::Result<()> {
         let actual_next = values[i + window_size];
 
         let heuristic = predictor.predict_heuristic(window);
-        
+
         // Neural can fail if model not loaded or internal error, handle gracefully
         let neural = predictor.predict_neural(window).unwrap_or(0.0);
 

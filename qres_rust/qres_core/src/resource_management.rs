@@ -10,7 +10,9 @@ pub struct MovingAveragePredictor {
 
 impl MovingAveragePredictor {
     pub fn new(window_size: usize) -> Self {
-        Self { _window_size: window_size }
+        Self {
+            _window_size: window_size,
+        }
     }
 
     pub fn predict(&self, window: &[f32]) -> f32 {

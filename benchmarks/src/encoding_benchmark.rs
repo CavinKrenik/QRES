@@ -26,7 +26,11 @@ fn main() {
 
     // 2. Count zeros (should be very few with this distribution)
     let zeros = data.iter().filter(|&&x| x == 0 || x == 128).count();
-    println!("Near-zero bytes: {} ({:.2}%)", zeros, (zeros as f64 / size as f64) * 100.0);
+    println!(
+        "Near-zero bytes: {} ({:.2}%)",
+        zeros,
+        (zeros as f64 / size as f64) * 100.0
+    );
 
     // 3. Compress with ZSTD (level 3)
     let zstd_start = std::time::Instant::now();
@@ -71,6 +75,12 @@ fn main() {
 
     // 6. Summary
     println!("\n>> Summary");
-    println!("   ZSTD Ratio:       {:.2}x", data.len() as f64 / zstd_compressed.len() as f64);
-    println!("   Range Coder Ratio: {:.2}x", data.len() as f64 / ac_compressed.len() as f64);
+    println!(
+        "   ZSTD Ratio:       {:.2}x",
+        data.len() as f64 / zstd_compressed.len() as f64
+    );
+    println!(
+        "   Range Coder Ratio: {:.2}x",
+        data.len() as f64 / ac_compressed.len() as f64
+    );
 }

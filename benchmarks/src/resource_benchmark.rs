@@ -1,6 +1,6 @@
 use qres_core::resource_management::ResourceUsagePredictor;
-use std::time::Instant;
 use std::path::PathBuf;
+use std::time::Instant;
 
 fn main() {
     println!("==================================================");
@@ -13,16 +13,19 @@ fn main() {
     // We try a few paths to be robust
     let mut model_path = PathBuf::from("qres_rust/qres_core/assets/predictor_v2.onnx");
     if !model_path.exists() {
-         model_path = PathBuf::from("../qres_rust/qres_core/assets/predictor_v2.onnx");
+        model_path = PathBuf::from("../qres_rust/qres_core/assets/predictor_v2.onnx");
     }
     if !model_path.exists() {
-         // Maybe we are in qres_core
-         model_path = PathBuf::from("assets/predictor_v2.onnx");
+        // Maybe we are in qres_core
+        model_path = PathBuf::from("assets/predictor_v2.onnx");
     }
-    
+
     // Fallback check
     if !model_path.exists() {
-        println!("Error: Could not find ONNX model at {:?}. Benchmark will use Heuristic only.", model_path);
+        println!(
+            "Error: Could not find ONNX model at {:?}. Benchmark will use Heuristic only.",
+            model_path
+        );
     } else {
         println!("Found ONNX model at {:?}", model_path);
     }
@@ -32,7 +35,7 @@ fn main() {
     // 2. Data Gen
     let window_size = 32;
     let iterations = 10_000;
-    
+
     // Create random window data
     let mut data: Vec<Vec<f32>> = Vec::with_capacity(iterations);
     for i in 0..iterations {
@@ -43,7 +46,7 @@ fn main() {
         }
         data.push(window);
     }
-    
+
     // 3. Benchmark Heuristic
     let start_heuristic = Instant::now();
     for window in &data {
@@ -51,7 +54,7 @@ fn main() {
     }
     let duration_heuristic = start_heuristic.elapsed();
     let avg_heuristic = duration_heuristic.as_secs_f64() * 1_000_000.0 / iterations as f64;
-    
+
     println!("Heuristic Average Latency: {:.2} µs", avg_heuristic);
 
     // 4. Benchmark Neural
@@ -63,14 +66,17 @@ fn main() {
         }
     }
     let duration_neural = start_neural.elapsed();
-    
+
     if success_count > 0 {
         let avg_neural = duration_neural.as_secs_f64() * 1_000_000.0 / iterations as f64;
         println!("Neural Average Latency:    {:.2} µs", avg_neural);
-        println!("Neural Overhead Factor:    {:.2}x", avg_neural / avg_heuristic);
+        println!(
+            "Neural Overhead Factor:    {:.2}x",
+            avg_neural / avg_heuristic
+        );
     } else {
         println!("Neural Benchmark Failed (Model not loaded or invalid windows)");
     }
-    
+
     println!("==================================================");
 }

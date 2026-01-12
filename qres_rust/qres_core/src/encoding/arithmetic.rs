@@ -17,7 +17,7 @@ impl Default for RangeCoder {
 }
 
 impl RangeCoder {
-// const TOP: u64 = 1 << 24;
+    // const TOP: u64 = 1 << 24;
     const BOTTOM: u64 = 1 << 16;
 
     pub fn new() -> Self {
@@ -64,7 +64,7 @@ pub struct RangeDecoder<'a> {
 }
 
 impl<'a> RangeDecoder<'a> {
-// const TOP: u64 = 1 << 24;
+    // const TOP: u64 = 1 << 24;
     const BOTTOM: u64 = 1 << 16;
 
     pub fn new(input: &'a [u8]) -> Self {

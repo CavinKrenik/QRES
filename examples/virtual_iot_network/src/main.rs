@@ -20,7 +20,7 @@ async fn main() {
     for i in 1..=5 {
         let node_id = format!("sensor_{:03}", i);
         let node = SensorNode::new(node_id, "http://127.0.0.1:3030/telemetry".to_string(), 1);
-        
+
         let handle = task::spawn(async move {
             // Give aggregator time to start
             tokio::time::sleep(std::time::Duration::from_millis(500)).await;
