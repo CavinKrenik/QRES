@@ -173,83 +173,72 @@ fn main() -> anyhow::Result<()> {
         PathBuf::from("benchmarks/src/edge_realistic/datasets")
     };
 
-    // Gracefully handle missing data directory (for CI environments)
     if !data_dir.exists() {
         println!(
             "WARN: Data directory not found at {:?}. Skipping benchmarks.",
             data_dir
         );
-        println!("      This is expected in CI. Download datasets locally to run benchmarks.");
-        return Ok(()); // Exit successfully, not a failure
+        return Ok(());
     }
 
-    // Create results directory
     let results_dir = PathBuf::from("results");
     fs::create_dir_all(&results_dir)?;
 
     let output_path = results_dir.join("benchmark_matrix.csv");
     let mut wtr = Writer::from_path(&output_path)?;
 
-    // Write header
+    // [UPDATED] Expanded CSV Header
     wtr.write_record([
         "Dataset",
         "Predictor",
         "Coder",
-        "Original_Size",
-        "Compressed_Size",
-        "Ratio",
-        "Compression_Speed_MBs",
-        "Decompression_Speed_MBs",
+        "Raw_Size_Bytes",
+        "BitPacked_Size_Bytes",
+        "Final_Size_Bytes",
+        "Total_Ratio",
+        "BitPack_Ratio",
+        "Neural_Gain",
+        "Compress_Speed_MBs",
+        "Decompress_Speed_MBs",
     ])?;
 
-    println!("=== QRES Comprehensive Benchmark ===");
-    println!("Data directory: {:?}", data_dir);
-    println!("Output: {:?}", output_path);
-    println!();
+    println!("=== QRES Comprehensive Benchmark (Metric Fix) ===");
+    println!("Data: {:?}", data_dir);
 
-    // Find all data files
     let entries: Vec<_> = fs::read_dir(&data_dir)?
         .filter_map(|e| e.ok())
         .filter(|e| {
             let path = e.path();
-            path.is_file()
-                && (path
-                    .extension()
-                    .map(|s| s == "csv" || s == "txt")
-                    .unwrap_or(false))
+            path.is_file() && path.extension().map_or(false, |s| s == "csv" || s == "txt")
         })
         .collect();
-
-    if entries.is_empty() {
-        println!("No .csv or .txt files found in {:?}", data_dir);
-        return Ok(());
-    }
-
-    println!("Found {} datasets", entries.len());
 
     for entry in entries {
         let path = entry.path();
         let dataset_name = path.file_stem().unwrap_or_default().to_string_lossy();
-
         println!("\n[{}]", dataset_name);
 
         let data = match load_dataset(&path) {
             Ok(d) if !d.is_empty() => d,
-            Ok(_) => {
-                println!("  Skipping: Empty dataset");
-                continue;
-            }
-            Err(e) => {
-                println!("  Skipping: {}", e);
-                continue;
-            }
+            Ok(_) => continue,
+            Err(_) => continue,
         };
 
-        // [FIX] Quantize data to 2 decimal places to make it compressible!
+        // Quantize
         let data: Vec<f32> = data.iter().map(|&x| (x * 100.0).round() / 100.0).collect();
 
+        // [CRITICAL FIX 1] True Baseline = 4 bytes per float
+        let raw_size = data.len() * 4;
+
+        // [CRITICAL FIX 2] Measure Bit-Packing Baseline
         let data_bytes = floats_to_bytes(&data);
-        let original_size = data_bytes.len();
+        let bitpacked_size = data_bytes.len();
+        let bitpack_ratio = raw_size as f64 / bitpacked_size as f64;
+
+        println!(
+            "  Base: Bit-Packing achieved {:.2}x ({} -> {} bytes)",
+            bitpack_ratio, raw_size, bitpacked_size
+        );
 
         for predictor in PREDICTORS {
             for coder in CODERS {
@@ -257,39 +246,54 @@ fn main() -> anyhow::Result<()> {
                 let coder_name = format!("{:?}", coder);
 
                 match benchmark_config(&data_bytes, predictor, coder) {
-                    Some((compressed_size, compress_speed, decompress_speed)) => {
-                        let ratio = original_size as f64 / compressed_size as f64;
+                    Some((final_size, speed_c, speed_d)) => {
+                        // [CRITICAL FIX 3] Calculate Total Ratio
+                        let total_ratio = raw_size as f64 / final_size as f64;
+                        let neural_gain = bitpacked_size as f64 / final_size as f64;
 
                         println!(
-                            "  {:8} + {:10}: {:.2}x @ {:.1} MB/s",
-                            predictor_name, coder_name, ratio, compress_speed
+                            "  {:8} + {:10}: {:.2}x (Neural Gain: {:.2}x) @ {:.1} MB/s",
+                            predictor_name, coder_name, total_ratio, neural_gain, speed_c
                         );
 
                         wtr.write_record([
                             dataset_name.as_ref(),
                             predictor_name.as_str(),
                             coder_name.as_str(),
-                            &original_size.to_string(),
-                            &compressed_size.to_string(),
-                            &format!("{:.4}", ratio),
-                            &format!("{:.2}", compress_speed),
-                            &format!("{:.2}", decompress_speed),
+                            &raw_size.to_string(),
+                            &bitpacked_size.to_string(),
+                            &final_size.to_string(),
+                            &format!("{:.4}", total_ratio),
+                            &format!("{:.4}", bitpack_ratio),
+                            &format!("{:.4}", neural_gain),
+                            &format!("{:.2}", speed_c),
+                            &format!("{:.2}", speed_d),
                         ])?;
                     }
                     None => {
+                        // Even if Neural expands, Bit-Packing worked!
                         println!(
-                            "  {:8} + {:10}: SKIPPED (expansion)",
-                            predictor_name, coder_name
+                            "  {:8} + {:10}: {:.2}x (Bit-Pack Only - Neural Skipped)",
+                            predictor_name, coder_name, bitpack_ratio
                         );
+                        wtr.write_record([
+                            dataset_name.as_ref(),
+                            predictor_name.as_str(),
+                            coder_name.as_str(),
+                            &raw_size.to_string(),
+                            &bitpacked_size.to_string(),
+                            &bitpacked_size.to_string(),
+                            &format!("{:.4}", bitpack_ratio),
+                            &format!("{:.4}", bitpack_ratio),
+                            "1.0000",
+                            "N/A",
+                            "N/A",
+                        ])?;
                     }
                 }
             }
         }
     }
-
     wtr.flush()?;
-    println!("\n=== Benchmark Complete ===");
-    println!("Results written to: {:?}", output_path);
-
     Ok(())
 }
