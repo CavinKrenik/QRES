@@ -17,7 +17,7 @@ Thank you for your interest in contributing to QRES!
 ## Development Setup
 
 # Rust Workspace (Core + Daemon)
-cd qres_rust
+cd QRES
 cargo build --release --workspace
 
 # Run tests
@@ -89,4 +89,4 @@ Open an issue or start a discussion. We're happy to help!
 
 ---
 
-*See [ROADMAP.md](ROADMAP.md) for current priorities.*
+*See [PRODUCT_ROADMAP.md](PRODUCT_ROADMAP.md) for current priorities.*

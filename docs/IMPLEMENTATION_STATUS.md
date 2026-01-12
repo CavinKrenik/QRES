@@ -13,6 +13,8 @@ This document clarifies what's production-ready vs. experimental vs. roadmap.
 - **Swarm Synchronization**: PRNG seed-based coordination (zero-bandwidth)
 - **Ensemble Predictors**: Linear, Graph, Spectral, SNN, High-Dimensional predictors with RL mixing
 - **Portable SIMD**: ARM NEON, x86 AVX, and WASM SIMD via `wide` crate
+- **Arithmetic Coding** (v16): Range coder for residual compression
+- **Neural Resource Prediction** (v16): ONNX-based hybrid predictor (Neural + Heuristic fallback)
 
 ## 🧪 Experimental (Works But Not Hardened)
 
@@ -27,7 +29,6 @@ This document clarifies what's production-ready vs. experimental vs. roadmap.
 ## 📋 Roadmap (Not Yet Implemented)
 
 - **Security Defenses**: Reputation scoring
-- **Arithmetic Coding**: Advanced entropy coding for 10-20% better ratios
 - **Explicit Fallback Modes**: Graceful degradation during phase shifts
 - **FPGA Acceleration**: Hardware implementation of Mixer logic
 - **Multimodal SNNs**: Cross-domain compression predictors

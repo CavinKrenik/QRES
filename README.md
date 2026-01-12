@@ -125,7 +125,7 @@ This project evolved through 15 major iterations:
 | v15 | Privacy: Differential Privacy, Secure Aggregation, ZK Proofs |
 | v15.2 | Publication Enhancement: Benchmarks, Reproducibility, Paper Draft |
 
-[Read the full story →](docs/PHILOSOPHY.md)
+[See detailed roadmap →](docs/PRODUCT_ROADMAP.md)
 
 ---
 
@@ -318,7 +318,7 @@ cargo run --bin preventative_scaling
 ## Frequently Asked Questions
 
 **Q: Is this production-ready?**  
-A: The core engine is stable and deterministic. Federated learning is experimental. Security features (authentication, Byzantine-tolerant aggregation, privacy) are **complete** as of v15.2. See [Implementation Status](docs/IMPLEMENTATION_STATUS.md).
+A: The core engine (compression/decompression) is stable and deterministic. The P2P federated features are experimental but include full security stack (ed25519 authentication, Krum aggregation, differential privacy + ZK proofs) as of v15. The new Neural Predictor v2 and Arithmetic Coding are verified in v16. See [Implementation Status](docs/IMPLEMENTATION_STATUS.md).
 
 **Q: How does this compare to Zstd/Gzip?**  
 A: QRES is specialized for repetitive time-series data. For general-purpose compression, use Zstd. QRES shines when data patterns are predictable and bandwidth is constrained.
@@ -330,7 +330,7 @@ A: No. QRES runs on classical hardware. Early versions had misleading naming tha
 A: For basic use (compress/decompress): low, similar to any compression tool. For federated swarm deployment: moderate, requires understanding of distributed systems.
 
 **Q: Can I use this in production?**  
-A: The compression engine is solid. The P2P/federated features now include ed25519 authentication (v13), Byzantine-tolerant Krum aggregation (v14), and differential privacy with ZK proofs (v15). Safe for most environments; production hardening is ongoing.
+A: The compression engine is stable. The P2P/federated features include ed25519 authentication (v13), Byzantine-tolerant Krum aggregation (v14), differential privacy with ZK proofs (v15), and neural resource prediction (v16). The core is ready; federated features are experimental but security-hardened.
 
 ## License
 
@@ -347,4 +347,4 @@ Apache 2.0 – See [LICENSE](LICENSE)
 
 **What I'd do differently:** Start with security/Byzantine tolerance from day one. Adding it retroactively is painful.
 
-[Read more about the development journey →](docs/PHILOSOPHY.md)
+[View completed milestones →](docs/COMPLETED_MILESTONES.md)
