@@ -248,15 +248,17 @@ graph TD
 
 ## Performance
 
-Benchmarks on structured datasets (Intel Ice Lake):
+Performance metrics are now visualized in real-time via the **Edge Dashboard**.
 
-| Dataset | Type | Ratio | Speed |
-|---------|------|-------|-------|
-| **Sensor Stream** | IoT Telemetry | **~0.045** (22:1) | 85 MB/s |
-| **Server Logs** | Text/Time-series | **~0.19** (5.2x) | 200 MB/s |
-| **Synthetic Wave** | Model-generated | **~0.02** (48:1) | 120 MB/s |
+Historical benchmarks on Intel Ice Lake (v15.2):
 
-[Full benchmarks →](docs/BENCHMARKS.md)
+| Dataset | Ratio | Speed |
+|---------|-------|-------|
+| **Sensor Stream** | ~0.045 (22:1) | 85 MB/s |
+| **Synthetic Wave** | ~0.02 (48:1) | 120 MB/s |
+
+To validate these results on your hardware, run the simulation:
+`npm run dev`
 
 ## Implementation Status
 
