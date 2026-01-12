@@ -23,10 +23,7 @@ impl MultivariateManager {
     ///
     /// Returns:
     ///     Vec<StreamGroup>: List of detected groups.
-    pub fn find_groups(
-        streams: &HashMap<String, Vec<f32>>, 
-        threshold: f32
-    ) -> Vec<StreamGroup> {
+    pub fn find_groups(streams: &HashMap<String, Vec<f32>>, threshold: f32) -> Vec<StreamGroup> {
         let mut groups = Vec::new();
         let mut assigned = HashSet::new();
 

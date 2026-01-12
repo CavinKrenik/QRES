@@ -48,9 +48,13 @@ impl ResourceUsagePredictor {
             match NeuralPredictor::load(path.as_ref()) {
                 Ok(p) => Some(p),
                 Err(e) => {
-                    eprintln!("Warning: Failed to load NeuralPredictor: {}. Using heuristic only.", e);
+                    eprintln!(
+                        "Warning: Failed to load NeuralPredictor: {}. Using heuristic only.",
+                        e
+                    );
                     None
                 }
+
             }
         } else {
             None
@@ -86,9 +90,9 @@ impl ResourceUsagePredictor {
     /// Returns None if neural model not loaded or window size mismatch
     pub fn predict_neural(&self, window: &[f32]) -> Option<f32> {
         if let Some(neural) = &self.neural {
-             if window.len() == NeuralPredictor::WINDOW_SIZE {
-                 return neural.predict(window).ok();
-             }
+            if window.len() == NeuralPredictor::WINDOW_SIZE {
+                return neural.predict(window).ok();
+            }
         }
         None
     }
@@ -119,13 +123,13 @@ impl WorkerPool {
         // Linear mapping: y = 2 + (x * 14)
         // Clamp x to [0.0, 1.0] for safety approx
         let load = predicted_load.max(0.0).min(1.2); // Allow slight overprovision if > 1.0
-        
+
         // Calculate raw target
         let raw_target = 2.0 + (load * 14.0);
-        
+
         let target = raw_target.round() as usize;
         let clamped = target.clamp(2, 16);
-        
+
         self.current_capacity = clamped;
         clamped
     }
