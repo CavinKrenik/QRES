@@ -26,14 +26,12 @@ jobs:
         cat original_hash.txt
 
     - name: Build QRES (Release)
-      working-directory: ./qres_rust
       run: cargo build --release --workspace
 
     - name: Compress Data (Linux x86)
-      working-directory: ./qres_rust
       run: |
         # Binary is now qres_daemon (from the daemon crate)
-        ./target/release/qres_daemon compress ../golden_master.dat ../compressed.qres
+        ./target/release/qres_daemon compress golden_master.dat compressed.qres
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
@@ -57,14 +55,12 @@ jobs:
         name: battle-artifacts
 
     - name: Build QRES (Release)
-      working-directory: ./qres_rust
       run: cargo build --release --workspace
 
     - name: Decompress Data (macOS ARM)
-      working-directory: ./qres_rust
       run: |
         # Binary is now qres_daemon (from the daemon crate)
-        ./target/release/qres_daemon decompress ../compressed.qres ../restored.dat
+        ./target/release/qres_daemon decompress compressed.qres restored.dat
 
     - name: Verify Integrity
       run: |
