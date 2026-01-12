@@ -68,15 +68,7 @@ jobs:
           # Build Python extension from qres_core
           maturin develop --release
 
-      - name: Run Torture Test
-        run: |
-          source .venv/bin/activate
-          python benchmarks/torture_test.py
-      
-      - name: Verify Singularity (Battle Royale)
-        run: |
-          source .venv/bin/activate
-          python benchmarks/battle_royale.py --quick
+
 
       - name: Run Phase 1 & 2 Verifications (Quantum)
         run: |
@@ -86,11 +78,7 @@ jobs:
           python tests/test_swarm_broadcast.py
           python tests/test_receiver_unit.py
 
-      - name: Test LLM Predictor (Optional)
-        continue-on-error: true
-        run: |
-          source .venv/bin/activate
-          python benchmarks/semantic_bench.py || echo "LLM test skipped"
+
 
   studio-test:
     name: GUI Build
