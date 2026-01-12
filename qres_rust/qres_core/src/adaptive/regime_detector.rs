@@ -1,6 +1,5 @@
 use alloc::vec::Vec;
 
-
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum RegimeChange {
     None,
