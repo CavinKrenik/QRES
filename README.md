@@ -2,13 +2,13 @@
 
 > A neural compression engine for time-series data
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18194636.svg)](https://doi.org/10.5281/zenodo.18194636)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18216283.svg)](https://doi.org/10.5281/zenodo.18216283)
 [![ORCID](https://img.shields.io/badge/ORCID-0009--0008--9183--1278-green.svg)](https://orcid.org/0009-0008-9183-1278)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/CavinKrenik/QRES/release.yml?style=flat)](https://github.com/CavinKrenik/QRES/actions)
 [![Version](https://img.shields.io/badge/version-v15.4.0-brightgreen)](https://github.com/CavinKrenik/QRES/releases)
 
-**Paper:** [Download PDF](paper/QRES__Biologically_Inspired_Secure_Federated_Learning_for_Edge_IoT_Devices.pdf) | **DOI:** [10.5281/zenodo.18194636](https://doi.org/10.5281/zenodo.18194636)
+**Paper:** [Download PDF](paper/QRES__Biologically_Inspired_Secure_Federated_Learning_for_Edge_IoT_Devices.pdf) | **DOI:** [10.5281/zenodo.18216283](https://doi.org/10.5281/zenodo.18216283)
 
 ## The Core Idea
 
@@ -129,7 +129,7 @@ This project evolved through 15 major iterations:
 **Author:** Cavin Krenik [![ORCID](https://img.shields.io/badge/ORCID-0009--0008--9183--1278-green.svg)](https://orcid.org/0009-0008-9183-1278)  
 **Affiliation:** Olympic College, Shelton, WA, USA  
 **Published:** January 2026  
-**DOI:** [10.5281/zenodo.18194636](https://doi.org/10.5281/zenodo.18194636)
+**DOI:** [10.5281/zenodo.18216283](https://doi.org/10.5281/zenodo.18216283)
 
 ### Key Results
 
@@ -152,8 +152,8 @@ This project evolved through 15 major iterations:
   year         = 2026,
   publisher    = {Zenodo},
   version      = {v15.2.0},
-  doi          = {10.5281/zenodo.18194636},
-  url          = {https://doi.org/10.5281/zenodo.18194636}
+  doi          = {10.5281/zenodo.18216283},
+  url          = {https://doi.org/10.5281/zenodo.18216283}
 }
 ```
 
