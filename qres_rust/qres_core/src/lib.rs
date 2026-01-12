@@ -74,6 +74,7 @@ pub mod mixer;
 pub mod multivariate;
 pub mod predictors;
 pub mod privacy;
+#[cfg(feature = "std")]
 pub mod resource_management;
 pub mod secure_agg;
 pub mod spectral;

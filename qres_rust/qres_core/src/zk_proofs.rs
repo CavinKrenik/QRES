@@ -4,7 +4,7 @@
 //! Uses EdwardsPoint from curve25519-dalek (minimal feature set).
 
 #[cfg(not(feature = "std"))]
-use alloc::vec::Vec;
+// use alloc::vec::Vec;
 
 use blake3::Hasher;
 use curve25519_dalek::constants::ED25519_BASEPOINT_POINT;
