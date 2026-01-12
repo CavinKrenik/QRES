@@ -44,6 +44,6 @@
 
 **Goal:** Polish, document, and release QRES v16.0.0.
 
-* [ ] **Feature Flags:** Toggle Lossless/Lossy, Neural/SNN, Arithmetic/Huffman.
-* [ ] **Comprehensive Benchmarking:** Run full suite on 100+ UCR datasets.
+* [x] **Feature Flags:** Toggle Lossless/Lossy, Neural/SNN, Arithmetic/Huffman via CLI.
+* [/] **Comprehensive Benchmarking:** Run full suite on 100+ UCR datasets.
 * [ ] **Paper Update:** Finalize LaTeX tables, figures, and submission (post-validation).

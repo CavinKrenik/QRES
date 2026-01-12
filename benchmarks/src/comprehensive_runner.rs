@@ -169,7 +169,7 @@ fn main() -> anyhow::Result<()> {
                             predictor_name, coder_name, ratio, compress_speed
                         );
 
-                        wtr.write_record(&[
+                        wtr.write_record([
                             dataset_name.as_ref(),
                             predictor_name.as_str(),
                             coder_name.as_str(),
