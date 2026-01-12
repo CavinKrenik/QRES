@@ -50,7 +50,10 @@ impl RegimeDetector {
             let threshold = mean + 3.0 * std_dev;
 
             if abs_error > threshold {
-                 RegimeChange::Drift { current_error: abs_error, threshold }
+                RegimeChange::Drift {
+                    current_error: abs_error,
+                    threshold,
+                }
             } else {
                 RegimeChange::None
             }
@@ -61,7 +64,7 @@ impl RegimeDetector {
         // 2. Update Window (Ring Buffer)
         let old_val = self.history[self.idx];
         self.history[self.idx] = abs_error;
-        
+
         // Update running stats
         self.sum = self.sum - old_val + abs_error;
         self.sum_sq = self.sum_sq - (old_val * old_val) + (abs_error * abs_error);

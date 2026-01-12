@@ -42,7 +42,7 @@ fn main() {
     for i in 0..iterations {
         let mut window = Vec::with_capacity(window_size);
         let is_flat = (i / 100) % 2 == 0; // Alternate every 100 iterations
-        
+
         for j in 0..window_size {
             let val = if is_flat {
                 0.5 // Flat line (Variance = 0)
@@ -92,8 +92,8 @@ fn main() {
     }
     let duration_hybrid = start_hybrid.elapsed();
     let avg_hybrid = duration_hybrid.as_secs_f64() * 1_000_000.0 / iterations as f64;
-    
+
     println!("Hybrid Average Latency:    {:.2} µs", avg_hybrid);
-    
+
     println!("==================================================");
 }

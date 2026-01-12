@@ -1,10 +1,10 @@
 use crate::inference::hybrid_predictor::HybridPredictor;
 use std::path::Path;
 
-// Re-export MovingAveragePredictor for compatibility if needed, 
+// Re-export MovingAveragePredictor for compatibility if needed,
 // but primarily it is used internally relative to this module in benchmarks?
 // benchmarks usually import `qres_core::resource_management::ResourceUsagePredictor`.
-// If they imported `MovingAveragePredictor`, we might break them. 
+// If they imported `MovingAveragePredictor`, we might break them.
 // Let's re-export it.
 // pub use crate::inference::heuristic::MovingAveragePredictor;
 

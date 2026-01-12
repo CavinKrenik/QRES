@@ -18,7 +18,10 @@ impl HybridPredictor {
             match NeuralPredictor::load(path.as_ref()) {
                 Ok(p) => Some(p),
                 Err(e) => {
-                    eprintln!("Warning: Failed to load NeuralPredictor: {}. Using heuristic only.", e);
+                    eprintln!(
+                        "Warning: Failed to load NeuralPredictor: {}. Using heuristic only.",
+                        e
+                    );
                     None
                 }
             }
@@ -62,10 +65,14 @@ impl HybridPredictor {
             return 0.0;
         }
         let mean = window.iter().sum::<f32>() / window.len() as f32;
-        let variance = window.iter().map(|&x| {
-            let diff = x - mean;
-            diff * diff
-        }).sum::<f32>() / window.len() as f32;
+        let variance = window
+            .iter()
+            .map(|&x| {
+                let diff = x - mean;
+                diff * diff
+            })
+            .sum::<f32>()
+            / window.len() as f32;
         variance
     }
 

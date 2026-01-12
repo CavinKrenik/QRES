@@ -1,4 +1,4 @@
-use super::regime_detector::{RegimeDetector, RegimeChange};
+use super::regime_detector::{RegimeChange, RegimeDetector};
 
 pub struct FeedbackLoop {
     detector: RegimeDetector,
@@ -16,14 +16,20 @@ impl FeedbackLoop {
     pub fn observe(&mut self, prediction: f32, actual: f32) {
         let error = prediction - actual;
         match self.detector.observe(error) {
-            RegimeChange::Drift { current_error, threshold } => {
+            RegimeChange::Drift {
+                current_error,
+                threshold,
+            } => {
                 // Log warning (using standard eprintln mechanism for now, or log crate if available)
                 // In no_std environment this might need a different reporting mechanism
                 #[cfg(feature = "std")]
                 {
-                   eprintln!("[FeedbackLoop] DRIFT DETECTED! Error: {:.4} > Threshold: {:.4}", current_error, threshold);
+                    eprintln!(
+                        "[FeedbackLoop] DRIFT DETECTED! Error: {:.4} > Threshold: {:.4}",
+                        current_error, threshold
+                    );
                 }
-                
+
                 // TODO: Trigger adaptation (e.g., lower hybrid threshold)
             }
             RegimeChange::None => {}
