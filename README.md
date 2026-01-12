@@ -280,8 +280,9 @@ The new hybrid Neural-Symbolic predictor enables proactive resource scaling:
 
 | Predictor | Latency | MSE |
 | :--- | :--- | :--- |
-| **Heuristic** | 0.02 µs | 0.44 |
-| **Neural** | 1.3 ms | **0.017** |
+| **Heuristic** | 0.04 µs | 0.44 |
+| **Neural** | 1.7 ms | **0.017** |
+| **Hybrid** | **845 µs** | 0.017 |
 
 Run the preventative scaling simulation:
 ```bash
@@ -295,7 +296,7 @@ cargo run --bin preventative_scaling
 | **Production Ready** | Core engine, Python bindings, WASM decoder |
 | **Experimental** | Federated dreaming, regime adaptation |
 | **Security Complete** | Authentication (v13), Robust Aggregation (v14), Privacy (v15) |
-| **Verified** | Neural Predictor (v16), Arithmetic Coding |
+| **Verified** | Neural Predictor (v16), Arithmetic Coding, Hybrid Predictor, Azure Edge (B1ls) |
 | **Roadmap** | FPGA acceleration |
 
 [Detailed status →](docs/IMPLEMENTATION_STATUS.md)
