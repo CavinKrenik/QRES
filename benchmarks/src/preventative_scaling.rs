@@ -33,11 +33,7 @@ fn main() {
     let window_size = 32;
     let total_steps = 100;
     
-    let mut history = Vec::with_capacity(total_steps + window_size);
-    // Fill initial history with low load
-    for _ in 0..window_size {
-        history.push(0.1); 
-    }
+    let mut history = vec![0.1; window_size];
 
     // Main Control Loop
     for t in 0..total_steps {
