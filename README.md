@@ -100,6 +100,13 @@ python3 scripts/fetch_weather_replay.py
 cd qres-studio && npm run dev
 ```
 
+## Zero-Cost Home Lab
+
+QRES is designed to run on scavenged hardware. The "Zero-Cost Home Lab" setup runs the entire federated swarm using virtualization on a single desktop:
+
+![Zero-Cost Edge Lab](docs/images/zero_cost_edge_lab.png)
+
+
 ## The Journey
 
 This project evolved through 15 major iterations:
@@ -259,6 +266,12 @@ Historical benchmarks on Intel Ice Lake (v15.2):
 
 To validate these results on your hardware, run the simulation:
 `npm run dev`
+
+### Adaptive Lossy Compression
+Error-bounded lossy compression adapts to signal variance, maintaining high fidelity while maximizing ratios:
+
+![Adaptive Lossy Analysis](docs/images/adaptive_lossy_analysis.png)
+
 
 ### Neural Resource Prediction (v16)
 The new hybrid Neural-Symbolic predictor enables proactive resource scaling:
