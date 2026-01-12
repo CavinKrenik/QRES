@@ -209,7 +209,7 @@ fn main() -> anyhow::Result<()> {
         .filter_map(|e| e.ok())
         .filter(|e| {
             let path = e.path();
-            path.is_file() && path.extension().map_or(false, |s| s == "csv" || s == "txt")
+            path.is_file() && path.extension().is_some_and(|s| s == "csv" || s == "txt")
         })
         .collect();
 
