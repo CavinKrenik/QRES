@@ -51,8 +51,8 @@ fn compute_deltas(data: &[f32]) -> Vec<i16> {
 }
 
 /// 2. Neural Predictor (Simulated)
-/// Uses a Linear Adaptive Filter (LMS) to mimic a Neural Network's ability
-/// to learn local trends.
+///   Uses a Linear Adaptive Filter (LMS) to mimic a Neural Network's ability
+///   to learn local trends.
 fn predict_residuals(deltas: &[i16]) -> Vec<i16> {
     let mut residuals = Vec::with_capacity(deltas.len());
     residuals.push(deltas[0]); // Can't predict the first one
@@ -129,7 +129,7 @@ fn main() -> anyhow::Result<()> {
 
     for entry in entries {
         let p = entry.path();
-        if !p.extension().map_or(false, |s| s == "csv") {
+        if !p.extension().is_some_and(|s| s == "csv") {
             continue;
         }
 
