@@ -9,6 +9,7 @@ std = ["serde/std", "rand/std", "rand/std_rng", "dep:walkdir", "constriction/std
 python = ["pyo3", "std"]
 dp = ["dep:opendp", "std"]
 gpu = []
+cli = ["dep:clap"]
 
 [lib]
 # Required for PyO3 when building Python extension
@@ -41,6 +42,9 @@ curve25519-dalek = { version = "=4.1.3", default-features = false, features = ["
 
 # Privacy features
 opendp = { version = "0.10", optional = true }
+
+# CLI support
+clap = { version = "4.4", default-features = false, features = ["derive", "std"], optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 getrandom = { version = "0.2", features = ["js"] }

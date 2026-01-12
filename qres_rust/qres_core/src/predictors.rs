@@ -231,3 +231,25 @@ impl Predictor for LzMatchPredictor {
         }
     }
 }
+
+// --- Task B: Zero Predictor (Baseline) ---
+pub struct ZeroPredictor;
+
+impl ZeroPredictor {
+    pub fn new() -> Self {
+        ZeroPredictor
+    }
+}
+
+impl Default for ZeroPredictor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Predictor for ZeroPredictor {
+    fn predict_next(&self) -> u8 {
+        0
+    }
+    fn update(&mut self, _actual: u8) {}
+}

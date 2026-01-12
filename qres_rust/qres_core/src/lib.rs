@@ -61,6 +61,7 @@ pub mod ans_coder;
 pub mod archive;
 #[cfg(feature = "std")]
 pub mod compression;
+pub mod config;
 #[cfg(feature = "std")]
 pub mod dedup;
 #[cfg(feature = "std")]
@@ -147,7 +148,11 @@ fn calculate_sample_entropy(data: &[u8]) -> f32 {
     entropy
 }
 
-fn predictive_encode_v4(data: &[u8], lossy: Option<u8>, weights: Option<&[u8]>) -> Vec<u8> {
+fn predictive_encode_v4(
+    data: &[u8],
+    config: Option<&crate::config::QresConfig>,
+    weights: Option<&[u8]>,
+) -> Vec<u8> {
     #[cfg(feature = "std")]
     println!("DEBUG: Running Optimized Encoder");
     // Lazy Mixer Update batch size - weights update every N bytes
@@ -194,7 +199,14 @@ fn predictive_encode_v4(data: &[u8], lossy: Option<u8>, weights: Option<&[u8]>) 
     let mut ans = AnsWriter::new();
 
     // Prepare quantization factor
-    let q_factor = lossy.unwrap_or(1).max(1) as i8;
+    let q_factor = if let Some(cfg) = config {
+        match cfg.mode {
+            crate::config::CompressionMode::Lossy => 5,
+            _ => 1,
+        }
+    } else {
+        1
+    };
 
     let mut preds = [0u8; 6];
     let mut batch_counter = 0usize;
@@ -351,7 +363,7 @@ pub fn compress_chunk(
     chunk: &[u8],
     _predictor_id: u8,
     _weights: Option<&[u8]>,
-    _lossy: Option<u8>,
+    config: Option<&crate::config::QresConfig>,
 ) -> Result<Vec<u8>> {
     // 1. SAFETY CHECK: Validate Predictor ID
     if _predictor_id > PREDICTOR_ID_SPLIT {
@@ -385,8 +397,8 @@ pub fn compress_chunk(
             }
 
             // Recursive compression
-            let c_even = compress_chunk(&even, 0, _weights, _lossy)?;
-            let c_odd = compress_chunk(&odd, 0, _weights, _lossy)?;
+            let c_even = compress_chunk(&even, 0, _weights, config)?;
+            let c_odd = compress_chunk(&odd, 0, _weights, config)?;
 
             // Flag 0x03: Interleaved Split
             // Structure: [Flag] [TotalLen: 4] [EvenLen: 4] [EvenData] [OddData]
@@ -461,7 +473,7 @@ pub fn compress_chunk(
     };
 
     // 3. Encode
-    let compressed_body = predictive_encode_v4(chunk, _lossy, w_arg);
+    let compressed_body = predictive_encode_v4(chunk, config, w_arg);
 
     // 4. Wrap with VERSIONED Header
     if compressed_body.len() < chunk.len() {

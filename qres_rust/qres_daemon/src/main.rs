@@ -15,7 +15,7 @@ pub mod swarm_p2p;
 use crate::living_brain::LivingBrain;
 use clap::{Parser, Subcommand};
 use qres_core::tensor::MpsCompressor;
-use qres_core::{compress_chunk, decompress_chunk, QresError};
+use qres_core::{compress_chunk, config::QresConfig, decompress_chunk, QresError};
 // use qres_core::QresError;
 use std::fs::{self, File};
 use std::io::{self, Read, Write};
@@ -28,6 +28,9 @@ const CHUNK_SIZE: usize = 64 * 1024; // 64KB chunks
 #[command(name = "qres-cli")]
 #[command(about = "QRES v10.0 - Neural-Symbolic Meta-Compressor")]
 struct Cli {
+    #[command(flatten)]
+    config: QresConfig,
+
     #[command(subcommand)]
     command: Commands,
 }
@@ -88,7 +91,7 @@ enum Commands {
     },
 }
 
-fn compress_file(input: &str, output: &str) -> io::Result<()> {
+fn compress_file(input: &str, output: &str, config: &QresConfig) -> io::Result<()> {
     let mut input_file = File::open(input)?;
     let mut output_file = File::create(output)?;
 
@@ -129,7 +132,7 @@ fn compress_file(input: &str, output: &str) -> io::Result<()> {
         }
 
         let chunk = &buffer[..bytes_read];
-        let compressed_result = compress_chunk(chunk, 0, weights_arg, None);
+        let compressed_result = compress_chunk(chunk, 0, weights_arg, Some(config));
 
         let compressed = match compressed_result {
             Ok(c) => c,
@@ -458,9 +461,18 @@ fn main() {
     tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
 
     let cli = Cli::parse();
+    println!(
+        "QRES v16.0 | Predictor: {:?} | Coder: {:?}",
+        cli.config.predictor, cli.config.coder
+    );
+
+    info!(
+        config = ?cli.config,
+        "Starting QRES with Configuration"
+    );
 
     let result = match cli.command {
-        Commands::Compress { input, output } => compress_file(&input, &output),
+        Commands::Compress { input, output } => compress_file(&input, &output, &cli.config),
         Commands::Decompress { input, output } => decompress_file(&input, &output),
         Commands::ExportBrain { output } => brain_export_to_file(&output),
         Commands::ImportBrain { input } => brain_import(&input),
