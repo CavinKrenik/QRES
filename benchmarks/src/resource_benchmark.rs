@@ -37,11 +37,18 @@ fn main() {
     let iterations = 10_000;
 
     // Create random window data
+    // Create mixed window data (50% simple/flat, 50% complex/sine)
     let mut data: Vec<Vec<f32>> = Vec::with_capacity(iterations);
     for i in 0..iterations {
         let mut window = Vec::with_capacity(window_size);
+        let is_flat = (i / 100) % 2 == 0; // Alternate every 100 iterations
+        
         for j in 0..window_size {
-            let val = ((i + j) as f32 * 0.1).sin();
+            let val = if is_flat {
+                0.5 // Flat line (Variance = 0)
+            } else {
+                ((i + j) as f32 * 0.1).sin() // Sine wave
+            };
             window.push(val);
         }
         data.push(window);
@@ -78,5 +85,15 @@ fn main() {
         println!("Neural Benchmark Failed (Model not loaded or invalid windows)");
     }
 
+    // 5. Benchmark Hybrid
+    let start_hybrid = Instant::now();
+    for window in &data {
+        let _ = predictor.predict(window);
+    }
+    let duration_hybrid = start_hybrid.elapsed();
+    let avg_hybrid = duration_hybrid.as_secs_f64() * 1_000_000.0 / iterations as f64;
+    
+    println!("Hybrid Average Latency:    {:.2} µs", avg_hybrid);
+    
     println!("==================================================");
 }

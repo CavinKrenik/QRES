@@ -1,101 +1,41 @@
-use crate::inference::onnx::NeuralPredictor;
-// use anyhow::{anyhow, Result};
-// use std::collections::VecDeque;
+use crate::inference::hybrid_predictor::HybridPredictor;
 use std::path::Path;
 
-/// Simple heuristic predictor using Weighted Moving Average
-pub struct MovingAveragePredictor {
-    _window_size: usize,
-}
-
-impl MovingAveragePredictor {
-    pub fn new(window_size: usize) -> Self {
-        Self {
-            _window_size: window_size,
-        }
-    }
-
-    pub fn predict(&self, window: &[f32]) -> f32 {
-        if window.is_empty() {
-            return 0.0;
-        }
-
-        // let len = window.len();
-        let mut sum = 0.0;
-        let mut weight_sum = 0.0;
-
-        // Give more weight to recent values (Linear decay)
-        for (i, &val) in window.iter().enumerate() {
-            let weight = (i + 1) as f32;
-            sum += val * weight;
-            weight_sum += weight;
-        }
-
-        if weight_sum > 0.0 {
-            sum / weight_sum
-        } else {
-            0.0
-        }
-    }
-}
+// Re-export MovingAveragePredictor for compatibility if needed, 
+// but primarily it is used internally relative to this module in benchmarks?
+// benchmarks usually import `qres_core::resource_management::ResourceUsagePredictor`.
+// If they imported `MovingAveragePredictor`, we might break them. 
+// Let's re-export it.
+// pub use crate::inference::heuristic::MovingAveragePredictor;
 
 pub struct ResourceUsagePredictor {
-    neural: Option<NeuralPredictor>,
-    heuristic: MovingAveragePredictor,
+    inner: HybridPredictor,
 }
 
 impl ResourceUsagePredictor {
     pub fn new<P: AsRef<Path>>(onnx_path: Option<P>) -> Self {
-        let neural = if let Some(path) = onnx_path {
-            match NeuralPredictor::load(path.as_ref()) {
-                Ok(p) => Some(p),
-                Err(e) => {
-                    eprintln!(
-                        "Warning: Failed to load NeuralPredictor: {}. Using heuristic only.",
-                        e
-                    );
-                    None
-                }
-            }
-        } else {
-            None
-        };
-
+        // Default threshold of 0.01 (1% variance)
+        // If variance is < 0.01 (very smooth), use Heuristic
+        // If variance is > 0.01 (chaotic), use Neural
         Self {
-            neural,
-            heuristic: MovingAveragePredictor::new(32),
+            inner: HybridPredictor::new(onnx_path, 0.01),
         }
     }
 
     /// Hybrid prediction: Try Neural, fallback to Heuristic
     pub fn predict(&self, window: &[f32]) -> f32 {
-        // Try Neural first
-        if let Some(neural) = &self.neural {
-            if window.len() == NeuralPredictor::WINDOW_SIZE {
-                if let Ok(val) = neural.predict(window) {
-                    return val;
-                }
-            }
-        }
-
-        // Fallback
-        self.heuristic.predict(window)
+        self.inner.predict(window)
     }
 
     /// Force use of heuristic (good for benchmarking baseline)
     pub fn predict_heuristic(&self, window: &[f32]) -> f32 {
-        self.heuristic.predict(window)
+        self.inner.predict_heuristic(window)
     }
 
     /// Force use of neural (good for benchmarking overhead)
     /// Returns None if neural model not loaded or window size mismatch
     pub fn predict_neural(&self, window: &[f32]) -> Option<f32> {
-        if let Some(neural) = &self.neural {
-            if window.len() == NeuralPredictor::WINDOW_SIZE {
-                return neural.predict(window).ok();
-            }
-        }
-        None
+        self.inner.predict_neural(window)
     }
 }
 
