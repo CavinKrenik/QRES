@@ -1,6 +1,6 @@
 use anyhow::Result;
 use byteorder::{LittleEndian, WriteBytesExt};
-use std::io::{Cursor, Write};
+use std::io::Cursor;
 
 /// A compressor that skips values if they can be predicted within a specific error bound.
 ///

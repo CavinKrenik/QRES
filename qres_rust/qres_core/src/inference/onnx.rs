@@ -6,6 +6,7 @@ use std::path::Path;
 /// This provides inference for the TinyPredictor model exported from PyTorch.
 /// The model expects a fixed window of 32 float values and outputs a single prediction.
 pub struct NeuralPredictor {
+    #[allow(clippy::type_complexity)]
     model: tract_onnx::prelude::SimplePlan<
         tract_onnx::prelude::TypedFact,
         Box<dyn tract_onnx::prelude::TypedOp>,

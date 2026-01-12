@@ -1,16 +1,16 @@
 use crate::inference::onnx::NeuralPredictor;
-use anyhow::{anyhow, Result};
-use std::collections::VecDeque;
+// use anyhow::{anyhow, Result};
+// use std::collections::VecDeque;
 use std::path::Path;
 
 /// Simple heuristic predictor using Weighted Moving Average
 pub struct MovingAveragePredictor {
-    window_size: usize,
+    _window_size: usize,
 }
 
 impl MovingAveragePredictor {
     pub fn new(window_size: usize) -> Self {
-        Self { window_size }
+        Self { _window_size: window_size }
     }
 
     pub fn predict(&self, window: &[f32]) -> f32 {
@@ -18,7 +18,7 @@ impl MovingAveragePredictor {
             return 0.0;
         }
 
-        let len = window.len();
+        // let len = window.len();
         let mut sum = 0.0;
         let mut weight_sum = 0.0;
 
@@ -121,7 +121,7 @@ impl WorkerPool {
     pub fn adjust_capacity(&mut self, predicted_load: f32) -> usize {
         // Linear mapping: y = 2 + (x * 14)
         // Clamp x to [0.0, 1.0] for safety approx
-        let load = predicted_load.max(0.0).min(1.2); // Allow slight overprovision if > 1.0
+        let load = predicted_load.clamp(0.0, 1.2); // Allow slight overprovision if > 1.0
 
         // Calculate raw target
         let raw_target = 2.0 + (load * 14.0);
