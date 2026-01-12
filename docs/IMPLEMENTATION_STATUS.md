@@ -47,6 +47,7 @@ This document clarifies what's production-ready vs. experimental vs. roadmap.
 
 | Version | Era | Key Features |
 |---------|-----|--------------|
+| v16.0 | Neural Prediction Era | Hybrid Resource Predictor (ONNX), Arithmetic Coding, Proactive Scaling |
 | v15.3 | Edge Visualization | IoT Dashboard, Real-time D3 Charts, SNN Spike Visualizer |
 | v15.2 | Publication Era | Benchmarks, Reproducibility, Paper Draft |
 | v15.0 | Privacy Era | Differential Privacy, Secure Aggregation, ZK Proofs |
@@ -55,3 +56,4 @@ This document clarifies what's production-ready vs. experimental vs. roadmap.
 | v10.x | Singularity Engine | Q16.16 determinism, architecture decoupling |
 | v9.0 | SNN Era | GIF neurons, OSBC pruning |
 | v8.x | Hive Mind | P2P swarm, federated learning |
+
