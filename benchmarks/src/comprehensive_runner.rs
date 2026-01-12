@@ -55,12 +55,25 @@ fn zigzag_encode(n: i16) -> u16 {
     ((n << 1) ^ (n >> 15)) as u16
 }
 
-/// Convert quantized float data to bytes using Delta + ZigZag + Byte-Split pipeline.
+/// Calculate minimum bits needed to represent a value.
+#[inline]
+fn bits_needed(max_val: u16) -> u8 {
+    if max_val == 0 {
+        1
+    } else {
+        16 - max_val.leading_zeros() as u8
+    }
+}
+
+/// Block size for bit-packing
+const BLOCK_SIZE: usize = 256;
+
+/// Convert quantized float data to bytes using Delta + ZigZag + Bit-Packing pipeline.
 ///
-/// Pipeline:
+/// Pipeline (per block):
 /// 1. Delta Encoding: Store differences between consecutive values
-/// 2. ZigZag Encoding: Map signed deltas to unsigned (eliminates sign noise)
-/// 3. Byte-Plane Splitting: Separate low bytes (high entropy) from high bytes (low entropy)
+/// 2. ZigZag Encoding: Map signed deltas to unsigned
+/// 3. Bit-Packing: Pack values using minimum bits for block (not fixed 16 bits)
 fn floats_to_bytes(data: &[f32]) -> Vec<u8> {
     if data.is_empty() {
         return Vec::new();
@@ -83,19 +96,39 @@ fn floats_to_bytes(data: &[f32]) -> Vec<u8> {
     // Step 2: ZigZag encode all values
     let zigzag_values: Vec<u16> = deltas.iter().map(|&d| zigzag_encode(d)).collect();
 
-    // Step 3: Byte-plane split - separate low and high bytes
-    let mut low_bytes: Vec<u8> = Vec::with_capacity(zigzag_values.len());
-    let mut high_bytes: Vec<u8> = Vec::with_capacity(zigzag_values.len());
+    // Step 3: Bit-pack per block
+    let mut result = Vec::with_capacity(data.len()); // Optimistic size
 
-    for &val in &zigzag_values {
-        low_bytes.push((val & 0xFF) as u8);
-        high_bytes.push((val >> 8) as u8);
+    for chunk in zigzag_values.chunks(BLOCK_SIZE) {
+        // Find max value in block to determine bit width
+        let max_val = *chunk.iter().max().unwrap_or(&0);
+        let bit_width = bits_needed(max_val);
+
+        // Write block header: bit_width (1 byte)
+        result.push(bit_width);
+
+        // Pack values using bit_width bits each
+        let mut bit_buffer: u64 = 0;
+        let mut bits_in_buffer: u8 = 0;
+
+        for &val in chunk {
+            bit_buffer |= (val as u64) << bits_in_buffer;
+            bits_in_buffer += bit_width;
+
+            // Flush complete bytes
+            while bits_in_buffer >= 8 {
+                result.push(bit_buffer as u8);
+                bit_buffer >>= 8;
+                bits_in_buffer -= 8;
+            }
+        }
+
+        // Flush remaining bits
+        if bits_in_buffer > 0 {
+            result.push(bit_buffer as u8);
+        }
     }
 
-    // Concatenate: [high_bytes][low_bytes]
-    // High bytes first (mostly zeros after ZigZag = better compression)
-    let mut result = high_bytes;
-    result.extend(low_bytes);
     result
 }
 
