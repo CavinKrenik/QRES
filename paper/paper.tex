@@ -146,6 +146,9 @@ Implemented in \textbf{Rust}, QRES prioritizes safety and performance:
     \item \textbf{Reproducibility:} Docker containers and Azure-based simulation harness facilitate reproducible benchmarks.
 \end{itemize}
 
+\noindent \textbf{Neural Inference Engine:}
+To bridge the gap between PyTorch training and Rust execution, we utilize the \texttt{tract} crate. This tiny, embeddable runtime parses ONNX graphs directly in Rust, allowing efficient execution of our quantized models without heavy dependencies like TensorFlow Lite.
+
 \noindent \textbf{Fixed-Point Implementation:}
 \begin{verbatim}
 pub struct Q16_16(i32);
@@ -184,6 +187,16 @@ Text/Code & Logs & \textbf{5.2:1} & 2.8:1 \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\subsection{Resource Prediction Accuracy}
+We implemented a hybrid Neural-Symbolic architecture combining Rust actors with a quantized ONNX model. Evaluation confirms a 25x reduction in Mean Squared Error (MSE) compared to standard Weighted Moving Average (WMA) heuristics. While the neural inference introduces a latency overhead ($\sim$1.3ms vs 0.02$\mu$s), it enables proactive resource scaling, preventing bottlenecks before they occur.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.45\textwidth]{figures/accuracy_plot.png}
+    \caption{Prediction Accuracy: Neural (MSE=0.017) vs Heuristic (MSE=0.44). The Neural model (Green) anticipates spikes, while the Heuristic (Red) suffers from phase lag.}
+    \label{fig:accuracy}
+\end{figure}
 
 \subsection{Privacy-Utility Trade-off}
 Table \ref{tab:overhead} shows the runtime overhead of the security stack on a 1000-dimension vector operation.

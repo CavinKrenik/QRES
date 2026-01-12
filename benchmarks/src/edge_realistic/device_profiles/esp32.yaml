@@ -1,0 +1,4 @@
+name: "ESP32 (Extreme Constraint)"
+cpu_cores: 1
+clock_speed_mhz: 240
+memory_limit_mb: 4

@@ -1,0 +1,4 @@
+name: "Desktop Workstation"
+cpu_cores: 8
+clock_speed_mhz: 4000
+memory_limit_mb: 16384

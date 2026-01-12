@@ -1,0 +1,4 @@
+name: "Raspberry Pi Zero"
+cpu_cores: 1
+clock_speed_mhz: 1000
+memory_limit_mb: 512

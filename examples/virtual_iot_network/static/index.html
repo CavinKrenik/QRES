@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QRES v16 // Hive Mind Uplink</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --neon-green: #00ff9d;
+            --neon-pink: #ff00ff;
+            --bg-color: #050505;
+            --panel-bg: #111;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--neon-green);
+            font-family: 'Courier New', monospace;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        header {
+            border-bottom: 2px solid var(--neon-pink);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        h1 { margin: 0; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 10px var(--neon-green); }
+        .status { color: var(--neon-pink); font-weight: bold; }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+        .panel {
+            background: var(--panel-bg);
+            border: 1px solid #333;
+            padding: 15px;
+            box-shadow: 0 0 15px rgba(0, 255, 157, 0.1);
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 8px; border-bottom: 1px solid #333; }
+        th { color: var(--neon-pink); }
+        tr:hover { background: #222; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>QRES v16 // Synthetic Sensor Net</h1>
+            <div class="status">● SYSTEM ONLINE</div>
+        </header>
+
+        <div class="grid">
+            <div class="panel">
+                <canvas id="sensorChart"></canvas>
+            </div>
+            <div class="panel">
+                <h3 style="margin-top: 0; color: var(--neon-pink)">> LATEST TELEMETRY</h3>
+                <table id="telemetryTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>VALUE</th>
+                            <th>TIME</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ctx = document.getElementById('sensorChart').getContext('2d');
+        const MAX_DATA_POINTS = 50;
+        
+        // Initialize Chart
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: { datasets: [] },
+            options: {
+                responsive: true,
+                animation: false,
+                scales: {
+                    x: { type: 'linear', display: false },
+                    y: { grid: { color: '#222' }, ticks: { color: '#00ff9d' } }
+                },
+                plugins: { legend: { labels: { color: '#fff', font: { family: 'Courier New' } } } }
+            }
+        });
+
+        // Color palette for sensors
+        const colors = ['#00ff9d', '#ff00ff', '#00ccff', '#ffcc00', '#ff3333'];
+
+        async function fetchMetrics() {
+            try {
+                const response = await fetch('/metrics');
+                const data = await response.json(); // Expecting Map<String, {id, value, timestamp}>
+                
+                const tableBody = document.getElementById('tableBody');
+                tableBody.innerHTML = '';
+                
+                let idx = 0;
+                // Convert object to array if needed and sort by ID
+                const sensors = Object.values(data).sort((a, b) => a.id.localeCompare(b.id));
+
+                sensors.forEach(sensor => {
+                    // 1. Update Table
+                    const row = `<tr>
+                        <td>${sensor.id}</td>
+                        <td>${sensor.value.toFixed(4)}</td>
+                        <td>${new Date(sensor.timestamp).toLocaleTimeString()}</td>
+                    </tr>`;
+                    tableBody.innerHTML += row;
+
+                    // 2. Update Chart
+                    let dataset = chart.data.datasets.find(ds => ds.label === sensor.id);
+                    if (!dataset) {
+                        dataset = {
+                            label: sensor.id,
+                            borderColor: colors[idx % colors.length],
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            data: []
+                        };
+                        chart.data.datasets.push(dataset);
+                    }
+                    
+                    dataset.data.push({x: Date.now(), y: sensor.value});
+                    if (dataset.data.length > MAX_DATA_POINTS) dataset.data.shift();
+                    idx++;
+                });
+
+                chart.update();
+            } catch (err) {
+                console.error("Link Failure:", err);
+            }
+        }
+
+        setInterval(fetchMetrics, 1000);
+    </script>
+</body>
+</html>

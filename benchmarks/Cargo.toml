@@ -1,0 +1,34 @@
+[package]
+name = "benchmarks"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "1.32", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.9"
+sysinfo = "0.29"
+anyhow = "1.0"
+qres_core = { path = "../qres_rust/qres_core" }
+zstd = "0.13"
+rand = "0.8"
+
+[[bin]]
+name = "multivariate_demo"
+path = "src/multivariate_demo.rs"
+
+[[bin]]
+name = "encoding_benchmark"
+path = "src/encoding_benchmark.rs"
+
+[[bin]]
+name = "resource_benchmark"
+path = "src/resource_benchmark.rs"
+
+[[bin]]
+name = "accuracy_sim"
+path = "src/accuracy_sim.rs"
+
+[[bin]]
+name = "preventative_scaling"
+path = "src/preventative_scaling.rs"

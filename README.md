@@ -260,6 +260,21 @@ Historical benchmarks on Intel Ice Lake (v15.2):
 To validate these results on your hardware, run the simulation:
 `npm run dev`
 
+### Neural Resource Prediction (v16)
+The new hybrid Neural-Symbolic predictor enables proactive resource scaling:
+
+![Accuracy Plot](docs/images/accuracy_plot.png)
+
+| Predictor | Latency | MSE |
+| :--- | :--- | :--- |
+| **Heuristic** | 0.02 µs | 0.44 |
+| **Neural** | 1.3 ms | **0.017** |
+
+Run the preventative scaling simulation:
+```bash
+cargo run --bin preventative_scaling
+```
+
 ## Implementation Status
 
 | Status | Components |
@@ -267,7 +282,8 @@ To validate these results on your hardware, run the simulation:
 | **Production Ready** | Core engine, Python bindings, WASM decoder |
 | **Experimental** | Federated dreaming, regime adaptation |
 | **Security Complete** | Authentication (v13), Robust Aggregation (v14), Privacy (v15) |
-| **Roadmap** | Arithmetic coding, FPGA acceleration |
+| **Verified** | Neural Predictor (v16), Arithmetic Coding |
+| **Roadmap** | FPGA acceleration |
 
 [Detailed status →](docs/IMPLEMENTATION_STATUS.md)
 

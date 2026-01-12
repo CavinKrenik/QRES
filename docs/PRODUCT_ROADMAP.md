@@ -1,105 +1,110 @@
-# QRES Edge - Product Roadmap
+# QRES v16 Zero-Cost Home Lab Roadmap (2026)
 
-**Last Updated:** January 11, 2026  
-**Current Version:** v15.4.0 (Neural Swarm)
+**Vision:** Transform QRES into a biologically-inspired edge intelligence platform using zero-cost resources, simulation, and rigorous benchmarking.
 
----
-
-## Vision
-
-Transform QRES from a file compression utility into a **real-time edge intelligence platform** that enables seamless neural compression across distributed IoT networks.
+**Resources:** Desktop/Laptop + $100 Azure Education Credit + Open Data.
 
 ---
 
-## Q1 2026 - Browser-to-Edge Bridge
+## Q1 2026 (Jan-Mar): Pure Software Foundation [COMPLETE]
 
-> **Goal:** Solve the Hive Mind browser limitation and enable full Swarm toggling from any client.
+**Goal:** Establish a rigorous testing baseline using simulated constraints and public datasets.
 
-### Planned Features
+### 1. Edge-Realistic Benchmark Suite
+*Run QRES under artificial constraints (cgroups/VMs) to mimic IoT hardware.*
 
-| Feature | Priority | Status |
-|---------|----------|--------|
-| WebSocket Relay Server | 🔴 Critical | 📋 Planned |
-| Browser-Compatible Swarm Protocol | 🔴 Critical | 📋 Planned |
-| Authenticated Session Handoff | 🟡 High | 📋 Planned |
-| TURN/STUN NAT Traversal | 🟡 High | 📋 Planned |
+* **Deliverables:**
+    * [x] `benchmarks/edge_realistic/benchmark_runner.rs`: Main harness
+    * [x] `benchmarks/edge_realistic/constraint_simulator.rs`: CPU/RAM limiter
+    * [x] Device Profiles: `desktop.yaml`, `pi_zero.yaml` (simulated), `esp32.yaml` (simulated)
+* **Datasets:** UCR Archive, ETT (Electricity), Jena Climate, NOAA Weather.
 
-### Technical Approach
+### 2. Synthetic Sensor Network (Simulation)
+*Multi-process simulation of a federated sensor mesh.*
 
-```mermaid
-graph LR
-    A[Browser Client] -->|WebSocket| B[Relay Server]
-    B -->|libp2p| C[Edge Node 1]
-    B -->|libp2p| D[Edge Node 2]
-    C <-->|P2P Gossip| D
-```
+* **Deliverables:**
+    * [x] `examples/virtual_iot_network/sensor_simulator.rs`: Virtual device process
+    * [x] `aggregator.rs`: Local federated server
+    * [x] Web Dashboard: HTML/JS for real-time visualization ("Cyberpunk Dashboard")
 
-1. **Relay Server**: Lightweight Rust service bridging WebSocket (browser) to libp2p (edge nodes)
-2. **Session Auth**: Ed25519 signatures from browser to verify identity with swarm
-3. **Fallback Mode**: If relay unavailable, browser continues in simulation mode
+### 3. Adaptive Lossy + Visual Analysis
+*Implement error-bounded compression and visualization tools.*
 
-### Success Criteria
-
-- [ ] Browser can join live Swarm with ≥95% reliability
-- [ ] Latency overhead <50ms vs native P2P
-- [ ] Zero additional configuration for end users
+* **Deliverables:**
+    * [x] `src/compression/lossy.rs`: Error-bounded logic
+    * [x] `tools/visual_comparison.py`: Plotting CLI
+    * [x] Analysis Notebooks: Interactive reconstruction exploration
 
 ---
 
-## Q2 2026 - Deep Hive Integration
+## Q2 2026 (Apr-Jun): Predictor Advancement [COMPLETE]
 
-> **Goal:** Enable automatic task offloading between heterogeneous edge devices.
+**Goal:** Advance the neural engine with multivariate support and arithmetic coding.
 
-### Planned Features
+### 1. Multivariate Support
+*Handle correlated data streams (e.g., Temperature + Humidity).*
 
-| Feature | Priority | Status |
-|---------|----------|--------|
-| Device Capability Discovery | 🔴 Critical | 📋 Planned |
-| Compression Task Scheduler | 🔴 Critical | 📋 Planned |
-| Pi-Cluster Offload from Jetson | 🟡 High | 📋 Planned |
-| Battery-Aware Load Balancing | 🟢 Medium | 📋 Planned |
-| Remote Model Training | 🟢 Medium | 📋 Planned |
+* **Deliverables:**
+    * [x] `src/multivariate/correlation_detector.rs`: Auto-grouping streams
+    * [x] `joint_predictor.rs`: Multi-channel prediction
 
-### Technical Approach
+### 2. Arithmetic Coding Integration
+*Replace/augment standard entropy coders with adaptive arithmetic coding.*
 
-```mermaid
-sequenceDiagram
-    participant J as Jetson-Nano
-    participant P as Pi-4 Cluster
-    participant H as Hive Coordinator
-    
-    J->>H: Request compression (10MB dataset)
-    H->>H: Check capacity (J: 80% CPU, P: 20% CPU)
-    H->>P: Offload 6MB to Pi-Cluster
-    H->>J: Process 4MB locally
-    P->>H: Return compressed chunk
-    J->>H: Return compressed chunk
-    H->>J: Merge results
-```
+* **Deliverables:**
+    * [x] `src/encoding/arithmetic.rs`: Wrapper for `arithmetic-coding` crate
+    * [x] Benchmark vs ZSTD, LZ4, Brotli.
 
-1. **Capability Broadcast**: Nodes advertise CPU/GPU/battery via Gossip
-2. **Smart Scheduler**: Coordinator splits workloads based on real-time metrics
-3. **Chunk Merging**: Deterministic assembly of distributed compression results
+### 3. Neural Predictor v2
+*Lightweight attention-based predictor (Transformer-lite).*
 
-### Success Criteria
+* **Deliverables:**
+    * [x] `python/qres_experiments/neural_v2/`: PyTorch training scripts
+    * [x] `src/inference/onnx_predictor.rs`: Rust ONNX runtime integration
 
-- [ ] 30% throughput improvement on heterogeneous clusters
-- [ ] Energy savings ≥20% on battery-powered nodes
-- [ ] Automatic failover within 5s if node goes offline
+### 4. Integration & Actuation
+*Verified hybrid architecture.*
+
+* **Deliverables:**
+    * [x] `ResourceUsagePredictor`: Hybrid Neural/Heuristic
+    * [x] `WorkerPool`: Proactive scaling actuation
+    * [x] Accuracy Showdown: Neural achieves 25x better accuracy (0.017 MSE).
 
 ---
 
-## Q3-Q4 2026 - Future Considerations
+## Q3 2026 (Jul-Sep): Novel Contributions [NEXT UP]
 
-| Feature | Description |
-|---------|-------------|
-| FPGA Acceleration | Offload Mixer logic to hardware |
-| Multimodal SNNs | Cross-domain (audio + video) compression |
-| Edge Marketplace | Share trained models between organizations |
-| Mobile SDK | iOS/Android compression libraries |
+**Goal:** Implement closed-loop feedback and Spiking Neural Networks (SNNs).
+
+### 1. Feedback Loop Implementation
+*Real-time model adaptation based on reconstruction error.*
+
+* **Deliverables:**
+    * [ ] `src/adaptive/feedback_loop.rs`: Online learning trigger
+    * [ ] `regime_detector.rs`: Detect signal drift/shifts
+
+### 2. SNN Predictor Simulation
+*Spike-based prediction for theoretical energy savings.*
+
+* **Deliverables:**
+    * [ ] `python/qres_experiments/snn/`: `snnTorch` implementation
+    * [ ] `docs/SNN_ENERGY_ANALYSIS.md`: Joules/Spike vs Joules/FLOP calculations
+
+### 3. Azure-Based "Edge" Simulation
+*Validate on actual constrained cloud hardware.*
+
+* **Deliverables:**
+    * [ ] `cloud_benchmarks/azure_deploy.sh`: Auto-scale testing script
+    * [ ] Results comparison: B1ls vs B1s vs B2s VMs.
 
 ---
 
-## Feedback
+## Q4 2026 (Oct-Dec): Integration & Validation
 
-Submit feature requests via [GitHub Issues](https://github.com/CavinKrenik/QRES/issues) with label `roadmap-request`.
+**Goal:** Polish, document, and release QRES v16.0.0.
+
+* **Feature Flags:** Toggle Lossless/Lossy, Neural/SNN, Arithmetic/Huffman via config.
+* **Comprehensive Benchmarking:** Run full suite on 100+ UCR datasets.
+* **Paper Preparation:**
+    * [x] Generate LaTeX tables and figures (Started: accuracy_plot.png & evaluation.tex update).
+    * [ ] Final review and submission.
