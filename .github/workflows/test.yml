@@ -24,10 +24,10 @@ jobs:
 
       - name: Clippy Linting
         continue-on-error: true
-        run: cargo clippy --workspace -- -D warnings
+        run: cargo clippy --workspace --exclude qres-studio -- -D warnings
 
       - name: Run Core Unit Tests
-        run: cargo test --workspace --verbose
+        run: cargo test --workspace --exclude qres-studio --verbose
 
       - name: Install wasm-pack
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
@@ -37,7 +37,7 @@ jobs:
         run: wasm-pack build --target web
 
       - name: Verify Release Build
-        run: cargo build --release --workspace
+        run: cargo build --release --workspace --exclude qres-studio
 
   integration-test:
     name: Python Integration

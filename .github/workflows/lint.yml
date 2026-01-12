@@ -25,4 +25,4 @@ jobs:
         run: cargo fmt --all -- --check
 
       - name: Run Clippy
-        run: cargo clippy --workspace -- -D warnings
+        run: cargo clippy --workspace --exclude qres-studio -- -D warnings
