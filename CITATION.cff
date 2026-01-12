@@ -1,40 +1,43 @@
 cff-version: 1.2.0
 message: "If you use QRES in academic work, please cite the associated Zenodo publication."
 
-title: "QRES: Biologically-Inspired Secure Federated Learning for Edge IoT Devices"
-version: "v15.4.0"
-doi: "10.5281/zenodo.18194636"
-date-released: "2026-01-11"
+# [UPDATED] New v16 Title
+title: "QRES: An Adaptive Hybrid Compression System for Edge IoT"
+version: "v16.0.0"
+# [UPDATED] DOI from your README
+doi: "10.5281/zenodo.18216283"
+date-released: "2026-01-12"
 
 authors:
   - family-names: Krenik
     given-names: Cavin
     orcid: "https://orcid.org/0009-0008-9183-1278"
 
+# [UPDATED] Abstract matches the new "Hybrid Gatekeeper" narrative
 abstract: >
-  QRES is a deterministic, edge-native neural compression
-  and federated learning system for time-series data. By treating
-  compression as shared prediction and transmitting only residuals,
-  QRES achieves high compression ratios while providing strong
-  privacy guarantees through differential privacy, secure aggregation,
-  and zero-knowledge proofs. The system is implemented in Rust with
-  bit-perfect fixed-point determinism and targets constrained IoT
-  environments.
+  QRES is an adaptive hybrid compression system designed for constrained
+  Edge IoT environments. It utilizes a "Hybrid Gatekeeper" architecture
+  that dynamically switches between a lightweight Bit-Packing pipeline
+  (for high-entropy data) and a Neural Residual Predictor (for structured
+  signals). This approach eliminates data expansion on noisy streams while
+  achieving high compression ratios (up to 25x) on structured telemetry.
+  The system is implemented in no_std Rust with bit-perfect Q16.16 
+  fixed-point determinism.
 
 keywords:
-  - Federated Learning
-  - Edge AI
-  - Time-Series Compression
-  - Spiking Neural Networks
-  - Secure Aggregation
-  - Differential Privacy
-  - Byzantine Fault Tolerance
-  - Deterministic Systems
+  - Adaptive Compression
+  - Time-Series Data
+  - Edge Computing
+  - Hybrid Architecture
+  - Bit-Packing
+  - Neural Residual Prediction
+  - Internet of Things
+  - Rust
 
 license: Apache-2.0
 
 repository-code: "https://github.com/CavinKrenik/QRES"
-url: "https://doi.org/10.5281/zenodo.18194636"
+url: "https://doi.org/10.5281/zenodo.18216283"
 
 preferred-citation:
   type: software
@@ -42,7 +45,8 @@ preferred-citation:
     - family-names: Krenik
       given-names: Cavin
       orcid: "https://orcid.org/0009-0008-9183-1278"
-  title: "QRES: Biologically-Inspired Secure Federated Learning for Edge IoT Devices"
+  # [UPDATED] Match the title above
+  title: "QRES: An Adaptive Hybrid Compression System for Edge IoT"
   year: 2026
-  version: "v15.4.0"
-  doi: "10.5281/zenodo.18194636"
+  version: "v16.0.0"
+  doi: "10.5281/zenodo.18216283"
