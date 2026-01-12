@@ -1,7 +1,6 @@
 # QRES v15.4.0 Release Notes
 
 **Release Date:** January 11, 2026  
-**Codename:** Neural Swarm
 
 ---
 

@@ -4,6 +4,22 @@ All notable changes to this project are documented here.
 
 ---
 
+## [15.4.0] - 2026-01-11
+
+### ✨ New Features
+- **Weather Replay Engine:** Hardware-in-the-Loop simulation with Jena Climate Dataset.
+- **Hive Mind Visualization:** Infinite canvas, node inspector HUD, and gradient packets.
+- **Neural Graph:** 5-layer deep network visualization with live spike propagation.
+
+### 🔧 Improvements
+- **UI/UX:** Streamlined sidebar, single connect button, and no-scroll layout.
+- **Architecture:** simulated compression for browser mode (no WASM required).
+
+### 📝 Documentation
+- **README:** Added "Hardware-in-the-Loop Simulation" section.
+
+---
+
 ## [15.2.0] - 2026-01-08
 
 ### Added
