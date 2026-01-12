@@ -47,15 +47,56 @@ fn load_dataset(path: &Path) -> anyhow::Result<Vec<f32>> {
     Ok(data)
 }
 
-/// Convert quantized float data to bytes for compression.
-/// Uses i16 encoding (multiply by 100, clamp to i16 range) for better compression.
+/// ZigZag encode a signed 16-bit integer to unsigned.
+/// Maps: 0 -> 0, -1 -> 1, 1 -> 2, -2 -> 3, 2 -> 4, ...
+/// This eliminates sign-extension noise by keeping small magnitudes small.
+#[inline]
+fn zigzag_encode(n: i16) -> u16 {
+    ((n << 1) ^ (n >> 15)) as u16
+}
+
+/// Convert quantized float data to bytes using Delta + ZigZag + Byte-Split pipeline.
+/// 
+/// Pipeline:
+/// 1. Delta Encoding: Store differences between consecutive values
+/// 2. ZigZag Encoding: Map signed deltas to unsigned (eliminates sign noise)
+/// 3. Byte-Plane Splitting: Separate low bytes (high entropy) from high bytes (low entropy)
 fn floats_to_bytes(data: &[f32]) -> Vec<u8> {
-    data.iter()
-        .flat_map(|&f| {
-            let scaled = (f * 100.0).clamp(i16::MIN as f32, i16::MAX as f32) as i16;
-            scaled.to_le_bytes()
-        })
-        .collect()
+    if data.is_empty() {
+        return Vec::new();
+    }
+
+    // Step 1: Delta encode and scale to i16
+    let mut deltas: Vec<i16> = Vec::with_capacity(data.len());
+
+    // First value as baseline
+    let first_scaled = (data[0] * 100.0).clamp(i16::MIN as f32, i16::MAX as f32) as i16;
+    deltas.push(first_scaled);
+
+    // Delta for remaining values
+    for i in 1..data.len() {
+        let delta = (data[i] - data[i - 1]) * 100.0;
+        let delta_scaled = delta.clamp(i16::MIN as f32, i16::MAX as f32) as i16;
+        deltas.push(delta_scaled);
+    }
+
+    // Step 2: ZigZag encode all values
+    let zigzag_values: Vec<u16> = deltas.iter().map(|&d| zigzag_encode(d)).collect();
+
+    // Step 3: Byte-plane split - separate low and high bytes
+    let mut low_bytes: Vec<u8> = Vec::with_capacity(zigzag_values.len());
+    let mut high_bytes: Vec<u8> = Vec::with_capacity(zigzag_values.len());
+
+    for &val in &zigzag_values {
+        low_bytes.push((val & 0xFF) as u8);
+        high_bytes.push((val >> 8) as u8);
+    }
+
+    // Concatenate: [high_bytes][low_bytes]
+    // High bytes first (mostly zeros after ZigZag = better compression)
+    let mut result = high_bytes;
+    result.extend(low_bytes);
+    result
 }
 
 /// Benchmark a single configuration on a dataset.
