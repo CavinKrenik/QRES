@@ -24,7 +24,7 @@
 \maketitle
 
 \begin{abstract}
-Federated learning (FL) enables collaborative model training across distributed devices without sharing raw data, yet traditional frameworks (e.g., FedAvg, FedProx) are ill-suited for the strict bandwidth and determinism constraints of edge IoT networks. We present \textbf{QRES}, a bio-inspired, edge-native FL system that redefines compression as predictive modeling. QRES leverages a deterministic ensemble of Spiking Neural Networks (SNNs) and Tensor Networks to achieve compression ratios of \textbf{22:1} on real-world IoT telemetry and \textbf{48:1} on synthetic datasets. To address edge security, we introduce a lightweight, three-layer defense stack: (1) $\epsilon$-Differential Privacy via Gaussian noise injection, (2) Byzantine-tolerant aggregation using Krum (resilient to 45\% malicious nodes), and (3) Zero-Knowledge Proofs for update validity. Implemented in \texttt{no\_std} Rust with \textbf{Q16.16 fixed-point arithmetic}, QRES guarantees bit-perfect reproducibility across x86, ARM, and WASM architectures. Evaluations on a 100-node cluster demonstrate that while the full security stack incurs a \textbf{3.1$\times$ runtime overhead}, the system maintains high convergence rates and successfully recovers from regime changes in approximately 20 seconds.
+Federated learning (FL) enables collaborative model training across distributed devices without sharing raw data, yet traditional frameworks (e.g., FedAvg, FedProx) are ill-suited for the strict bandwidth and determinism constraints of edge IoT networks. We present \textbf{QRES}, a bio-inspired, edge-native FL system that redefines compression as predictive modeling. QRES leverages a deterministic ensemble of Spiking Neural Networks (SNNs) and hybrid bit-packing to achieve compression ratios of \textbf{5:1} on real-world IoT telemetry and \textbf{25:1} on synthetic datasets. To address edge security, we introduce a lightweight, three-layer defense stack: (1) $\epsilon$-Differential Privacy via Gaussian noise injection, (2) Byzantine-tolerant aggregation using Krum (resilient to 45\% malicious nodes), and (3) Zero-Knowledge Proofs for update validity. Implemented in \texttt{no\_std} Rust with \textbf{Q16.16 fixed-point arithmetic}, QRES guarantees bit-perfect reproducibility across x86, ARM, and WASM architectures. Evaluations on a 100-node cluster demonstrate that while the full security stack incurs a \textbf{3.1$\times$ runtime overhead}, the system maintains high convergence rates and successfully recovers from regime changes in approximately 20 seconds.
 \end{abstract}
 
 \vspace{0.2cm}
@@ -180,10 +180,12 @@ As shown in Table \ref{tab:compression}, the predictive SNN approach outperforms
 \toprule
 Dataset & Type & QRES & Zstd \\
 \midrule
-Synthetic Wave & Model-generated & \textbf{48:1} & 2.1:1 \\
-IoT Telemetry & Sensor Stream & \textbf{22:1} & 2.2:1 \\
-IoT Trending & Sine + drift & \textbf{2.0:1} & 1.8:1 \\
-Text/Code & Logs & \textbf{5.2:1} & 2.8:1 \\
+Synthetic Wave & Smooth Sine & \textbf{24.9:1} & 2.1:1 \\
+IoT Telemetry & Weather (Jena) & \textbf{4.9:1} & 2.2:1 \\
+Smart Grid & Power (Italy) & \textbf{4.6:1} & 2.0:1 \\
+Manufacturing & Wafer & \textbf{4.2:1} & 1.9:1 \\
+Medical & ECG5000 & \textbf{4.0:1} & 1.8:1 \\
+Edge Sensor & ETTh1 & \textbf{2.8:1} & 1.5:1 \\
 \bottomrule
 \end{tabular}
 \end{table}
