@@ -23,8 +23,6 @@ jobs:
 
       - name: Check Formatting
         run: cargo fmt --all -- --check
-        working-directory: ./qres_rust
 
       - name: Run Clippy
-        run: cargo clippy -- -D warnings
-        working-directory: ./qres_rust
+        run: cargo clippy --workspace -- -D warnings
