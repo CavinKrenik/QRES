@@ -2,7 +2,7 @@
 
 > A neural compression engine for time-series data
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18216283.svg)](https://doi.org/10.5281/zenodo.18216283)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.18216283-blue)](https://doi.org/10.5281/zenodo.18216283)
 [![ORCID](https://img.shields.io/badge/ORCID-0009--0008--9183--1278-green.svg)](https://orcid.org/0009-0008-9183-1278)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/CavinKrenik/QRES/release.yml?style=flat)](https://github.com/CavinKrenik/QRES/actions)
