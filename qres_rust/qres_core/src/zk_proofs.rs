@@ -3,7 +3,7 @@
 //! Provides Pedersen Commitments and a Proof of Norm protocol.
 //! Uses EdwardsPoint from curve25519-dalek (minimal feature set).
 
-#[cfg(not(feature = "std"))]
+// #[cfg(not(feature = "std"))]
 // use alloc::vec::Vec;
 
 use blake3::Hasher;

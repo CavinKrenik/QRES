@@ -20,16 +20,13 @@ jobs:
           components: clippy, rustfmt
 
       - name: Check Formatting
-        working-directory: qres_rust
         run: cargo fmt --check
 
       - name: Clippy Linting
-        working-directory: qres_rust
         continue-on-error: true
         run: cargo clippy --workspace -- -D warnings
 
       - name: Run Core Unit Tests
-        working-directory: qres_rust
         run: cargo test --workspace --verbose
 
       - name: Install wasm-pack
@@ -40,7 +37,6 @@ jobs:
         run: wasm-pack build --target web
 
       - name: Verify Release Build
-        working-directory: qres_rust
         run: cargo build --release --workspace
 
   integration-test:
