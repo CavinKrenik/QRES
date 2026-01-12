@@ -26,7 +26,7 @@ jobs:
         cat original_hash.txt
 
     - name: Build QRES (Release)
-      run: cargo build --release --workspace
+      run: cargo build --release -p qres_daemon
 
     - name: Compress Data (Linux x86)
       run: |
@@ -55,7 +55,7 @@ jobs:
         name: battle-artifacts
 
     - name: Build QRES (Release)
-      run: cargo build --release --workspace
+      run: cargo build --release -p qres_daemon
 
     - name: Decompress Data (macOS ARM)
       run: |
