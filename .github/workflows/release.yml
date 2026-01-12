@@ -158,6 +158,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: QRES ${{ github.ref_name }} - The Hybrid Era
-          body_path: RELEASE_NOTES.md
+          body_path: docs/releases/RELEASE_NOTES.md
           files: dist/*
           generate_release_notes: true
