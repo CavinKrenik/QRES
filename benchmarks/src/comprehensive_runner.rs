@@ -27,10 +27,10 @@ fn load_dataset(path: &Path) -> anyhow::Result<Vec<f32>> {
     let reader = BufReader::new(file);
     let mut data = Vec::new();
     let mut lines = reader.lines();
-    
+
     // Skip header row
     let _ = lines.next();
-    
+
     for line in lines {
         let line = line?;
         let trimmed = line.trim();
@@ -56,7 +56,7 @@ fn zigzag_encode(n: i16) -> u16 {
 }
 
 /// Convert quantized float data to bytes using Delta + ZigZag + Byte-Split pipeline.
-/// 
+///
 /// Pipeline:
 /// 1. Delta Encoding: Store differences between consecutive values
 /// 2. ZigZag Encoding: Map signed deltas to unsigned (eliminates sign noise)
@@ -142,7 +142,10 @@ fn main() -> anyhow::Result<()> {
 
     // Gracefully handle missing data directory (for CI environments)
     if !data_dir.exists() {
-        println!("WARN: Data directory not found at {:?}. Skipping benchmarks.", data_dir);
+        println!(
+            "WARN: Data directory not found at {:?}. Skipping benchmarks.",
+            data_dir
+        );
         println!("      This is expected in CI. Download datasets locally to run benchmarks.");
         return Ok(()); // Exit successfully, not a failure
     }
