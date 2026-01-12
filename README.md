@@ -8,7 +8,7 @@
 [![Build Status](https://img.shields.io/github/actions/workflow/status/CavinKrenik/QRES/release.yml?style=flat)](https://github.com/CavinKrenik/QRES/actions)
 [![Version](https://img.shields.io/badge/version-v15.4.0-brightgreen)](https://github.com/CavinKrenik/QRES/releases)
 
-**📄 Paper:** [Download PDF](paper/QRES__Biologically_Inspired_Secure_Federated_Learning_for_Edge_IoT_Devices.pdf) | **🔗 DOI:** [10.5281/zenodo.18194636](https://doi.org/10.5281/zenodo.18194636)
+**Paper:** [Download PDF](paper/QRES__Biologically_Inspired_Secure_Federated_Learning_for_Edge_IoT_Devices.pdf) | **DOI:** [10.5281/zenodo.18194636](https://doi.org/10.5281/zenodo.18194636)
 
 ## The Core Idea
 
@@ -45,7 +45,7 @@ graph LR
 
 ## When to Use QRES
 
-| ✅ Use QRES For | ❌ Don't Use QRES For |
+| Use QRES For | Don't Use QRES For |
 |----------------|----------------------|
 | Real-time IoT Telemetry (Sensor Streams) | High-entropy data (encryption, random) |
 | Bandwidth-Constrained Edge Networks | Existing archives (.zip, .jpg, .mp4) |
@@ -71,7 +71,7 @@ npm run dev
 
 [Full installation docs →](docs/guides/P2P_IMPLEMENTATION.md)
 
-## 🎮 Hardware-in-the-Loop Simulation: "Director's Cut"
+## Hardware-in-the-Loop Simulation: "Director's Cut"
 To demonstrate QRES capabilities on real-world chaotic data, this repository includes a **Weather Replay Engine** powered by the [Jena Climate Dataset](https://www.bgc-jena.mpg.de/wetter/).
 
 We curated a specific "Calm → Storm" narrative to demonstrate **Bio-inspired Adaptation**:
@@ -122,7 +122,7 @@ This project evolved through 15 major iterations:
 
 ---
 
-## 📄 Publication
+## Publication
 
 **QRES: Biologically-Inspired Secure Federated Learning for Edge IoT Devices**
 
@@ -135,11 +135,11 @@ This project evolved through 15 major iterations:
 
 | Metric | Result |
 |--------|--------|
-| 🗜️ Compression | 48:1 synthetic, 22:1 IoT telemetry |
-| 🔒 Privacy | DP (ε=1.0) + Secure Aggregation + ZK Proofs |
-| 🛡️ Byzantine Tolerance | Up to 45% malicious nodes (Krum) |
-| ⚡ Overhead | 3.1× runtime for full security stack |
-| 📈 Scalability | 10-100 nodes, >85% success rate |
+| Compression | 48:1 synthetic, 22:1 IoT telemetry |
+| Privacy | DP (ε=1.0) + Secure Aggregation + ZK Proofs |
+| Byzantine Tolerance | Up to 45% malicious nodes (Krum) |
+| Overhead | 3.1× runtime for full security stack |
+| Scalability | 10-100 nodes, >85% success rate |
 
 ### Citation
 
@@ -262,10 +262,10 @@ Benchmarks on structured datasets (Intel Ice Lake):
 
 | Status | Components |
 |--------|------------|
-| ✅ **Production Ready** | Core engine, Python bindings, WASM decoder |
-| 🧪 **Experimental** | Federated dreaming, regime adaptation |
-| ✅ **Security Complete** | Authentication (v13), Robust Aggregation (v14), Privacy (v15) |
-| 📋 **Roadmap** | Arithmetic coding, FPGA acceleration |
+| **Production Ready** | Core engine, Python bindings, WASM decoder |
+| **Experimental** | Federated dreaming, regime adaptation |
+| **Security Complete** | Authentication (v13), Robust Aggregation (v14), Privacy (v15) |
+| **Roadmap** | Arithmetic coding, FPGA acceleration |
 
 [Detailed status →](docs/IMPLEMENTATION_STATUS.md)
 
