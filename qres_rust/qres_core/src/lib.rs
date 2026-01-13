@@ -771,14 +771,22 @@ fn compress_matrix_v1(
 }
 
 #[cfg(feature = "python")]
+#[pyfunction]
+#[pyo3(signature = (data, predictor_id=0, weights=None))]
+fn compress_adaptive(
+    py: Python<'_>,
+    data: &[u8],
+    predictor_id: u8,
+    weights: Option<&[u8]>,
+) -> PyResult<Py<pyo3::types::PyBytes>> {
+    encode_bytes(py, data, predictor_id, weights)
+}
+
+#[cfg(feature = "python")]
 #[pymodule]
 fn qres_rust(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(encode_bytes, m)?)?;
-    // Backwards compatibility for existing scripts
-    m.add_function(wrap_pyfunction!(encode_bytes, m).map(|f| {
-        f.set_name("compress_adaptive").unwrap(); // Alias
-        f
-    })?)?;
+    m.add_function(wrap_pyfunction!(compress_adaptive, m)?)?;
     m.add_function(wrap_pyfunction!(decode_bytes, m)?)?;
     m.add_function(wrap_pyfunction!(get_residuals_py, m)?)?;
     m.add_function(wrap_pyfunction!(compress_matrix_v1, m)?)?;
