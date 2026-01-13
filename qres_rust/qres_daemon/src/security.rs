@@ -204,7 +204,6 @@ impl std::error::Error for SecurityError {}
 mod tests {
     use super::*;
 
-
     #[test]
     fn test_sign_verify() {
         let temp_dir = std::env::temp_dir();

@@ -31,7 +31,7 @@ ml = [
     "shimmy",
 ]
 readme = "README.md"
-authors = ["Cavin Krenik"]
+authors = [{name = "Cavin Krenik"}]
 
 
 [tool.maturin]
