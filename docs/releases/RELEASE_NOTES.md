@@ -3,7 +3,7 @@
 **Date:** January 13, 2026
 **Title:** QRES: Adapter Hybrid Compression System
 
-## 🚀 Major Features
+## Major Features
 
 ### 1. Hybrid Conditional Pipeline
 QRES now dynamically switches between two codec paths based on real-time data entropy (< 7.5 bits/byte threshold):
