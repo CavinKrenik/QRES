@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cargo fmt:*)",
+      "Bash(cargo tree:*)",
+      "Bash(cargo clippy:*)",
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "Bash(python -m pip:*)",
+      "Bash(maturin develop:*)",
+      "Bash(git commit:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)"
+    ]
+  }
+}

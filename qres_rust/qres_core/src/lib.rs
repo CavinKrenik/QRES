@@ -774,6 +774,11 @@ fn compress_matrix_v1(
 #[pymodule]
 fn qres_rust(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(encode_bytes, m)?)?;
+    // Backwards compatibility for existing scripts
+    m.add_function(wrap_pyfunction!(encode_bytes, m).map(|f| {
+        f.set_name("compress_adaptive").unwrap(); // Alias
+        f
+    })?)?;
     m.add_function(wrap_pyfunction!(decode_bytes, m)?)?;
     m.add_function(wrap_pyfunction!(get_residuals_py, m)?)?;
     m.add_function(wrap_pyfunction!(compress_matrix_v1, m)?)?;
