@@ -6,9 +6,11 @@ build-backend = "maturin"
 name = "qres"
 version = "16.0.0"
 description = "QRES: Quantum-Relational Encoding System for Python"
+readme = "README.md"
+authors = [{name = "Cavin Krenik"}]
 requires-python = ">=3.8"
 dependencies = [
-    "numpy", 
+    "numpy",
     "scipy",
 ]
 
@@ -30,8 +32,6 @@ ml = [
     "stable-baselines3",
     "shimmy",
 ]
-readme = "README.md"
-authors = [{name = "Cavin Krenik"}]
 
 
 [tool.maturin]
