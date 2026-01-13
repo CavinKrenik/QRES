@@ -15,6 +15,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Lightweight CI dependencies - used in GitHub Actions (install torch CPU separately)
+ci = [
+    "networkx",
+    "gymnasium",
+]
+
 # Heavy ML dependencies - install locally with: pip install qres[ml]
 ml = [
     "pandas",

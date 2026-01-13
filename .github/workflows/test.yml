@@ -59,8 +59,10 @@ jobs:
         run: |
           source .venv/bin/activate
           pip install maturin pytest
-          # Install dependencies from pyproject.toml (including optional ML deps for tests)
-          pip install ".[ml]"
+          # Install CPU-only PyTorch (smaller, no CUDA) for CI
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          # Install lightweight CI dependencies
+          pip install ".[ci]"
           # Build Python extension from qres_core
           maturin develop --release
 
