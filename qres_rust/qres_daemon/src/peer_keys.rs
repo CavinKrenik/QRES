@@ -146,7 +146,7 @@ mod tests {
         let peer_id = PeerId::from_public_key(&public_key);
 
         // Add the key
-        assert!(store.add_peer_key(peer_id.clone(), public_key.clone()));
+        assert!(store.add_peer_key(peer_id, public_key.clone()));
 
         // Verify lookup
         assert!(store.has_key(&peer_id));

@@ -203,7 +203,7 @@ impl std::error::Error for SecurityError {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::path::Path;
+
 
     #[test]
     fn test_sign_verify() {

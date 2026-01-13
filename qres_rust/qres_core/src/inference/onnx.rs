@@ -118,8 +118,8 @@ mod tests {
 
         // Create a simple sine wave input
         let mut window = [0.0f32; 32];
-        for i in 0..32 {
-            window[i] = (i as f32 * 0.2).sin();
+        for (i, val) in window.iter_mut().enumerate() {
+            *val = (i as f32 * 0.2).sin();
         }
 
         let prediction = predictor.predict(&window)?;

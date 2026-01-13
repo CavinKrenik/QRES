@@ -22,7 +22,7 @@ fn bench_clipping(c: &mut Criterion) {
     let dp = DifferentialPrivacy::new(1.0, 1e-5, 1.0);
 
     for dim in [100, 500, 1000, 5000].iter() {
-        let mut update = generate_update(*dim);
+        let update = generate_update(*dim);
 
         group.bench_with_input(BenchmarkId::new("clip", dim), dim, |b, _| {
             b.iter(|| {

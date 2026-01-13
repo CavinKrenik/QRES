@@ -78,9 +78,6 @@ mod tests {
         assert_eq!(sample.len(), 1024);
         assert_eq!(mgr.dream_count(), 1);
 
-        // All values should be in valid range
-        for &byte in &sample {
-            assert!(byte <= 255);
-        }
+
     }
 }
