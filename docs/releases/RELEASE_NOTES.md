@@ -1,6 +1,6 @@
 # QRES v16.0.0 Release Notes
 
-**Date:** January 12, 2026
+**Date:** January 13, 2026
 **Title:** QRES: Adapter Hybrid Compression System
 
 ## 🚀 Major Features
@@ -33,6 +33,8 @@ Comprehensive benchmarking across 7 diverse datasets confirms QRES outperforms s
 - Fixed "Metric Fallacy" in benchmarks (now measuring against raw 4-byte `f32`).
 - Fixed CI/CD failures related to missing data directories.
 - Resolved `cargo fmt` and `clippy` lints.
+- **Hotfix:** Restored `compress_adaptive` Python alias for backward compatibility.
+- **Hotfix:** Resolved Tauri plugin version mismatch.
 
 ---
 
