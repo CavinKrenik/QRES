@@ -29,7 +29,7 @@ Comprehensive benchmarking across 7 diverse datasets confirms QRES outperforms s
 - **Theory Docs:** "Living Brain" architecture details moved to `docs/THEORY.md`.
 - **Roadmap:** v16 milestones marked complete.
 
-## 🐛 Fixes
+## Fixes
 - Fixed "Metric Fallacy" in benchmarks (now measuring against raw 4-byte `f32`).
 - Fixed CI/CD failures related to missing data directories.
 - Resolved `cargo fmt` and `clippy` lints.
