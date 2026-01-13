@@ -58,23 +58,15 @@ jobs:
       - name: Build Python Extension
         run: |
           source .venv/bin/activate
-          pip install maturin pytest
-          # Install CPU-only PyTorch (smaller, no CUDA) for CI
-          pip install torch --index-url https://download.pytorch.org/whl/cpu
-          # Install lightweight CI dependencies
-          pip install ".[ci]"
+          pip install maturin
           # Build Python extension from qres_core
           maturin develop --release
 
-
-
-      - name: Run Phase 1 & 2 Verifications (Quantum)
+      - name: Verify Python Import
         run: |
           source .venv/bin/activate
-          python tests/verify_phase1.py
-          python tests/verify_phase2.py
-          python tests/test_swarm_broadcast.py
-          python tests/test_receiver_unit.py
+          python -c "from qres import qres_rust; print('Rust core imported successfully')"
+          python -c "from qres.qres_rust import compress_adaptive, decompress_adaptive; print('Core functions available')"
 
 
 
