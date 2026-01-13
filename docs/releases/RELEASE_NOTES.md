@@ -44,32 +44,32 @@ Comprehensive benchmarking across 7 diverse datasets confirms QRES outperforms s
 
 ---
 
-## 🎉 Overview
+## Overview
 
 v15.4.0 introduces **Hardware-in-the-Loop Simulation** using real-world climate data, along with major visualization upgrades to the Hive Mind and Neural Graph pages.
 
 ---
 
-## ✨ New Features
+## New Features
 
-### 🌡️ Weather Replay Engine
+### Weather Replay Engine
 * **Real-World Data:** Integrates the [Jena Climate Dataset](https://www.bgc-jena.mpg.de/wetter/) (Max Planck Institute) for high-fidelity sensor simulation
 * **Storm Detection:** Maps atmospheric pressure drops to vibration spikes, triggering `LEARNING` mode
 * **Debug Panel:** Real-time display of Frame index, Pressure (mbar), and Compression ratio
 
-### 🕸️ Hive Mind: Interactive Neural Swarm
+### Hive Mind: Interactive Neural Swarm
 * **Infinite Canvas:** Zoom (0.1x-8x) and pan controls for exploring large networks
 * **Node Inspector HUD:** Click any node to view IP, CPU load, Memory, and Status
 * **Gradient Packets:** Animated particles flow between nodes when streaming is active
 
-### 🧠 Neural Graph: Deep Learning Visualization
+### Neural Graph: Deep Learning Visualization
 * **Layered Architecture:** 5-layer deep network (Input → Hidden A/B → Attention → Output)
 * **Live Spike Propagation:** Visual pulses travel from input sensors to output nodes
 * **Reactive to Data:** Input nodes flash based on real telemetry intensity
 
 ---
 
-## 🔧 Improvements
+## Improvements
 
 ### UI/UX Enhancements
 * **Single Connect Button:** Removed duplicate header button; swarm toggle in Edge Swarm panel only
@@ -83,14 +83,14 @@ v15.4.0 introduces **Hardware-in-the-Loop Simulation** using real-world climate 
 
 ---
 
-## 📝 Documentation
+## Documentation
 
 * **README:** Added "Hardware-in-the-Loop Simulation" section
 * **Release Notes:** Updated v15.3.0 notes with simulation features
 
 ---
 
-## 📦 Upgrade Instructions
+## Upgrade Instructions
 
 ```bash
 # 1. Pull latest
@@ -108,7 +108,7 @@ npm run dev
 
 ---
 
-## 📊 Metrics
+## Metrics
 
 | Metric | v15.3.0 | v15.4.0 |
 |--------|---------|---------|
