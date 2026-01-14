@@ -159,7 +159,7 @@ fn benchmark_config(
 
     // Decompression verification
     let start = Instant::now();
-    let _decompressed = decompress_chunk(&compressed, 0, None);
+    let _decompressed = decompress_chunk(compressed, 0, None);
     let decompress_time = start.elapsed().as_secs_f64();
 
     let original_size = data_bytes.len();
