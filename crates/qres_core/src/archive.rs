@@ -227,8 +227,7 @@ fn compress_solid_stream_dedup(data: &[u8]) -> io::Result<Vec<u8>> {
     // We map unique chunks by their ID (index in unique_data)
 
     // Buffer for compression (re-used)
-    let mut comp_buffer = Vec::with_capacity(64 * 1024 + 4096);
-    comp_buffer.resize(64 * 1024 + 4096, 0);
+    let mut comp_buffer = vec![0u8; 64 * 1024 + 4096];
 
     for ref_chunk in result.references {
         match ref_chunk {
@@ -252,7 +251,7 @@ fn compress_solid_stream_dedup(data: &[u8]) -> io::Result<Vec<u8>> {
                 // Write [Len: 4][Compressed Data]
                 // Note: compress_chunk includes its own internal flag byte at the start
                 output.extend_from_slice(&(compressed.len() as u32).to_le_bytes());
-                output.extend_from_slice(&compressed);
+                output.extend_from_slice(compressed);
             }
             DedupReference::Existing { hash, size } => {
                 // Write Reference Chunk (Flag 0x03)

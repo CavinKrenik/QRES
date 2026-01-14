@@ -731,7 +731,7 @@ where
                 // But QRES requires QRES format.
                 // Re-try with larger buffer or fail?
                 // For now, fail.
-                return Err(io::Error::new(io::ErrorKind::Other, "Compression failed"));
+                return Err(io::Error::other("Compression failed"));
             }
         };
         let compressed = &comp_buffer[..compressed_len];
