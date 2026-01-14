@@ -43,10 +43,10 @@ This document outlines the **Defense-in-Depth** security architecture of the QRE
 **Focus:** Protecting the confidentiality of raw data and individual updates from peers and aggregators.
 
 ### Implemented (v16.5)
-- **Differential Privacy (DP)**: Gaussian noise addition to `I16F16` gradients to prevent reverse-engineering.
-- **Secure Aggregation**: Pairwise masking (x25519 + ChaCha20) ensures aggregators see only the global sum.
-- **Zero-Knowledge Proofs (ZK)**: Pedersen Commitments proving that masked updates are within valid bounds (Norm Proofs).
-- **Ghost Packet**: Encapsulated transport structure (`GhostUpdate`) carrying the masked payload and proofs.
+- [x] **Differential Privacy (DP)**: Gaussian noise addition to `I16F16` gradients to prevent reverse-engineering.
+- [x] **Secure Aggregation**: Pairwise masking (x25519 + ChaCha20) ensures aggregators see only the global sum.
+- [x] **Zero-Knowledge Proofs (ZK)**: Pedersen Commitments proving that masked updates are within valid bounds (Norm Proofs).
+- [x] **Ghost Packet**: Encapsulated transport structure (`GhostUpdate`) carrying the masked payload and proofs.
 
 ### Roadmap
 - **Full Range Proofs**: Proving individual weight elements are within bounds (Bulletproofs).

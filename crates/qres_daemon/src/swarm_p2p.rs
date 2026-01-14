@@ -3,8 +3,6 @@ use crate::config::Config;
 use crate::living_brain::{LivingBrain, SignedEpiphany};
 use crate::peer_keys::PeerKeyStore;
 use crate::security::{ReputationManager, SecurityManager, SignedPayload};
-use qres_core::privacy::PrivacyAccountant;
-use qres_core::zk_proofs::{ZkNormProver, ProofBundle};
 use axum::{extract::State, routing::get, Json, Router};
 use libp2p::futures::StreamExt; // For select_next_some
 use libp2p::gossipsub::IdentTopic; // Added helper
@@ -13,6 +11,9 @@ use libp2p::{
     swarm::{NetworkBehaviour, SwarmEvent},
     tcp, yamux, PeerId, SwarmBuilder,
 };
+use qres_core::privacy::PrivacyAccountant;
+use qres_core::zk_proofs::{ProofBundle, ZkNormProver};
+use rand;
 use serde::Serialize;
 use std::collections::hash_map::DefaultHasher;
 use std::collections::HashSet;
@@ -24,7 +25,6 @@ use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 use tokio::sync::RwLock;
 use tracing::{info, warn};
-use rand;
 
 // Topic for brain synchronization
 const BRAIN_TOPIC: &str = "qres-hive-v2";
@@ -376,7 +376,7 @@ pub async fn start_p2p_node(
                     // --- PHASE 1: Verification Step (Receiver) ---
                     // 1. Deserialize SignedEpiphany
                     if let Ok(signed_epiphany) = serde_json::from_slice::<SignedEpiphany>(&message.data) {
-                        
+
                         // 2. Reconstruct the SignedPayload expected by SecurityManager
                         let payload_to_verify = SignedPayload {
                             data: signed_epiphany.payload_bytes(),
@@ -423,7 +423,7 @@ pub async fn start_p2p_node(
                                         local_brain.merge(&signed_epiphany.brain, 0.05);
                                         let _ = fs::write(brain_file, local_brain.to_json());
                                         state.write().await.brain = local_brain;
-                                        
+
                                         // Reputation Reward
                                         let mut app_state = state.write().await;
                                         app_state.reputation.reward(&signed_epiphany.sender_id);
