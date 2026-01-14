@@ -4,7 +4,6 @@ QRES adopts a bio-mimetic architecture that separates deterministic execution (*
 
 ```mermaid
 graph TD
-    %% Nodes
     IoT[Raw IoT Data] --> Core
     
     subgraph Body ["The Core (Body)"]
@@ -17,31 +16,27 @@ graph TD
             Linear[Linear Predictor]
             Graph[Graph Predictor]
         end
-        
         Core --- Predictors
     end
     
-    Core -->|Residuals & Surprises| Daemon
+    Core -->|Residuals| Daemon
     
     subgraph Mind ["The Daemon (Mind)"]
         style Mind fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
         Daemon[qres_daemon<br>Async Service]
         MetaBrain[MetaBrain RL Agent]
         
-        subgraph Security ["Security Stack"]
+        subgraph Security ["The Immune System"]
             style Security fill:#ffffff,stroke:#0277bd,stroke-width:1px,stroke-dasharray: 5 5
-            L1[Layer 1: Differential Privacy]
-            L2[Layer 2: Secure Aggregation]
-            L3[Layer 3: ZK Proofs]
-            
-            L1 --> L2 --> L3
+            L1[Diff Privacy] --> L2[Secure Agg] --> L3[ZK Proofs]
+            Reputation[Reputation Manager]
         end
         
         Daemon --- MetaBrain
         Daemon --- Security
     end
 
-    Security -->|Signed Updates| Swarm[P2P Swarm]
+    Security -->|GhostUpdate| Swarm[P2P Swarm]
     Swarm -->|Aggregated Model| Cloud[Cloud / Aggregator]
 ```
 

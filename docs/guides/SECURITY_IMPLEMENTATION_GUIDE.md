@@ -40,7 +40,7 @@ Repeat per item within a phase. Post-phase: Release new version, update `CHANGEL
 
 ## Phases
 
-### Phase 1: Authentication (Target v13)
+### Phase 1: Authentication (Completed v16.5)
 
 Focus: Secure model updates in trusted-node setup.  
 Cross-ref: P2P in `qres_daemon` (libp2p/GossipSub), FedProx in core, config in `examples/qres_daemon.toml.example`.
@@ -82,7 +82,25 @@ Cross-ref: P2P in `qres_daemon` (libp2p/GossipSub), FedProx in core, config in `
 
 ---
 
-### Phase 2: Robust Aggregation (Target v14)
+### Phase 1.5: Reputation & Trust (Completed v16.5)
+
+Focus: Filtering malicious actors based on historical behavior.
+Cross-ref: `ReputationManager` in `qres_daemon`.
+
+#### Item 1: Long-term Reputation Scoring
+
+| Step | Details |
+|------|---------|
+| **Research** | Reputation systems (EigenTrust, etc.); persistent tracking |
+| **Cross-ref** | `PeerId` usage in aggregator |
+| **Implementation** | JSON-backed Score DB; Reward (+0.01)/Punish (-0.1) logic |
+| **Testing** | Simulate "sleeper agent" behavior |
+| **Updates** | `reputation.json` config |
+| **Iteration** | Ban thresholds |
+
+---
+
+### Phase 2: Robust Aggregation (Completed v16.5)
 
 Focus: Byzantine faults.  
 Cross-ref: FedProx in `qres_core`; Krum in roadmap.
@@ -124,7 +142,7 @@ Cross-ref: FedProx in `qres_core`; Krum in roadmap.
 
 ---
 
-### Phase 3: Privacy (Target v15)
+### Phase 3: Privacy (Completed v16.5 - "The Ghost Protocol")
 
 Focus: Data protection.  
 Cross-ref: DP in roadmap; gradient attacks.
@@ -133,10 +151,10 @@ Cross-ref: DP in roadmap; gradient attacks.
 
 | Step | Details |
 |------|---------|
-| **Research** | `opendp` or similar |
-| **Cross-ref** | Weight sharing |
-| **Implementation** | Noise addition |
-| **Testing** | Privacy audits |
+| **Research** | `opendp` or Manual Gaussian Mechanism |
+| **Cross-ref** | Weight sharing in `privacy.rs` |
+| **Implementation** | Noise addition (Gaussian) on I16F16 |
+| **Testing** | Privacy audits; `I16F16` precision checks |
 | **Updates** | DP section |
 | **Iteration** | Utility benchmarks |
 
@@ -144,10 +162,10 @@ Cross-ref: DP in roadmap; gradient attacks.
 
 | Step | Details |
 |------|---------|
-| **Research** | MPC in libp2p |
-| **Cross-ref** | Aggregation |
-| **Implementation** | Masked summing |
-| **Testing** | Leak tests |
+| **Research** | Pairwise X25519 Masking |
+| **Cross-ref** | Aggregation in `secure_agg.rs` |
+| **Implementation** | Masked summing; `mask_update_fixed` |
+| **Testing** | perfect cancellation checks |
 | **Updates** | Protocols expansion |
 | **Iteration** | Scale tests |
 
@@ -155,14 +173,14 @@ Cross-ref: DP in roadmap; gradient attacks.
 
 | Step | Details |
 |------|---------|
-| **Research** | zk-SNARKs in Rust |
-| **Cross-ref** | Snapshots |
-| **Implementation** | Proof gen/verify |
-| **Testing** | Validity/time |
+| **Research** | Pedersen Commitments |
+| **Cross-ref** | Snapshots in `zk_proofs.rs` |
+| **Implementation** | Proof gen/verify; `ProofBundle` |
+| **Testing** | Validity/time; batch verification |
 | **Updates** | ZK section |
 | **Iteration** | Edge device opt |
 
-**Post-Phase**: v15; security audit.
+**Post-Phase**: v16.5; security audit.
 
 ---
 

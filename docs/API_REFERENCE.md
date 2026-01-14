@@ -1,4 +1,4 @@
-# QRES API Reference (v12.0)
+# QRES API Reference (v16.5)
 
 ## 🏗️ Rust Core API (`qres_core`)
 

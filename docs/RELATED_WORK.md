@@ -23,7 +23,7 @@ This document surveys relevant literature and positions QRES within the federate
 ### Bonawitz et al. (2017)
 - **Key Idea:** Pairwise masking with secret sharing for dropout tolerance
 - **Implementation:** Used in Google's Gboard
-- **Relation to QRES:** QRES uses simplified pairwise X25519 masking (Phase 3)
+- **Relation to QRES:** QRES uses simplified pairwise X25519 masking (v16.5)
 
 ### Bell et al. (2020)
 - **Key Idea:** Improved efficiency via structured random seed agreement
@@ -53,7 +53,7 @@ This document surveys relevant literature and positions QRES within the federate
 
 ### DP-SGD (Abadi et al., 2016)
 - **Key Idea:** Clip gradients, add Gaussian noise
-- **Relation to QRES:** Core privacy mechanism in v15
+- **Relation to QRES:** Core privacy mechanism in v16.5
 
 ### User-Level DP (Geyer et al., 2017)
 - **Key Idea:** Privacy per user, not per sample

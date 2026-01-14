@@ -63,3 +63,31 @@
     * [x] `ResourceUsagePredictor`: Hybrid Neural/Heuristic
     * [x] `WorkerPool`: Proactive scaling actuation
     * [x] Accuracy Showdown: Neural achieves 25x better accuracy (0.017 MSE).
+
+---
+
+## Q3 2026 (Jul-Sep): The Immune System [COMPLETE]
+
+**Goal:** Secure the decentralized swarm against adversarial poisoning and privacy leakage.
+
+### 1. Privacy Stack (Ghost Protocol)
+*Implement "Defense-in-Depth" privacy layer.*
+
+* **Deliverables:**
+    * [x] `crates/qres_core/src/privacy.rs`: Differential Privacy (Gaussian Fixed-Point)
+    * [x] `crates/qres_core/src/secure_agg.rs`: Secure Aggregation (X25519 Masking)
+    * [x] `crates/qres_core/src/packet.rs`: `GhostUpdate` transport
+
+### 2. Zero-Knowledge Verification
+*Prove update validity without revealing data.*
+
+* **Deliverables:**
+    * [x] `crates/qres_core/src/zk_proofs.rs`: Pedersen Commitments & Norm Proofs
+    * [x] `verify_batch`: High-performance batch verification
+
+### 3. Trust & Reputation
+*Identify and ban malicious actors.*
+
+* **Deliverables:**
+    * [x] `ReputationManager`: Persistent scoring (Reward/Punish)
+    * [x] `BrainAggregator`: Authenticated Krum integration
