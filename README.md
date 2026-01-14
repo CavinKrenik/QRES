@@ -2,13 +2,13 @@
 
 > A biologically-inspired neural compression engine for the constrained edge.
 
-[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.18216283-blue)](https://doi.org/10.5281/zenodo.18216283)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.18216348-blue)](https://doi.org/10.5281/zenodo.18216348)
 [![ORCID](https://img.shields.io/badge/ORCID-0009--0008--9183--1278-green.svg)](https://orcid.org/0009-0008-9183-1278)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/CavinKrenik/QRES/release.yml?style=flat)](https://github.com/CavinKrenik/QRES/actions)
 [![Version](https://img.shields.io/badge/version-v16.0.0-blue)](https://github.com/CavinKrenik/QRES/releases)
 
-**Paper:** [Download PDF](docs/paper/QRES__An_Adaptive_Hybrid_Compression_System_for_Edge_IoT.pdf) | **DOI:** [10.5281/zenodo.18216283](https://doi.org/10.5281/zenodo.18216283)
+**Paper:** [Download PDF](docs/paper/QRES__An_Adaptive_Hybrid_Compression_System_for_Edge_IoT.pdf) | **DOI:** [10.5281/zenodo.18216348](https://doi.org/10.5281/zenodo.18216348)
 
 ---
 
@@ -156,8 +156,8 @@ If you use QRES in your research, please cite:
   year         = 2026,
   publisher    = {Zenodo},
   version      = {v16.0.0},
-  doi          = {10.5281/zenodo.18216283},
-  url          = {https://doi.org/10.5281/zenodo.18216283}
+  doi          = {10.5281/zenodo.18216348},
+  url          = {https://doi.org/10.5281/zenodo.18216348}
 }
 ```
 

@@ -5,7 +5,7 @@ message: "If you use QRES in academic work, please cite the associated Zenodo pu
 title: "QRES: An Adaptive Hybrid Compression System for Edge IoT"
 version: "v16.0.0"
 # [UPDATED] DOI from your README
-doi: "10.5281/zenodo.18216283"
+doi: "10.5281/zenodo.18216348"
 date-released: "2026-01-12"
 
 authors:
@@ -37,7 +37,7 @@ keywords:
 license: Apache-2.0
 
 repository-code: "https://github.com/CavinKrenik/QRES"
-url: "https://doi.org/10.5281/zenodo.18216283"
+url: "https://doi.org/10.5281/zenodo.18216348"
 
 preferred-citation:
   type: software
@@ -49,4 +49,4 @@ preferred-citation:
   title: "QRES: An Adaptive Hybrid Compression System for Edge IoT"
   year: 2026
   version: "v16.0.0"
-  doi: "10.5281/zenodo.18216283"
+  doi: "10.5281/zenodo.18216348"
