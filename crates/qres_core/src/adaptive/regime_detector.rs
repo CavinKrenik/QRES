@@ -1,5 +1,5 @@
-use alloc::vec::Vec;
 use alloc::vec;
+use alloc::vec::Vec;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Regime {
@@ -30,7 +30,7 @@ pub struct RegimeDetector {
     throughput_threshold: f32,
     /// Current regime
     current_regime: Regime,
-    
+
     // --- Throughput Tracking Fields ---
     /// Last update timestamp (ms)
     last_update_ms: u64,
@@ -77,24 +77,25 @@ impl RegimeDetector {
 
         // 3. Check Time Window (READS last_update_ms)
         let elapsed = now_ms.saturating_sub(self.last_update_ms);
-        
+
         // Update throughput metric every 1 second (1000ms)
         if elapsed >= 1000 {
             // Calculate bytes/sec
             self.current_throughput = (self.accumulated_bytes as f32) / (elapsed as f32 / 1000.0);
-            
+
             // Reset Window
             self.last_update_ms = now_ms;
             self.accumulated_bytes = 0;
         }
 
         // 4. Dual trigger: Storm if entropy > threshold OR throughput > threshold
-        let new_regime =
-            if entropy > self.entropy_threshold || self.current_throughput > self.throughput_threshold {
-                Regime::Storm
-            } else {
-                Regime::Calm
-            };
+        let new_regime = if entropy > self.entropy_threshold
+            || self.current_throughput > self.throughput_threshold
+        {
+            Regime::Storm
+        } else {
+            Regime::Calm
+        };
 
         self.current_regime = new_regime;
     }
@@ -138,7 +139,7 @@ impl RegimeDetector {
 
         // Advance index
         self.idx = (self.idx + 1) % self.window_size;
-        self.count += 1; 
+        self.count += 1;
 
         result
     }
