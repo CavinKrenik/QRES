@@ -1,11 +1,11 @@
 [workspace]
 members = [
-    "qres_rust/qres_core",
-    "qres_rust/qres_daemon",
-    "qres_rust/qres_wasm",
-    "benchmarks",
+    "crates/qres_core",
+    "crates/qres_daemon",
+    "crates/qres_wasm",
+    "evaluation/benchmarks",
     "examples/virtual_iot_network",
-    "qres-studio/src-tauri"
+    "web/src-tauri"
 ]
 resolver = "2"
 
@@ -19,4 +19,4 @@ zstd = "0.13"
 anyhow = "1.0"
 thiserror = "1.0"
 tract-onnx = "0.21.10"
-qres_core = { path = "./qres_rust/qres_core" }
+qres_core = { path = "./crates/qres_core" }

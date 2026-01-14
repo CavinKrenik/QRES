@@ -11,4 +11,4 @@ warp = "0.3"
 rand = "0.8"
 reqwest = { version = "0.11", features = ["json"] }
 anyhow = "1.0"
-qres_core = { path = "../../qres_rust/qres_core" }
+qres_core = { path = "../../crates/qres_core" }

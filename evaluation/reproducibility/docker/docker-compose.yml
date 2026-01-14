@@ -3,8 +3,8 @@ version: '3.8'
 services:
   qres-node-1:
     build:
-      context: ../..
-      dockerfile: reproducibility/docker/Dockerfile.qres
+      context: ../../..
+      dockerfile: evaluation/reproducibility/docker/Dockerfile.qres
     ports:
       - "8080:8080"
     environment:
@@ -15,8 +15,8 @@ services:
 
   qres-node-2:
     build:
-      context: ../..
-      dockerfile: reproducibility/docker/Dockerfile.qres
+      context: ../../..
+      dockerfile: evaluation/reproducibility/docker/Dockerfile.qres
     ports:
       - "8081:8080"
     environment:
@@ -27,8 +27,8 @@ services:
 
   qres-node-3:
     build:
-      context: ../..
-      dockerfile: reproducibility/docker/Dockerfile.qres
+      context: ../../..
+      dockerfile: evaluation/reproducibility/docker/Dockerfile.qres
     ports:
       - "8082:8080"
     environment:

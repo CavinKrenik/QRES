@@ -9,7 +9,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9"
 sysinfo = "0.29"
 anyhow = "1.0"
-qres_core = { path = "../qres_rust/qres_core", features = ["cli", "std"] }
+qres_core = { path = "../../crates/qres_core", features = ["cli", "std"] }
 zstd = "0.13"
 rand = "0.8"
 csv = "1.3"

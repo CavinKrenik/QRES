@@ -42,13 +42,13 @@ ml = [
 
 [tool.maturin]
 # Point to qres_core crate (after workspace split)
-manifest-path = "qres_rust/qres_core/Cargo.toml"
+manifest-path = "../../crates/qres_core/Cargo.toml"
 # Point to the Python wrapper we moved to root
-python-source = "python"
+python-source = "."
 module-name = "qres.qres_rust"
 features = ["python"]
 
 # Start with a clean slate by ignoring old artifacts
 [tool.maturin.sdist]
-include = ["qres_rust/**/*", "python/**/*", "README.md", "pyproject.toml"]
-exclude = ["legacy/**/*", "tests/data/**/*"]
+include = ["../../crates/**/*", "**/*", "../../README.md", "pyproject.toml"]
+exclude = ["../../evaluation/**/*", "../../tests/data/**/*"]

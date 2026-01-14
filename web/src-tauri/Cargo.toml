@@ -26,7 +26,7 @@ tauri-plugin-websocket = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 # Updated: depend on qres_core instead of qres_rust (which is now a workspace)
-qres_core = { path = "../../qres_rust/qres_core" }
+qres_core = { path = "../../crates/qres_core" }
 tokio = { version = "1", features = ["full"] }
 walkdir = "2"
 lazy_static = "1.4"

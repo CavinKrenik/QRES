@@ -1,27 +1,21 @@
-﻿# QRES: An Adaptive Hybrid Compression System for Edge IoT
+﻿# QRES: A Deterministic Data Consensus System for Edge IoT
 
-> A biologically-inspired neural compression engine for the constrained edge.
+> **Produce. Predict. Preserve.**
 
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.18216348-blue)](https://doi.org/10.5281/zenodo.18216348)
-[![ORCID](https://img.shields.io/badge/ORCID-0009--0008--9183--1278-green.svg)](https://orcid.org/0009-0008-9183-1278)
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/CavinKrenik/QRES/release.yml?style=flat)](https://github.com/CavinKrenik/QRES/actions)
-[![Version](https://img.shields.io/badge/version-v16.0.0-blue)](https://github.com/CavinKrenik/QRES/releases)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 
-**Paper:** [Download PDF](docs/paper/QRES__An_Adaptive_Hybrid_Compression_System_for_Edge_IoT.pdf) | **DOI:** [10.5281/zenodo.18216348](https://doi.org/10.5281/zenodo.18216348)
+**QRES** is a distributed system that solves the "Bandwidth vs. Privacy" conflict in Edge IoT. Unlike traditional compressors, QRES treats data compression as a **prediction problem**, allowing edge swarms to learn temporal patterns without transmitting raw data.
 
----
+### Core Architecture
+* **The Body (Deterministic Core):** A `no_std` Rust engine using **Q16.16 Fixed-Point Arithmetic**. This guarantees bit-perfect reproducibility across x86 servers, ARM microcontrollers, and WASM clients.
+* **The Mind (Adaptive Daemon):** An async background service that switches between a **Neural Predictor** (for structured data) and **Bit-Packing** (for high-entropy noise) based on real-time signal complexity.
 
-## The Core Idea: Hybrid Adaptive Compression
-
-Time-series data at the edge presents a unique contradiction: some signals are highly structured (weather, vibrations), while others are noisy and chaotic (grid load spikes). Traditional compressors treat them all the same.
-
-**QRES (Quantized Residual Entropy System)** introduces a **Hybrid Gatekeeper** that dynamically switches between two compression paths based on real-time entropy analysis:
-
-1.  **Bit-Packing Path (Low-Latency):** For high-entropy data (e.g., Grid Sensors), QRES strips trends using Delta+ZigZag encoding and packs the residuals directly. This bypasses the heavy neural network, saving CPU while maintaining ~2.8x compression.
-2.  **Neural-Enhanced Path (High-Ratio):** For structured data (e.g., Manufacturing, ECG), QRES activates a lightweight Neural Residual Predictor. This squeezes out an additional **25%** compression by modeling the physics of the signal.
-
-The result is a system that never "expands" data and adapts its computational cost to the difficulty of the signal.
+### Key Features
+1. **Deterministic Sparse Updates:** Syncs model weights using only a PRNG seed (8 KB/day vs 2.3 GB/day), effectively solving the "Link Explosion" problem in P2P learning.
+2. **Hybrid Gatekeeper:** Automatically bypasses heavy neural networks when data entropy exceeds 7.5 bits/byte, ensuring zero latency spikes during "regime changes" (storms, grid failures).
+3. **Byzantine Resilience:** Integrated Krum aggregation and Differential Privacy stack for operating in adversarial networks.
 
 ---
 
@@ -29,14 +23,14 @@ The result is a system that never "expands" data and adapts its computational co
 
 Benchmarks run on single-core generic hardware. QRES automatically bypasses Neural prediction when entropy is high (> 7.5 bits/byte).
 
-| Dataset | Domain | Ratio | Architecture Used |
-|:---|:---|:---:|:---|
-| **SmoothSine** | Synthetic | **24.9x** | Neural + BitPack |
-| **Jena Climate** | Weather | **4.9x** | BitPack Dominant |
-| **ItalyPower** | Smart Grid | **4.6x** | Neural + BitPack |
-| **Wafer** | Manufacturing | **4.2x** | Neural + BitPack |
-| **ECG5000** | Medical | **4.0x** | Neural + BitPack |
-| **ETTh1** | Grid Sensor | **2.8x** | BitPack Only (Bypass) |
+| Feature | QRES (v16) | Facebook Gorilla | TFLite Micro | Federated Avg |
+|:---|:---|:---:|:---:|:---:|
+| **Primary Goal** | **Data Consensus** | Storage Optimization | Inference | Model Training |
+| **Determinism** | **Q16.16 Fixed-Point** | Float (Arch Dependent) | Float / Int8 | Float |
+| **Noise Handling** | **Hybrid (Bit-Pack Switch)** | XOR Delta (Good) | Poor (Model Drift) | N/A |
+| **Edge Training** | **Yes (MetaBrain)** | No | Limited | Yes (Heavy) |
+| **Byzantine Defense** | **Krum + ZK Proofs** | None | None | None |
+| **Bandwidth (Daily)** | **~8 KB (Seed Sync)** | N/A | N/A | ~2.3 GB (Weights) |
 
 ---
 
@@ -101,10 +95,10 @@ To demonstrate the Hybrid Gatekeeper in action, this repository includes a **Wea
 ### Run the Simulation
 ```bash
 # 1. Fetch the curated "Director's Cut" data
-python3 scripts/fetch_weather_replay.py
+python3 tools/ci/fetch_weather_replay.py
 
 # 2. Launch real-time dashboard
-cd qres-studio && npm run dev
+cd web && npm run dev
 ```
 
 ---
@@ -123,12 +117,12 @@ fn main() {
     // QRES automatically detects structure and chooses the Neural Path
     let sensor_data: Vec<f32> = vec![22.0, 22.1, 22.1, 22.3, 24.5];
     
-    let compressed = compress_adaptive(&sensor_data).unwrap();
+    let compressed = compress_adaptive(&sensor_data).expect("Compression failed");
     
     println!("Compressed {} bytes -> {} bytes", 
              sensor_data.len() * 4, compressed.len());
              
-    let recovered = decompress_adaptive(&compressed).unwrap();
+    let recovered = decompress_adaptive(&compressed).expect("Decompression failed");
     assert_eq!(sensor_data, recovered);
 }
 ```
@@ -151,7 +145,7 @@ If you use QRES in your research, please cite:
 ```bibtex
 @software{krenik2026qres,
   author       = {Krenik, Cavin},
-  title        = {{QRES: An Adaptive Hybrid Compression System for Edge IoT}},
+  title        = {{QRES: A Deterministic, Prediction-Driven Data Consensus System for Edge IoT}},
   month        = jan,
   year         = 2026,
   publisher    = {Zenodo},
