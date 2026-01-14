@@ -44,3 +44,11 @@ ai/rl_logs/
 
 # Environment
 .env
+
+# LaTeX
+*.aux
+*.bbl
+*.blg
+*.out
+*.toc
+*.synctex.gz

@@ -38,41 +38,7 @@ Benchmarks run on single-core generic hardware. QRES automatically bypasses Neur
 
 QRES adopts a bio-mimetic architecture that separates deterministic execution (**The Body**) from adaptive learning (**The Mind**). This ensures bit-perfect reproducibility while allowing the system to "dream" and adapt to new data regimes.
 
-```mermaid
-graph TD
-    IoT[Raw IoT Data] --> Core
-    
-    subgraph Body ["The Core (Body)"]
-        style Body fill:#fff9c4,stroke:#fbc02d,stroke-width:2px
-        Core[qres_core<br>No_Std Rust Library]
-        
-        subgraph Predictors [Predictor Ensemble]
-            style Predictors fill:#ffffff,stroke:#fbc02d,stroke-width:1px,stroke-dasharray: 5 5
-            SNN[SNN Predictor]
-            Linear[Linear Predictor]
-            Graph[Graph Predictor]
-        end
-        Core --- Predictors
-    end
-    
-    Core -->|Residuals| Daemon
-    
-    subgraph Mind ["The Daemon (Mind)"]
-        style Mind fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
-        Daemon[qres_daemon<br>Async Service]
-        MetaBrain[MetaBrain RL Agent]
-        
-        subgraph Security ["Security Stack"]
-            style Security fill:#ffffff,stroke:#0277bd,stroke-width:1px,stroke-dasharray: 5 5
-            L1[Diff Privacy] --> L2[Secure Agg] --> L3[ZK Proofs]
-        end
-        
-        Daemon --- MetaBrain
-        Daemon --- Security
-    end
-
-    Security -->|Updates| Swarm[P2P Swarm]
-```
+![QRES Architecture](paper/figures/figure1_architecture.png)
 
 Read more in [**QRES Theory**](docs/THEORY.md).
 
@@ -133,7 +99,7 @@ fn main() {
 
 *   [**Theory & Architecture**](docs/THEORY.md)
 *   [**Implementation Status**](docs/IMPLEMENTATION_STATUS.md)
-*   [**Product Roadmap**](docs/PRODUCT_ROADMAP.md)
+
 *   [**Release Notes**](docs/releases)
 
 ---
