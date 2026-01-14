@@ -56,8 +56,10 @@ jobs:
           pip install --upgrade pip
 
       - name: Build Python Extension
+        working-directory: bindings/python
         run: |
-          source .venv/bin/activate
+          # Use the venv created in root
+          source ../../.venv/bin/activate
           pip install maturin
           # Build Python extension from qres_core
           maturin develop --release

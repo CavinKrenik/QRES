@@ -24,6 +24,7 @@ jobs:
       - name: Build Wheels (Maturin)
         uses: PyO3/maturin-action@v1
         with:
+          working-directory: bindings/python
           command: build
           args: --release --out dist
           sccache: 'true'
