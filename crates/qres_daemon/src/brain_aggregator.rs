@@ -190,7 +190,10 @@ impl FederatedAverager {
 
     /// Aggregate buffered updates using weighted average
     /// Returns the aggregated weights and confidence vectors
-    pub fn aggregate(&mut self, reputation_manager: &ReputationManager) -> Option<(Vec<u8>, Vec<f32>)> {
+    pub fn aggregate(
+        &mut self,
+        reputation_manager: &ReputationManager,
+    ) -> Option<(Vec<u8>, Vec<f32>)> {
         if self.buffer.is_empty() {
             return None;
         }
@@ -212,7 +215,8 @@ impl FederatedAverager {
 
             // Calculate freshness decay: weight = reputation * exp(-ln(2) * age / half_life)
             let age_seconds = now - epiphany.timestamp as f64;
-            let freshness = (-std::f64::consts::LN_2 * age_seconds / self.freshness_half_life).exp();
+            let freshness =
+                (-std::f64::consts::LN_2 * age_seconds / self.freshness_half_life).exp();
 
             let combined_weight = reputation * freshness;
             weights.push(combined_weight);
@@ -223,7 +227,13 @@ impl FederatedAverager {
                 // I8F8 weights - need to upcast to f32
                 if let Some(weights_bytes) = &epiphany.brain.best_engine_weights {
                     let i8f8_weights = FixedTensor::from_i8f8_bytes(weights_bytes);
-                    all_weights.push(i8f8_weights.data.iter().map(|&w| w.to_num::<f32>()).collect());
+                    all_weights.push(
+                        i8f8_weights
+                            .data
+                            .iter()
+                            .map(|&w| w.to_num::<f32>())
+                            .collect(),
+                    );
                 } else {
                     // Fallback to confidence if no weights
                     all_weights.push(epiphany.brain.confidence.clone());
@@ -232,7 +242,13 @@ impl FederatedAverager {
                 // I16F16 weights
                 if let Some(weights_bytes) = &epiphany.brain.best_engine_weights {
                     let i16f16_weights = FixedTensor::from_i16f16_bytes(weights_bytes);
-                    all_weights.push(i16f16_weights.data.iter().map(|&w| w.to_num::<f32>()).collect());
+                    all_weights.push(
+                        i16f16_weights
+                            .data
+                            .iter()
+                            .map(|&w| w.to_num::<f32>())
+                            .collect(),
+                    );
                 } else {
                     // Fallback to confidence
                     all_weights.push(epiphany.brain.confidence.clone());

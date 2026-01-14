@@ -37,10 +37,10 @@ pub struct BrainDelta {
 pub struct SignedEpiphany {
     pub brain: LivingBrain,
     pub proof_bundle: Option<ProofBundle>,
-    pub signature: String, // Hex encoded signature
-    pub sender_id: String, // PeerID or Public Key
-    pub timestamp: u64,    // Replay protection
-    pub nonce: u64,        // Replay protection
+    pub signature: String,   // Hex encoded signature
+    pub sender_id: String,   // PeerID or Public Key
+    pub timestamp: u64,      // Replay protection
+    pub nonce: u64,          // Replay protection
     pub is_storm_mode: bool, // True if weights are I8F8 quantized
 }
 

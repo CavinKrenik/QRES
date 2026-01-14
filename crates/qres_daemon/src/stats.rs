@@ -47,21 +47,18 @@ impl SingularityMetrics {
     pub fn export_csv(&self) -> Result<(), Box<dyn std::error::Error>> {
         let path = Self::get_csv_path();
         let exists = path.exists();
-        
+
         let mut csv_content = if !exists {
             "timestamp,local_loss,swarm_consensus_variance,active_peers\n".to_string()
         } else {
             String::new()
         };
-        
+
         csv_content.push_str(&format!(
             "{},{:.6},{:.6},{}\n",
-            self.timestamp,
-            self.local_loss,
-            self.swarm_consensus_variance,
-            self.active_peers
+            self.timestamp, self.local_loss, self.swarm_consensus_variance, self.active_peers
         ));
-        
+
         fs::write(path, csv_content)?;
         Ok(())
     }

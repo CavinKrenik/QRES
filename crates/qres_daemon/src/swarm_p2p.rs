@@ -3,10 +3,7 @@ use crate::config::Config;
 use crate::living_brain::{LivingBrain, SignedEpiphany};
 use crate::peer_keys::PeerKeyStore;
 use crate::security::{ReputationManager, SecurityManager, SignedPayload};
-use qres_core::adaptive::regime_detector::{Regime, RegimeDetector};
-use qres_core::privacy::PrivacyAccountant;
-use qres_core::tensor::{FixedTensor, I8F8};
-use qres_core::zk_proofs::{ProofBundle, ZkNormProver};
+use crate::stats::SingularityMetrics;
 use axum::{extract::State, routing::get, Json, Router};
 use fixed::types::I16F16;
 use libp2p::futures::StreamExt; // For select_next_some
@@ -16,6 +13,10 @@ use libp2p::{
     swarm::{NetworkBehaviour, SwarmEvent},
     tcp, yamux, PeerId, SwarmBuilder,
 };
+use qres_core::adaptive::regime_detector::{Regime, RegimeDetector};
+use qres_core::privacy::PrivacyAccountant;
+use qres_core::tensor::{FixedTensor, I8F8};
+use qres_core::zk_proofs::{ProofBundle, ZkNormProver};
 use rand;
 use serde::Serialize;
 use std::collections::hash_map::DefaultHasher;
@@ -28,7 +29,6 @@ use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 use tokio::sync::RwLock;
 use tracing::{info, warn};
-use crate::stats::SingularityMetrics;
 
 // Topic for brain synchronization
 const BRAIN_TOPIC: &str = "qres-hive-v2";
@@ -381,20 +381,20 @@ pub async fn start_p2p_node(
                 if app_state.federated_averager.should_aggregate() {
                     // Clone reputation data to avoid borrowing issues
                     let reputation_clone = app_state.reputation.clone();
-                    if let Some((aggregated_weights, aggregated_confidence)) = 
+                    if let Some((aggregated_weights, aggregated_confidence)) =
                         app_state.federated_averager.aggregate(&reputation_clone) {
-                        
+
                         // Load current brain
                         if let Ok(local_json) = fs::read_to_string(brain_file) {
                             if let Some(mut local_brain) = LivingBrain::from_json(&local_json) {
                                 // Apply aggregated weights
                                 local_brain.best_engine_weights = Some(aggregated_weights);
-                                
+
                                 // Apply aggregated confidence with learning rate
                                 for (local_conf, &agg_conf) in local_brain.confidence.iter_mut().zip(aggregated_confidence.iter()) {
                                     *local_conf = *local_conf * 0.9 + agg_conf * 0.1; // 10% learning rate
                                 }
-                                
+
                                 // Check for Singularity
                                 let global_error_rate = 1.0 - (aggregated_confidence.iter().sum::<f32>() / aggregated_confidence.len() as f32);
                                 if global_error_rate < 0.01 {
@@ -402,23 +402,23 @@ pub async fn start_p2p_node(
                                     // Emit SystemEvent::SingularityReached (would be sent to monitoring system)
                                     // Switch to inference-only mode (conceptual - would disable training)
                                 }
-                                
+
                                 // Export metrics to CSV
                                 let local_loss = 1.0 - (local_brain.confidence.iter().sum::<f32>() / local_brain.confidence.len() as f32);
                                 let swarm_variance = aggregated_confidence.iter()
                                     .map(|&c| (c - global_error_rate).powi(2))
                                     .sum::<f32>() / aggregated_confidence.len() as f32;
                                 let active_peers = app_state.connected_peers.len();
-                                
+
                                 let metrics = SingularityMetrics::new(local_loss, swarm_variance.sqrt(), active_peers);
                                 if let Err(e) = metrics.export_csv() {
                                     warn!("Failed to export singularity metrics: {}", e);
                                 }
-                                
+
                                 // Save updated brain
                                 let _ = fs::write(brain_file, local_brain.to_json());
                                 app_state.brain = local_brain;
-                                
+
                                 info!("Applied federated aggregation. Global error rate: {:.4}", global_error_rate);
                             }
                         }

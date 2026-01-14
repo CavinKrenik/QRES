@@ -53,23 +53,29 @@ impl FixedTensor {
     /// Downcast to I8F8 (Storm Mode): Halves precision and bandwidth
     /// Saturates values outside I8F8 range to prevent overflow
     pub fn quantize_to_i8f8(&self) -> Vec<I8F8> {
-        self.data.iter().map(|&val| {
-            // Convert to f32 for range checking, then quantize
-            let f32_val = val.to_num::<f32>();
-            // I8F8 range: -128.0 to 127.996 (approximately)
-            let clamped = f32_val.clamp(-128.0, 127.996);
-            I8F8::from_num(clamped)
-        }).collect()
+        self.data
+            .iter()
+            .map(|&val| {
+                // Convert to f32 for range checking, then quantize
+                let f32_val = val.to_num::<f32>();
+                // I8F8 range: -128.0 to 127.996 (approximately)
+                let clamped = f32_val.clamp(-128.0, 127.996);
+                I8F8::from_num(clamped)
+            })
+            .collect()
     }
 
     /// Upcast from I8F8 (Restore from Storm Mode)
     /// Fills lower precision bits with zeros (lossy but deterministic)
     pub fn from_i8f8(data: &[I8F8]) -> Self {
-        let data_i16f16 = data.iter().map(|&val| {
-            // Convert I8F8 to f32, then to I16F16
-            let f32_val = val.to_num::<f32>();
-            I16F16::from_num(f32_val)
-        }).collect();
+        let data_i16f16 = data
+            .iter()
+            .map(|&val| {
+                // Convert I8F8 to f32, then to I16F16
+                let f32_val = val.to_num::<f32>();
+                I16F16::from_num(f32_val)
+            })
+            .collect();
         Self::new(data_i16f16)
     }
 }

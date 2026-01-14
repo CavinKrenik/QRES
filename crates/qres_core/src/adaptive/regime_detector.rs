@@ -68,11 +68,12 @@ impl RegimeDetector {
         };
 
         // Dual trigger: Storm if entropy > threshold OR throughput > threshold
-        let new_regime = if entropy > self.entropy_threshold || bytes_per_sec > self.throughput_threshold {
-            Regime::Storm
-        } else {
-            Regime::Calm
-        };
+        let new_regime =
+            if entropy > self.entropy_threshold || bytes_per_sec > self.throughput_threshold {
+                Regime::Storm
+            } else {
+                Regime::Calm
+            };
 
         self.current_regime = new_regime;
     }
