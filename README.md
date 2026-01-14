@@ -2,7 +2,7 @@
 
 > **Produce. Predict. Preserve.**
 
-[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.18216348-blue)](https://doi.org/10.5281/zenodo.18216348)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.18246044-blue)](https://doi.org/10.5281/zenodo.18246044)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/CavinKrenik/QRES/test.yml?branch=main)](https://github.com/CavinKrenik/QRES/actions)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 
@@ -165,8 +165,8 @@ If you use QRES in your research, please cite:
   year         = 2026,
   publisher    = {Zenodo},
   version      = {v16.5.0},
-  doi          = {10.5281/zenodo.18216348},
-  url          = {https://doi.org/10.5281/zenodo.18216348}
+  doi          = {10.5281/zenodo.18246044},
+  url          = {https://doi.org/10.5281/zenodo.18246044}
 }
 ```
 
