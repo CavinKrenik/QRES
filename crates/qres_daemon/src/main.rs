@@ -134,14 +134,15 @@ fn compress_file(input: &str, output: &str, config: &QresConfig) -> io::Result<(
         let chunk = &buffer[..bytes_read];
         // Allocate buffer (worst case estimate)
         let mut comp_buffer = vec![0u8; chunk.len() + 4096];
-        let compressed_result = compress_chunk(chunk, 0, weights_arg, Some(config), &mut comp_buffer);
-        
+        let compressed_result =
+            compress_chunk(chunk, 0, weights_arg, Some(config), &mut comp_buffer);
+
         let compressed = match compressed_result {
             Ok(len) => comp_buffer[..len].to_vec(),
             Err(QresError::CompressionError(_)) => {
                 // Core failed (expansion). Use Zstd fallback.
                 let zstd_data = zstd::bulk::compress(chunk, 3)?;
-                let ver = 0x0A; 
+                let ver = 0x0A;
                 let flag_byte = (ver << 4) | 0x01;
 
                 let mut out = Vec::with_capacity(5 + zstd_data.len());

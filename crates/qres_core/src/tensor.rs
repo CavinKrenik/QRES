@@ -77,7 +77,7 @@ impl MpsCompressor {
     fn haar_1d(&self, data: &mut [I16F16], start: usize, len: usize) {
         let mut temp = vec![I16F16::ZERO; len];
         let mut h = len;
-        
+
         // Pre-calculate constants in Fixed Point
         let frac_sqrt_2 = I16F16::from_num(core::f64::consts::FRAC_1_SQRT_2);
 
@@ -93,7 +93,7 @@ impl MpsCompressor {
 
                 // temp[i] = sum * frac_sqrt_2
                 temp[i] = sum.checked_mul(frac_sqrt_2).unwrap_or(I16F16::MAX);
-                
+
                 // temp[half + i] = diff * frac_sqrt_2
                 if let Some(idx) = temp.get_mut(half + i) {
                     *idx = diff.checked_mul(frac_sqrt_2).unwrap_or(I16F16::MAX);

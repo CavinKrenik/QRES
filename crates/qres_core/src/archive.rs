@@ -227,7 +227,7 @@ fn compress_solid_stream_dedup(data: &[u8]) -> io::Result<Vec<u8>> {
     // We map unique chunks by their ID (index in unique_data)
 
     // Buffer for compression (re-used)
-    let mut comp_buffer = Vec::with_capacity(64 * 1024 + 4096); 
+    let mut comp_buffer = Vec::with_capacity(64 * 1024 + 4096);
     comp_buffer.resize(64 * 1024 + 4096, 0);
 
     for ref_chunk in result.references {
@@ -239,7 +239,7 @@ fn compress_solid_stream_dedup(data: &[u8]) -> io::Result<Vec<u8>> {
             } => {
                 // Get the data for this new chunk
                 let chunk_data = &result.unique_data[chunk_id as usize];
-                
+
                 // Resize if needed (rare case where chunk > 64KB)
                 if chunk_data.len() + 4096 > comp_buffer.len() {
                     comp_buffer.resize(chunk_data.len() + 4096, 0);

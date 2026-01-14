@@ -268,11 +268,11 @@ fn predictive_encode_v4(
     // In a full Zero-Copy impl, AnsWriter should write to a buffer.
     // For now, we accept the allocation here but avoid copying it further.
     let compressed_data = ans.finish();
-    
+
     if compressed_data.len() > output.len() {
         return Err(QresError::Other(String::from("Buffer too small")));
     }
-    
+
     output[..compressed_data.len()].copy_from_slice(&compressed_data);
     Ok(compressed_data.len())
 }
@@ -418,7 +418,7 @@ pub fn compress_chunk(
             // Recursive compression - Estimate split sizes?
             // Since we recurse, we need to partition the output buffer.
             // Strategy: Reserve space for header, compress Even, then compress Odd.
-            
+
             let mut cursor = 9; // Skip headers for now
 
             // Compress Even
@@ -441,7 +441,7 @@ pub fn compress_chunk(
                 output[0] = flag_byte;
                 output[1..5].copy_from_slice(&total_len.to_le_bytes());
                 output[5..9].copy_from_slice(&even_len_u32.to_le_bytes());
-                
+
                 return Ok(cursor);
             }
         }
@@ -502,22 +502,31 @@ pub fn compress_chunk(
     let ver = QRES_PROTOCOL_VERSION & 0x0F;
     let flag_byte = (ver << 4) | mode;
 
-    let header_size = 1 + 4 + if is_neural { stored_init_weights.len() } else { 0 };
-    
+    let header_size = 1
+        + 4
+        + if is_neural {
+            stored_init_weights.len()
+        } else {
+            0
+        };
+
     if output.len() < header_size {
-         return Err(QresError::Other(String::from("Buffer too small for header")));
+        return Err(QresError::Other(String::from(
+            "Buffer too small for header",
+        )));
     }
 
     // Write Header Info
     let mut cursor = 0;
-    output[cursor] = flag_byte; cursor += 1;
-    
+    output[cursor] = flag_byte;
+    cursor += 1;
+
     let chunk_len_u32 = chunk.len() as u32;
-    output[cursor..cursor+4].copy_from_slice(&chunk_len_u32.to_le_bytes()); 
+    output[cursor..cursor + 4].copy_from_slice(&chunk_len_u32.to_le_bytes());
     cursor += 4;
 
     if is_neural {
-        output[cursor..cursor+stored_init_weights.len()].copy_from_slice(&stored_init_weights);
+        output[cursor..cursor + stored_init_weights.len()].copy_from_slice(&stored_init_weights);
         cursor += stored_init_weights.len();
     }
 
@@ -713,8 +722,8 @@ where
         // Allocate worst-case buffer for compression
         // Worst case: Header + Chunk + Overhead
         // Header ~ 100 bytes (with weights), Chunk = bytes_read
-        let mut comp_buffer = vec![0u8; bytes_read + 2048]; 
-        
+        let mut comp_buffer = vec![0u8; bytes_read + 2048];
+
         let compressed_len = match compress_chunk(chunk, 0, None, None, &mut comp_buffer) {
             Ok(len) => len,
             Err(_) => {
@@ -785,7 +794,7 @@ fn encode_bytes(
 
     let compressed_len = compress_chunk(data, predictor_id, weights, None, &mut buffer)
         .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(e.to_string()))?;
-        
+
     buffer.truncate(compressed_len);
     Ok(pyo3::types::PyBytes::new_bound(py, &buffer).unbind())
 }
