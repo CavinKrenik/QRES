@@ -1,5 +1,6 @@
 use alloc::vec;
 use alloc::vec::Vec;
+use fixed::types::I16F16;
 
 /// Tensor Network MPS (Matrix Product State) Compressor
 /// Breaks a high-dimensional tensor into a chain of low-rank tensors (cores).
@@ -11,50 +12,35 @@ use alloc::vec::Vec;
 /// - Output: List of compressed cores.
 pub struct MpsCompressor {
     pub bond_dim: usize,
-    pub threshold: f64,
+    pub threshold: I16F16,
 }
 
 impl MpsCompressor {
     pub fn new(bond_dim: usize, threshold: f64) -> Self {
         MpsCompressor {
             bond_dim,
-            threshold,
+            threshold: I16F16::from_num(threshold),
         }
     }
 
-    /// Compress a 2D matrix (rows x cols) into MPS cores using SVD
-    /// (Simplified singular value truncation for prototype)
+    /// Compress a 2D matrix (rows x cols) into MPS cores using "Haar Wavelet Tensor Train"
+    /// Uses Q16.16 Fixed Point arithmetic for determinism.
     pub fn compress_matrix(&self, data: &[f64], rows: usize, cols: usize) -> Vec<Vec<f64>> {
         // Validation
         if data.len() != rows * cols {
             return Vec::new(); // Error
         }
 
-        // 1. Convert to Array2
-        // In a real SVD implementation we would use `ndarray-linalg` (requires LAPACK).
-        // Since we want pure Rust for portability, we'll use a simplified Power Iteration SVD
-        // or just a mock "Trunactor" for this v7.5 step if LAPACK isn't guaranteed.
-
-        // Wait! We can't do full SVD without external libs (ndarray-linalg).
-        // Strategy: Use an Auto-Encoder style approximation or purely mathematical transform?
-        // Or simpler: Quantized Tensor Train.
-
-        // Let's implement a 'Fake' MPS that actually does
-        // "Adaptive Grid Quantization" which is the classical analogue.
-        // Or, since we have `candle-core` in deps, use Candle for SVD?
-        // Candle supports non-square matmul. Does it support SVD?
-        // Candle doesn't have SVD yet (as of v0.3).
-
-        // Fallback: Use `rustfft` for Spectral Tensor compression (already done in spectral.rs?)
-        // No, let's do "Haar Wavelet Tensor Train" manually.
+        // 1. Convert to Fixed Point Matrix
+        let mut matrix: Vec<I16F16> = Vec::with_capacity(rows * cols);
+        for &val in data {
+            matrix.push(I16F16::from_num(val));
+        }
 
         // Implementation: 2D Haar Wavelet Transform (Lossy)
         // 1. Row transform
         // 2. Column transform
         // 3. Thresholding (Tensor sparsity)
-
-        let mut matrix = vec![0.0; rows * cols];
-        matrix.copy_from_slice(data);
 
         // Row steps
         for r in 0..rows {
@@ -62,14 +48,15 @@ impl MpsCompressor {
         }
 
         // Col steps
-        // Transpose, transform, transpose back (inefficient but simple)
-        let mut transposed = vec![0.0; rows * cols];
+        // Transpose
+        let mut transposed = vec![I16F16::ZERO; rows * cols];
         for r in 0..rows {
             for c in 0..cols {
                 transposed[c * rows + r] = matrix[r * cols + c];
             }
         }
 
+        // Transform Columns
         for c in 0..cols {
             self.haar_1d(&mut transposed, c * rows, rows);
         }
@@ -78,32 +65,46 @@ impl MpsCompressor {
         let mut flattened_sparse = Vec::new();
         for val in transposed {
             if val.abs() > self.threshold {
-                flattened_sparse.push(val);
+                flattened_sparse.push(val.to_num::<f64>());
             } else {
                 flattened_sparse.push(0.0);
             }
         }
 
-        // Run-Length Encode the sparse matrix?
-        // For MPS "structure", we return the raw coeffs.
-        // The "Compression" is strictly the sparsity here.
-
         vec![flattened_sparse]
     }
 
-    fn haar_1d(&self, data: &mut [f64], start: usize, len: usize) {
-        let mut temp = vec![0.0; len];
+    fn haar_1d(&self, data: &mut [I16F16], start: usize, len: usize) {
+        let mut temp = vec![I16F16::ZERO; len];
         let mut h = len;
+        
+        // Pre-calculate constants in Fixed Point
+        let frac_sqrt_2 = I16F16::from_num(core::f64::consts::FRAC_1_SQRT_2);
+
         while h > 1 {
             let half = h / 2;
             for i in 0..half {
-                let sum = data[start + 2 * i] + data[start + 2 * i + 1];
-                let diff = data[start + 2 * i] - data[start + 2 * i + 1];
-                temp[i] = sum * core::f64::consts::FRAC_1_SQRT_2;
-                temp[half + i] = diff * core::f64::consts::FRAC_1_SQRT_2;
+                // Safety: Use checked arithmetic to prevent panics on overflow
+                let a = data.get(start + 2 * i).copied().unwrap_or(I16F16::ZERO);
+                let b = data.get(start + 2 * i + 1).copied().unwrap_or(I16F16::ZERO);
+
+                let sum = a.checked_add(b).unwrap_or(I16F16::MAX);
+                let diff = a.checked_sub(b).unwrap_or(I16F16::MAX);
+
+                // temp[i] = sum * frac_sqrt_2
+                temp[i] = sum.checked_mul(frac_sqrt_2).unwrap_or(I16F16::MAX);
+                
+                // temp[half + i] = diff * frac_sqrt_2
+                if let Some(idx) = temp.get_mut(half + i) {
+                    *idx = diff.checked_mul(frac_sqrt_2).unwrap_or(I16F16::MAX);
+                }
             }
             // Copy back
-            data[start..start + h].copy_from_slice(&temp[..h]);
+            if let Some(dest_slice) = data.get_mut(start..start + h) {
+                if let Some(src_slice) = temp.get(..h) {
+                    dest_slice.copy_from_slice(src_slice);
+                }
+            }
             h = half;
         }
     }

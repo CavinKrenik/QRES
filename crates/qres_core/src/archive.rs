@@ -226,6 +226,10 @@ fn compress_solid_stream_dedup(data: &[u8]) -> io::Result<Vec<u8>> {
     // DedupResult contains references and a list of unique data blocks (in order of creation)
     // We map unique chunks by their ID (index in unique_data)
 
+    // Buffer for compression (re-used)
+    let mut comp_buffer = Vec::with_capacity(64 * 1024 + 4096); 
+    comp_buffer.resize(64 * 1024 + 4096, 0);
+
     for ref_chunk in result.references {
         match ref_chunk {
             DedupReference::New {
@@ -235,9 +239,15 @@ fn compress_solid_stream_dedup(data: &[u8]) -> io::Result<Vec<u8>> {
             } => {
                 // Get the data for this new chunk
                 let chunk_data = &result.unique_data[chunk_id as usize];
+                
+                // Resize if needed (rare case where chunk > 64KB)
+                if chunk_data.len() + 4096 > comp_buffer.len() {
+                    comp_buffer.resize(chunk_data.len() + 4096, 0);
+                }
 
                 // Compress normally (Flag 0x00 or 0x02 via compress_chunk)
-                let compressed = crate::compress_chunk(chunk_data, 0, None, None)?;
+                let len = crate::compress_chunk(chunk_data, 0, None, None, &mut comp_buffer)?;
+                let compressed = &comp_buffer[..len];
 
                 // Write [Len: 4][Compressed Data]
                 // Note: compress_chunk includes its own internal flag byte at the start

@@ -32,6 +32,7 @@ libm = "0.2"
 wide = "0.7"
 num-traits = { version = "0.2", default-features = false, features = ["libm"] }
 pyo3 = { version = "0.22", optional = true, features = ["abi3-py38", "extension-module"] }
+fixed = "1.23"
 
 # Secure Aggregation dependencies
 x25519-dalek = { version = "2.0", default-features = false, features = ["static_secrets"] }

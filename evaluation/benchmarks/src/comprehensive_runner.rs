@@ -146,8 +146,13 @@ fn benchmark_config(
 
     // Compression
     let start = Instant::now();
-    let compressed = match compress_chunk(data_bytes, 0, None, Some(&config)) {
-        Ok(c) => c,
+    // Pre-allocate buffer (worst case: input + overhead)
+    let mut comp_buffer = vec![0u8; data_bytes.len() + 4096];
+    
+    let compressed_result = compress_chunk(data_bytes, 0, None, Some(&config), &mut comp_buffer);
+    
+    let compressed = match compressed_result {
+        Ok(len) => &comp_buffer[..len],
         Err(_) => return None, // Expansion or error
     };
     let compress_time = start.elapsed().as_secs_f64();

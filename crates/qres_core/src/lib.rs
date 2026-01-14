@@ -152,7 +152,8 @@ fn predictive_encode_v4(
     data: &[u8],
     config: Option<&crate::config::QresConfig>,
     weights: Option<&[u8]>,
-) -> Vec<u8> {
+    output: &mut [u8],
+) -> Result<usize> {
     #[cfg(feature = "std")]
     println!("DEBUG: Running Optimized Encoder");
     // Lazy Mixer Update batch size - weights update every N bytes
@@ -263,7 +264,17 @@ fn predictive_encode_v4(
     }
 
     // I. Finish (Seal the stream)
-    ans.finish()
+    // Note: AnsWriter currently allocates via `finish()`.
+    // In a full Zero-Copy impl, AnsWriter should write to a buffer.
+    // For now, we accept the allocation here but avoid copying it further.
+    let compressed_data = ans.finish();
+    
+    if compressed_data.len() > output.len() {
+        return Err(QresError::Other(String::from("Buffer too small")));
+    }
+    
+    output[..compressed_data.len()].copy_from_slice(&compressed_data);
+    Ok(compressed_data.len())
 }
 
 fn predictive_decode_v4(
@@ -364,7 +375,8 @@ pub fn compress_chunk(
     _predictor_id: u8,
     _weights: Option<&[u8]>,
     config: Option<&crate::config::QresConfig>,
-) -> Result<Vec<u8>> {
+    output: &mut [u8],
+) -> Result<usize> {
     // 1. SAFETY CHECK: Validate Predictor ID
     if _predictor_id > PREDICTOR_ID_SPLIT {
         return Err(QresError::InvalidInput(format!(
@@ -396,38 +408,46 @@ pub fn compress_chunk(
                 }
             }
 
-            // Recursive compression
-            let c_even = compress_chunk(&even, 0, _weights, config)?;
-            let c_odd = compress_chunk(&odd, 0, _weights, config)?;
-
             // Flag 0x03: Interleaved Split
             // Structure: [Flag] [TotalLen: 4] [EvenLen: 4] [EvenData] [OddData]
-            let total_len = chunk.len() as u32;
-            let even_compressed_len = c_even.len() as u32;
+            let required_header = 9;
+            if output.len() < required_header {
+                return Err(QresError::Other(String::from("Buffer too small")));
+            }
+
+            // Recursive compression - Estimate split sizes?
+            // Since we recurse, we need to partition the output buffer.
+            // Strategy: Reserve space for header, compress Even, then compress Odd.
+            
+            let mut cursor = 9; // Skip headers for now
+
+            // Compress Even
+            let len_even = compress_chunk(&even, 0, _weights, config, &mut output[cursor..])?;
+            cursor += len_even;
+
+            // Compress Odd
+            let len_odd = compress_chunk(&odd, 0, _weights, config, &mut output[cursor..])?;
+            cursor += len_odd;
 
             // Heuristic: Only use split if it actually compresses better than original
-            if (c_even.len() + c_odd.len() + 9) < chunk.len() {
-                // Wrap with VERSIONED Header
+            if cursor < chunk.len() {
+                // Write Header after successful compression using backpatching
                 // Mode 0x03: Interleaved
                 let ver = QRES_PROTOCOL_VERSION & 0x0F;
                 let flag_byte = (ver << 4) | 0x03;
+                let total_len = chunk.len() as u32;
+                let even_len_u32 = len_even as u32;
 
-                let mut out = Vec::with_capacity(9 + c_even.len() + c_odd.len());
-                out.push(flag_byte);
-                out.extend_from_slice(&total_len.to_le_bytes());
-                out.extend_from_slice(&even_compressed_len.to_le_bytes());
-                out.extend_from_slice(&c_even);
-                out.extend_from_slice(&c_odd);
-                return Ok(out);
+                output[0] = flag_byte;
+                output[1..5].copy_from_slice(&total_len.to_le_bytes());
+                output[5..9].copy_from_slice(&even_len_u32.to_le_bytes());
+                
+                return Ok(cursor);
             }
         }
     }
 
-    // 1. Smart Fallback Pre-scan (ZSTD)
-    // 1. Pre-scan Check
-    // If entropy is extremely high (random), we might skip or warn.
-    // For no_std/Core purification, we do NOT fallback to Zstd.
-    // We let the caller decide if the result is larger than input.
+    // 1. Smart Fallback Pre-scan (ZSTD) - Skipped for Core
 
     // 2. Prepare Weights (Neural vs Static)
     // (Assuming standard logic for effective_weights...)
@@ -472,35 +492,44 @@ pub fn compress_chunk(
         Some(effective_weights.as_slice())
     };
 
-    // 3. Encode
-    let compressed_body = predictive_encode_v4(chunk, config, w_arg);
-
     // 4. Wrap with VERSIONED Header
-    if compressed_body.len() < chunk.len() {
-        // Flag Layout: [7-4: Version] [3-0: Codec Mode]
-        // Mode 0x00: Standard
-        // Mode 0x02: Neural (includes weights)
-        let mode = if is_neural { 0x02 } else { 0x00 };
+    // Flag Layout: [7-4: Version] [3-0: Codec Mode]
+    // Mode 0x00: Standard
+    // Mode 0x02: Neural (includes weights)
+    let mode = if is_neural { 0x02 } else { 0x00 };
 
-        // Safety: Ensure version fits in 4 bits
-        let ver = QRES_PROTOCOL_VERSION & 0x0F;
-        let flag_byte = (ver << 4) | mode;
+    // Safety: Ensure version fits in 4 bits
+    let ver = QRES_PROTOCOL_VERSION & 0x0F;
+    let flag_byte = (ver << 4) | mode;
 
-        let mut out = Vec::with_capacity(1 + 4 + stored_init_weights.len() + compressed_body.len());
+    let header_size = 1 + 4 + if is_neural { stored_init_weights.len() } else { 0 };
+    
+    if output.len() < header_size {
+         return Err(QresError::Other(String::from("Buffer too small for header")));
+    }
 
-        out.push(flag_byte);
-        out.extend_from_slice(&(chunk.len() as u32).to_le_bytes());
+    // Write Header Info
+    let mut cursor = 0;
+    output[cursor] = flag_byte; cursor += 1;
+    
+    let chunk_len_u32 = chunk.len() as u32;
+    output[cursor..cursor+4].copy_from_slice(&chunk_len_u32.to_le_bytes()); 
+    cursor += 4;
 
-        if is_neural {
-            out.extend_from_slice(&stored_init_weights);
-        }
+    if is_neural {
+        output[cursor..cursor+stored_init_weights.len()].copy_from_slice(&stored_init_weights);
+        cursor += stored_init_weights.len();
+    }
 
-        out.extend_from_slice(&compressed_body);
-        Ok(out)
+    // Compress Body directly into output buffer
+    // Slice remainder of buffer
+    let compressed_len = predictive_encode_v4(chunk, config, w_arg, &mut output[cursor..])?;
+    cursor += compressed_len;
+
+    if cursor < chunk.len() {
+        Ok(cursor)
     } else {
-        // Core Purification: If we expand, return specific error so Daemon can handle fallback.
-        // Or return Expanded variant if we had an Enum return type.
-        // For now, Err(CompressionError("Expansion detected")) allows Daemon to catch and fallback.
+        // Core Purification: If we expand, return specific error
         Err(QresError::CompressionError(String::from(
             "Expansion detected",
         )))
@@ -586,7 +615,11 @@ pub fn decompress_chunk(
                     "Split chunk too short",
                 )));
             }
-            let even_len = u32::from_le_bytes(compressed[5..9].try_into().unwrap()) as usize;
+            let even_len = u32::from_le_bytes(
+                compressed[5..9]
+                    .try_into()
+                    .map_err(|_| QresError::InvalidData(String::from("Invalid split length")))?,
+            ) as usize;
             let even_data = &compressed[9..9 + even_len];
             let odd_data = &compressed[9 + even_len..];
 
@@ -677,11 +710,26 @@ where
         }
 
         let chunk = &buffer[..bytes_read];
-        let compressed = compress_chunk(chunk, 0, None, None)?;
+        // Allocate worst-case buffer for compression
+        // Worst case: Header + Chunk + Overhead
+        // Header ~ 100 bytes (with weights), Chunk = bytes_read
+        let mut comp_buffer = vec![0u8; bytes_read + 2048]; 
+        
+        let compressed_len = match compress_chunk(chunk, 0, None, None, &mut comp_buffer) {
+            Ok(len) => len,
+            Err(_) => {
+                // Fallback or skip? For file compression, usually we just store uncompressed if it fails?
+                // But QRES requires QRES format.
+                // Re-try with larger buffer or fail?
+                // For now, fail.
+                return Err(io::Error::new(io::ErrorKind::Other, "Compression failed"));
+            }
+        };
+        let compressed = &comp_buffer[..compressed_len];
 
         // Write chunk length + data
         writer.write_all(&(compressed.len() as u32).to_le_bytes())?;
-        writer.write_all(&compressed)?;
+        writer.write_all(compressed)?;
 
         total_read += bytes_read as u64;
         total_written += compressed.len() as u64 + 4;
@@ -727,9 +775,19 @@ fn encode_bytes(
     predictor_id: u8,
     weights: Option<&[u8]>,
 ) -> PyResult<Py<pyo3::types::PyBytes>> {
-    let compressed = compress_chunk(data, predictor_id, weights, None)
+    // Python Wrapper must allocate the buffer
+    // Estimate worst case: input len + overhead
+    let overhead = 4096 + if let Some(w) = weights { w.len() } else { 0 };
+    let capacity = data.len() + overhead;
+    let mut buffer = Vec::with_capacity(capacity);
+    // Unsafe resize to allow writing into it? Or just zero-init.
+    buffer.resize(capacity, 0);
+
+    let compressed_len = compress_chunk(data, predictor_id, weights, None, &mut buffer)
         .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(e.to_string()))?;
-    Ok(pyo3::types::PyBytes::new_bound(py, &compressed).unbind())
+        
+    buffer.truncate(compressed_len);
+    Ok(pyo3::types::PyBytes::new_bound(py, &buffer).unbind())
 }
 
 #[cfg(feature = "python")]

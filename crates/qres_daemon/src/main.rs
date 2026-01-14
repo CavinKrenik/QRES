@@ -132,19 +132,17 @@ fn compress_file(input: &str, output: &str, config: &QresConfig) -> io::Result<(
         }
 
         let chunk = &buffer[..bytes_read];
-        let compressed_result = compress_chunk(chunk, 0, weights_arg, Some(config));
-
+        // Allocate buffer (worst case estimate)
+        let mut comp_buffer = vec![0u8; chunk.len() + 4096];
+        let compressed_result = compress_chunk(chunk, 0, weights_arg, Some(config), &mut comp_buffer);
+        
         let compressed = match compressed_result {
-            Ok(c) => c,
+            Ok(len) => comp_buffer[..len].to_vec(),
             Err(QresError::CompressionError(_)) => {
-                // Core failed to compress (expansion or error). Use Zstd fallback.
-                // We need to implement the Zstd chunk format manually here to match what Core used to do.
-                // Header: [Version: 4 bits][Mode 0x01: 4 bits]
-                // Format: [Header: 1] [Len: 4] [ZstdData]
-                // Note: qres_core's Zstd mode was 0x01.
+                // Core failed (expansion). Use Zstd fallback.
                 let zstd_data = zstd::bulk::compress(chunk, 3)?;
-                let ver = 0x0A; // V10 protocol version (0x0A & 0x0F)
-                let flag_byte = (ver << 4) | 0x01; // Mode 0x01 = Zstd
+                let ver = 0x0A; 
+                let flag_byte = (ver << 4) | 0x01;
 
                 let mut out = Vec::with_capacity(5 + zstd_data.len());
                 out.push(flag_byte);
