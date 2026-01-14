@@ -4,6 +4,7 @@
 [![no_std](https://img.shields.io/badge/no_std-compatible-green.svg)](https://docs.rust-embedded.org/book/intro/no-std.html)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Coverage: 100%](https://img.shields.io/badge/coverage-100%25-green.svg)](https://github.com/CavinKrenik/QRES/actions)
+[![DOI](https://zenodo.org/badge/DOI/18249198.svg)](https://doi.org/10.5281/zenodo.18249198)
 
 **A deterministic, privacy-preserving consensus engine for Edge AI. Converges 100x faster than traditional FL using 1/1000th the bandwidth (8KB/day).**
 
