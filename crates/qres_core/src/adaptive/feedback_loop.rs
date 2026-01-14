@@ -7,7 +7,7 @@ pub struct FeedbackLoop {
 impl FeedbackLoop {
     pub fn new(window_size: usize) -> Self {
         Self {
-            detector: RegimeDetector::new(window_size),
+            detector: RegimeDetector::new(window_size, 0.8, 1000000.0), // Default thresholds
         }
     }
 

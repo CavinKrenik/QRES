@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "qres"
-version = "16.0.0"
+version = "17.0.0"
 description = "QRES: Quantum-Relational Encoding System for Python"
 readme = "README.md"
 authors = [{name = "Cavin Krenik"}]

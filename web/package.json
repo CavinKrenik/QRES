@@ -1,6 +1,6 @@
 {
   "name": "qres-studio",
-  "version": "16.0.0",
+  "version": "17.0.0",
   "description": "Real-time Edge Dashboard for QRES Swarm",
   "type": "module",
   "scripts": {

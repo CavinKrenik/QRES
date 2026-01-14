@@ -5,7 +5,7 @@ use qres_core::adaptive::regime_detector::{RegimeChange, RegimeDetector};
 fn test_regime_change_detection() {
     // 1. Setup
     let window_size = 32;
-    let mut detector = RegimeDetector::new(window_size);
+    let mut detector = RegimeDetector::new(window_size, 0.8, 1000.0);
 
     println!(">> Phase 1: Training on Stable Signal (Sine Wave)");
     // Feed 100 samples of a clean sine wave

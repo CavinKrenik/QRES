@@ -1,6 +1,78 @@
 use alloc::vec;
 use alloc::vec::Vec;
 use fixed::types::I16F16;
+use fixed::FixedI16;
+
+/// Q8.8 Fixed Point Type (16-bit total: 8 integer, 8 fractional)
+pub type I8F8 = FixedI16<fixed::types::extra::U8>;
+
+/// Fixed-Point Tensor Structure for QRES
+/// Supports both I16F16 (Calm Mode) and I8F8 (Storm Mode) precision levels
+#[derive(Debug, Clone)]
+pub struct FixedTensor {
+    pub data: Vec<I16F16>,
+}
+
+impl FixedTensor {
+    pub fn new(data: Vec<I16F16>) -> Self {
+        Self { data }
+    }
+
+    /// Create FixedTensor from I16F16 bytes (4 bytes per value)
+    pub fn from_i16f16_bytes(bytes: &[u8]) -> Self {
+        let data: Vec<I16F16> = bytes
+            .chunks(4)
+            .filter_map(|chunk| {
+                if chunk.len() == 4 {
+                    let bits = u32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]);
+                    Some(I16F16::from_bits(bits as i32))
+                } else {
+                    None
+                }
+            })
+            .collect();
+        Self::new(data)
+    }
+
+    /// Create FixedTensor from I8F8 bytes (2 bytes per value)
+    pub fn from_i8f8_bytes(bytes: &[u8]) -> Self {
+        let i8f8_data: Vec<I8F8> = bytes
+            .chunks(2)
+            .filter_map(|chunk| {
+                if chunk.len() == 2 {
+                    let bits = u16::from_le_bytes([chunk[0], chunk[1]]);
+                    Some(I8F8::from_bits(bits as i16))
+                } else {
+                    None
+                }
+            })
+            .collect();
+        Self::from_i8f8(&i8f8_data)
+    }
+
+    /// Downcast to I8F8 (Storm Mode): Halves precision and bandwidth
+    /// Saturates values outside I8F8 range to prevent overflow
+    pub fn quantize_to_i8f8(&self) -> Vec<I8F8> {
+        self.data.iter().map(|&val| {
+            // Convert to f32 for range checking, then quantize
+            let f32_val = val.to_num::<f32>();
+            // I8F8 range: -128.0 to 127.996 (approximately)
+            let clamped = f32_val.clamp(-128.0, 127.996);
+            I8F8::from_num(clamped)
+        }).collect()
+    }
+
+    /// Upcast from I8F8 (Restore from Storm Mode)
+    /// Fills lower precision bits with zeros (lossy but deterministic)
+    pub fn from_i8f8(data: &[I8F8]) -> Self {
+        let data_i16f16 = data.iter().map(|&val| {
+            // Convert I8F8 to f32, then to I16F16
+            let f32_val = val.to_num::<f32>();
+            I16F16::from_num(f32_val)
+        }).collect();
+        Self::new(data_i16f16)
+    }
+}
 
 /// Tensor Network MPS (Matrix Product State) Compressor
 /// Breaks a high-dimensional tensor into a chain of low-rank tensors (cores).

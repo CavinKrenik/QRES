@@ -5,9 +5,12 @@
 //! Part of Phase 2 Security implementation.
 
 use crate::config::AggregationConfig;
-use crate::living_brain::LivingBrain;
+use crate::living_brain::{LivingBrain, SignedEpiphany};
+use crate::security::ReputationManager;
 use qres_core::aggregation::{aggregate_updates, AggregationMode, AggregationResult};
+use qres_core::tensor::FixedTensor;
 use std::collections::VecDeque;
+use std::time::{SystemTime, UNIX_EPOCH};
 use tracing::{info, warn};
 
 /// Aggregator that buffers brain updates and applies robust aggregation
@@ -152,6 +155,165 @@ impl BrainAggregator {
 pub fn apply_aggregated_confidence(brain: &mut LivingBrain, aggregated: &[f32], alpha: f32) {
     for (conf, &agg) in brain.confidence.iter_mut().zip(aggregated.iter()) {
         *conf = *conf * (1.0 - alpha) + agg * alpha;
+    }
+}
+
+/// Federated Learning Averager using weighted averaging with reputation and freshness
+pub struct FederatedAverager {
+    /// Buffered SignedEpiphany updates from peers
+    buffer: VecDeque<SignedEpiphany>,
+    /// Maximum buffer size before forced aggregation
+    max_buffer_size: usize,
+    /// Freshness decay half-life in seconds (updates older than this lose weight)
+    freshness_half_life: f64,
+}
+
+impl FederatedAverager {
+    /// Create a new FederatedAverager
+    pub fn new(max_buffer_size: usize, freshness_half_life: f64) -> Self {
+        Self {
+            buffer: VecDeque::with_capacity(max_buffer_size),
+            max_buffer_size,
+            freshness_half_life,
+        }
+    }
+
+    /// Add a SignedEpiphany update to the buffer
+    pub fn add_update(&mut self, epiphany: SignedEpiphany) {
+        self.buffer.push_back(epiphany);
+
+        // Keep buffer size in check
+        if self.buffer.len() > self.max_buffer_size {
+            self.buffer.pop_front(); // Remove oldest
+        }
+    }
+
+    /// Aggregate buffered updates using weighted average
+    /// Returns the aggregated weights and confidence vectors
+    pub fn aggregate(&mut self, reputation_manager: &ReputationManager) -> Option<(Vec<u8>, Vec<f32>)> {
+        if self.buffer.is_empty() {
+            return None;
+        }
+
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as f64;
+
+        // Extract all weight vectors and compute weights
+        let mut all_weights: Vec<Vec<f32>> = Vec::new();
+        let mut all_confidences: Vec<Vec<f32>> = Vec::new();
+        let mut weights: Vec<f64> = Vec::new();
+        let mut total_weight = 0.0;
+
+        for epiphany in &self.buffer {
+            // Get reputation score (0.5 default for new peers)
+            let reputation = reputation_manager.get_trust(&epiphany.sender_id) as f64;
+
+            // Calculate freshness decay: weight = reputation * exp(-ln(2) * age / half_life)
+            let age_seconds = now - epiphany.timestamp as f64;
+            let freshness = (-std::f64::consts::LN_2 * age_seconds / self.freshness_half_life).exp();
+
+            let combined_weight = reputation * freshness;
+            weights.push(combined_weight);
+            total_weight += combined_weight;
+
+            // Extract weights - handle both I16F16 and I8F8 formats
+            if epiphany.is_storm_mode {
+                // I8F8 weights - need to upcast to f32
+                if let Some(weights_bytes) = &epiphany.brain.best_engine_weights {
+                    let i8f8_weights = FixedTensor::from_i8f8_bytes(weights_bytes);
+                    all_weights.push(i8f8_weights.data.iter().map(|&w| w.to_num::<f32>()).collect());
+                } else {
+                    // Fallback to confidence if no weights
+                    all_weights.push(epiphany.brain.confidence.clone());
+                }
+            } else {
+                // I16F16 weights
+                if let Some(weights_bytes) = &epiphany.brain.best_engine_weights {
+                    let i16f16_weights = FixedTensor::from_i16f16_bytes(weights_bytes);
+                    all_weights.push(i16f16_weights.data.iter().map(|&w| w.to_num::<f32>()).collect());
+                } else {
+                    // Fallback to confidence
+                    all_weights.push(epiphany.brain.confidence.clone());
+                }
+            }
+
+            all_confidences.push(epiphany.brain.confidence.clone());
+        }
+
+        if all_weights.is_empty() || total_weight == 0.0 {
+            return None;
+        }
+
+        // Normalize weights
+        for w in &mut weights {
+            *w /= total_weight;
+        }
+
+        // Weighted average using Kahan summation for precision
+        let weight_dim = all_weights[0].len();
+        let mut aggregated_weights = vec![0.0f32; weight_dim];
+        let mut confidences = vec![0.0f32; all_confidences[0].len()];
+
+        // Aggregate weights with Kahan summation
+        for i in 0..weight_dim {
+            let mut sum = 0.0f64;
+            let mut c = 0.0f64; // Kahan compensation
+
+            for (j, weights_vec) in all_weights.iter().enumerate() {
+                let y = weights_vec[i] as f64 * weights[j] - c;
+                let t = sum + y;
+                c = (t - sum) - y;
+                sum = t;
+            }
+            aggregated_weights[i] = sum as f32;
+        }
+
+        // Aggregate confidences with Kahan summation
+        for i in 0..all_confidences[0].len() {
+            let mut sum = 0.0f64;
+            let mut c = 0.0f64;
+
+            for (j, conf_vec) in all_confidences.iter().enumerate() {
+                let y = conf_vec[i] as f64 * weights[j] - c;
+                let t = sum + y;
+                c = (t - sum) - y;
+                sum = t;
+            }
+            confidences[i] = sum as f32;
+        }
+
+        // Convert back to bytes (use I16F16 for aggregated result)
+        let fixed_weights: Vec<fixed::types::I16F16> = aggregated_weights
+            .iter()
+            .map(|&w| fixed::types::I16F16::from_num(w))
+            .collect();
+        let weights_bytes: Vec<u8> = fixed_weights
+            .iter()
+            .flat_map(|&w| w.to_le_bytes())
+            .collect();
+
+        // Clear buffer after aggregation
+        self.buffer.clear();
+
+        info!(
+            updates = all_weights.len(),
+            total_weight = total_weight,
+            "Federated averaging completed"
+        );
+
+        Some((weights_bytes, confidences))
+    }
+
+    /// Get current buffer size
+    pub fn buffer_len(&self) -> usize {
+        self.buffer.len()
+    }
+
+    /// Check if buffer is ready for aggregation
+    pub fn should_aggregate(&self) -> bool {
+        !self.buffer.is_empty()
     }
 }
 

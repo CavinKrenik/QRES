@@ -41,6 +41,7 @@ pub struct SignedEpiphany {
     pub sender_id: String, // PeerID or Public Key
     pub timestamp: u64,    // Replay protection
     pub nonce: u64,        // Replay protection
+    pub is_storm_mode: bool, // True if weights are I8F8 quantized
 }
 
 impl SignedEpiphany {
@@ -51,6 +52,7 @@ impl SignedEpiphany {
         sender_id: String,
         timestamp: u64,
         nonce: u64,
+        is_storm_mode: bool,
     ) -> Self {
         Self {
             brain,
@@ -59,6 +61,7 @@ impl SignedEpiphany {
             sender_id,
             timestamp,
             nonce,
+            is_storm_mode,
         }
     }
 
@@ -73,6 +76,7 @@ impl SignedEpiphany {
         }
         payload.extend(self.timestamp.to_le_bytes());
         payload.extend(self.nonce.to_le_bytes());
+        payload.extend([self.is_storm_mode as u8]);
         payload
     }
 }

@@ -158,7 +158,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: QRES ${{ github.ref_name }} - The Hybrid Era
+          name: QRES ${{ github.ref_name }}
           body_path: docs/releases/RELEASE_NOTES.md
           files: dist/*
           generate_release_notes: true

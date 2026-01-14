@@ -1,6 +1,12 @@
 use alloc::vec::Vec;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Regime {
+    Calm,
+    Storm,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum RegimeChange {
     None,
     Drift { current_error: f32, threshold: f32 },
@@ -17,10 +23,20 @@ pub struct RegimeDetector {
     idx: usize,
     /// Number of samples observed so far
     count: usize,
+    /// Entropy threshold for storm detection
+    entropy_threshold: f32,
+    /// Throughput threshold (bytes/sec) for storm detection
+    throughput_threshold: f32,
+    /// Current regime
+    current_regime: Regime,
+    /// Last update timestamp (ms)
+    last_update_ms: u64,
+    /// Accumulated bytes since last update
+    accumulated_bytes: u64,
 }
 
 impl RegimeDetector {
-    pub fn new(window_size: usize) -> Self {
+    pub fn new(window_size: usize, entropy_threshold: f32, throughput_threshold: f32) -> Self {
         Self {
             window_size,
             history: vec![0.0; window_size],
@@ -28,7 +44,37 @@ impl RegimeDetector {
             sum_sq: 0.0,
             idx: 0,
             count: 0,
+            entropy_threshold,
+            throughput_threshold,
+            current_regime: Regime::Calm,
+            last_update_ms: 0,
+            accumulated_bytes: 0,
         }
+    }
+
+    pub fn current_regime(&self) -> Regime {
+        self.current_regime
+    }
+
+    /// Update regime based on entropy and throughput
+    /// elapsed_ms: time since last update
+    /// bytes: bytes processed in this interval
+    pub fn update(&mut self, entropy: f32, elapsed_ms: u64, bytes: u64) {
+        // Update throughput
+        let bytes_per_sec = if elapsed_ms > 0 {
+            (bytes as f64 / elapsed_ms as f64 * 1000.0) as f32
+        } else {
+            0.0
+        };
+
+        // Dual trigger: Storm if entropy > threshold OR throughput > threshold
+        let new_regime = if entropy > self.entropy_threshold || bytes_per_sec > self.throughput_threshold {
+            Regime::Storm
+        } else {
+            Regime::Calm
+        };
+
+        self.current_regime = new_regime;
     }
 
     /// Observe a new residual (absolute error).

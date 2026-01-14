@@ -1,9 +1,14 @@
-use crate::brain_aggregator::BrainAggregator;
+use crate::brain_aggregator::{BrainAggregator, FederatedAverager};
 use crate::config::Config;
 use crate::living_brain::{LivingBrain, SignedEpiphany};
 use crate::peer_keys::PeerKeyStore;
 use crate::security::{ReputationManager, SecurityManager, SignedPayload};
+use qres_core::adaptive::regime_detector::{Regime, RegimeDetector};
+use qres_core::privacy::PrivacyAccountant;
+use qres_core::tensor::{FixedTensor, I8F8};
+use qres_core::zk_proofs::{ProofBundle, ZkNormProver};
 use axum::{extract::State, routing::get, Json, Router};
+use fixed::types::I16F16;
 use libp2p::futures::StreamExt; // For select_next_some
 use libp2p::gossipsub::IdentTopic; // Added helper
 use libp2p::{
@@ -11,20 +16,19 @@ use libp2p::{
     swarm::{NetworkBehaviour, SwarmEvent},
     tcp, yamux, PeerId, SwarmBuilder,
 };
-use qres_core::privacy::PrivacyAccountant;
-use qres_core::zk_proofs::{ProofBundle, ZkNormProver};
 use rand;
 use serde::Serialize;
 use std::collections::hash_map::DefaultHasher;
 use std::collections::HashSet;
 use std::fs;
 use std::hash::{Hash, Hasher};
-use std::io; // Added
+use std::io;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 use tokio::sync::RwLock;
 use tracing::{info, warn};
+use crate::stats::SingularityMetrics;
 
 // Topic for brain synchronization
 const BRAIN_TOPIC: &str = "qres-hive-v2";
@@ -47,9 +51,11 @@ pub struct AppState {
     pub reputation: ReputationManager,
     pub require_signatures: bool,
     pub aggregator: BrainAggregator,
+    pub federated_averager: FederatedAverager,
     pub config: Config,
     pub privacy_accountant: PrivacyAccountant,
     pub zk_prover: ZkNormProver,
+    pub regime_detector: RegimeDetector,
 }
 
 // Custom Behavior Struct
@@ -129,9 +135,11 @@ pub async fn start_p2p_node(
         reputation,
         require_signatures: config.security.require_signatures,
         aggregator: BrainAggregator::new(config.aggregation.clone()),
+        federated_averager: FederatedAverager::new(50, 300.0), // Buffer 50 updates, 5min half-life
         config,
         privacy_accountant: PrivacyAccountant::new(10.0, 1e-5, 0.995),
         zk_prover: ZkNormProver::new(),
+        regime_detector: RegimeDetector::new(100, 0.8, 1000000.0), // window=100, entropy_thresh=0.8, throughput_thresh=1MB/s
     }));
 
     // Spawn API
@@ -210,6 +218,7 @@ pub async fn start_p2p_node(
 
     // 6. Loop
     let mut interval = tokio::time::interval(Duration::from_secs(10));
+    let mut federation_epoch = tokio::time::interval(Duration::from_secs(5)); // Every 5 seconds
     let brain_file = &brain_path;
     let _last_broadcast_brain: Option<LivingBrain> = None;
 
@@ -240,30 +249,57 @@ pub async fn start_p2p_node(
 
                 if should_publish {
                     if let Ok(content) = fs::read_to_string(brain_file) {
-                        if let Some(brain) = LivingBrain::from_json(&content) {
+                        if let Some(mut brain) = LivingBrain::from_json(&content) {
                             // Update RAM state
                             state.write().await.brain = brain.clone();
 
+                            // Check current regime
+                            let current_regime = state.read().await.regime_detector.current_regime();
+                            let is_storm = matches!(current_regime, Regime::Storm);
+
+                            // Adaptive quantization
+                            if is_storm {
+                                // Storm Mode: Quantize to I8F8 to halve bandwidth
+                                if let Some(w_bytes) = &brain.best_engine_weights {
+                                    let i16f16_weights: Vec<I16F16> = w_bytes.chunks(4).filter_map(|chunk| {
+                                        if chunk.len() == 4 {
+                                            let bits = i32::from_le_bytes(chunk.try_into().unwrap());
+                                            Some(I16F16::from_bits(bits))
+                                        } else {
+                                            None
+                                        }
+                                    }).collect();
+                                    let fixed_tensor = FixedTensor::new(i16f16_weights);
+                                    let i8f8_weights = fixed_tensor.quantize_to_i8f8();
+                                    // Convert back to bytes
+                                    let quantized_bytes: Vec<u8> = i8f8_weights.iter().flat_map(|&w| w.to_le_bytes()).collect();
+                                    brain.best_engine_weights = Some(quantized_bytes);
+                                }
+                            }
+
                             // --- PHASE 1: Proving Step (Sender) ---
-                            // A. Type Conversion: I16F16 (Bytes) -> f32
-                            // We need Vec<f32> for the ZK Prover
-                            let weights_f32: Vec<f32> = if let Some(w_bytes) = &brain.best_engine_weights {
-                                // Safety: Assuming 4-byte chunks are little-endian i32 (Q16.16)
-                                w_bytes.chunks(4).filter_map(|chunk| {
-                                    if chunk.len() == 4 {
-                                        let bits = i32::from_le_bytes(chunk.try_into().unwrap());
-                                        let fixed = fixed::types::I16F16::from_bits(bits);
-                                        Some(fixed.to_num::<f32>())
-                                    } else {
-                                        None
-                                    }
-                                }).collect()
+                            // A. Type Conversion: Weights (Bytes) -> f32 for ZK (only in Calm mode)
+                            let weights_f32: Vec<f32> = if !is_storm {
+                                if let Some(w_bytes) = &brain.best_engine_weights {
+                                    // Safety: Assuming 4-byte chunks are little-endian i32 (Q16.16)
+                                    w_bytes.chunks(4).filter_map(|chunk| {
+                                        if chunk.len() == 4 {
+                                            let bits = i32::from_le_bytes(chunk.try_into().unwrap());
+                                            let fixed = fixed::types::I16F16::from_bits(bits);
+                                            Some(fixed.to_num::<f32>())
+                                        } else {
+                                            None
+                                        }
+                                    }).collect()
+                                } else {
+                                    Vec::new()
+                                }
                             } else {
-                                Vec::new()
+                                Vec::new() // No ZK in storm mode
                             };
 
-                            // B. Generate ZK Proof
-                            let proof_bundle = {
+                            // B. Generate ZK Proof (only in Calm mode)
+                            let proof_bundle = if !is_storm {
                                 let app_state = state.read().await;
                                 if !weights_f32.is_empty() {
                                     // Threshold 10.0 (L2 Norm Squared)
@@ -279,6 +315,8 @@ pub async fn start_p2p_node(
                                 } else {
                                     None
                                 }
+                            } else {
+                                None // No proof in storm mode
                             };
 
                             // C. Sign the Payload
@@ -292,6 +330,7 @@ pub async fn start_p2p_node(
                                 sender_id: state.read().await.security.as_ref().map(|s| s.public_key_hex()).unwrap_or_default(),
                                 timestamp,
                                 nonce,
+                                is_storm_mode: is_storm,
                             };
 
                             let payload_bytes = epiphany.payload_bytes();
@@ -316,6 +355,7 @@ pub async fn start_p2p_node(
 
                             // D. Serialize & Publish
                             let msg_bytes = serde_json::to_vec(&epiphany).unwrap();
+                            let outgoing_bytes = msg_bytes.len() as u64;
                             let topic = IdentTopic::new(BRAIN_TOPIC);
                             if let Err(e) = swarm.behaviour_mut().gossipsub.publish(topic, msg_bytes) {
                                 tracing::error!("Publish error: {:?}", e);
@@ -323,7 +363,63 @@ pub async fn start_p2p_node(
                                 // Record Privacy Cost only on successful publish
                                 let mut app_state = state.write().await;
                                 let _ = app_state.privacy_accountant.record_consumption(epiphany_cost);
-                                info!("Published SignedEpiphany with ZK proof");
+
+                                // Update regime detector
+                                let entropy = calculate_brain_entropy(&brain);
+                                app_state.regime_detector.update(entropy, 10000, outgoing_bytes); // elapsed_ms=10s
+
+                                info!("Published SignedEpiphany (mode: {})", if is_storm { "Storm" } else { "Calm" });
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Federated Learning Epoch
+            _ = federation_epoch.tick() => {
+                let mut app_state = state.write().await;
+                if app_state.federated_averager.should_aggregate() {
+                    // Clone reputation data to avoid borrowing issues
+                    let reputation_clone = app_state.reputation.clone();
+                    if let Some((aggregated_weights, aggregated_confidence)) = 
+                        app_state.federated_averager.aggregate(&reputation_clone) {
+                        
+                        // Load current brain
+                        if let Ok(local_json) = fs::read_to_string(brain_file) {
+                            if let Some(mut local_brain) = LivingBrain::from_json(&local_json) {
+                                // Apply aggregated weights
+                                local_brain.best_engine_weights = Some(aggregated_weights);
+                                
+                                // Apply aggregated confidence with learning rate
+                                for (local_conf, &agg_conf) in local_brain.confidence.iter_mut().zip(aggregated_confidence.iter()) {
+                                    *local_conf = *local_conf * 0.9 + agg_conf * 0.1; // 10% learning rate
+                                }
+                                
+                                // Check for Singularity
+                                let global_error_rate = 1.0 - (aggregated_confidence.iter().sum::<f32>() / aggregated_confidence.len() as f32);
+                                if global_error_rate < 0.01 {
+                                    info!("🎯 SINGULARITY ACHIEVED! Global error rate: {:.6}", global_error_rate);
+                                    // Emit SystemEvent::SingularityReached (would be sent to monitoring system)
+                                    // Switch to inference-only mode (conceptual - would disable training)
+                                }
+                                
+                                // Export metrics to CSV
+                                let local_loss = 1.0 - (local_brain.confidence.iter().sum::<f32>() / local_brain.confidence.len() as f32);
+                                let swarm_variance = aggregated_confidence.iter()
+                                    .map(|&c| (c - global_error_rate).powi(2))
+                                    .sum::<f32>() / aggregated_confidence.len() as f32;
+                                let active_peers = app_state.connected_peers.len();
+                                
+                                let metrics = SingularityMetrics::new(local_loss, swarm_variance.sqrt(), active_peers);
+                                if let Err(e) = metrics.export_csv() {
+                                    warn!("Failed to export singularity metrics: {}", e);
+                                }
+                                
+                                // Save updated brain
+                                let _ = fs::write(brain_file, local_brain.to_json());
+                                app_state.brain = local_brain;
+                                
+                                info!("Applied federated aggregation. Global error rate: {:.4}", global_error_rate);
                             }
                         }
                     }
@@ -404,35 +500,55 @@ pub async fn start_p2p_node(
                         };
 
                         if sig_valid {
-                            // 4. Verify ZK Proof
-                            let zk_valid = {
+                            // 4. Verify ZK Proof or Trust High-Reputation Peers
+                            let proof_valid = {
                                 let app_state = state.read().await;
                                 if let Some(bundle) = &signed_epiphany.proof_bundle {
-                                    // Note: Verify the proof against the weights inside the bundle
-                                    // Threshold must match sender (10.0)
+                                    // Verify proof if present
                                     app_state.zk_prover.verify_proof(&bundle.zk_proof, 10.0)
                                 } else {
-                                    true // No weights = valid? Or require proof? Policy decision.
+                                    // No proof: Accept if high reputation (>80) or storm mode
+                                    let reputation_score = app_state.reputation.get_trust(&signed_epiphany.sender_id);
+                                    signed_epiphany.is_storm_mode || reputation_score > 80.0
                                 }
                             };
 
-                            if zk_valid {
-                                // 5. Merge (Success)
-                                if let Ok(local_json) = fs::read_to_string(brain_file) {
-                                    if let Some(mut local_brain) = LivingBrain::from_json(&local_json) {
-                                        local_brain.merge(&signed_epiphany.brain, 0.05);
-                                        let _ = fs::write(brain_file, local_brain.to_json());
-                                        state.write().await.brain = local_brain;
-
-                                        // Reputation Reward
-                                        let mut app_state = state.write().await;
-                                        app_state.reputation.reward(&signed_epiphany.sender_id);
-                                        info!("Merged SignedEpiphany and rewarded sender");
+                            if proof_valid {
+                                // 5. Handle Storm Mode Upcasting
+                                let mut processed_brain = signed_epiphany.brain.clone();
+                                if signed_epiphany.is_storm_mode {
+                                    // Upcast I8F8 weights back to I16F16
+                                    if let Some(w_bytes) = &processed_brain.best_engine_weights {
+                                        let i8f8_weights: Vec<I8F8> = w_bytes.chunks(2).filter_map(|chunk| {
+                                            if chunk.len() == 2 {
+                                                let bits = i16::from_le_bytes(chunk.try_into().unwrap());
+                                                Some(I8F8::from_bits(bits))
+                                            } else {
+                                                None
+                                            }
+                                        }).collect();
+                                        let fixed_tensor = FixedTensor::from_i8f8(&i8f8_weights);
+                                        // Convert back to bytes
+                                        let i16f16_bytes: Vec<u8> = fixed_tensor.data.iter().flat_map(|&w| w.to_le_bytes()).collect();
+                                        processed_brain.best_engine_weights = Some(i16f16_bytes);
                                     }
                                 }
+
+                                // 6. Buffer for Federated Learning (instead of immediate merge)
+                                let mut app_state = state.write().await;
+                                app_state.federated_averager.add_update(signed_epiphany.clone());
+
+                                // Update regime detector with incoming bytes
+                                let incoming_bytes = message.data.len() as u64;
+                                let entropy = calculate_brain_entropy(&processed_brain);
+                                app_state.regime_detector.update(entropy, 10000, incoming_bytes);
+
+                                // Reputation Reward
+                                app_state.reputation.reward(&signed_epiphany.sender_id);
+                                info!("Buffered SignedEpiphany (mode: {}) for federated averaging", if signed_epiphany.is_storm_mode { "Storm" } else { "Calm" });
                             } else {
-                                // 6. Punish (Fail ZK)
-                                warn!("Invalid ZK Proof from {}", signed_epiphany.sender_id);
+                                // 7. Punish (Fail Proof or Low Reputation)
+                                warn!("Rejected SignedEpiphany from {}: missing/invalid proof and low reputation", signed_epiphany.sender_id);
                                 let mut app_state = state.write().await;
                                 app_state.reputation.punish(&signed_epiphany.sender_id);
                             }
@@ -472,4 +588,15 @@ async fn get_health() -> Json<serde_json::Value> {
         "status": "ok",
         "version": env!("CARGO_PKG_VERSION")
     }))
+}
+
+/// Calculate entropy from brain confidence (Shannon entropy)
+fn calculate_brain_entropy(brain: &LivingBrain) -> f32 {
+    let mut entropy = 0.0;
+    for &conf in &brain.confidence {
+        if conf > 0.0 {
+            entropy -= conf * conf.ln(); // Assuming normalized
+        }
+    }
+    entropy
 }

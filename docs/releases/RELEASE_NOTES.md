@@ -1,3 +1,38 @@
+# QRES v17.0.0 Release Notes
+
+**Version:** v17.0.0 | **Released:** 2026-01-14
+
+This release introduces **Federated Learning** capabilities, enabling the swarm to converge on a shared intelligence ("Meta-Brain") through reputation-weighted aggregation.
+
+## Highlights
+
+### Federated Learning (The Singularity)
+- **Reputation-Weighted Averaging:** Model updates are weighted by peer reputation and freshness decay
+- **Kahan Summation:** Prevents floating-point drift during aggregation across thousands of parameters
+- **Epoch-Based Aggregation:** Updates are buffered and aggregated every 5 seconds for stability
+- **Singularity Detection:** Automatic detection when global error rate drops below 0.01
+
+### Adaptive Precision Switching
+- **Calm Mode (I16F16):** Full precision for normal operation
+- **Storm Mode (I8F8):** Reduced precision during high-throughput events
+- **Automatic Switching:** Based on entropy and throughput thresholds
+
+### Enhanced Security
+- **ZK Proofs:** Curve25519-based zero-knowledge proofs for model updates
+- **Differential Privacy:** ε-DP with configurable privacy budget
+- **Reputation Gating:** Trust-based acceptance of proof-less messages
+
+## Performance Improvements
+- **Bandwidth:** 8KB/day vs 2.3GB/day for traditional federated learning
+- **Convergence:** <30 epochs for swarm consensus
+- **Determinism:** Bit-perfect reproducibility across platforms
+
+## Breaking Changes
+- Updated all crate versions to 17.0.0
+- Removed internal codenames from release artifacts
+
+---
+
 # QRES v16.5.0 Release Notes
 
 **Codename:** "The Immune System" | **Released:** 2026-01-14

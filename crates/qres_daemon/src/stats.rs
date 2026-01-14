@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompressionStats {
@@ -12,6 +13,58 @@ pub struct CompressionStats {
     pub total_bytes_in: u64,
     pub total_bytes_out: u64,
     pub avg_ratio: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SingularityMetrics {
+    pub timestamp: u64,
+    pub local_loss: f32,
+    pub swarm_consensus_variance: f32,
+    pub active_peers: usize,
+}
+
+impl SingularityMetrics {
+    pub fn new(local_loss: f32, swarm_consensus_variance: f32, active_peers: usize) -> Self {
+        Self {
+            timestamp: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
+            local_loss,
+            swarm_consensus_variance,
+            active_peers,
+        }
+    }
+
+    fn get_csv_path() -> PathBuf {
+        let mut path = dirs::home_dir().expect("Could not find home directory");
+        path.push(".qres");
+        fs::create_dir_all(&path).expect("Could not create .qres directory");
+        path.push("singularity_metrics.csv");
+        path
+    }
+
+    pub fn export_csv(&self) -> Result<(), Box<dyn std::error::Error>> {
+        let path = Self::get_csv_path();
+        let exists = path.exists();
+        
+        let mut csv_content = if !exists {
+            "timestamp,local_loss,swarm_consensus_variance,active_peers\n".to_string()
+        } else {
+            String::new()
+        };
+        
+        csv_content.push_str(&format!(
+            "{},{:.6},{:.6},{}\n",
+            self.timestamp,
+            self.local_loss,
+            self.swarm_consensus_variance,
+            self.active_peers
+        ));
+        
+        fs::write(path, csv_content)?;
+        Ok(())
+    }
 }
 
 impl Default for CompressionStats {
