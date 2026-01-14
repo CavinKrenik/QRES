@@ -80,7 +80,7 @@ graph TD
     Security -->|GhostUpdate| Swarm[P2P Swarm]
 ```
 
-Read more in [QRES Theory](docs/THEORY.md).
+Read more in the [Technical Whitepaper](https://github.com/CavinKrenik/QRES/wiki/Technical-Whitepaper-&-Architectural-Overview).
 
 ---
 
@@ -147,7 +147,7 @@ pip install ./bindings/python
 ## Documentation
 
 *   [**Security Roadmap**](docs/SECURITY_ROADMAP.md) - **New!**
-*   [**Theory & Architecture**](docs/THEORY.md)
+*   [**Theory & Architecture**](https://github.com/CavinKrenik/QRES/wiki/Technical-Whitepaper-&-Architectural-Overview)
 *   [**Implementation Status**](docs/IMPLEMENTATION_STATUS.md)
 *   [**Release Notes**](docs/releases)
 

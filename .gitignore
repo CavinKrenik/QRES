@@ -52,3 +52,4 @@ ai/rl_logs/
 *.out
 *.toc
 *.synctex.gz
+wiki/
