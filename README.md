@@ -3,14 +3,15 @@
 > **Produce. Predict. Preserve.**
 
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.18216348-blue)](https://doi.org/10.5281/zenodo.18216348)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/CavinKrenik/QRES/release.yml?style=flat)](https://github.com/CavinKrenik/QRES/actions)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/CavinKrenik/QRES/test.yml?branch=main)](https://github.com/CavinKrenik/QRES/actions)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 
-**QRES** is a distributed system that solves the "Bandwidth vs. Privacy" conflict in Edge IoT. Unlike traditional compressors, QRES treats data compression as a **prediction problem**, allowing edge swarms to learn temporal patterns without transmitting raw data.
+**QRES** is a distributed system that solves the "Bandwidth vs. Privacy" conflict in Edge IoT. Unlike traditional compressors, QRES treats data compression as a **prediction-driven consensus problem**.
 
 ### Core Architecture
-* **The Body (Deterministic Core):** A `no_std` Rust engine using **Q16.16 Fixed-Point Arithmetic**. This guarantees bit-perfect reproducibility across x86 servers, ARM microcontrollers, and WASM clients.
-* **The Mind (Adaptive Daemon):** An async background service that switches between a **Neural Predictor** (for structured data) and **Bit-Packing** (for high-entropy noise) based on real-time signal complexity.
+* **The Body (`crates/qres_core`):** A `no_std` deterministic engine using **Q16.16 Fixed-Point Arithmetic**. This guarantees bit-perfect reproducibility across x86 servers, ARM microcontrollers, and WASM clients.
+* **The Mind (`crates/qres_daemon`):** An async background service that switches between a **Neural Predictor** (for structured data) and **Bit-Packing** (for high-entropy noise) based on real-time signal complexity.
+* **The Dashboard (`web/`):** A lightweight "Cyberpunk" visualization interface for monitoring swarm consensus and entropy levels.
 
 ### Key Features
 1. **Deterministic Sparse Updates:** Syncs model weights using only a PRNG seed (8 KB/day vs 2.3 GB/day), effectively solving the "Link Explosion" problem in P2P learning.
@@ -38,9 +39,43 @@ Benchmarks run on single-core generic hardware. QRES automatically bypasses Neur
 
 QRES adopts a bio-mimetic architecture that separates deterministic execution (**The Body**) from adaptive learning (**The Mind**). This ensures bit-perfect reproducibility while allowing the system to "dream" and adapt to new data regimes.
 
-![QRES Architecture](paper/figures/figure1_architecture.png)
+```mermaid
+graph TD
+    IoT[Raw IoT Data] --> Core
+    
+    subgraph Body ["The Core (Body)"]
+        style Body fill:#fff9c4,stroke:#fbc02d,stroke-width:2px
+        Core[qres_core<br>No_Std Rust Library]
+        
+        subgraph Predictors [Predictor Ensemble]
+            style Predictors fill:#ffffff,stroke:#fbc02d,stroke-width:1px,stroke-dasharray: 5 5
+            SNN[SNN Predictor]
+            Linear[Linear Predictor]
+            Graph[Graph Predictor]
+        end
+        Core --- Predictors
+    end
+    
+    Core -->|Residuals| Daemon
+    
+    subgraph Mind ["The Daemon (Mind)"]
+        style Mind fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
+        Daemon[qres_daemon<br>Async Service]
+        MetaBrain[MetaBrain RL Agent]
+        
+        subgraph Security ["Security Stack"]
+            style Security fill:#ffffff,stroke:#0277bd,stroke-width:1px,stroke-dasharray: 5 5
+            L1[Diff Privacy] --> L2[Secure Agg] --> L3[ZK Proofs]
+        end
+        
+        Daemon --- MetaBrain
+        Daemon --- Security
+    end
 
-Read more in [**QRES Theory**](docs/THEORY.md).
+    Security -->|Updates| Swarm[P2P Swarm]
+```
+
+Read more in [QRES Theory](docs/THEORY.md).
 
 ---
 
@@ -48,15 +83,15 @@ Read more in [**QRES Theory**](docs/THEORY.md).
 
 To demonstrate the Hybrid Gatekeeper in action, this repository includes a **Weather Replay Engine** powered by the Jena Climate Dataset. We curated a "Calm → Storm" narrative to show how the engine switches modes:
 
-1.  **Phase 1: The Calm (Neural Mode)**
-    *   **Signal:** Stable weather.
-    *   **Action:** Neural Predictor engages.
-    *   **Result:** High efficiency (~4.9x), exploiting patterns.
+1. **Phase 1: The Calm (Neural Mode)**
+   * **Signal:** Stable weather.
+   * **Action:** Neural Predictor engages.
+   * **Result:** High efficiency (~4.9x), exploiting patterns.
 
-2.  **Phase 2: The Storm (Bit-Pack Mode)**
-    *   **Signal:** Chaotic pressure drop (Entropy > 7.5 bits/byte).
-    *   **Action:** Gatekeeper switches to Bit-Packing.
-    *   **Result:** Robust throughput, zero latency spikes.
+2. **Phase 2: The Storm (Bit-Pack Mode)**
+   * **Signal:** Chaotic pressure drop (Entropy > 7.5 bits/byte).
+   * **Action:** Gatekeeper switches to Bit-Packing.
+   * **Result:** Robust throughput, zero latency spikes.
 
 ### Run the Simulation
 ```bash
@@ -71,16 +106,19 @@ cd web && npm run dev
 
 ## Installation & Usage
 
+### 1. Rust Core (Embedded/Systems)
+
 ```toml
 [dependencies]
-qres = "0.16.0"
+# Use local path for development until published
+qres_core = { path = "crates/qres_core" }
 ```
 
 ```rust
 use qres_core::{compress_adaptive, decompress_adaptive};
 
 fn main() {
-    // QRES automatically detects structure and chooses the Neural Path
+    // QRES automatically detects entropy and selects the optimal path
     let sensor_data: Vec<f32> = vec![22.0, 22.1, 22.1, 22.3, 24.5];
     
     let compressed = compress_adaptive(&sensor_data).expect("Compression failed");
@@ -93,13 +131,18 @@ fn main() {
 }
 ```
 
+### 2. Python Research Bindings
+
+```bash
+pip install ./bindings/python
+```
+
 ---
 
 ## Documentation
 
 *   [**Theory & Architecture**](docs/THEORY.md)
 *   [**Implementation Status**](docs/IMPLEMENTATION_STATUS.md)
-
 *   [**Release Notes**](docs/releases)
 
 ---
