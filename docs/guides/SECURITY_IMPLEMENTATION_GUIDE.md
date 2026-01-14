@@ -8,7 +8,7 @@ Assumptions: Access to the repo via GitHub or local clone. Commit changes after 
 
 1. **Research and Planning**:
    - Research concepts (e.g., web searches for crates/examples).
-   - Cross-reference: Check code (e.g., `qres_rust/qres_daemon/src` for P2P), configs (e.g., `qres_daemon.toml.example`), docs (e.g., `IMPLEMENTATION_STATUS.md` for FedProx status).
+   - Cross-reference: Check code (e.g., `crates/qres_daemon/src` for P2P), configs (e.g., `qres_daemon.toml.example`), docs (e.g., `IMPLEMENTATION_STATUS.md` for FedProx status).
    - Plan: Outline integration into architecture (e.g., FedProx update flow).
 
 2. **Implementation**:
@@ -17,7 +17,7 @@ Assumptions: Access to the repo via GitHub or local clone. Commit changes after 
    - Ensure compatibility (e.g., `no_std`, portable SIMD, async with Tokio).
 
 3. **Testing**:
-   - Add unit/integration tests (in `tests/` or `qres_rust/benches/`).
+   - Add unit/integration tests (in `tests/` or `crates/benches/`).
    - Simulate scenarios (e.g., poisoning attacks from `SECURITY_ROADMAP.md` demo).
    - Validate cross-platform (Linux/macOS/Windows/WASM).
    - Run benchmarks to check performance impact.
@@ -50,7 +50,7 @@ Cross-ref: P2P in `qres_daemon` (libp2p/GossipSub), FedProx in core, config in `
 | Step | Details |
 |------|---------|
 | **Research** | `ed25519-dalek` crate; sign/verify model weights |
-| **Cross-ref** | Model update logic in `qres_daemon/src`; `require_signature = false` in config |
+| **Cross-ref** | Model update logic in `crates/qres_daemon/src`; `require_signature = false` in config |
 | **Implementation** | Sign before sending; verify on receipt in P2P messages |
 | **Testing** | Unit tests for sign/verify; simulate invalid signatures |
 | **Updates** | Enable `require_signature = true`; status to implemented |

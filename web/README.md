@@ -141,7 +141,7 @@ qres-studio/
 ### WASM 403 Error
 If you see "qres_wasm_bg.wasm" 403 errors:
 ```bash
-cd ../qres_rust/qres_wasm
+cd ../crates/qres_wasm
 wasm-pack build --target web
 ```
 

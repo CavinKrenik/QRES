@@ -13,7 +13,7 @@ The QRES Swarm uses `libp2p` to create a decentralized network where nodes share
 ## Architecture
 
 ### 1. Network Stack (Rust)
-Located in `qres_rust/src/swarm.rs`.
+Located in `crates/qres_daemon/src/swarm.rs`.
 *   **Transport:** TCP/QUIC with Noise encryption (Yamux multiplexing).
 *   **Discovery:** Kademlia DHT (Distributed Hash Table) for finding peers without a central server.
     *   **Bootstrap Mode:** Nodes can act as bootstrap servers for WAN discovery.

@@ -9,22 +9,21 @@
 
 ### 1. Version Bumping
 
-- [ ] Update `qres-studio/package.json`
+- [ ] Update `web/package.json`
+- [ ] Update `web/src-tauri/Cargo.toml`n": "15.3.0"
+  ```
+
+- [ ] Update `web/src-tauri/tauri.conf.json`
   ```json
   "version": "15.3.0"
   ```
 
-- [ ] Update `qres-studio/src-tauri/tauri.conf.json`
-  ```json
-  "version": "15.3.0"
-  ```
-
-- [ ] Update `pyproject.toml` (if Python bindings changed)
+- [ ] Update `bindings/python/pyproject.toml` (if Python bindings changed)
   ```toml
   version = "15.3.0"
   ```
 
-- [ ] Update `qres_rust/qres_core/Cargo.toml`
+- [ ] Update `crates/qres_core/Cargo.toml`
   ```toml
   version = "15.3.0"
   ```
@@ -38,7 +37,7 @@
 ### 2. Documentation Updates
 
 - [ ] Update `README.md` Quick Start (if commands changed)
-- [ ] Update `qres-studio/README.md` with new features
+- [ ] Update `web/README.md` with new features
 - [ ] Add entry to `docs/IMPLEMENTATION_STATUS.md` version table
 - [ ] Add entry to `docs/ROADMAP.md` version history
 - [ ] Create `docs/releases/RELEASE_v15.3.0.md`
@@ -60,22 +59,22 @@
 
 - [ ] Run Rust unit tests:
   ```bash
-  cd qres_rust && cargo test --all
+  cargo test --workspace
   ```
 
 - [ ] Run Python binding tests:
   ```bash
-  cd python && pytest tests/
+  cd bindings/python && pytest tests/
   ```
 
 - [ ] Run WASM build verification:
   ```bash
-  cd qres_rust/qres_wasm && wasm-pack build --target web
+  cd crates/qres_wasm && wasm-pack build --target web
   ```
 
 - [ ] Run frontend checks:
   ```bash
-  cd qres-studio && npm run check
+  cd web && npm run check
   ```
 
 ### 5. Manual Testing

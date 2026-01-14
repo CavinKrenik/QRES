@@ -97,7 +97,7 @@ v15.4.0 introduces **Hardware-in-the-Loop Simulation** using real-world climate 
 git pull origin main
 
 # 2. Install dependencies
-cd qres-studio && npm install
+cd web && npm install
 
 # 3. (Optional) Fetch weather data
 python3 scripts/fetch_weather_replay.py

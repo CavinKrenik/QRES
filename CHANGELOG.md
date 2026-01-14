@@ -4,6 +4,18 @@ All notable changes to this project are documented here.
 
 ---
 
+## [16.0.0] - 2026-01-14
+
+### Changed
+- **Refactor**: Reorganized repository into a standard monorepo structure:
+    - `crates/` (formerly `qres_rust/*`) - Rust backend services and libraries.
+    - `web/` (formerly `qres-studio`) - Real-time dashboard and frontend.
+    - `bindings/` (formerly `python/`) - Python bindings and wrappers.
+    - `evaluation/` - Benchmarks and reproducibility scripts.
+    - `research/` - Neural experiments and notebooks.
+- **Documentation**: Updated README architecture diagrams and removed legacy roadmaps.
+- **Paper**: Finalized compilation of `paper/paper.pdf` with corrected citations.
+
 ## [15.4.0] - 2026-01-11
 
 ### ✨ New Features
