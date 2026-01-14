@@ -1,86 +1,73 @@
-# QRES Security Roadmap (2026)
+# QRES Security Architecture & Roadmap (2026)
 
-This document outlines the phased security hardening of the QRES distributed system, transitioning from a trusted research prototype to a robust, adversarial-resistant production network.
+This document outlines the **Defense-in-Depth** security architecture of the QRES distributed system. It tracks the implementation status of our "Immune System" layers, designed to protect the network from adversarial attacks while preserving user privacy.
 
-> **Implementation Guide:** See [docs/guides/SECURITY_IMPLEMENTATION_GUIDE.md](guides/SECURITY_IMPLEMENTATION_GUIDE.md) for step-by-step dev workflows.
-
----
-
-## Phase 1: Authentication & Identity (Target v13)
-**Focus:** Secure the P2P layer against unauthorized access and tampering in a semi-trusted environment.
-
-- [x] **Item 1: Ed25519 Signatures**
-  - **Goal:** Guarantee authenticity of all model updates.
-  - **Tech:** `ed25519-dalek` for signing weight buffers.
-  - **Attack Mitigation:** Spoofing, Man-in-the-Middle.
-
-- [x] **Item 2: Node PKI (Public Key Infrastructure)**
-  - **Goal:** Enforce node identity verification during handshake.
-  - **Tech:** `libp2p` PeerId / Noise protocol.
-  - **Attack Mitigation:** Sybil attacks (partial).
-
-- [x] **Item 3: Replay Prevention**
-  - **Goal:** Prevent attackers from rebroadcasting old valid updates.
-  - **Tech:** Nonces + Timestamps in protocol headers.
-  - **Attack Mitigation:** Replay attacks.
+> **Implementation Guide:** See [docs/guides/SECURITY_IMPLEMENTATION_GUIDE.md](guides/SECURITY_IMPLEMENTATION_GUIDE.md)
 
 ---
 
-## Phase 1.5: Reputation & Trust (Target v16.5)
-**Focus:** Build long-term trust metrics to punish bad actors and reward honest contributors.
+## Layer 1: Network & Identity (The Outer Shell)
+**Focus:** Securing the P2P transport and ensuring node accountability.
 
-- [ ] **Item 1: Long-term Reputation Scoring**
-  - **Goal:** Filter out nodes that consistently provide poor or malicious updates.
-  - **Tech:** `ReputationManager` (Persistent JSON DB).
-  - **Logic:**
-    - **Reward:** Trust += 0.01 (accepted update).
-    - **Punish:** Trust -= 0.1 (rejected by Krum).
-    - **Ban:** Trust < 0.2 (Gatekeeper Block).
-  - **Attack Mitigation:** Sleeper agents, intermittent poisoning.
+### Implemented
+- **Ed25519 Signatures**: Guarantees authenticity of all model updates (v13).
+- **Node PKI**: Enforced identity verification via `libp2p` Noise protocol.
+- **Replay Prevention**: Nonces and timestamps prevent replay attacks.
 
----
-
-## Phase 2: Robust Aggregation (Target v14)
-**Focus:** Resilience against Byzantine faults (malicious or faulty nodes) sending bad data.
-> **Note:** Integration with Phase 1 (Identity) is currently active via the 'Gatekeeper' logic in v16.5.
-
-- [x] **Item 1: Krum Algorithm**
-  - **Goal:** Replace simple averaging with outlier-resistant aggregation.
-  - **Tech:** Multi-Krum (selects $n-f-2$ vectors closest to geometric median).
-  - **Attack Mitigation:** Model Poisoning (Gaussian noise injection).
-
-- [ ] **Item 2: Trimmed Mean / Median**
-  - **Goal:** Statistical robustness for scalar updates.
-  - **Tech:** Dimension-wise sorting and trimming.
-  - **Attack Mitigation:** Extreme value outliers.
-
-- [ ] **Item 3: Pre-Merge Validation**
-  - **Goal:** Filter updates that degrade model performance on a local validation set.
-  - **Tech:** "Gatekeeper" check before aggregation.
-  - **Attack Mitigation:** Subtle poisoning / Backdoor attacks.
+### Roadmap
+- **Hardware Enclaves (TEE/SGX)**: Hardware-backed key protection.
 
 ---
 
-## Phase 3: Privacy & Zero-Knowledge (Target v15 - In Progress v16.5)
-**Focus:** Protecting the confidentiality of raw data and individual updates.
+## Layer 2: Trust & Reputation (The Gatekeeper)
+**Focus:** Filtering malicious actors based on historical behavior and mathematical validity.
 
-- [x] **Item 1: Differential Privacy (DP)**
-  - **Goal:** Mathematically guarantee bounds on information leakage.
-  - **Tech:** Gaussian Mechanism (noise addition) on gradients - **Implemented (v16.5)**.
-  - **Attack Mitigation:** Membership Inference, Gradient Inversion.
+### Implemented
+- **Reputation Scoring (v16.5)**: Persistent trust tracking.
+    - **Reward**: `+0.01` for accepted updates.
+    - **Punish**: `-0.1` for updates rejected by Krum.
+    - **Ban**: Trust `< 0.2` triggers simple blocklist.
+- **The Gatekeeper**: Logic that binds aggregation results back to the P2P identity layer.
 
-- [x] **Item 2: Secure Aggregation**
-  - **Goal:** Aggregator sees only the sum, not individual updates.
-  - **Tech:** Masking protocols (Pairwise Masking via x25519) - **Implemented (v16.5)**.
-  - **Attack Mitigation:** Honest-but-curious server/peers.
-
-- [x] **Item 3: Zero-Knowledge Proofs (ZK)**
-  - **Goal:** Prove training happened correctly without revealing data.
-  - **Tech:** ZkNormProver (Pedersen Commitments) - **Implemented (v16.5)**.
-  - **Attack Mitigation:** Compute spoofing ("Lazy Worker").
+### Roadmap
+- **Federated Reputation**: Sharing reputation scores (Web of Trust) to accelerate ban propagation.
 
 ---
 
-## Future Considerations
-- Hardware Enclaves (TEE/SGX)
-- Homomorphic Encryption
+## Layer 3: Privacy & Zero-Knowledge (The Ghost Protocol)
+**Focus:** Protecting the confidentiality of raw data and individual updates from peers and aggregators.
+
+### Implemented (v16.5)
+- **Differential Privacy (DP)**: Gaussian noise addition to `I16F16` gradients to prevent reverse-engineering.
+- **Secure Aggregation**: Pairwise masking (x25519 + ChaCha20) ensures aggregators see only the global sum.
+- **Zero-Knowledge Proofs (ZK)**: Pedersen Commitments proving that masked updates are within valid bounds (Norm Proofs).
+- **Ghost Packet**: Encapsulated transport structure (`GhostUpdate`) carrying the masked payload and proofs.
+
+### Roadmap
+- **Full Range Proofs**: Proving individual weight elements are within bounds (Bulletproofs).
+- **Homomorphic Encryption**: Fully encrypted computation (Long term).
+
+---
+
+## Layer 4: Algorithmic Robustness (The Immune System)
+**Focus:** Mathematical resilience against Byzantine faults and poisoning.
+
+### Implemented
+- **Krum Algorithm**: Outlier-resistant aggregation (selects vectors closest to geometric median).
+- **Dreaming Sanity Check**: Validates synthetic "dreamt" data against real validation buffers.
+
+### Roadmap
+- **Trimmed Mean / Median**: Statistical robustness for scalar updates.
+- **Pre-Merge Validation**: Local validation set testing for *all* incoming updates (not just dreams).
+
+---
+
+## Attack Mitigation Matrix
+
+| Attack Vector | Primary Defense | Secondary Defense |
+|:---|:---|:---|
+| **Sybil Attack** | Node PKI (Layer 1) | Reputation Cost (Layer 2) |
+| **Model Poisoning** | Krum (Layer 4) | Reputation Banning (Layer 2) |
+| **Gradient Inversion** | Differential Privacy (Layer 3) | Secure Aggregation (Layer 3) |
+| **"Lazy Worker" Spoofing** | ZK Proofs (Layer 3) | Krum (Layer 4) |
+| **Man-in-the-Middle** | Ed25519 Signatures (Layer 1) | Transport Encryption (Layer 1) |
