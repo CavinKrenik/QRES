@@ -21,9 +21,10 @@ This document clarifies what's production-ready vs. experimental vs. roadmap.
 
 ## 🧪 Experimental (Works But Not Hardened)
 
-- **Phase 1 Security (Authentication)**: ed25519 signatures, PKI identity verification, replay prevention - fully integrated into P2P
-- **Phase 2 Security (Robust Aggregation)**: Krum, Multi-Krum, Trimmed Mean, Median algorithms for Byzantine-tolerant federated averaging - **Fully Implemented** (`qres_core/src/aggregation.rs`)
-- **Federated Dreaming**: Synthetic sample generation for weight updates during idle time
+- **Phase 1 Security (Authentication)**: ed25519 signatures, PKI identity verification, replay prevention - fully integrated via **The Gatekeeper**.
+- **Phase 2 Security (Robust Aggregation)**: Krum, Multi-Krum, Trimmed Mean, Median algorithms for Byzantine-tolerant federated averaging - Integrated via **The Gatekeeper** path.
+- **Reputation Scoring**: Persistent trust tracking (Reward/Punish/Ban) - **In Progress** (v16.5).
+- **Federated Dreaming**: Synthetic sample generation with **Sanity Check** validation (preventing hallucinations).
 - **Regime Change Adaptation**: Dynamic predictor reweighting via momentum updates
 - **Differential Privacy:** Gaussian noise injection for model updates (v15 alpha).
 - **Zero-Knowledge Proofs:** Pedersen Commitments + Proof of Norm (v15).
@@ -31,7 +32,6 @@ This document clarifies what's production-ready vs. experimental vs. roadmap.
 
 ## 📋 Roadmap (Not Yet Implemented)
 
-- **Security Defenses**: Reputation scoring
 - **Explicit Fallback Modes**: Graceful degradation during phase shifts
 - **FPGA Acceleration**: Hardware implementation of Mixer logic
 - **Multimodal SNNs**: Cross-domain compression predictors
@@ -50,6 +50,7 @@ This document clarifies what's production-ready vs. experimental vs. roadmap.
 
 | Version | Era | Key Features |
 |---------|-----|--------------|
+| v16.5 | Immune System Era | Identity-Bound Aggregation (The Gatekeeper), Reputation Manager, Dreaming Sanity Check |
 | v16.0 | Neural Prediction Era | Hybrid Resource Predictor (ONNX), Arithmetic Coding, Proactive Scaling |
 | v15.3 | Edge Visualization | IoT Dashboard, Real-time D3 Charts, SNN Spike Visualizer |
 | v15.2 | Publication Era | Benchmarks, Reproducibility, Paper Draft |
@@ -59,4 +60,3 @@ This document clarifies what's production-ready vs. experimental vs. roadmap.
 | v10.x | Singularity Engine | Q16.16 determinism, architecture decoupling |
 | v9.0 | SNN Era | GIF neurons, OSBC pruning |
 | v8.x | Hive Mind | P2P swarm, federated learning |
-

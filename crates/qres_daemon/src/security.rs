@@ -200,6 +200,65 @@ impl std::fmt::Display for SecurityError {
 
 impl std::error::Error for SecurityError {}
 
+
+/// Reputation Manager for tracking peer trust
+/// Implements Phase 2 Item 3 (Reputation Scoring)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReputationManager {
+    /// Map of PeerID -> Trust Score (0.0 - 1.0)
+    pub peers: std::collections::HashMap<String, f32>,
+    /// Path to save reputation DB
+    pub db_path: PathBuf,
+}
+
+impl ReputationManager {
+    pub fn new(db_path: PathBuf) -> Self {
+        // Try load existing
+        if db_path.exists() {
+            if let Ok(content) = fs::read_to_string(&db_path) {
+                if let Ok(loaded) = serde_json::from_str::<Self>(&content) {
+                    return loaded;
+                }
+            }
+        }
+
+        Self {
+            peers: std::collections::HashMap::new(),
+            db_path,
+        }
+    }
+
+    /// Get trust score for a peer (default 0.5 for new peers)
+    pub fn get_trust(&self, peer_id: &str) -> f32 {
+        *self.peers.get(peer_id).unwrap_or(&0.5)
+    }
+
+    /// Check if peer is banned (Trust < 0.2)
+    pub fn is_banned(&self, peer_id: &str) -> bool {
+        self.get_trust(peer_id) < 0.2
+    }
+
+    /// Reward a peer for good contribution (+0.01)
+    pub fn reward(&mut self, peer_id: &str) {
+        let entry = self.peers.entry(peer_id.to_string()).or_insert(0.5);
+        *entry = (*entry + 0.01).min(1.0);
+        let _ = self.save();
+    }
+
+    /// Punish a peer for malicious contribution (-0.1)
+    pub fn punish(&mut self, peer_id: &str) {
+        let entry = self.peers.entry(peer_id.to_string()).or_insert(0.5);
+        *entry = (*entry - 0.1).max(0.0);
+        let _ = self.save();
+    }
+
+    fn save(&self) -> Result<(), Box<dyn std::error::Error>> {
+        let json = serde_json::to_string_pretty(self)?;
+        fs::write(&self.db_path, json)?;
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -266,5 +325,33 @@ mod tests {
         assert!(matches!(result, Err(SecurityError::ReplayDetected)));
 
         let _ = fs::remove_file(&key_path);
+    }
+
+    #[test]
+    fn test_reputation_scoring() {
+         let temp_dir = std::env::temp_dir();
+         let db_path = temp_dir.join("reputation.json");
+         let _ = fs::remove_file(&db_path);
+
+         let mut rep = ReputationManager::new(db_path.clone());
+         let peer = "peer_A";
+
+         // Default trust
+         assert_eq!(rep.get_trust(peer), 0.5);
+
+         // Reward
+         rep.reward(peer);
+         assert_eq!(rep.get_trust(peer), 0.51);
+
+         // Punish
+         rep.punish(peer); // 0.51 - 0.1 = 0.41
+         // Floating point calc
+         assert!((rep.get_trust(peer) - 0.41).abs() < 0.001);
+
+         // Ban threshold
+         rep.peers.insert(peer.to_string(), 0.19);
+         assert!(rep.is_banned(peer));
+         
+         let _ = fs::remove_file(db_path);
     }
 }

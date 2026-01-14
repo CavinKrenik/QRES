@@ -2,7 +2,7 @@ use crate::brain_aggregator::{apply_aggregated_confidence, BrainAggregator};
 use crate::config::Config;
 use crate::living_brain::{BrainMessage, LivingBrain};
 use crate::peer_keys::PeerKeyStore;
-use crate::security::{SecurityManager, SignedPayload};
+use crate::security::{ReputationManager, SecurityManager, SignedPayload};
 use axum::{extract::State, routing::get, Json, Router};
 use libp2p::futures::StreamExt; // For select_next_some
 use libp2p::gossipsub::IdentTopic; // Added helper
@@ -41,6 +41,7 @@ pub struct AppState {
     pub brain: LivingBrain,
     pub peer_keys: PeerKeyStore,
     pub security: Option<SecurityManager>,
+    pub reputation: ReputationManager,
     pub require_signatures: bool,
     pub aggregator: BrainAggregator,
     pub config: Config,
@@ -106,6 +107,12 @@ pub async fn start_p2p_node(
         None
     };
 
+    // Initialize ReputationManager
+    let rep_path = dirs::home_dir()
+        .map(|p| p.join(".qres").join("reputation.json"))
+        .unwrap_or_else(|| PathBuf::from("reputation.json"));
+    let reputation = ReputationManager::new(rep_path);
+
     // Shared State
     let state = Arc::new(RwLock::new(AppState {
         local_peer_id: peer_id.to_string(),
@@ -114,6 +121,7 @@ pub async fn start_p2p_node(
         brain: LivingBrain::default(),
         peer_keys,
         security,
+        reputation,
         require_signatures: config.security.require_signatures,
         aggregator: BrainAggregator::new(config.aggregation.clone()),
         config,
@@ -359,20 +367,55 @@ pub async fn start_p2p_node(
                                 match msg {
                                     BrainMessage::Full(remote_brain) => {
                                         // Buffer the update for robust aggregation
-                                        let aggregated = {
+                                        let aggregation_outcome = {
                                             let mut app_state = state.write().await;
-                                            app_state.aggregator.add_update(&remote_brain)
+                                            
+                                            // Determine Source ID for Reputation
+                                            // If signed, use signer_pubkey. If not, use gossip message source (less secure)
+                                            let source_id_opt = if let Ok(signed) = serde_json::from_slice::<SignedPayload>(&message.data) {
+                                                if app_state.reputation.is_banned(&signed.signer_pubkey) {
+                                                    warn!(signer = %signed.signer_pubkey[..8], "Ignoring update from BANNED peer");
+                                                    None
+                                                } else {
+                                                    Some(signed.signer_pubkey)
+                                                }
+                                            } else {
+                                                // Fallback for legacy/unsigned
+                                                match message.source {
+                                                    Some(pid) => Some(pid.to_string()),
+                                                    None => Some("unknown".to_string()),
+                                                }
+                                            };
+
+                                            if let Some(source_id) = source_id_opt {
+                                                app_state.aggregator.add_update(&remote_brain, source_id)
+                                            } else {
+                                                None
+                                            }
                                         };
 
                                         // If we have enough updates, apply aggregated result
-                                        if let Some(agg_confidence) = aggregated {
+                                        if let Some((agg_confidence, accepted, rejected)) = aggregation_outcome {
                                             if let Ok(local_json) = fs::read_to_string(brain_file) {
                                                 if let Some(mut local_brain) = LivingBrain::from_json(&local_json) {
                                                     // Apply aggregated confidence with alpha blend
                                                     apply_aggregated_confidence(&mut local_brain, &agg_confidence, 0.1);
                                                     let _ = fs::write(brain_file, local_brain.to_json());
                                                     info!("Assimilated Aggregated Knowledge (robust)");
-                                                    state.write().await.brain = local_brain;
+                                                    
+                                                    // Update Reputation
+                                                    {
+                                                        let mut app_state = state.write().await;
+                                                        app_state.brain = local_brain; // Update RAM
+
+                                                        for peer in accepted {
+                                                            app_state.reputation.reward(&peer);
+                                                        }
+                                                        for peer in rejected {
+                                                            warn!(peer = %peer[..8], "Punishing malicious peer");
+                                                            app_state.reputation.punish(&peer);
+                                                        }
+                                                    }
                                                 }
                                             }
                                         } else {

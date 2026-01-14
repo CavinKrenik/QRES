@@ -9,27 +9,42 @@ This document outlines the phased security hardening of the QRES distributed sys
 ## Phase 1: Authentication & Identity (Target v13)
 **Focus:** Secure the P2P layer against unauthorized access and tampering in a semi-trusted environment.
 
-- [ ] **Item 1: Ed25519 Signatures**
+- [x] **Item 1: Ed25519 Signatures**
   - **Goal:** Guarantee authenticity of all model updates.
   - **Tech:** `ed25519-dalek` for signing weight buffers.
   - **Attack Mitigation:** Spoofing, Man-in-the-Middle.
 
-- [ ] **Item 2: Node PKI (Public Key Infrastructure)**
+- [x] **Item 2: Node PKI (Public Key Infrastructure)**
   - **Goal:** Enforce node identity verification during handshake.
   - **Tech:** `libp2p` PeerId / Noise protocol.
   - **Attack Mitigation:** Sybil attacks (partial).
 
-- [ ] **Item 3: Replay Prevention**
+- [x] **Item 3: Replay Prevention**
   - **Goal:** Prevent attackers from rebroadcasting old valid updates.
   - **Tech:** Nonces + Timestamps in protocol headers.
   - **Attack Mitigation:** Replay attacks.
 
 ---
 
+## Phase 1.5: Reputation & Trust (Target v16.5)
+**Focus:** Build long-term trust metrics to punish bad actors and reward honest contributors.
+
+- [ ] **Item 1: Long-term Reputation Scoring**
+  - **Goal:** Filter out nodes that consistently provide poor or malicious updates.
+  - **Tech:** `ReputationManager` (Persistent JSON DB).
+  - **Logic:**
+    - **Reward:** Trust += 0.01 (accepted update).
+    - **Punish:** Trust -= 0.1 (rejected by Krum).
+    - **Ban:** Trust < 0.2 (Gatekeeper Block).
+  - **Attack Mitigation:** Sleeper agents, intermittent poisoning.
+
+---
+
 ## Phase 2: Robust Aggregation (Target v14)
 **Focus:** Resilience against Byzantine faults (malicious or faulty nodes) sending bad data.
+> **Note:** Integration with Phase 1 (Identity) is currently active via the 'Gatekeeper' logic in v16.5.
 
-- [ ] **Item 1: Krum Algorithm**
+- [x] **Item 1: Krum Algorithm**
   - **Goal:** Replace simple averaging with outlier-resistant aggregation.
   - **Tech:** Multi-Krum (selects $n-f-2$ vectors closest to geometric median).
   - **Attack Mitigation:** Model Poisoning (Gaussian noise injection).

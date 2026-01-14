@@ -12,8 +12,8 @@ use tracing::{info, warn};
 
 /// Aggregator that buffers brain updates and applies robust aggregation
 pub struct BrainAggregator {
-    /// Buffered confidence vectors from remote peers
-    buffer: VecDeque<Vec<f32>>,
+    /// Buffered confidence vectors from remote peers (Update, PeerID)
+    buffer: VecDeque<(Vec<f32>, String)>,
     /// Configuration for aggregation
     config: AggregationConfig,
     /// Derived aggregation mode
@@ -56,10 +56,10 @@ impl BrainAggregator {
     }
 
     /// Add a brain update to the buffer
-    /// Returns Some(aggregated confidence) if buffer is full and ready for aggregation
-    pub fn add_update(&mut self, brain: &LivingBrain) -> Option<Vec<f32>> {
+    /// Returns Some((aggregated confidence, accepted_peers, rejected_peers)) if buffer is full and ready for aggregation
+    pub fn add_update(&mut self, brain: &LivingBrain, peer_id: String) -> Option<(Vec<f32>, Vec<String>, Vec<String>)> {
         // Add confidence vector to buffer
-        self.buffer.push_back(brain.confidence.clone());
+        self.buffer.push_back((brain.confidence.clone(), peer_id));
 
         // Check if we have enough updates to aggregate
         if self.buffer.len() >= self.config.buffer_size {
@@ -75,7 +75,7 @@ impl BrainAggregator {
     }
 
     /// Force aggregation with current buffer (for timeout scenarios)
-    pub fn force_aggregate(&mut self) -> Option<Vec<f32>> {
+    pub fn force_aggregate(&mut self) -> Option<(Vec<f32>, Vec<String>, Vec<String>)> {
         if self.buffer.is_empty() {
             return None;
         }
@@ -83,8 +83,9 @@ impl BrainAggregator {
     }
 
     /// Aggregate buffered updates and clear the buffer
-    fn aggregate_and_clear(&mut self) -> Vec<f32> {
-        let updates: Vec<Vec<f32>> = self.buffer.drain(..).collect();
+    fn aggregate_and_clear(&mut self) -> (Vec<f32>, Vec<String>, Vec<String>) {
+        // Separate updates and peer_ids
+        let (updates, peer_ids): (Vec<Vec<f32>>, Vec<String>) = self.buffer.drain(..).unzip();
         let n = updates.len();
 
         // Calculate expected byzantines dynamically based on fraction
@@ -117,7 +118,19 @@ impl BrainAggregator {
             );
         }
 
-        result.weights
+        let rejected_peers: Vec<String> = result
+            .rejected_indices
+            .iter()
+            .map(|&idx| peer_ids[idx].clone())
+            .collect();
+            
+        let accepted_peers: Vec<String> = result
+            .selected_indices
+            .iter()
+            .map(|&idx| peer_ids[idx].clone())
+            .collect();
+
+        (result.weights, accepted_peers, rejected_peers)
     }
 
     /// Get current buffer size
@@ -157,12 +170,12 @@ mod tests {
         let brain2 = LivingBrain::new();
 
         // First two shouldn't trigger aggregation
-        assert!(agg.add_update(&brain1).is_none());
-        assert!(agg.add_update(&brain2).is_none());
+        assert!(agg.add_update(&brain1, "peer1".to_string()).is_none());
+        assert!(agg.add_update(&brain2, "peer2".to_string()).is_none());
         assert_eq!(agg.buffer_len(), 2);
 
         // Third should trigger
-        let result = agg.add_update(&brain1);
+        let result = agg.add_update(&brain1, "peer3".to_string());
         assert!(result.is_some());
         assert_eq!(agg.buffer_len(), 0);
     }
