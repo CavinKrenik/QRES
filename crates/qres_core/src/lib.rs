@@ -74,6 +74,7 @@ pub mod meta_brain; // Inference Engine (moved to Core)
 pub mod mixer;
 #[cfg(feature = "std")]
 pub mod multivariate;
+pub mod packet;
 pub mod predictors;
 pub mod privacy;
 #[cfg(feature = "std")]

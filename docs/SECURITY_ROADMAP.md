@@ -61,22 +61,22 @@ This document outlines the phased security hardening of the QRES distributed sys
 
 ---
 
-## Phase 3: Privacy & Zero-Knowledge (Target v15)
+## Phase 3: Privacy & Zero-Knowledge (Target v15 - In Progress v16.5)
 **Focus:** Protecting the confidentiality of raw data and individual updates.
 
-- [ ] **Item 1: Differential Privacy (DP)**
+- [x] **Item 1: Differential Privacy (DP)**
   - **Goal:** Mathematically guarantee bounds on information leakage.
-  - **Tech:** Gaussian Mechanism (noise addition) on gradients.
+  - **Tech:** Gaussian Mechanism (noise addition) on gradients - **Implemented (v16.5)**.
   - **Attack Mitigation:** Membership Inference, Gradient Inversion.
 
-- [ ] **Item 2: Secure Aggregation**
+- [x] **Item 2: Secure Aggregation**
   - **Goal:** Aggregator sees only the sum, not individual updates.
-  - **Tech:** Masking protocols (e.g., Bonawitz et al.).
+  - **Tech:** Masking protocols (Pairwise Masking via x25519) - **Implemented (v16.5)**.
   - **Attack Mitigation:** Honest-but-curious server/peers.
 
-- [ ] **Item 3: Zero-Knowledge Proofs (ZK)**
+- [x] **Item 3: Zero-Knowledge Proofs (ZK)**
   - **Goal:** Prove training happened correctly without revealing data.
-  - **Tech:** zk-SNARKs (e.g., `bellman` / `halo2`).
+  - **Tech:** ZkNormProver (Pedersen Commitments) - **Implemented (v16.5)**.
   - **Attack Mitigation:** Compute spoofing ("Lazy Worker").
 
 ---

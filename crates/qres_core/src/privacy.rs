@@ -21,6 +21,7 @@ use opendp::measurements::make_gaussian;
 #[cfg(feature = "dp")]
 use opendp::metrics::L2Distance;
 
+use fixed::types::I16F16;
 #[cfg(all(not(feature = "dp"), feature = "std"))]
 use rand::{thread_rng, Rng};
 
@@ -198,6 +199,32 @@ impl DifferentialPrivacy {
 
             Ok(())
         }
+    }
+
+    /// Add Gaussian noise to fixed-point weights (I16F16)
+    ///
+    /// Converts to f64 for noise addition, then saturates back to I16F16.
+    pub fn add_noise_fixed(&self, weights: &mut [I16F16]) -> Result<(), String> {
+        // 1. Convert to float context
+        // In a real no_std environment without allocation, we might operate in chunks
+        // or implement a fixed-point Gaussian sampler.
+        // For v16.5, we use a temporary float buffer (requiring alloc).
+
+        #[cfg(feature = "std")]
+        let mut float_weights: Vec<f32> = weights.iter().map(|w| w.to_num::<f32>()).collect();
+        #[cfg(not(feature = "std"))]
+        let mut float_weights: alloc::vec::Vec<f32> =
+            weights.iter().map(|w| w.to_num::<f32>()).collect();
+
+        // 2. Add Noise (using existing float impl)
+        self.add_noise(&mut float_weights)?;
+
+        // 3. Convert back
+        for (i, &fw) in float_weights.iter().enumerate() {
+            weights[i] = I16F16::from_num(fw);
+        }
+
+        Ok(())
     }
 
     /// Calculate the theoretical noise scale (sigma)

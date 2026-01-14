@@ -91,13 +91,11 @@ impl SecureAggregator {
         self.peers.insert(public_key_bytes, pk);
     }
 
-    /// Generate a masked update vector
+    /// Generate a masked update vector for Fixed Point weights
     ///
     /// The mask is the sum of pairwise masks:
     /// Mask_i = Sum_{j > i} (PRNG(S_ij)) - Sum_{j < i} (PRNG(S_ij))
-    ///
-    /// When all Mask_i are summed, they cancel out exactly.
-    pub fn mask_update(&self, update: &[f32]) -> Vec<f32> {
+    pub fn mask_update_fixed(&self, update: &[fixed::types::I16F16]) -> Vec<fixed::types::I16F16> {
         let mut masked_update = update.to_vec();
         let my_pk_bytes = self.get_public_key();
 
@@ -116,14 +114,48 @@ impl SecureAggregator {
             let add_mask = my_pk_bytes < *peer_pk_bytes;
 
             for val in masked_update.iter_mut() {
-                // Generate a random float roughly in range [-1, 1] or similar
-                // We generate u32 and cast to ensure identical generation on all platforms
+                // Generate a random u32
                 let rnd_u32 = rng.next_u32();
-                // Map u32 to f32 roughly centered
-                let rnd_f32 = (rnd_u32 as f32) / (u32::MAX as f32);
+                // We treat this u32 as an I16F16 raw representation?
+                // No, that would overflow. We need to generate a valid I16F16 mask within range.
+                // For simplicity, we generate a float-like perturbation in [-1, 1].
 
-                // Scale mask to be significant but not overflow f32 precision easily
-                // For model weights ~0.1, mask ~1.0 is fine.
+                // Construct mask from bits to ensure exact reproducibility across platforms
+                // We mask lower 16 bits to stay within reason, or just wrap?
+                // Secure Aggregation usually works on Modular Arithmetic (Fields).
+                // Doing it on Q16.16 with wrapping_add is actually mathematically sound
+                // IF we allow overflows (Modular Arithmetic on 2^32).
+                // Let's use wrapping arithmetic on the raw bits (i32).
+
+                let mask_bits = rnd_u32 as i32;
+                let mask_val = fixed::types::I16F16::from_bits(mask_bits);
+
+                // Use wrapping add/sub to effectively use modulo 2^32 arithmetic
+                // This prevents clipping issues and guarantees perfect cancellation.
+                if add_mask {
+                    *val = val.wrapping_add(mask_val);
+                } else {
+                    *val = val.wrapping_sub(mask_val);
+                }
+            }
+        }
+
+        masked_update
+    }
+
+    /// Generate a masked update vector (Legacy Float)
+    pub fn mask_update(&self, update: &[f32]) -> Vec<f32> {
+        let mut masked_update = update.to_vec();
+        let my_pk_bytes = self.get_public_key();
+
+        for (peer_pk_bytes, peer_pk) in &self.peers {
+            let shared_secret = self.my_secret.diffie_hellman(peer_pk);
+            let mut rng = ChaCha20Rng::from_seed(*shared_secret.as_bytes());
+            let add_mask = my_pk_bytes < *peer_pk_bytes;
+
+            for val in masked_update.iter_mut() {
+                let rnd_u32 = rng.next_u32();
+                let rnd_f32 = (rnd_u32 as f32) / (u32::MAX as f32);
                 let mask_val = rnd_f32;
 
                 if add_mask {
@@ -133,7 +165,6 @@ impl SecureAggregator {
                 }
             }
         }
-
         masked_update
     }
 

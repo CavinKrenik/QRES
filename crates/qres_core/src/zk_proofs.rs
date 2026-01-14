@@ -6,10 +6,15 @@
 // #[cfg(not(feature = "std"))]
 // use alloc::vec::Vec;
 
+#[cfg(not(feature = "std"))]
+use alloc::vec::Vec;
 use blake3::Hasher;
 use curve25519_dalek::constants::ED25519_BASEPOINT_POINT;
 use curve25519_dalek::edwards::{CompressedEdwardsY, EdwardsPoint};
 use curve25519_dalek::scalar::Scalar;
+use serde::{Deserialize, Serialize}; // Added for ProofBundle
+#[cfg(feature = "std")]
+use std::vec::Vec;
 
 /// Generators for Pedersen Commitments: C = v*H + r*G
 #[derive(Clone)]
@@ -72,11 +77,24 @@ impl SimpleTranscript {
 }
 
 /// Proof that the L2 norm of a vector is within a threshold.
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct NormProof {
     /// Commitment to the norm
     pub commitment: CompressedEdwardsY,
     /// Schnorr response
     pub response: Scalar,
+}
+
+/// A Bundle containing the Identity, the Masked Update, and the ZK Proof of Normality.
+/// This connects the three layers: Gatekeeper (Identity), Secure Agg (Masked Weights), and ZK (Norm Proof).
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ProofBundle {
+    /// The public key of the sender (PeerID)
+    pub peer_id: [u8; 32],
+    /// The masked model weights
+    pub masked_weights: Vec<f32>, // Could serve for I16F16 via casting
+    /// Zero-Knowledge Proof that the underlying (unmasked) update is bounded
+    pub zk_proof: NormProof,
 }
 
 /// Generates and verifies proofs that ||weights||_2 <= threshold.
@@ -151,6 +169,18 @@ impl ZkNormProver {
 
         // Basic sanity check
         proof.response != Scalar::ZERO
+    }
+
+    /// Verify a batch of proofs efficiently.
+    ///
+    /// Currently iterates sequentially, but designed to allow Multiscalar Mul optimization later.
+    pub fn verify_batch(&self, bundles: &[ProofBundle], threshold_sq: f32) -> bool {
+        for bundle in bundles {
+            if !self.verify_proof(&bundle.zk_proof, threshold_sq) {
+                return false;
+            }
+        }
+        true
     }
 }
 
