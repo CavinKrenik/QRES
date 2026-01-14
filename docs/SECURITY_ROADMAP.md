@@ -1,3 +1,8 @@
+Here is the updated content for `docs/SECURITY_ROADMAP.md`, reflecting the new "Layered" security architecture and the successful implementation of the Ghost Protocol (Phase 3).
+
+### File: `docs/SECURITY_ROADMAP.md`
+
+```markdown
 # QRES Security Architecture & Roadmap (2026)
 
 This document outlines the **Defense-in-Depth** security architecture of the QRES distributed system. It tracks the implementation status of our "Immune System" layers, designed to protect the network from adversarial attacks while preserving user privacy.
