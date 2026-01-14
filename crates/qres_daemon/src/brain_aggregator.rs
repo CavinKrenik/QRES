@@ -57,7 +57,11 @@ impl BrainAggregator {
 
     /// Add a brain update to the buffer
     /// Returns Some((aggregated confidence, accepted_peers, rejected_peers)) if buffer is full and ready for aggregation
-    pub fn add_update(&mut self, brain: &LivingBrain, peer_id: String) -> Option<(Vec<f32>, Vec<String>, Vec<String>)> {
+    pub fn add_update(
+        &mut self,
+        brain: &LivingBrain,
+        peer_id: String,
+    ) -> Option<(Vec<f32>, Vec<String>, Vec<String>)> {
         // Add confidence vector to buffer
         self.buffer.push_back((brain.confidence.clone(), peer_id));
 
@@ -123,7 +127,7 @@ impl BrainAggregator {
             .iter()
             .map(|&idx| peer_ids[idx].clone())
             .collect();
-            
+
         let accepted_peers: Vec<String> = result
             .selected_indices
             .iter()

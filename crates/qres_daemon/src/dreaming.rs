@@ -70,9 +70,9 @@ impl DreamingManager {
     /// Returns true if the new weights maintain accuracy on real data.
     pub fn validate_dream(&self, current_weights: &[f32], new_weights: &[f32]) -> bool {
         if self.validation_buffer.is_empty() {
-            // No real data to validate against, accept but warn? 
+            // No real data to validate against, accept but warn?
             // For safety, we accept (bootstrapping phase)
-            return true; 
+            return true;
         }
 
         // Mock Validation Logic:

@@ -369,7 +369,7 @@ pub async fn start_p2p_node(
                                         // Buffer the update for robust aggregation
                                         let aggregation_outcome = {
                                             let mut app_state = state.write().await;
-                                            
+
                                             // Determine Source ID for Reputation
                                             // If signed, use signer_pubkey. If not, use gossip message source (less secure)
                                             let source_id_opt = if let Ok(signed) = serde_json::from_slice::<SignedPayload>(&message.data) {
@@ -402,7 +402,7 @@ pub async fn start_p2p_node(
                                                     apply_aggregated_confidence(&mut local_brain, &agg_confidence, 0.1);
                                                     let _ = fs::write(brain_file, local_brain.to_json());
                                                     info!("Assimilated Aggregated Knowledge (robust)");
-                                                    
+
                                                     // Update Reputation
                                                     {
                                                         let mut app_state = state.write().await;

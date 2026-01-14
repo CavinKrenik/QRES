@@ -200,7 +200,6 @@ impl std::fmt::Display for SecurityError {
 
 impl std::error::Error for SecurityError {}
 
-
 /// Reputation Manager for tracking peer trust
 /// Implements Phase 2 Item 3 (Reputation Scoring)
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -329,29 +328,29 @@ mod tests {
 
     #[test]
     fn test_reputation_scoring() {
-         let temp_dir = std::env::temp_dir();
-         let db_path = temp_dir.join("reputation.json");
-         let _ = fs::remove_file(&db_path);
+        let temp_dir = std::env::temp_dir();
+        let db_path = temp_dir.join("reputation.json");
+        let _ = fs::remove_file(&db_path);
 
-         let mut rep = ReputationManager::new(db_path.clone());
-         let peer = "peer_A";
+        let mut rep = ReputationManager::new(db_path.clone());
+        let peer = "peer_A";
 
-         // Default trust
-         assert_eq!(rep.get_trust(peer), 0.5);
+        // Default trust
+        assert_eq!(rep.get_trust(peer), 0.5);
 
-         // Reward
-         rep.reward(peer);
-         assert_eq!(rep.get_trust(peer), 0.51);
+        // Reward
+        rep.reward(peer);
+        assert_eq!(rep.get_trust(peer), 0.51);
 
-         // Punish
-         rep.punish(peer); // 0.51 - 0.1 = 0.41
-         // Floating point calc
-         assert!((rep.get_trust(peer) - 0.41).abs() < 0.001);
+        // Punish
+        rep.punish(peer); // 0.51 - 0.1 = 0.41
+                          // Floating point calc
+        assert!((rep.get_trust(peer) - 0.41).abs() < 0.001);
 
-         // Ban threshold
-         rep.peers.insert(peer.to_string(), 0.19);
-         assert!(rep.is_banned(peer));
-         
-         let _ = fs::remove_file(db_path);
+        // Ban threshold
+        rep.peers.insert(peer.to_string(), 0.19);
+        assert!(rep.is_banned(peer));
+
+        let _ = fs::remove_file(db_path);
     }
 }
