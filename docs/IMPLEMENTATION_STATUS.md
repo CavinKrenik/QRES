@@ -17,18 +17,19 @@ This document clarifies what's production-ready vs. experimental vs. roadmap.
 - **Ensemble Predictors**: Linear, Graph, Spectral, SNN, High-Dimensional predictors with RL mixing
 - **Portable SIMD**: ARM NEON, x86 AVX, and WASM SIMD via `wide` crate
 - **Arithmetic Coding** (v16): Range coder for residual compression
+- **The Immune System (v16.5)**:
+    - **Ghost Protocol**: Differential Privacy, Secure Aggregation, ZK Proofs.
+    - **Reputation Manager**: Persistent trust scoring (Reward/Punish/Ban).
+    - **The Gatekeeper**: Identity-bound aggregation.
+- **Phase 1 Security (Authentication)**: ed25519 signatures, PKI identity verification, replay prevention.
+- **Phase 2 Security (Robust Aggregation)**: Krum, Multi-Krum for Byzantine tolerance.
 - **Neural Resource Prediction** (v16): ONNX-based hybrid predictor (Neural + Heuristic fallback)
 
 ## 🧪 Experimental (Works But Not Hardened)
 
-- **Phase 1 Security (Authentication)**: ed25519 signatures, PKI identity verification, replay prevention - fully integrated via **The Gatekeeper**.
-- **Phase 2 Security (Robust Aggregation)**: Krum, Multi-Krum, Trimmed Mean, Median algorithms for Byzantine-tolerant federated averaging - Integrated via **The Gatekeeper** path.
-- **Reputation Scoring**: Persistent trust tracking (Reward/Punish/Ban) - **In Progress** (v16.5).
-- **Federated Dreaming**: Synthetic sample generation with **Sanity Check** validation (preventing hallucinations).
-- **Regime Change Adaptation**: Dynamic predictor reweighting via momentum updates
-- **Differential Privacy:** Gaussian noise injection for model updates (v15 alpha).
-- **Zero-Knowledge Proofs:** Pedersen Commitments + Proof of Norm (v15).
-- **Unary VLQ Encoding**: Simple variable-length residual encoding
+- **Federated Dreaming**: Synthetic sample generation with **Sanity Check** validation.
+- **Regime Change Adaptation**: Dynamic predictor reweighting via momentum updates.
+- **Unary VLQ Encoding**: Simple variable-length residual encoding.
 
 ## 📋 Roadmap (Not Yet Implemented)
 

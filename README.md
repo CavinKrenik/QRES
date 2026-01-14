@@ -13,25 +13,29 @@
 * **The Mind (`crates/qres_daemon`):** An async background service that switches between a **Neural Predictor** (for structured data) and **Bit-Packing** (for high-entropy noise) based on real-time signal complexity.
 * **The Dashboard (`web/`):** A lightweight "Cyberpunk" visualization interface for monitoring swarm consensus and entropy levels.
 
-### Key Features
+### Key Features (v16.5)
 1. **Deterministic Sparse Updates:** Syncs model weights using only a PRNG seed (8 KB/day vs 2.3 GB/day), effectively solving the "Link Explosion" problem in P2P learning.
 2. **Hybrid Gatekeeper:** Automatically bypasses heavy neural networks when data entropy exceeds 7.5 bits/byte, ensuring zero latency spikes during "regime changes" (storms, grid failures).
-3. **Byzantine Resilience:** Integrated Krum aggregation and Differential Privacy stack for operating in adversarial networks.
+3. **The Immune System (Security):**
+    *   **Ghost Protocol:** Differential Privacy + Secure Aggregation + ZK Proofs.
+    *   **Reputation Manager:** Trust scoring to identify and ban malicious nodes.
+    *   **Krum Aggregation:** Byzantine-resilient consensus.
 
 ---
 
-## Validated Performance (v16)
+## Validated Performance (v16.5)
 
 Benchmarks run on single-core generic hardware. QRES automatically bypasses Neural prediction when entropy is high (> 7.5 bits/byte).
 
-| Feature | QRES (v16) | Facebook Gorilla | TFLite Micro | Federated Avg |
+| Feature | QRES (v16.5) | Facebook Gorilla | TFLite Micro | Federated Avg |
 |:---|:---|:---:|:---:|:---:|
 | **Primary Goal** | **Data Consensus** | Storage Optimization | Inference | Model Training |
 | **Determinism** | **Q16.16 Fixed-Point** | Float (Arch Dependent) | Float / Int8 | Float |
 | **Noise Handling** | **Hybrid (Bit-Pack Switch)** | XOR Delta (Good) | Poor (Model Drift) | N/A |
 | **Edge Training** | **Yes (MetaBrain)** | No | Limited | Yes (Heavy) |
-| **Byzantine Defense** | **Krum + ZK Proofs** | None | None | None |
+| **Byzantine Defense** | **Ghost Protocol + Krum** | None | None | None |
 | **Bandwidth (Daily)** | **~8 KB (Seed Sync)** | N/A | N/A | ~2.3 GB (Weights) |
+| **Privacy** | **DP + ZK + Secure Agg** | None | None | Partial |
 
 ---
 
@@ -63,16 +67,17 @@ graph TD
         Daemon[qres_daemon<br>Async Service]
         MetaBrain[MetaBrain RL Agent]
         
-        subgraph Security ["Security Stack"]
+        subgraph Security ["The Immune System"]
             style Security fill:#ffffff,stroke:#0277bd,stroke-width:1px,stroke-dasharray: 5 5
             L1[Diff Privacy] --> L2[Secure Agg] --> L3[ZK Proofs]
+            Reputation[Reputation Manager]
         end
         
         Daemon --- MetaBrain
         Daemon --- Security
     end
 
-    Security -->|Updates| Swarm[P2P Swarm]
+    Security -->|GhostUpdate| Swarm[P2P Swarm]
 ```
 
 Read more in [QRES Theory](docs/THEORY.md).
@@ -141,6 +146,7 @@ pip install ./bindings/python
 
 ## Documentation
 
+*   [**Security Roadmap**](docs/SECURITY_ROADMAP.md) - **New!**
 *   [**Theory & Architecture**](docs/THEORY.md)
 *   [**Implementation Status**](docs/IMPLEMENTATION_STATUS.md)
 *   [**Release Notes**](docs/releases)
@@ -158,7 +164,7 @@ If you use QRES in your research, please cite:
   month        = jan,
   year         = 2026,
   publisher    = {Zenodo},
-  version      = {v16.0.0},
+  version      = {v16.5.0},
   doi          = {10.5281/zenodo.18216348},
   url          = {https://doi.org/10.5281/zenodo.18216348}
 }

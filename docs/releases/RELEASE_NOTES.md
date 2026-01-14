@@ -1,3 +1,61 @@
+# QRES v16.5.0 Release Notes
+
+**Codename:** "The Immune System" | **Released:** 2026-01-14
+
+> **"Identity without Exposure. Trust without Centralization."**
+
+This release introduces the **QRES Immune System**—a comprehensive security stack designed to protect the decentralized "Living Brain" from adversarial attacks while preserving the privacy of edge contributors.
+
+## Highlights
+
+### The Ghost Protocol (Privacy Stack)
+We have implemented a **Defense-in-Depth** privacy layer that ensures no single peer or component can see the raw model updates:
+1.  **Differential Privacy (Noise Layer):** Deterministic Gaussian noise is added to the `I16F16` weights before they leave the device.
+2.  **Secure Aggregation (Masking Layer):** Peers establish pairwise shared secrets (X25519) to mask their updates. The Aggregator sees only the global sum, as individual masks cancel out mathematically.
+3.  **Zero-Knowledge Proofs (Verification Layer):** Peers attach `NormProofs` (Pedersen Commitments) proving their masked update is bounded (not garbage) without revealing the update itself.
+
+### Trust & Reputation (The Gatekeeper)
+The swarm now actively filters participation based on "Mathematical Merit":
+*   **Reputation Manager:** A persistent trust score tracks peer behavior.
+    *   Accepted Update: `+0.01` Trust
+    *   Krum Rejection: `-0.1` Trust
+    *   Ban Threshold: Trust `< 0.2`
+*   **Identity Binding:** Aggregation results are now cryptographically bound to the sender's Ed25519 identity, enabling long-term accountability.
+
+### Hardened Federated Dreaming
+*   **Sanity Checks:** The "Dreaming" process (Generative Replay) now validates synthetic weights against a local buffer of real data before applying them, preventing "hallucinations" or model poisoning via synthesis.
+
+## Changes
+
+### Core (`qres_core`)
+*   Added `privacy` module with `add_noise_fixed` for I16F16 support.
+*   Added `secure_agg` module with `mask_update_fixed` and strict X25519 key agreement.
+*   Added `zk_proofs` module with `ProofBundle` and `verify_batch`.
+*   Added `packet` module defining the `GhostUpdate` structure.
+
+### Daemon (`qres_daemon`)
+*   Integrated `ReputationManager` into `AppState`.
+*   Updated `BrainAggregator` to return accepted/rejected peer lists for scoring.
+*   Updated `SwarmP2P` message loop to handle reputation rewards/punishments.
+
+## Breaking Changes
+*   **Protocol Update:** The peer-to-peer message format has changed to support `GhostUpdate` packets. v16.5 nodes cannot federate with v16.0 nodes.
+*   **Config:** `reputation.json` is now required (automatically created if missing).
+
+## Upgrade Guide
+```bash
+# Update Rust Toolchain
+rustup update stable
+
+# Pull latest
+git pull origin main
+
+# Build
+cargo build --release
+```
+
+---
+
 # QRES v16.0.0 Release Notes
 
 ## v16.0.0 - The "Systems" Update
