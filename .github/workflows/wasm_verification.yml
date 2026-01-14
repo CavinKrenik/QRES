@@ -4,8 +4,8 @@ on:
   push:
     branches: [ "main", "dev" ]
     paths:
-      - 'qres_rust/qres_core/**'
-      - 'qres_rust/qres_wasm/**'
+      - 'crates/qres_core/**'
+      - 'crates/qres_wasm/**'
 
 jobs:
   build-wasm:
@@ -22,10 +22,10 @@ jobs:
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
       - name: Build QRES Core for Web
-        working-directory: ./qres_rust/qres_wasm
+        working-directory: ./crates/qres_wasm
         run: wasm-pack build --target web --release
 
       - name: Check Artifact Size
         run: |
-          ls -lh qres_rust/qres_wasm/pkg/*.wasm
+          ls -lh crates/qres_wasm/pkg/*.wasm
           echo "✅ WASM Build Successful"
