@@ -1,4 +1,5 @@
 use alloc::vec::Vec;
+use alloc::vec;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Regime {
@@ -29,10 +30,14 @@ pub struct RegimeDetector {
     throughput_threshold: f32,
     /// Current regime
     current_regime: Regime,
+    
+    // --- Throughput Tracking Fields ---
     /// Last update timestamp (ms)
     last_update_ms: u64,
     /// Accumulated bytes since last update
     accumulated_bytes: u64,
+    /// Current throughput metric (bytes/sec)
+    current_throughput: f32,
 }
 
 impl RegimeDetector {
@@ -49,6 +54,7 @@ impl RegimeDetector {
             current_regime: Regime::Calm,
             last_update_ms: 0,
             accumulated_bytes: 0,
+            current_throughput: 0.0,
         }
     }
 
@@ -57,19 +63,34 @@ impl RegimeDetector {
     }
 
     /// Update regime based on entropy and throughput
-    /// elapsed_ms: time since last update
-    /// bytes: bytes processed in this interval
-    pub fn update(&mut self, entropy: f32, elapsed_ms: u64, bytes: u64) {
-        // Update throughput
-        let bytes_per_sec = if elapsed_ms > 0 {
-            (bytes as f64 / elapsed_ms as f64 * 1000.0) as f32
-        } else {
-            0.0
-        };
+    /// entropy: current entropy value
+    /// packet_size: size of the current packet in bytes
+    /// now_ms: current system timestamp in milliseconds
+    pub fn update(&mut self, entropy: f32, packet_size: usize, now_ms: u64) {
+        // 1. Initialize timer on first run
+        if self.last_update_ms == 0 {
+            self.last_update_ms = now_ms;
+        }
 
-        // Dual trigger: Storm if entropy > threshold OR throughput > threshold
+        // 2. Accumulate bytes (READS accumulated_bytes)
+        self.accumulated_bytes += packet_size as u64;
+
+        // 3. Check Time Window (READS last_update_ms)
+        let elapsed = now_ms.saturating_sub(self.last_update_ms);
+        
+        // Update throughput metric every 1 second (1000ms)
+        if elapsed >= 1000 {
+            // Calculate bytes/sec
+            self.current_throughput = (self.accumulated_bytes as f32) / (elapsed as f32 / 1000.0);
+            
+            // Reset Window
+            self.last_update_ms = now_ms;
+            self.accumulated_bytes = 0;
+        }
+
+        // 4. Dual trigger: Storm if entropy > threshold OR throughput > threshold
         let new_regime =
-            if entropy > self.entropy_threshold || bytes_per_sec > self.throughput_threshold {
+            if entropy > self.entropy_threshold || self.current_throughput > self.throughput_threshold {
                 Regime::Storm
             } else {
                 Regime::Calm
@@ -117,7 +138,7 @@ impl RegimeDetector {
 
         // Advance index
         self.idx = (self.idx + 1) % self.window_size;
-        self.count += 1; // Saturating add could be safer if running forever, but usize is huge.
+        self.count += 1; 
 
         result
     }
@@ -130,5 +151,9 @@ impl RegimeDetector {
         for x in &mut self.history {
             *x = 0.0;
         }
+        // Reset throughput tracking
+        self.last_update_ms = 0;
+        self.accumulated_bytes = 0;
+        self.current_throughput = 0.0;
     }
 }
