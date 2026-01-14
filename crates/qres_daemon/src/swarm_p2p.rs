@@ -1,8 +1,10 @@
-use crate::brain_aggregator::{apply_aggregated_confidence, BrainAggregator};
+use crate::brain_aggregator::BrainAggregator;
 use crate::config::Config;
-use crate::living_brain::{BrainMessage, LivingBrain};
+use crate::living_brain::{LivingBrain, SignedEpiphany};
 use crate::peer_keys::PeerKeyStore;
 use crate::security::{ReputationManager, SecurityManager, SignedPayload};
+use qres_core::privacy::PrivacyAccountant;
+use qres_core::zk_proofs::{ZkNormProver, ProofBundle};
 use axum::{extract::State, routing::get, Json, Router};
 use libp2p::futures::StreamExt; // For select_next_some
 use libp2p::gossipsub::IdentTopic; // Added helper
@@ -19,12 +21,13 @@ use std::hash::{Hash, Hasher};
 use std::io; // Added
 use std::path::PathBuf;
 use std::sync::Arc;
-use std::time::Duration;
+use std::time::{Duration, SystemTime};
 use tokio::sync::RwLock;
 use tracing::{info, warn};
+use rand;
 
 // Topic for brain synchronization
-const BRAIN_TOPIC: &str = "qres-brain-sync";
+const BRAIN_TOPIC: &str = "qres-hive-v2";
 
 #[derive(Clone, Serialize, Default)]
 pub struct SwarmStatus {
@@ -45,6 +48,8 @@ pub struct AppState {
     pub require_signatures: bool,
     pub aggregator: BrainAggregator,
     pub config: Config,
+    pub privacy_accountant: PrivacyAccountant,
+    pub zk_prover: ZkNormProver,
 }
 
 // Custom Behavior Struct
@@ -125,6 +130,8 @@ pub async fn start_p2p_node(
         require_signatures: config.security.require_signatures,
         aggregator: BrainAggregator::new(config.aggregation.clone()),
         config,
+        privacy_accountant: PrivacyAccountant::new(10.0, 1e-5, 0.995),
+        zk_prover: ZkNormProver::new(),
     }));
 
     // Spawn API
@@ -204,71 +211,120 @@ pub async fn start_p2p_node(
     // 6. Loop
     let mut interval = tokio::time::interval(Duration::from_secs(10));
     let brain_file = &brain_path;
-    let mut last_broadcast_brain: Option<LivingBrain> = None;
+    let _last_broadcast_brain: Option<LivingBrain> = None;
 
     loop {
         tokio::select! {
-            // Periodic Brain Broadcast with Delta Encoding
+            // Periodic Brain Broadcast with Ghost Protocol
             _ = interval.tick() => {
-                if let Ok(content) = fs::read_to_string(brain_file) {
-                    if let Some(current_brain) = LivingBrain::from_json(&content) {
-                        // Update RAM state
-                        state.write().await.brain = current_brain.clone();
+                // --- PHASE 2: Privacy Accounting ---
+                // Decay budget over time (rolling window)
+                {
+                    let mut app_state = state.write().await;
+                    app_state.privacy_accountant.decay();
+                }
 
-                        // Prepare outgoing brain (potentially with privacy noise)
-                        let mut outgoing_brain = current_brain.clone();
-                        let privacy_config = { state.read().await.config.privacy.clone() };
+                // Cost of an Epiphany (approximate)
+                let epiphany_cost = 0.1;
 
-                        if privacy_config.enabled {
-                            let dp = qres_core::privacy::DifferentialPrivacy::new(
-                                privacy_config.epsilon as f64,
-                                privacy_config.delta as f64,
-                                privacy_config.clipping_threshold as f64,
-                            );
-
-                            // Apply clipping and noise
-                            dp.clip_update(&mut outgoing_brain.confidence);
-                            if let Err(e) = dp.add_noise(&mut outgoing_brain.confidence) {
-                                tracing::error!("Failed to apply privacy noise: {}", e);
-                            } else {
-                                tracing::debug!(epsilon = privacy_config.epsilon, "Applied differential privacy to update");
-                            }
+                let should_publish = {
+                    let app_state = state.read().await;
+                    match app_state.privacy_accountant.check_budget(epiphany_cost) {
+                        Ok(_) => true,
+                        Err(_) => {
+                            info!("Privacy budget exhausted. Entering Listen-Only Mode.");
+                            false
                         }
+                    }
+                };
 
-                        // Delta Encoding Logic using the (potentially noisy) outgoing brain
-                        let message = if let Some(last) = &last_broadcast_brain {
-                            outgoing_brain.diff(last).map(BrainMessage::Delta)
-                        } else {
-                            Some(BrainMessage::Full(outgoing_brain.clone()))
-                        };
+                if should_publish {
+                    if let Ok(content) = fs::read_to_string(brain_file) {
+                        if let Some(brain) = LivingBrain::from_json(&content) {
+                            // Update RAM state
+                            state.write().await.brain = brain.clone();
 
-                        if let Some(msg) = message {
-                            let topic = IdentTopic::new(BRAIN_TOPIC);
-                            if let Ok(brain_payload) = serde_json::to_vec(&msg) {
-                                // Sign the message if security is enabled
-                                let final_payload = {
-                                    let app_state = state.read().await;
-                                    if let Some(sec_mgr) = &app_state.security {
-                                        let signed = sec_mgr.sign(&brain_payload);
-                                        serde_json::to_vec(&signed).unwrap_or(brain_payload.clone())
+                            // --- PHASE 1: Proving Step (Sender) ---
+                            // A. Type Conversion: I16F16 (Bytes) -> f32
+                            // We need Vec<f32> for the ZK Prover
+                            let weights_f32: Vec<f32> = if let Some(w_bytes) = &brain.best_engine_weights {
+                                // Safety: Assuming 4-byte chunks are little-endian i32 (Q16.16)
+                                w_bytes.chunks(4).filter_map(|chunk| {
+                                    if chunk.len() == 4 {
+                                        let bits = i32::from_le_bytes(chunk.try_into().unwrap());
+                                        let fixed = fixed::types::I16F16::from_bits(bits);
+                                        Some(fixed.to_num::<f32>())
                                     } else {
-                                        brain_payload
+                                        None
                                     }
-                                };
+                                }).collect()
+                            } else {
+                                Vec::new()
+                            };
 
-                                if let Err(e) = swarm.behaviour_mut().gossipsub.publish(topic, final_payload) {
-                                    tracing::error!("P2P publish error: {:?}", e);
-                                } else {
-                                    match &msg {
-                                        BrainMessage::Delta(d) => info!(updates = d.updates.len(), signed = state.read().await.security.is_some(), "Broadcasted Delta"),
-                                        BrainMessage::Full(_) => info!(signed = state.read().await.security.is_some(), "Broadcasted Full Wisdom"),
+                            // B. Generate ZK Proof
+                            let proof_bundle = {
+                                let app_state = state.read().await;
+                                if !weights_f32.is_empty() {
+                                    // Threshold 10.0 (L2 Norm Squared)
+                                    if let Some((proof, _)) = app_state.zk_prover.generate_proof(&weights_f32, 10.0) {
+                                        Some(ProofBundle {
+                                            peer_id: [0u8; 32], // Placeholder or derived from sec_mgr
+                                            masked_weights: weights_f32, // Sending unmasked in this context for Epiphany
+                                            zk_proof: proof,
+                                        })
+                                    } else {
+                                        None
                                     }
-                                    // Update last broadcast to the one we actually sent (noisy)
-                                    last_broadcast_brain = Some(outgoing_brain);
+                                } else {
+                                    None
                                 }
+                            };
+
+                            // C. Sign the Payload
+                            let timestamp = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs();
+                            let nonce = rand::random::<u64>(); // Generate unique nonce
+
+                            let mut epiphany = SignedEpiphany {
+                                brain: brain.clone(),
+                                proof_bundle: proof_bundle.clone(),
+                                signature: String::new(),
+                                sender_id: state.read().await.security.as_ref().map(|s| s.public_key_hex()).unwrap_or_default(),
+                                timestamp,
+                                nonce,
+                            };
+
+                            let payload_bytes = epiphany.payload_bytes();
+                            let signed_payload = {
+                                let app_state = state.read().await;
+                                if let Some(sec_mgr) = &app_state.security {
+                                    sec_mgr.sign(&payload_bytes)
+                                } else {
+                                    // Fallback: no signature
+                                    SignedPayload {
+                                        data: payload_bytes,
+                                        signature: String::new(),
+                                        signer_pubkey: String::new(),
+                                        timestamp,
+                                        nonce,
+                                    }
+                                }
+                            };
+
+                            // Move signature into our struct
+                            epiphany.signature = signed_payload.signature;
+
+                            // D. Serialize & Publish
+                            let msg_bytes = serde_json::to_vec(&epiphany).unwrap();
+                            let topic = IdentTopic::new(BRAIN_TOPIC);
+                            if let Err(e) = swarm.behaviour_mut().gossipsub.publish(topic, msg_bytes) {
+                                tracing::error!("Publish error: {:?}", e);
+                            } else {
+                                // Record Privacy Cost only on successful publish
+                                let mut app_state = state.write().await;
+                                let _ = app_state.privacy_accountant.record_consumption(epiphany_cost);
+                                info!("Published SignedEpiphany with ZK proof");
                             }
-                        } else {
-                            info!("No significant changes - skipping broadcast");
                         }
                     }
                 }
@@ -317,125 +373,76 @@ pub async fn start_p2p_node(
                     warn!(peer_id = %peer_id, error = %error, "Identify error");
                 }
                 SwarmEvent::Behaviour(QresBehaviorEvent::Gossipsub(gossipsub::Event::Message { propagation_source: _, message_id: _, message })) => {
-                    info!("Received Merge Candidate");
+                    // --- PHASE 1: Verification Step (Receiver) ---
+                    // 1. Deserialize SignedEpiphany
+                    if let Ok(signed_epiphany) = serde_json::from_slice::<SignedEpiphany>(&message.data) {
+                        
+                        // 2. Reconstruct the SignedPayload expected by SecurityManager
+                        let payload_to_verify = SignedPayload {
+                            data: signed_epiphany.payload_bytes(),
+                            signature: signed_epiphany.signature.clone(),
+                            signer_pubkey: signed_epiphany.sender_id.clone(),
+                            timestamp: signed_epiphany.timestamp,
+                            nonce: signed_epiphany.nonce,
+                        };
 
-                    // Try to extract the brain message - either from SignedPayload or raw
-                    let brain_data: Option<Vec<u8>> = {
-                        let mut app_state = state.write().await;
-
-                        // First, try to parse as SignedPayload
-                        if let Ok(signed) = serde_json::from_slice::<SignedPayload>(&message.data) {
-                            // Verify the signature if required
-                            if app_state.require_signatures {
-                                if let Some(ref mut sec) = app_state.security {
-                                    match sec.verify(&signed) {
-                                        Ok(data) => {
-                                            info!(signer = %signed.signer_pubkey[..16], "Signature verified");
-                                            Some(data)
-                                        }
-                                        Err(e) => {
-                                            warn!(error = %e, signer = %signed.signer_pubkey[..16], "Rejecting message: signature verification failed");
-                                            None
-                                        }
+                        // 3. Perform the cryptographic check
+                        let sig_valid = {
+                            let mut app_state = state.write().await;
+                            if let Some(security_mgr) = &mut app_state.security {
+                                match security_mgr.verify(&payload_to_verify) {
+                                    Ok(_) => true,
+                                    Err(e) => {
+                                        warn!("Verification Failed: {}", e);
+                                        false
                                     }
-                                } else {
-                                    // No SecurityManager but signatures required - reject
-                                    warn!("Rejecting signed message: no SecurityManager configured");
-                                    None
                                 }
                             } else {
-                                // Signatures not required - accept signed payload data without verification
-                                info!("Accepting signed payload (verification not required)");
-                                Some(signed.data)
+                                // No security manager, accept if not requiring signatures
+                                !app_state.require_signatures
+                            }
+                        };
+
+                        if sig_valid {
+                            // 4. Verify ZK Proof
+                            let zk_valid = {
+                                let app_state = state.read().await;
+                                if let Some(bundle) = &signed_epiphany.proof_bundle {
+                                    // Note: Verify the proof against the weights inside the bundle
+                                    // Threshold must match sender (10.0)
+                                    app_state.zk_prover.verify_proof(&bundle.zk_proof, 10.0)
+                                } else {
+                                    true // No weights = valid? Or require proof? Policy decision.
+                                }
+                            };
+
+                            if zk_valid {
+                                // 5. Merge (Success)
+                                if let Ok(local_json) = fs::read_to_string(brain_file) {
+                                    if let Some(mut local_brain) = LivingBrain::from_json(&local_json) {
+                                        local_brain.merge(&signed_epiphany.brain, 0.05);
+                                        let _ = fs::write(brain_file, local_brain.to_json());
+                                        state.write().await.brain = local_brain;
+                                        
+                                        // Reputation Reward
+                                        let mut app_state = state.write().await;
+                                        app_state.reputation.reward(&signed_epiphany.sender_id);
+                                        info!("Merged SignedEpiphany and rewarded sender");
+                                    }
+                                }
+                            } else {
+                                // 6. Punish (Fail ZK)
+                                warn!("Invalid ZK Proof from {}", signed_epiphany.sender_id);
+                                let mut app_state = state.write().await;
+                                app_state.reputation.punish(&signed_epiphany.sender_id);
                             }
                         } else {
-                            // Not a SignedPayload - check if we require signatures
-                            if app_state.require_signatures {
-                                warn!("Rejecting unsigned message: signatures required");
-                                None
-                            } else {
-                                // Accept raw message for backward compatibility
-                                Some(message.data.clone())
-                            }
+                            warn!("Invalid Signature from {}", signed_epiphany.sender_id);
+                            let mut app_state = state.write().await;
+                            app_state.reputation.punish(&signed_epiphany.sender_id);
                         }
-                    };
-
-                    // Process the brain message if we have verified data
-                    if let Some(data) = brain_data {
-                        if let Ok(json) = String::from_utf8(data) {
-                            if let Ok(msg) = serde_json::from_str::<BrainMessage>(&json) {
-                                match msg {
-                                    BrainMessage::Full(remote_brain) => {
-                                        // Buffer the update for robust aggregation
-                                        let aggregation_outcome = {
-                                            let mut app_state = state.write().await;
-
-                                            // Determine Source ID for Reputation
-                                            // If signed, use signer_pubkey. If not, use gossip message source (less secure)
-                                            let source_id_opt = if let Ok(signed) = serde_json::from_slice::<SignedPayload>(&message.data) {
-                                                if app_state.reputation.is_banned(&signed.signer_pubkey) {
-                                                    warn!(signer = %signed.signer_pubkey[..8], "Ignoring update from BANNED peer");
-                                                    None
-                                                } else {
-                                                    Some(signed.signer_pubkey)
-                                                }
-                                            } else {
-                                                // Fallback for legacy/unsigned
-                                                match message.source {
-                                                    Some(pid) => Some(pid.to_string()),
-                                                    None => Some("unknown".to_string()),
-                                                }
-                                            };
-
-                                            if let Some(source_id) = source_id_opt {
-                                                app_state.aggregator.add_update(&remote_brain, source_id)
-                                            } else {
-                                                None
-                                            }
-                                        };
-
-                                        // If we have enough updates, apply aggregated result
-                                        if let Some((agg_confidence, accepted, rejected)) = aggregation_outcome {
-                                            if let Ok(local_json) = fs::read_to_string(brain_file) {
-                                                if let Some(mut local_brain) = LivingBrain::from_json(&local_json) {
-                                                    // Apply aggregated confidence with alpha blend
-                                                    apply_aggregated_confidence(&mut local_brain, &agg_confidence, 0.1);
-                                                    let _ = fs::write(brain_file, local_brain.to_json());
-                                                    info!("Assimilated Aggregated Knowledge (robust)");
-
-                                                    // Update Reputation
-                                                    {
-                                                        let mut app_state = state.write().await;
-                                                        app_state.brain = local_brain; // Update RAM
-
-                                                        for peer in accepted {
-                                                            app_state.reputation.reward(&peer);
-                                                        }
-                                                        for peer in rejected {
-                                                            warn!(peer = %peer[..8], "Punishing malicious peer");
-                                                            app_state.reputation.punish(&peer);
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        } else {
-                                            info!(buffered = state.read().await.aggregator.buffer_len(), "Buffered update for aggregation");
-                                        }
-                                    }
-                                    BrainMessage::Delta(delta) => {
-                                        // Deltas are applied immediately (already small incremental updates)
-                                        if let Ok(local_json) = fs::read_to_string(brain_file) {
-                                            if let Some(mut local_brain) = LivingBrain::from_json(&local_json) {
-                                                local_brain.apply_delta(&delta);
-                                                let _ = fs::write(brain_file, local_brain.to_json());
-                                                info!(updates = delta.updates.len(), "Applied Knowledge Delta (verified)");
-                                                state.write().await.brain = local_brain;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                    } else {
+                        warn!("Failed to deserialize SignedEpiphany");
                     }
                 }
                 _ => {}

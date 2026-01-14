@@ -234,6 +234,104 @@ impl DifferentialPrivacy {
     }
 }
 
+/// Errors related to privacy accounting
+#[derive(Debug, Clone)]
+pub enum PrivacyError {
+    BudgetExceeded,
+    InvalidCost,
+}
+
+#[cfg(feature = "std")]
+impl std::fmt::Display for PrivacyError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            PrivacyError::BudgetExceeded => write!(f, "Privacy budget exceeded"),
+            PrivacyError::InvalidCost => write!(f, "Invalid privacy cost"),
+        }
+    }
+}
+#[cfg(feature = "std")]
+impl std::error::Error for PrivacyError {}
+
+/// Tracks privacy budget consumption over time (RDP / zCDP accountant simplified)
+///
+/// Implements Phase 2: Explicit Privacy Accounting
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct PrivacyAccountant {
+    /// Total epsilon budget available
+    pub total_epsilon: f64,
+    /// Target delta (usually 1e-5 or 1/N)
+    pub target_delta: f64,
+    /// Currently consumed epsilon
+    pub consumed_budget: f64,
+    /// Rolling window decay rate (0.0 to 1.0)
+    /// e.g. 0.99 means we retain 99% of consumed budget per step (slow decay)
+    pub decay_rate: f64,
+    /// History of queries and costs (optional, simplified to just counter here)
+    /// In a full RDP accountant, we'd track alphas and orders.
+    /// Here we use basic composition: E_total = Sum(E_i)
+    pub query_count: u64,
+    /// Timestamp of last reset (for rolling window)
+    pub last_reset: u64,
+}
+
+impl Default for PrivacyAccountant {
+    fn default() -> Self {
+        Self {
+            total_epsilon: 10.0,
+            target_delta: 1e-5,
+            consumed_budget: 0.0,
+            decay_rate: 0.995,
+            query_count: 0,
+            last_reset: 0,
+        }
+    }
+}
+
+impl PrivacyAccountant {
+    pub fn new(total_epsilon: f64, target_delta: f64, decay_rate: f64) -> Self {
+        Self {
+            total_epsilon,
+            target_delta,
+            consumed_budget: 0.0,
+            decay_rate,
+            query_count: 0,
+            last_reset: 0, // Should be set by caller using system time if available
+        }
+    }
+
+    /// Check if there is enough budget for a query with cost `epsilon_cost`.
+    pub fn check_budget(&self, epsilon_cost: f64) -> Result<(), PrivacyError> {
+        if epsilon_cost < 0.0 {
+            return Err(PrivacyError::InvalidCost);
+        }
+        if self.consumed_budget + epsilon_cost > self.total_epsilon {
+            return Err(PrivacyError::BudgetExceeded);
+        }
+        Ok(())
+    }
+
+    /// Deduct budget for a query.
+    pub fn record_consumption(&mut self, epsilon_cost: f64) -> Result<(), PrivacyError> {
+        self.check_budget(epsilon_cost)?;
+        self.consumed_budget += epsilon_cost;
+        self.query_count += 1;
+        Ok(())
+    }
+
+    /// Decay the consumed budget (simulate rolling window)
+    /// Should be called periodically (e.g. every tick)
+    pub fn decay(&mut self) {
+        self.consumed_budget *= self.decay_rate;
+    }
+
+    /// Reset budget (e.g., daily reset).
+    pub fn reset(&mut self) {
+        self.consumed_budget = 0.0;
+        self.query_count = 0;
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

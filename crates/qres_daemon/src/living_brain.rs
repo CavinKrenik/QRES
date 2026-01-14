@@ -1,4 +1,5 @@
 use qres_core::mixer::NUM_MODELS;
+use qres_core::zk_proofs::ProofBundle;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -28,6 +29,52 @@ pub enum BrainMessage {
 pub struct BrainDelta {
     pub timestamp: u64,
     pub updates: Vec<(usize, f32)>,
+}
+
+/// A wrapper for the LivingBrain that includes a ZK Proof and a Signature.
+/// This matches the "Ghost Protocol" Update Format.
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct SignedEpiphany {
+    pub brain: LivingBrain,
+    pub proof_bundle: Option<ProofBundle>,
+    pub signature: String, // Hex encoded signature
+    pub sender_id: String, // PeerID or Public Key
+    pub timestamp: u64,    // Replay protection
+    pub nonce: u64,        // Replay protection
+}
+
+impl SignedEpiphany {
+    pub fn new(
+        brain: LivingBrain,
+        proof_bundle: Option<ProofBundle>,
+        signature: String,
+        sender_id: String,
+        timestamp: u64,
+        nonce: u64,
+    ) -> Self {
+        Self {
+            brain,
+            proof_bundle,
+            signature,
+            sender_id,
+            timestamp,
+            nonce,
+        }
+    }
+
+    /// Serialize just the payload (brain + proof) for signing
+    pub fn payload_bytes(&self) -> Vec<u8> {
+        // We re-serialize the components to get the canonical bytes for signing
+        // Note: In production, use a stable serialization (like bincode or canonical JSON)
+        // Here we use serde_json for simplicity/consistency with existing protocol
+        let mut payload = serde_json::to_vec(&self.brain).unwrap_or_default();
+        if let Some(proof) = &self.proof_bundle {
+            payload.extend(serde_json::to_vec(proof).unwrap_or_default());
+        }
+        payload.extend(self.timestamp.to_le_bytes());
+        payload.extend(self.nonce.to_le_bytes());
+        payload
+    }
 }
 
 impl LivingBrain {

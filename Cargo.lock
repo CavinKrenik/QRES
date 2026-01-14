@@ -5604,6 +5604,7 @@ dependencies = [
  "clap",
  "dirs 5.0.1",
  "ed25519-dalek",
+ "fixed",
  "hex",
  "lazy_static",
  "libp2p",
