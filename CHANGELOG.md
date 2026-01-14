@@ -16,6 +16,15 @@ All notable changes to this project are documented here.
 - **Documentation**: Updated README architecture diagrams and removed legacy roadmaps.
 - **Paper**: Finalized compilation of `paper/paper.pdf` with corrected citations.
 
+### Security & Performance
+- **Safety**: Removed all panic paths (`unwrap`, `expect`) from the `no_std` core.
+- **Zero-Copy**: `compress_chunk` now requires a pre-allocated `&mut [u8]` buffer.
+- **Determinism**: Replaced floating-point math with `fixed::types::I16F16`.
+
+### Fixed
+- **Link Explosion**: P2P sync now uses Deterministic Seed Sync (8 KB/day).
+- **Expansion Problem**: Hybrid Gatekeeper falls back to bit-packing on high entropy.
+
 ## [15.4.0] - 2026-01-11
 
 ### ✨ New Features

@@ -1,5 +1,23 @@
 # QRES v16.0.0 Release Notes
 
+## v16.0.0 - The "Systems" Update
+> **Release Date:** January 13, 2026
+> **Focus:** Determinism, Safety, and Zero-Copy Performance.
+
+###  Major Changes
+- **Breaking:** `compress_chunk` now requires a pre-allocated `&mut [u8]` buffer (Zero-Copy).
+- **Feat:** Replaced floating-point math with `fixed::types::I16F16` for bit-perfect cross-arch consensus.
+- **Security:** Removed all panic paths (`unwrap`, `expect`) from the `no_std` core.
+- **Structure:** Monorepo split into `crates/` (Production) and `research/` (Experiments).
+
+### Bug Fixes
+- Fixed "Link Explosion" in P2P sync by implementing Deterministic Seed Sync (8 KB/day).
+- Fixed "Expansion Problem" via Hybrid Gatekeeper (fallback to bit-packing on high entropy).
+
+---
+
+# QRES v16.0.0 - Pre-Release Notes
+
 **Date:** January 13, 2026
 **Title:** QRES: Adapter Hybrid Compression System
 

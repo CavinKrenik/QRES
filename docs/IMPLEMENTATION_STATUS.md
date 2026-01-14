@@ -5,6 +5,9 @@ This document clarifies what's production-ready vs. experimental vs. roadmap.
 ## ✅ Fully Implemented & Tested
 
 - **Core Compression Engine** (`qres_core`): Q16.16 fixed-point determinism, bit-perfect across architectures
+- **Phase 7: Safety Hardening**: No `unwrap`/`expect` panic paths in core.
+- **Phase 8: Zero-Copy Optimization**: `compress_chunk` uses `&mut [u8]` buffers.
+- **Q16.16 Math Engine**: Replaced floats with `fixed::types::I16F16`.
 - **Python Bindings** (PyO3): Tested on Linux/macOS/Windows
 - **WASM Decoder**: Browser-compatible decompression via `wasm-bindgen`
 - **IoT Streaming Interface** (v15.3): Real-time dashboard with D3.js visualization, SNN Spike Visualizer
