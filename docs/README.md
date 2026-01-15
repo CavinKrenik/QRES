@@ -46,7 +46,6 @@ Step-by-step guides for specific integration tasks:
 Guidelines for contributing and maintaining the project:
 
 - [Contributing (CONTRIBUTING.md)](CONTRIBUTING.md) — Development setup, code style, testing standards, and pull request process.
-- [Release Workflow (RELEASE_WORKFLOW.md)](RELEASE_WORKFLOW.md) — How releases are cut, versioned (semver), and deployed to crates.io and NPM.
 - [Security Roadmap (SECURITY_ROADMAP.md)](SECURITY_ROADMAP.md) — Planned security audits, cryptography upgrades, and threat model refinements.
 
 ---
