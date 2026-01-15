@@ -80,7 +80,7 @@ impl LinearNeuron {
 
         // Clamp to u8 range
         let result = sum.to_num::<i32>();
-        (result.max(0).min(255)) as u8
+        result.clamp(0, 255) as u8
     }
 
     /// Update entropy estimate based on error
@@ -105,7 +105,7 @@ impl SwarmNeuron for LinearNeuron {
         tick: u32,
     ) -> Option<SpikeEvent> {
         // Calculate absolute error
-        let error = (actual as i16 - predicted as i16).abs() as u8;
+        let error = (actual as i16 - predicted as i16).unsigned_abs() as u8;
 
         // Update entropy tracking
         self.update_entropy(error);
@@ -143,14 +143,14 @@ impl SwarmNeuron for LinearNeuron {
                 *rep * I16F16::from_num(signal.error as i32) / I16F16::from_num(256);
 
             // Distribute error back to weights (simplified ADALINE-like update)
-            for i in 0..8 {
-                weight_delta[i] += signal_weight * self.learning_rate;
+            for item in &mut weight_delta {
+                *item += signal_weight * self.learning_rate;
             }
         }
 
         // Apply weight updates
-        for i in 0..8 {
-            self.weights[i] += weight_delta[i];
+        for (i, delta) in weight_delta.iter().enumerate() {
+            self.weights[i] += delta;
             // Clamp to reasonable range
             if self.weights[i] < I16F16::from_num(-2) {
                 self.weights[i] = I16F16::from_num(-2);
@@ -201,14 +201,14 @@ impl SwarmNeuron for LinearNeuron {
 
         // Extract weights
         let mut new_weights = [I16F16::from_num(0); 8];
-        for i in 0..8 {
+        for (i, weight) in new_weights.iter_mut().enumerate() {
             let offset = 8 + i * 4;
             if offset + 4 > gene.len() {
                 return false;
             }
             let bytes: [u8; 4] = gene[offset..offset + 4].try_into().unwrap_or_default();
             let bits = i32::from_le_bytes(bytes);
-            new_weights[i] = I16F16::from_bits(bits);
+            *weight = I16F16::from_bits(bits);
         }
 
         // Extract bias
