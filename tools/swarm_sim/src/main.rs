@@ -4,7 +4,6 @@ use bevy::prelude::*;
 use qres_core::cortex::{GeneStorage, LinearNeuron, Regime};
 use rand::Rng;
 use std::fs;
-use std::path::Path;
 
 // --- CONFIGURATION ---
 const MTU_LIMIT: usize = 1400;
@@ -104,6 +103,7 @@ impl GeneStorage for DiskGeneStorage {
 #[derive(Component)]
 struct IoTNode {
     id: u32,
+    #[allow(dead_code)]
     reputation: f32,
 }
 
@@ -117,6 +117,7 @@ struct Cortex {
 
 #[derive(Clone)]
 enum NeuronType {
+    #[allow(dead_code)]
     Linear(LinearNeuron), // Default: Fails in noise
     Evolved(Vec<u8>),     // Advanced: Robust in noise
 }
@@ -130,6 +131,7 @@ struct NetworkPacket {
 }
 
 enum PacketType {
+    #[allow(dead_code)]
     SpikeBroadcast,       // "I am surprised!"
     GeneRequest,          // "Help me!"
     GenePayload(Vec<u8>), // "Here is the cure."
@@ -167,7 +169,7 @@ fn setup_swarm(
     });
 
     // Initialize gene storage (The Hippocampus)
-    let mut storage = DiskGeneStorage::new("./swarms_memory");
+    let storage = DiskGeneStorage::new("./swarms_memory");
 
     // 10x10 Grid
     let mesh = meshes.add(Mesh::from(Sphere { radius: 0.3 }));
