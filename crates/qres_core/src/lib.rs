@@ -62,6 +62,7 @@ pub mod archive;
 #[cfg(feature = "std")]
 pub mod compression;
 pub mod config;
+pub mod cortex; // Phase 1: Neural Swarm Architecture - Active neurons & collective learning
 #[cfg(feature = "std")]
 pub mod dedup;
 #[cfg(feature = "std")]
