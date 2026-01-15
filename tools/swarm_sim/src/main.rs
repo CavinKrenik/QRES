@@ -119,7 +119,7 @@ struct Cortex {
 enum NeuronType {
     #[allow(dead_code)]
     Linear(LinearNeuron), // Default: Fails in noise
-    Evolved(Vec<u8>),     // Advanced: Robust in noise
+    Evolved(Vec<u8>), // Advanced: Robust in noise
 }
 
 #[derive(Component)]
@@ -132,7 +132,7 @@ struct NetworkPacket {
 
 enum PacketType {
     #[allow(dead_code)]
-    SpikeBroadcast,       // "I am surprised!"
+    SpikeBroadcast, // "I am surprised!"
     GeneRequest,          // "Help me!"
     GenePayload(Vec<u8>), // "Here is the cure."
 }
