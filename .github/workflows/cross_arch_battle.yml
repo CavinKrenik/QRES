@@ -16,6 +16,11 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
+    - name: Install Linux Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libasound2-dev pkg-config libudev-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev
+    
     - name: Generate Golden Master Data
       run: |
         # Generate 5MB of deterministic random data
