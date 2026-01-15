@@ -7452,7 +7452,7 @@ dependencies = [
 
 [[package]]
 name = "qres-studio"
-version = "17.0.0"
+version = "18.0.0"
 dependencies = [
  "lazy_static",
  "qres_core",
@@ -7471,7 +7471,7 @@ dependencies = [
 
 [[package]]
 name = "qres_core"
-version = "17.0.0"
+version = "18.0.0"
 dependencies = [
  "anyhow",
  "blake3",
@@ -7502,7 +7502,7 @@ dependencies = [
 
 [[package]]
 name = "qres_daemon"
-version = "17.0.0"
+version = "18.0.0"
 dependencies = [
  "axum",
  "chrono",
@@ -7530,7 +7530,7 @@ dependencies = [
 
 [[package]]
 name = "qres_wasm"
-version = "17.0.0"
+version = "18.0.0"
 dependencies = [
  "console_error_panic_hook",
  "js-sys",
