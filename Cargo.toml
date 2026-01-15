@@ -4,7 +4,7 @@ members = [
     "crates/qres_daemon",
     "crates/qres_wasm",
     "evaluation/benchmarks",
-    "examples/virtual_iot_network",
+    "examples/virtual_iot_network", "tools/swarm_sim",
     "web/src-tauri"
 ]
 resolver = "2"

@@ -13,6 +13,8 @@
 
 pub mod linear;
 pub mod neuron;
+pub mod storage;
 
 pub use linear::LinearNeuron;
 pub use neuron::{Regime, SpikeEvent, SwarmNeuron};
+pub use storage::GeneStorage;

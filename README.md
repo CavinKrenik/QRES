@@ -8,6 +8,12 @@
 
 **A deterministic, privacy-preserving consensus engine for Edge AI. Converges 100x faster than traditional FL using 1/1000th the bandwidth (8KB/day).**
 
+## Emergent Intelligence in Action
+
+![Neural Swarm Emergence](docs/images/neural_swarm_emergence.gif)
+
+*Visualizing a decentralized neural swarm recovering from a 15% packet loss interference zone. Watch as a single "mutation" (Purple) propagates its evolved bytecode to "heal" the network through hardware-constrained gossip. This emergence behavior is fundamentally different from top-down AI—evolution shaped by network physics.*
+
 ## The Hero Chart
 
 ![Swarm Singularity](docs/images/singularity_zero_shot.png)
