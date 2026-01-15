@@ -10,7 +10,6 @@
 /// - No std: All types use core::* and alloc
 /// - No String: All communication is Copy or Vec<u8>
 /// - Fixed-point math: I16F16 for determinism across platforms
-
 pub mod linear;
 pub mod neuron;
 pub mod storage;

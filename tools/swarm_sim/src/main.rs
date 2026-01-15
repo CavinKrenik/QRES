@@ -1,13 +1,13 @@
-use bevy::prelude::*;
 use bevy::core_pipeline::bloom::BloomSettings;
 use bevy::core_pipeline::tonemapping::Tonemapping;
+use bevy::prelude::*;
+use qres_core::cortex::{GeneStorage, LinearNeuron, Regime};
 use rand::Rng;
-use qres_core::cortex::{Regime, LinearNeuron, GeneStorage};
 use std::fs;
 use std::path::Path;
 
 // --- CONFIGURATION ---
-const MTU_LIMIT: usize = 1400; 
+const MTU_LIMIT: usize = 1400;
 const BASE_DROP_RATE: f64 = 0.02;
 const GENE_SIZE_BYTES: usize = 1600; // Large gene triggers MTU fragmentation!
 
@@ -27,17 +27,20 @@ fn main() {
             time: 0.0,
         })
         .add_systems(Startup, setup_swarm)
-        .add_systems(Update, (
-            move_noise_zone,        // 1. The Environment changes
-            simulate_cortex_reaction, // 2. Nodes react (Calm vs Storm)
-            trigger_evolution,      // 3. Random mutations ("The Spark")
-            gossip_protocol,        // 4. Nodes talk (Gene Requests)
-            packet_physics_system,  // 5. The Network carries (or drops) data
-            process_incoming_packets, // 6. Nodes learn (Gene Install)
-            persist_evolved_genes,  // 7. Save genes to disk (The Hippocampus)
-            update_visuals,         // 8. God View
-            draw_debug_overlays,    // 9. Gizmos + Noise Zone + Purple Web
-        ))
+        .add_systems(
+            Update,
+            (
+                move_noise_zone,          // 1. The Environment changes
+                simulate_cortex_reaction, // 2. Nodes react (Calm vs Storm)
+                trigger_evolution,        // 3. Random mutations ("The Spark")
+                gossip_protocol,          // 4. Nodes talk (Gene Requests)
+                packet_physics_system,    // 5. The Network carries (or drops) data
+                process_incoming_packets, // 6. Nodes learn (Gene Install)
+                persist_evolved_genes,    // 7. Save genes to disk (The Hippocampus)
+                update_visuals,           // 8. God View
+                draw_debug_overlays,      // 9. Gizmos + Noise Zone + Purple Web
+            ),
+        )
         .run();
 }
 
@@ -101,34 +104,34 @@ impl GeneStorage for DiskGeneStorage {
 #[derive(Component)]
 struct IoTNode {
     id: u32,
-    reputation: f32, 
+    reputation: f32,
 }
 
 #[derive(Component)]
 struct Cortex {
-    neuron_type: NeuronType, 
+    neuron_type: NeuronType,
     regime: Regime,
-    time_in_storm: f32, // How long have I been panicking?
+    time_in_storm: f32,     // How long have I been panicking?
     persistence_timer: f32, // Timer for gene saves
 }
 
 #[derive(Clone)]
 enum NeuronType {
     Linear(LinearNeuron), // Default: Fails in noise
-    Evolved(Vec<u8>),        // Advanced: Robust in noise
+    Evolved(Vec<u8>),     // Advanced: Robust in noise
 }
 
 #[derive(Component)]
 struct NetworkPacket {
-    target: u32,  // Simple ID-based routing for sim
+    target: u32, // Simple ID-based routing for sim
     payload: PacketType,
     size: usize,
     ttl: f32,
 }
 
 enum PacketType {
-    SpikeBroadcast,      // "I am surprised!"
-    GeneRequest,         // "Help me!"
+    SpikeBroadcast,       // "I am surprised!"
+    GeneRequest,          // "Help me!"
     GenePayload(Vec<u8>), // "Here is the cure."
 }
 
@@ -147,14 +150,19 @@ fn setup_swarm(
                 ..default()
             },
             tonemapping: Tonemapping::TonyMcMapface,
-            transform: Transform::from_xyz(0.0, 20.0, 25.0).looking_at(Vec3::new(10.0, 0.0, 10.0), Vec3::Y),
+            transform: Transform::from_xyz(0.0, 20.0, 25.0)
+                .looking_at(Vec3::new(10.0, 0.0, 10.0), Vec3::Y),
             ..default()
         },
         BloomSettings::NATURAL,
     ));
     commands.spawn(PointLightBundle {
         transform: Transform::from_xyz(10.0, 10.0, 10.0),
-        point_light: PointLight { intensity: 2000.0, range: 100.0, ..default() },
+        point_light: PointLight {
+            intensity: 2000.0,
+            range: 100.0,
+            ..default()
+        },
         ..default()
     });
 
@@ -168,14 +176,14 @@ fn setup_swarm(
     for x in 0..10 {
         for z in 0..10 {
             let id = x * 10 + z;
-            
+
             // Check if this node has a saved gene from a previous session
             let neuron_type = if let Some(gene) = storage.load_gene(id) {
                 NeuronType::Evolved(gene)
             } else {
                 NeuronType::Linear(LinearNeuron::new(32))
             };
-            
+
             commands.spawn((
                 PbrBundle {
                     mesh: mesh.clone(),
@@ -183,13 +191,16 @@ fn setup_swarm(
                     transform: Transform::from_xyz(x as f32 * 2.0, 0.0, z as f32 * 2.0),
                     ..default()
                 },
-                IoTNode { id, reputation: 1.0 },
+                IoTNode {
+                    id,
+                    reputation: 1.0,
+                },
                 Cortex {
                     neuron_type,
                     regime: Regime::Calm,
                     time_in_storm: 0.0,
                     persistence_timer: 0.0,
-                }
+                },
             ));
         }
     }
@@ -210,7 +221,8 @@ fn simulate_cortex_reaction(
     mut query: Query<(&Transform, &mut Cortex)>,
 ) {
     for (transform, mut cortex) in query.iter_mut() {
-        let dist = Vec2::new(transform.translation.x, transform.translation.z).distance(env.noise_center);
+        let dist =
+            Vec2::new(transform.translation.x, transform.translation.z).distance(env.noise_center);
         let in_noise = dist < env.noise_radius;
 
         match cortex.neuron_type {
@@ -225,7 +237,7 @@ fn simulate_cortex_reaction(
             }
             NeuronType::Evolved(_) => {
                 // Evolved neurons handle noise perfectly
-                cortex.regime = Regime::Calm; 
+                cortex.regime = Regime::Calm;
                 cortex.time_in_storm = 0.0;
             }
         }
@@ -233,9 +245,7 @@ fn simulate_cortex_reaction(
 }
 
 /// 3. The Spark: Random Mutation
-fn trigger_evolution(
-    mut query: Query<&mut Cortex>,
-) {
+fn trigger_evolution(mut query: Query<&mut Cortex>) {
     let mut rng = rand::thread_rng();
     for mut cortex in query.iter_mut() {
         // If panicking, 0.1% chance per frame to "invent" the solution
@@ -253,24 +263,26 @@ fn gossip_protocol(
     query_lookup: Query<(&IoTNode, &Transform)>, // Read-only lookups
 ) {
     let nodes_vec: Vec<_> = query_nodes.iter().collect();
-    
+
     for (_entity, node, cortex, transform) in nodes_vec.iter() {
         // STRATEGY: If I am in Storm for too long, ask for help
         if cortex.regime == Regime::Storm && cortex.time_in_storm > 2.0 {
-             // Find a calm neighbor
-             for (neighbor, n_trans) in query_lookup.iter() {
-                 if node.id == neighbor.id { continue; }
-                 
-                 if transform.translation.distance(n_trans.translation) < 3.0 {
-                     // Request help!
-                     commands.spawn(NetworkPacket {
-                         target: neighbor.id,
-                         payload: PacketType::GeneRequest,
-                         size: 64, // Small packet
-                         ttl: 1.0,
-                     });
-                 }
-             }
+            // Find a calm neighbor
+            for (neighbor, n_trans) in query_lookup.iter() {
+                if node.id == neighbor.id {
+                    continue;
+                }
+
+                if transform.translation.distance(n_trans.translation) < 3.0 {
+                    // Request help!
+                    commands.spawn(NetworkPacket {
+                        target: neighbor.id,
+                        payload: PacketType::GeneRequest,
+                        size: 64, // Small packet
+                        ttl: 1.0,
+                    });
+                }
+            }
         }
     }
 }
@@ -292,7 +304,7 @@ fn packet_physics_system(
         // NON-LINEAR DROP RATE (The Quirk)
         let drop_chance = if packet.size > MTU_LIMIT {
             // High drop rate for large genes
-            0.15 
+            0.15
         } else {
             // Low drop rate for small requests
             BASE_DROP_RATE
@@ -319,18 +331,18 @@ fn process_incoming_packets(
                         // If I am evolved, send the cure
                         if let NeuronType::Evolved(gene) = &cortex.neuron_type {
                             // Reply with the Payload (Subject to MTU drops!)
-                             commands.spawn(NetworkPacket {
-                                 target: node.id, // Should reply to sender, simplified here
-                                 payload: PacketType::GenePayload(gene.clone()),
-                                 size: GENE_SIZE_BYTES,
-                                 ttl: 1.0,
-                             });
+                            commands.spawn(NetworkPacket {
+                                target: node.id, // Should reply to sender, simplified here
+                                payload: PacketType::GenePayload(gene.clone()),
+                                size: GENE_SIZE_BYTES,
+                                ttl: 1.0,
+                            });
                         }
-                    },
+                    }
                     PacketType::GenePayload(gene) => {
                         // INSTALL THE CURE
                         cortex.neuron_type = NeuronType::Evolved(gene.clone());
-                    },
+                    }
                     _ => {}
                 }
                 commands.entity(p_entity).despawn(); // Consumed
@@ -340,19 +352,16 @@ fn process_incoming_packets(
 }
 
 /// 7. Persistence: Save evolved genes to disk (The Hippocampus)
-fn persist_evolved_genes(
-    time: Res<Time>,
-    mut query: Query<(&IoTNode, &mut Cortex)>,
-) {
+fn persist_evolved_genes(time: Res<Time>, mut query: Query<(&IoTNode, &mut Cortex)>) {
     let mut storage = DiskGeneStorage::new("./swarms_memory");
-    
+
     for (node, mut cortex) in query.iter_mut() {
         cortex.persistence_timer += time.delta_seconds();
-        
+
         // Every 5 seconds, if this node is evolved AND calm, save its gene
         if cortex.persistence_timer >= 5.0 {
             cortex.persistence_timer = 0.0;
-            
+
             if cortex.regime == Regime::Calm {
                 if let NeuronType::Evolved(ref gene) = cortex.neuron_type {
                     let _ = storage.save_gene(node.id, gene);
@@ -371,10 +380,10 @@ fn update_visuals(
         let color = match cortex.neuron_type {
             NeuronType::Evolved(_) => Color::rgb(0.6, 0.1, 1.0), // Purple: The Cure
             NeuronType::Linear(_) => match cortex.regime {
-                Regime::Calm => Color::rgb(0.1, 0.1, 0.8),   // Blue
-                Regime::Storm => Color::rgb(0.9, 0.1, 0.1),  // Red
-                _ => Color::rgb(1.0, 1.0, 0.0),              // Orange
-            }
+                Regime::Calm => Color::rgb(0.1, 0.1, 0.8),  // Blue
+                Regime::Storm => Color::rgb(0.9, 0.1, 0.1), // Red
+                _ => Color::rgb(1.0, 1.0, 0.0),             // Orange
+            },
         };
         *mat = materials.add(StandardMaterial::from(color));
     }
@@ -387,14 +396,25 @@ fn draw_debug_overlays(
     cortex_query: Query<(&Transform, &Cortex)>,
 ) {
     use bevy::math::primitives::Direction3d;
-    
+
     // 1. Draw the Noise Zone (Red Force Field) - Concentric circles at env.noise_center
     let base_pos = Vec3::new(env.noise_center.x, 0.0, env.noise_center.y);
-    gizmos.circle(base_pos, Direction3d::Y, env.noise_radius, Color::rgba(1.0, 0.3, 0.0, 0.8));
-    gizmos.circle(base_pos, Direction3d::Y, env.noise_radius * 0.95, Color::rgba(1.0, 0.0, 0.0, 0.4));
+    gizmos.circle(
+        base_pos,
+        Direction3d::Y,
+        env.noise_radius,
+        Color::rgba(1.0, 0.3, 0.0, 0.8),
+    );
+    gizmos.circle(
+        base_pos,
+        Direction3d::Y,
+        env.noise_radius * 0.95,
+        Color::rgba(1.0, 0.0, 0.0, 0.4),
+    );
 
     // 2. Draw "Connection Lines" between Evolved Nodes (The Purple Web)
-    let evolved_nodes: Vec<Vec3> = cortex_query.iter()
+    let evolved_nodes: Vec<Vec3> = cortex_query
+        .iter()
         .filter(|(_, c)| matches!(c.neuron_type, NeuronType::Evolved(_)))
         .map(|(t, _)| t.translation)
         .collect();

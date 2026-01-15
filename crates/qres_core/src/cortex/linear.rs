@@ -139,7 +139,8 @@ impl SwarmNeuron for LinearNeuron {
 
         for (signal, rep) in signals.iter().zip(reputation.iter()) {
             // Weight each signal by peer reputation
-            let signal_weight = *rep * I16F16::from_num(signal.error as i32) / I16F16::from_num(256);
+            let signal_weight =
+                *rep * I16F16::from_num(signal.error as i32) / I16F16::from_num(256);
 
             // Distribute error back to weights (simplified ADALINE-like update)
             for i in 0..8 {

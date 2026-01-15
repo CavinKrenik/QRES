@@ -1,5 +1,5 @@
 //! Gene Storage Abstraction Layer
-//! 
+//!
 //! Defines a trait for persisting evolved neural genes across sessions.
 //! This enables "Lamarckian Evolution"—learned strategies survive reboots.
 

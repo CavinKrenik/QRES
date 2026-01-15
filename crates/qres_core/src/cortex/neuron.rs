@@ -31,9 +31,9 @@ impl Regime {
     /// Higher rate = faster adaptation
     pub fn learning_rate(self) -> I16F16 {
         match self {
-            Regime::Calm => I16F16::from_num(0.01),  // Slow, conservative learning
+            Regime::Calm => I16F16::from_num(0.01), // Slow, conservative learning
             Regime::Alert => I16F16::from_num(0.05), // Moderate adaptation
-            Regime::Storm => I16F16::from_num(0.2),  // Aggressive learning
+            Regime::Storm => I16F16::from_num(0.2), // Aggressive learning
         }
     }
 }
@@ -78,7 +78,7 @@ impl fmt::Display for SpikeEvent {
 /// Each neuron processes local data, detects anomalies, and evolves via gossip
 pub trait SwarmNeuron: Clone {
     /// 1. HOT PATH: Pure prediction math, must be < 50us
-    /// 
+    ///
     /// Given a history window, predict the next value
     /// # Arguments
     /// * `history` - Recent observed values (typically 4-64 bytes)
