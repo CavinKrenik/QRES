@@ -1,4 +1,52 @@
-# QRES v17.0.0 Release Notes
+# QRES Release Notes
+
+## v18.0.0: The Neural Swarm Pivot
+
+**Version:** v18.0.0 | **Released:** 2026-01-15
+
+This release pivots from v17.0's deterministic compression to a fully decentralized neural swarm architecture. The system now demonstrates emergent self-healing behavior through hardware-constrained gene gossip and persistent evolutionary memory.
+
+### Highlights
+
+#### Emergent Intelligence
+- **Swarm Simulator:** Bevy-based God View visualization of 100 nodes in a 10x10 grid
+- **Self-Healing Networks:** Red (panicked) nodes automatically request cure genes from purple (evolved) neighbors
+- **Gossip Protocol:** Decentralized gene propagation under MTU fragmentation constraints
+- **Visible Evolution:** Watch as a single mutation spontaneously appears and spreads to heal the network
+
+#### Hippocampus: Persistent Evolutionary Memory
+- **GeneStorage Trait:** Abstract persistence interface (`no_std` compatible)
+- **DiskGeneStorage:** Saves evolved genes to `./swarms_memory/` directory
+- **Auto-Loading on Spawn:** Nodes check for saved genes and spawn as evolved immediately
+- **Periodic Persistence:** Every 5 seconds, calm evolved nodes save bytecode to disk
+- **Lamarckian Evolution:** Learned strategies survive simulation restarts and reboots
+
+#### No_Std Deterministic Core
+- **SwarmNeuron Trait:** Abstract interface for neural processors across embedded/desktop
+- **LinearNeuron:** 8-lag linear predictor with entropy tracking and refractory periods
+- **Q16.16 Fixed-Point:** All math is integer-based for cross-platform determinism
+- **Regime Switching:** Automatic Calm/Storm/Adapting states based on entropy thresholds
+
+### Breaking Changes
+- **Predictor Trait Removed:** Replaced with SwarmNeuron trait offering broader interface
+- **Gene Format:** Now supports install_gene() for persistent bytecode loading
+- **Simulator Location:** Moved from examples/ to tools/swarm_sim/ as full-fledged crate
+- **Storage Module:** New qres_core/src/cortex/storage.rs adds GeneStorage abstraction
+
+### Performance
+- **Convergence:** Swarm reaches consensus on learned model in <30 seconds under noise
+- **Bandwidth:** 8 KB/day per node with gene gossip optimization
+- **Mutation Rate:** ~5% probability per epoch triggers evolution under stress
+
+### Migration Guide
+1. Update imports: `use qres_core::cortex::{SwarmNeuron, LinearNeuron, GeneStorage}`
+2. For custom neurons: implement `SwarmNeuron` trait instead of `Predictor`
+3. For storage: implement `GeneStorage` or use `DiskGeneStorage` reference implementation
+4. Simulator: `cargo run -p swarm_sim --release` (previously: `cargo run --example swarm_sim`)
+
+---
+
+## v17.0.0 Release Notes
 
 **Version:** v17.0.0 | **Released:** 2026-01-14
 
