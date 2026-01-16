@@ -91,7 +91,8 @@ jobs:
 
     - name: Clean and Build QRES (Release)
       run: |
-        cargo clean -p qres_core -p qres_daemon
+        # Full clean to ensure no cached artifacts
+        rm -rf target/
         cargo build --release -p qres_daemon
 
     - name: Show Binary Info
