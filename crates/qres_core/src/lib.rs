@@ -47,9 +47,6 @@ impl From<QresError> for std::io::Error {
 
 pub type Result<T> = core::result::Result<T, QresError>;
 
-#[cfg(feature = "python")]
-use pyo3::prelude::*;
-
 pub mod adaptive;
 pub mod aggregation;
 pub mod ans_coder;
@@ -74,6 +71,8 @@ pub mod multivariate;
 pub mod packet;
 pub mod predictors;
 pub mod privacy;
+#[cfg(feature = "python")]
+pub mod python_api;
 #[cfg(feature = "std")]
 pub mod resource_management;
 pub mod secure_agg;
