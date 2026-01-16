@@ -89,8 +89,10 @@ jobs:
       with:
         name: battle-artifacts
 
-    - name: Build QRES (Release)
-      run: cargo build --release -p qres_daemon
+    - name: Clean and Build QRES (Release)
+      run: |
+        cargo clean -p qres_core -p qres_daemon
+        cargo build --release -p qres_daemon
 
     - name: Decompress Data (macOS ARM)
       run: |
