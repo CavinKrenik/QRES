@@ -26,6 +26,9 @@ __pycache__/
 venv/
 .pytest_cache/
 
+# Runtime logs
+snn_stats.txt
+
 # QRES Output & Test Data
 *.qres
 swarms_memory/
