@@ -1,72 +1,89 @@
-// QRES v11.1 Mixer: Hybrid Neural-Statistical Ensemble (Portable SIMD)
-// Features:
-// 1. Weighted Ensemble of Predictors (Linear, Simple, Graph, Spectral, LzMatch)
-// 2. Dynamic AR(2) Auto-regressor for Waveforms
-// 3. Variance-based Algorithm Switching (Stable -> AR2, Chaotic -> Ensemble)
-// 4. Portable SIMD via `wide` crate (ARM NEON, x86 AVX, WASM)
-
-use alloc::vec::Vec;
-use wide::f32x8;
+// QRES v18.0 Mixer: Deterministic Q16.16 Fixed-Point Implementation
+// Replaces previous float/SIMD version.
+// Strictly NO f32 usage.
 
 pub const NUM_MODELS: usize = 6;
+const Q16_ONE: i32 = 1 << 16;
+const Q16_HALF: i32 = 1 << 15;
 
-// Portable SIMD storage - works on all platforms
-type WeightStorage = f32x8;
+/// Q16.16 Multiplication: (a * b) >> 16
+#[inline(always)]
+fn mul_q16(a: i32, b: i32) -> i32 {
+    ((a as i64 * b as i64) >> 16) as i32
+}
+
+/// Q16.16 Division: (a << 16) / b
+#[inline(always)]
+fn div_q16(a: i32, b: i32) -> i32 {
+    if b == 0 {
+        return 0;
+    }
+    (((a as i64) << 16) / (b as i64)) as i32
+}
 
 pub struct Mixer {
-    // Ensemble Weights (Aligned __m256 for SIMD, [f32;8] for Scalar)
-    pub weights: WeightStorage,
-    learning_rate: f32,
+    // Weights are Q16.16
+    pub weights: [i32; 8],
+    learning_rate: i32,
 
-    // AR(2) Components (Recursive IIR - Scalar)
-    ar_coeffs: [f32; 2], // [phi1, phi2]
-    history: [f32; 2],   // [x_{t-1}, x_{t-2}]
-    ar_learning_rate: f32,
-    ar_velocities: [f32; 2], // Momentum for AR updates
+    // AR(2) Components (Q16.16)
+    ar_coeffs: [i32; 2],
+    history: [i32; 2],
+    ar_learning_rate: i32,
+    ar_velocities: [i32; 2],
 
-    // Variance Tracking
-    running_mean: f32,
-    running_var: f32,
-    count: usize,
+    // Variance Tracking (Q16.16)
+    running_mean: i32,
+    running_var: i32,
+    count: i32,
 
     // Lock-on Detection
     current_winner: usize,
     win_streak: usize,
 
     // Phase 2: FedProx
-    global_weights: Option<WeightStorage>,
+    global_weights: Option<[i32; 8]>,
 }
 
 impl Mixer {
-    /// Create a new Mixer with portable SIMD weights.
-    pub fn new(init: Option<&[f32]>, global: Option<&[f32]>) -> Self {
-        // Helper to load into f32x8
-        let load_simd = |data: &[f32]| -> f32x8 {
-            let mut arr = [0.0f32; 8];
-            for (i, &v) in data.iter().take(8).enumerate() {
-                arr[i] = v;
-            }
-            f32x8::new(arr)
-        };
+    /// Create a new Mixer with deterministic weights.
+    pub fn new(init: Option<&[i32]>, global: Option<&[i32]>) -> Self {
+        // Defaults: 0.4, 0.2, 0.1, 0.1, 0.1, 0.1 converted to Q16.16
+        // 0.1 * 65536 = 6553.6 -> 6554
+        // 0.2 * 65536 = 13107
+        // 0.4 * 65536 = 26214
+        let default_w = [26214, 13107, 6554, 6554, 6554, 6554, 0, 0];
 
-        let default_w = [0.4, 0.2, 0.1, 0.1, 0.1, 0.1, 0.0, 0.0];
         let weights = if let Some(w) = init {
-            load_simd(w)
+            let mut arr = [0; 8];
+            for (i, &val) in w.iter().take(8).enumerate() {
+                arr[i] = val;
+            }
+            arr
         } else {
-            load_simd(&default_w)
+            default_w
         };
 
-        let global_weights = global.map(load_simd);
+        let global_weights = global.map(|g| {
+            let mut arr = [0; 8];
+            for (i, &val) in g.iter().take(8).enumerate() {
+                arr[i] = val;
+            }
+            arr
+        });
 
+        // AR Constants: 0.05 -> 3277
+        // Mean: 128.0 -> 128 * 65536 = 8388608
+        // Var: 1000.0 -> 1000 * 65536 = 65536000
         Mixer {
             weights,
-            learning_rate: 0.01,
-            ar_coeffs: [1.0, 0.0],
-            history: [0.0, 0.0],
-            ar_learning_rate: 0.05,
-            ar_velocities: [0.0, 0.0],
-            running_mean: 128.0,
-            running_var: 1000.0,
+            learning_rate: 655, // ~0.01
+            ar_coeffs: [Q16_ONE, 0],
+            history: [0, 0],
+            ar_learning_rate: 3277, // ~0.05
+            ar_velocities: [0, 0],
+            running_mean: 8388608,
+            running_var: 65536000,
             count: 0,
             current_winner: 0,
             win_streak: 0,
@@ -76,202 +93,83 @@ impl Mixer {
 
     pub fn mix(&self, preds: &[u8; NUM_MODELS]) -> u8 {
         // 1. Calculate Ensemble Prediction
-        let ensemble_sum = self.compute_ensemble_score(preds);
+        // Inputs are u8, convert to Q16 (x << 16) before multiply
+        // But weights are Q16. So weight * (pred << 16) >> 16 == weight * pred.
+        // We can just accumulate weight * pred then result is Q16.
+        let mut ensemble_sum: i32 = 0;
+        for i in 0..NUM_MODELS {
+            ensemble_sum += mul_q16(self.weights[i], (preds[i] as i32) << 16);
+        }
 
-        // 2. Calculate AR(2) Prediction (Scalar)
-        let ar_pred = self.ar_coeffs[0] * self.history[0] + self.ar_coeffs[1] * self.history[1];
+        // 2. Calculate AR(2) Prediction
+        let term1 = mul_q16(self.ar_coeffs[0], self.history[0]);
+        let term2 = mul_q16(self.ar_coeffs[1], self.history[1]);
+        let ar_pred = term1 + term2;
 
         // 3. Dynamic Selection
-        let std = libm::sqrtf(self.running_var / (self.count.max(1) as f32));
+        // Variance threshold: 45.0^2 = 2025.0
+        // Check running_var < 2025.0 * 65536
+        // 2025 * 65536 = 132710400
+        const VAR_THRESH: i32 = 132710400;
+
+        // Note: Running var is scaled, effectively, so we compare directly.
+        // Actually, std = sqrt(var), check std < 45 is same as var < 2025.
+        // Logic: if std < 45.0 { 0.6 * ar + 0.4 * ensemble } else { ensemble }
+        // 0.6 -> 39322, 0.4 -> 26214
 
         let prediction = if self.win_streak > 32 {
-            // Lock-On: One model is crushing it. Use it exclusively.
-            preds[self.current_winner] as f32
-        } else if std < 45.0 {
-            0.6 * ar_pred + 0.4 * ensemble_sum
+            // Lock-On
+            (preds[self.current_winner] as i32) << 16
+        } else if self.running_var < VAR_THRESH {
+            let p1 = mul_q16(39322, ar_pred);
+            let p2 = mul_q16(26214, ensemble_sum);
+            p1 + p2
         } else {
             ensemble_sum
         };
 
-        if prediction > 255.0 {
-            255
-        } else if prediction < 0.0 {
+        // Round and clamp
+        // Add 0.5 (half Q16) for rounding
+        let rounded = prediction + Q16_HALF;
+        let byte_val = rounded >> 16;
+
+        if byte_val < 0 {
             0
+        } else if byte_val > 255 {
+            255
         } else {
-            libm::roundf(prediction) as u8
+            byte_val as u8
         }
     }
 
-    /// Logistic Mixing - Neural-style probability-based mixing
-    ///
-    /// Instead of linearly averaging predictions, this computes the probability
-    /// that the next byte is >= threshold, using sigmoid activation.
-    /// This is more accurate for modeling probability distributions.
-    pub fn logistic_mix(&self, preds: &[u8; NUM_MODELS]) -> u8 {
-        // Convert predictions to probabilities using sigmoid
-        let weighted_prob = self.compute_logistic_prob(preds);
-
-        // AR(2) contribution
-        let ar_pred = self.ar_coeffs[0] * self.history[0] + self.ar_coeffs[1] * self.history[1];
-        let ar_prob = sigmoid(ar_pred / 255.0);
-
-        // Dynamic blending based on variance
-        let std = libm::sqrtf(self.running_var / (self.count.max(1) as f32));
-        let final_prob = if std < 45.0 {
-            0.7 * ar_prob + 0.3 * weighted_prob
-        } else {
-            weighted_prob
-        };
-
-        // Convert probability back to byte value
-        libm::roundf((final_prob * 255.0).clamp(0.0, 255.0)) as u8
-    }
-
-    fn compute_logistic_prob(&self, preds: &[u8; NUM_MODELS]) -> f32 {
-        let weights = self.extract_weights();
-
-        let mut logit = 0.0;
-        for i in 0..NUM_MODELS.min(weights.len()) {
-            // Convert byte to probability
-            let p = preds[i] as f32 / 255.0;
-            // Apply weight and sigmoid
-            logit += weights[i] * sigmoid(p);
-        }
-
-        // Normalize
-        sigmoid(logit)
-    }
-
-    /// Extract weights as array (portable)
-    fn extract_weights(&self) -> Vec<f32> {
-        self.weights.to_array().to_vec()
-    }
-
-    /// Compute weighted ensemble score (portable SIMD)
-    fn compute_ensemble_score(&self, preds: &[u8; NUM_MODELS]) -> f32 {
-        let mut p_arr = [0.0f32; 8];
-        for i in 0..NUM_MODELS {
-            p_arr[i] = preds[i] as f32;
-        }
-        let p_simd = f32x8::new(p_arr);
-        let weighted = self.weights * p_simd;
-
-        // Sum all lanes using to_array
-        let arr = weighted.to_array();
-        arr[0] + arr[1] + arr[2] + arr[3] + arr[4] + arr[5] + arr[6] + arr[7]
-    }
-
-    // Batch and Update logic follow...
-    pub fn update(&mut self, actual: u8, preds: &[u8; NUM_MODELS]) {
-        let y = actual as f32;
-
-        // A. Update Statistics
-        self.count += 1;
-        let delta = y - self.running_mean;
-        self.running_mean += delta / self.count as f32;
-        let delta2 = y - self.running_mean;
-        self.running_var = self.running_var * 0.95 + (delta * delta2) * 0.05;
-
-        // B. Lock-On Detection
-        // Find best predictor (lowest error)
-        let mut best_idx = 0;
-        let mut min_err = f32::MAX;
-
-        for (i, &p) in preds.iter().enumerate().take(NUM_MODELS) {
-            let err = (p as f32 - y).abs();
-            if err < min_err {
-                min_err = err;
-                best_idx = i;
-            }
-        }
-
-        if best_idx == self.current_winner {
-            self.win_streak += 1;
-        } else {
-            self.current_winner = best_idx;
-            self.win_streak = 0;
-        }
-
-        // Adaptive Learning Rate
-        // High variance -> Concept Drift -> Increase LR
-        // Low variance -> Stable -> Decrease LR
-        // Win Streak -> Confidence -> Double LR to lock on
-        let std = libm::sqrtf(self.running_var / (self.count.max(1) as f32));
-        let base_lr = if std > 40.0 { 0.05 } else { 0.005 };
-        self.learning_rate = if self.win_streak > 32 {
-            base_lr * 2.5
-        } else {
-            base_lr
-        };
-
-        // C. Update Ensemble Weights (LMS)
-        self.update_weights(y, preds);
-
-        // Lock-On Boost: If one model is consistently winning, boost it
-        if self.win_streak > 32 {
-            // Scalar boost even if SIMD is used for weights
-            // We need to access weights. This is tricky with SIMD types.
-            // For now, let's rely on LMS naturally increasing weight, but speed it up via LR.
-            // We effectively did that by increasing LR above if var is high, but here lock-on might mean LOW var?
-            // Actually, if we are locked on, variance might be low (good prediction).
-            // Let's manually boost the winner if using scalar fallback, or just skip if complex.
-            // Given SIMD complexity, let's skip manual weight manipulation here and rely on `update_weights`.
-        }
-
-        // D. Update AR(2) with Exponential Smoothing / Momentum
-        let ar_est = self.ar_coeffs[0] * self.history[0] + self.ar_coeffs[1] * self.history[1];
-        let ar_error = y - ar_est;
-        const NORM: f32 = 1.0 / 10000.0; // Normalization for typical pixel values
-
-        // Momentum Update (Nesterov-like)
-        let momentum = 0.9;
-        let grad0 = ar_error * self.history[0] * NORM;
-        let grad1 = ar_error * self.history[1] * NORM;
-
-        self.ar_velocities[0] = momentum * self.ar_velocities[0] + self.ar_learning_rate * grad0;
-        self.ar_velocities[1] = momentum * self.ar_velocities[1] + self.ar_learning_rate * grad1;
-
-        self.ar_coeffs[0] += self.ar_velocities[0];
-        self.ar_coeffs[1] += self.ar_velocities[1];
-
-        self.ar_coeffs[0] = self.ar_coeffs[0].clamp(-1.9, 1.9);
-        self.ar_coeffs[1] = self.ar_coeffs[1].clamp(-0.99, 0.99);
-
-        self.history[1] = self.history[0];
-        self.history[0] = y;
-    }
-
-    /// Lazy Batch Update (Phase 2 Performance Fix)
-    /// Instead of updating weights every byte, we accumulate error stats
-    /// and perform one heavy AVX weight update every N bytes.
-    /// This yields ~30-50x speedup with minimal compression ratio impact.
     pub fn update_lazy(
         &mut self,
         batch_size: usize,
         sample_actual: u8,
         sample_preds: &[u8; NUM_MODELS],
     ) {
-        // We only use the SAMPLE byte of the batch to drive the weight update.
-        // This is a statistical approximation that yields massive speedup.
+        let y = (sample_actual as i32) << 16; // Q16
 
-        // 1. Update Statistics (Cheaper scalar update on just one sample)
-        let y = sample_actual as f32;
-
-        self.count += batch_size; // Count full batch
-
-        // Welford's online algorithm needs continuous updates for accuracy,
-        // but for "Triggering" logic, a sample is sufficient.
+        // 1. Update Statistics
+        self.count += batch_size as i32;
         let delta = y - self.running_mean;
-        self.running_mean += delta / 100.0; // Decay factor approx
+        // Approximation: self.running_mean += delta / 100.0
+        // 1/100 ~ 655 (0.01)
+        self.running_mean += mul_q16(delta, 655);
+
         let delta2 = y - self.running_mean;
-        self.running_var = self.running_var * 0.95 + (delta * delta2) * 0.05;
+        // running_var = var * 0.95 + (delta * delta2) * 0.05
+        // 0.95 -> 62259, 0.05 -> 3277
+        // delta * delta2 can be large, use i64 for intermediate mul
+        let sq_term = mul_q16(delta, delta2);
+        self.running_var = mul_q16(self.running_var, 62259) + mul_q16(sq_term, 3277);
 
-        // 2. Lock-On Detection (Sampled)
+        // 2. Lock-On
         let mut best_idx = 0;
-        let mut min_err = f32::MAX;
-
+        let mut min_err = i32::MAX;
         for (i, &p) in sample_preds.iter().enumerate().take(NUM_MODELS) {
-            let err = (p as f32 - y).abs();
+            let p_q16 = (p as i32) << 16;
+            let err = (p_q16 - y).abs();
             if err < min_err {
                 min_err = err;
                 best_idx = i;
@@ -285,91 +183,100 @@ impl Mixer {
             self.win_streak = 0;
         }
 
-        // 3. Adaptive Learning Rate
-        let std = libm::sqrtf(self.running_var / 10.0); // Approx
-        let base_lr = if std > 40.0 { 0.05 } else { 0.005 };
+        // 3. Learning Rate Logic
+        // Threshold check: var > 40.0^2 = 1600.0 -> 104857600
+        const LR_THRESH: i32 = 104857600;
+        let base_lr = if self.running_var > LR_THRESH {
+            3277
+        } else {
+            328
+        }; // 0.05 vs 0.005
+
         self.learning_rate = if self.win_streak > 32 {
-            base_lr * 2.5
+            // 2.5x base_lr
+            (base_lr * 5) / 2
         } else {
             base_lr
         };
 
-        // 4. Heavy SIMD Weight Update (Run once per batch)
+        // 4. Update Weights (LMS)
         self.update_weights(y, sample_preds);
 
-        // 5. AR(2) Update - Update history to maintain continuity
-        let ar_est = self.ar_coeffs[0] * self.history[0] + self.ar_coeffs[1] * self.history[1];
+        // 5. AR(2) Update
+        let term1 = mul_q16(self.ar_coeffs[0], self.history[0]);
+        let term2 = mul_q16(self.ar_coeffs[1], self.history[1]);
+        let ar_est = term1 + term2;
         let ar_error = y - ar_est;
-        const NORM: f32 = 1.0 / 10000.0;
-        let momentum = 0.9;
 
-        let grad0 = ar_error * self.history[0] * NORM;
-        let grad1 = ar_error * self.history[1] * NORM;
+        // NORM = 1/10000 = 0.0001 -> ~ 7 in Q16
+        const NORM: i32 = 7;
+        // Momentum 0.9 -> 58982
+        const MOMENTUM: i32 = 58982;
 
-        self.ar_velocities[0] = momentum * self.ar_velocities[0] + self.ar_learning_rate * grad0;
-        self.ar_velocities[1] = momentum * self.ar_velocities[1] + self.ar_learning_rate * grad1;
+        let grad0 = mul_q16(mul_q16(ar_error, self.history[0]), NORM);
+        let grad1 = mul_q16(mul_q16(ar_error, self.history[1]), NORM);
+
+        self.ar_velocities[0] =
+            mul_q16(MOMENTUM, self.ar_velocities[0]) + mul_q16(self.ar_learning_rate, grad0);
+        self.ar_velocities[1] =
+            mul_q16(MOMENTUM, self.ar_velocities[1]) + mul_q16(self.ar_learning_rate, grad1);
 
         self.ar_coeffs[0] += self.ar_velocities[0];
         self.ar_coeffs[1] += self.ar_velocities[1];
 
-        self.ar_coeffs[0] = self.ar_coeffs[0].clamp(-1.9, 1.9);
-        self.ar_coeffs[1] = self.ar_coeffs[1].clamp(-0.99, 0.99);
+        // Clamp coefficients: 1.9 -> 124518, 0.99 -> 64880
+        self.ar_coeffs[0] = self.ar_coeffs[0].clamp(-124518, 124518);
+        self.ar_coeffs[1] = self.ar_coeffs[1].clamp(-64880, 64880);
 
         self.history[1] = self.history[0];
         self.history[0] = y;
     }
 
-    /// Update weights using LMS algorithm (portable SIMD)
-    fn update_weights(&mut self, y: f32, preds: &[u8; NUM_MODELS]) {
-        // Convert predictions to f32x8
-        let mut p_arr = [0.0f32; 8];
+    fn update_weights(&mut self, y: i32, preds: &[u8; NUM_MODELS]) {
         for i in 0..NUM_MODELS {
-            p_arr[i] = preds[i] as f32;
+            let p_q16 = (preds[i] as i32) << 16;
+            let diff = p_q16 - y;
+            let error = diff.abs();
+
+            // Normalize error: err / 255.0.
+            // 255.0 in Q16 is 16711680.
+            // Better: just divide by 255 using integer div if we want standard norm.
+            // Or multiply by 1/255 (approx 257 in Q16).
+            let err_norm = mul_q16(error, 257).clamp(0, Q16_ONE);
+
+            // Factor = 1.0 - lr * err_norm
+            let penalty = mul_q16(self.learning_rate, err_norm);
+            let factor = Q16_ONE - penalty;
+
+            self.weights[i] = mul_q16(self.weights[i], factor);
         }
-        let p_simd = f32x8::new(p_arr);
-        let y_simd = f32x8::splat(y);
 
-        // Calculate error
-        let diff = p_simd - y_simd;
-        let error = diff.abs();
-
-        // Normalize error and calculate factor
-        let err_norm = (error / f32x8::splat(255.0))
-            .max(f32x8::splat(0.0))
-            .min(f32x8::splat(1.0));
-        let factor = f32x8::splat(1.0) - f32x8::splat(self.learning_rate) * err_norm;
-
-        // Update weights
-        self.weights *= factor;
-
-        // FedProx: Pull towards global weights if present
+        // FedProx
         if let Some(global) = self.global_weights {
-            let mu = f32x8::splat(0.001);
-            let diff_g = global - self.weights;
-            self.weights += diff_g * mu;
+            // mu = 0.001 -> 66
+            const MU: i32 = 66;
+            for i in 0..8 {
+                let diff_g = global[i] - self.weights[i];
+                self.weights[i] += mul_q16(diff_g, MU);
+            }
         }
 
-        // Regeneration term
-        self.weights += f32x8::splat(0.001);
+        // Regeneration: + 0.001 (66)
+        for i in 0..NUM_MODELS {
+            self.weights[i] += 66;
+        }
 
-        // Mask out unused lanes (indices 6, 7)
-        let mask = f32x8::new([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0]);
-        self.weights *= mask;
+        // Normalize
+        let mut sum: i32 = 0;
+        for i in 0..NUM_MODELS {
+            sum += self.weights[i];
+        }
 
-        // Normalize weights
-        let arr = self.weights.to_array();
-        let sum_w: f32 = arr.iter().sum();
-        if sum_w > 0.0001 {
-            self.weights /= f32x8::splat(sum_w);
+        if sum > 10 {
+            // Epsilon check
+            for i in 0..NUM_MODELS {
+                self.weights[i] = div_q16(self.weights[i], sum);
+            }
         }
     }
-}
-
-/// Fast Sigmoid activation function (approximation)
-/// Uses algebraic form: f(x) = 0.5 * (x / (1 + |x|) + 1)
-/// Avoids expensive expf, ~10x faster on MCUs/FPGAs.
-#[inline]
-fn sigmoid(x: f32) -> f32 {
-    let x_clamped = x.clamp(-6.0, 6.0);
-    0.5 * (x_clamped / (1.0 + libm::fabsf(x_clamped)) + 1.0)
 }
