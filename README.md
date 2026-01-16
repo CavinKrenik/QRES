@@ -18,7 +18,13 @@ Visualizing a decentralized neural swarm recovering from a 15% packet loss inter
 
 ## Executive Summary
 
-QRES is a decentralized operating system for edge AI swarms. It combines deterministic consensus (via fixed-point arithmetic), emergent healing (via MTU-constrained gene gossip), and persistent evolutionary memory (via the Hippocampus layer). In v18 cloud benchmarks, swarms converged an order of magnitude faster than baseline federated learning while holding bandwidth near ~8 KB/day; see docs/CLOUD_BENCHMARK_RESULTS.md for scenarios and metrics.
+QRES is a decentralized operating system that enables **swarm consensus on edge devices** by starting from deterministic math instead of floating point guesswork.
+
+Why this matters:
+- **AI swarms need consensus.** A thousand nodes must evolve in lockstep or the swarm fractures.
+- **f32 is nondeterministic across hardware.** x86 vs. ARM vs. WASM produce subtly different gradients; tiny drift compounds into divergent bytecode (the butterfly effect).
+- **Q16.16 fixed-point guarantees bit-perfect sync.** Every node executes the same arithmetic, so consensus holds without a coordinator.
+- **Network wins, not FLOPs.** With deterministic state, nodes gossip only the evolved gene (~1.6 KB) instead of multi-megabyte models, sustaining ~8 KB/day per node on constrained links.
 
 The system is architected as three interlocking layers:
 
@@ -27,6 +33,15 @@ The system is architected as three interlocking layers:
 2. **The Mind**: An ECS-based swarm simulator demonstrating emergent behavior where linear neural predictors mutate under stress and propagate evolved bytecode through gossip protocols.
 
 3. **The Hippocampus**: A persistence layer enabling Lamarckian evolution—learned strategies survive across reboots via disk storage.
+
+---
+
+## Why QRES?
+
+- **Consensus-first math:** Q16.16 fixed-point removes cross-arch float drift, keeping 1,000 heterogeneous devices in deterministic lockstep.
+- **Bandwidth as the bottleneck:** By shrinking updates to kilobyte genes, swarms converge faster in wall-clock time on LoRa/NB-IoT even if they need more epochs.
+- **Swarm-scale parallelism:** Parallelism lives at the node level (many daemons), while each node stays single-threaded for determinism (see docs/adrs/ADR-004-concurrency-model.md).
+- **End-to-end resilience:** MTU-aware gene gossip and persistence mean mutations survive drops and reboots; see docs/CLOUD_BENCHMARK_RESULTS.md for measured gains.
 
 ---
 

@@ -2,6 +2,8 @@ use crate::zk_proofs::NormProof;
 use alloc::vec::Vec;
 use serde::{Deserialize, Serialize};
 
+pub mod fragmentation;
+
 /// The "Ghost" Update Packet
 ///
 /// This structure brings together the three layers of the Phase 3 Security architecture:
