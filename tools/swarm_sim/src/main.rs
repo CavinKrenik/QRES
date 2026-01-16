@@ -31,7 +31,6 @@ const GLOBAL_ATTRACTION: f32 = 0.15; // Weak long-range attraction
 
 // --- SYNAPSE CONFIGURATION ---
 const SYNAPSE_DECAY_RATE: f32 = 1.5; // How fast pulses fade
-const SYNAPSE_MAX_DISTANCE: f32 = 4.0; // Max distance for active synapses
 
 fn main() {
     App::new()
