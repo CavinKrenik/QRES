@@ -521,7 +521,13 @@ pub fn decompress_chunk(
     ) as usize;
 
     match codec_mode {
-        0x00 | 0x01 => Ok(predictive_decode_v4(&compressed[5..], decomp_len, _weights)),
+        0x00 => Ok(predictive_decode_v4(&compressed[5..], decomp_len, _weights)),
+        0x01 => {
+            // Zstd fallback - return error to trigger daemon's Zstd handler
+            Err(QresError::CompressionError(String::from(
+                "Zstd fallback chunk - handle externally",
+            )))
+        }
         0x02 => {
             let header_size = 5 + WEIGHTS_LEN;
             if compressed.len() < header_size {
@@ -612,7 +618,8 @@ pub fn decompress_chunk_with_state(
     ) as usize;
 
     match codec_mode {
-        0x00 | 0x01 => {
+        0x00 => {
+            // Standard predictive codec
             // Parse weights and reset state
             let mut safe_weights_vec = Vec::new();
             if let Some(w_bytes) = _weights {
@@ -643,6 +650,12 @@ pub fn decompress_chunk_with_state(
                 decomp_len,
                 state,
             ))
+        }
+        0x01 => {
+            // Zstd fallback - return error to trigger daemon's Zstd handler
+            Err(QresError::CompressionError(String::from(
+                "Zstd fallback chunk - handle externally",
+            )))
         }
         0x02 => {
             let header_size = 5 + WEIGHTS_LEN;
