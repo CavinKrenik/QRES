@@ -213,6 +213,7 @@ impl AnsReader {
 
 // Optimized Batch Statistics using AVX2
 #[cfg(target_arch = "x86_64")]
+#[allow(dead_code)]
 unsafe fn compute_batch_stats_avx2(data: &[i8]) -> (f64, f64) {
     let mut sum_acc = _mm256_setzero_si256();
     let mut sq_acc = _mm256_setzero_si256();

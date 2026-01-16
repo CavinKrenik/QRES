@@ -17,8 +17,8 @@ impl FeedbackLoop {
         let error = prediction - actual;
         match self.detector.observe(error) {
             RegimeChange::Drift {
-                current_error,
-                threshold,
+                current_error: _current_error,
+                threshold: _threshold,
             } => {
                 // Log warning (using standard eprintln mechanism for now, or log crate if available)
                 // In no_std environment this might need a different reporting mechanism
@@ -26,7 +26,7 @@ impl FeedbackLoop {
                 {
                     eprintln!(
                         "[FeedbackLoop] DRIFT DETECTED! Error: {:.4} > Threshold: {:.4}",
-                        current_error, threshold
+                        _current_error, _threshold
                     );
                 }
 
