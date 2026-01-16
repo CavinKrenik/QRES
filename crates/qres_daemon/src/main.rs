@@ -461,7 +461,7 @@ fn main() {
 
     let cli = Cli::parse();
     println!(
-        "QRES v16.0 | Predictor: {:?} | Coder: {:?}",
+        "QRES v18.0 | Predictor: {:?} | Coder: {:?}",
         cli.config.predictor, cli.config.coder
     );
 
