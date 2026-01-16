@@ -60,11 +60,14 @@ See: [API Reference](docs/API_REFERENCE.md) | [Specification](docs/SPEC.md)
 
 Located in `tools/swarm_sim/`, this Bevy-based 3D simulator demonstrates:
 
-- **God View Visualization**: 100 nodes in a 10x10 grid, each running a SwarmNeuron instance.
-- **Noise Zone Physics**: A moving interference zone that induces packet loss and forces mutations.
-- **Gene Gossip Protocol**: Panicked (Red) nodes request cure genes from evolved (Purple) neighbors within transmission range.
-- **MTU Fragmentation**: Simulates ESP32 Wi-Fi 1400-byte MTU limit; large genes (1600 bytes) drop at 15% rate, creating evolutionary pressure for compact bytecode.
-- **Cinematic Rendering**: HDR bloom, TonyMcMapface tonemapping, gizmo visualization of the noise threat and neural web connections.
+- **Living Brain Visualization**: 150 nodes forming a force-directed spherical network with organic physics.
+- **Interactive Camera**: Mouse-drag to orbit, scroll to zoom, spacebar for auto-rotation.
+- **Noise Zone Physics**: A moving interference zone that induces storms and forces mutations.
+- **Gene Gossip Protocol**: Panicked (Red) nodes request cure genes from evolved (Purple) neighbors.
+- **Dense Neural Web**: Real-time connection visualization with color-coded synapse activity.
+- **HUD Metrics**: Live display of node counts, entropy, synapses, and packet traffic.
+- **Reset Function**: Press R to clear saved genes and restart evolution from scratch.
+- **Cinematic Rendering**: HDR bloom, TonyMcMapface tonemapping, pulsing evolved nodes.
 
 See: [Theory of Emergence](docs/theory/THEORY.md) | [P2P Implementation](docs/guides/P2P_IMPLEMENTATION.md)
 
@@ -102,12 +105,29 @@ Convergence benchmarks showing 100 nodes reaching consensus on a shared predicti
 cargo run -p swarm_sim --release
 ```
 
-A Bevy window opens titled "QRES Phase 3: Emergent Swarm Evolution." You will observe:
+A Bevy window opens titled "QRES Living Brain: Neural Swarm Visualization." You will observe:
 
-- **Seconds 0-10**: Blue nodes at rest (Calm state). Red force field (noise zone) begins orbiting.
-- **Seconds 10-15**: Red nodes appear where noise intersects. Panic state activated.
-- **Seconds 15-20**: A purple node spontaneously mutates (EvolvedNeuron). This is the spark.
-- **Seconds 20+**: Purple nodes spread to neighboring Red nodes via gossip. The cure propagates, but stutters due to MTU fragmentation losses. This is emergent healing under physical constraints.
+- **Force-Directed Brain**: 150 nodes form a cohesive spherical neural network with organic movement.
+- **Noise Zone**: A red interference zone orbits through the brain, inducing storms in affected nodes.
+- **Evolution Cascade**: Purple nodes spontaneously mutate and spread their cure to panicking red neighbors.
+- **Dense Neural Web**: Connections visualize communication paths—purple for evolved pairs, cyan for mixed.
+
+#### Interactive Controls
+
+| Key | Action |
+|-----|--------|
+| **Left-click + drag** | Orbit camera around the brain |
+| **Scroll wheel** | Zoom in/out |
+| **Spacebar** | Toggle auto-rotation on/off |
+| **R** | Reset simulation (clears all evolved genes) |
+
+#### HUD Metrics
+
+The top-left overlay displays real-time swarm statistics:
+- **Nodes**: Total count and evolved percentage
+- **Entropy**: Storm activity level (0% = calm, 100% = chaos)
+- **Synapses**: Active communication channels
+- **Packets**: Gene transfers in-flight
 
 ### Verify Persistence (The Hippocampus)
 
