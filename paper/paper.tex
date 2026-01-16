@@ -25,18 +25,7 @@
 \maketitle
 
 \begin{abstract}
-Reliable machine learning on edge IoT networks is hindered by a fundamental conflict: high-fidelity data requires massive bandwidth, while constrained devices demand minimal latency and power. Traditional approaches force a tradeoff between lightweight heuristics (which fail on complex signals) and heavy deep learning (which fails on constrained hardware).
-
-We present \textbf{QRES}, a distributed system that treats data compression as a \textbf{prediction-driven consensus problem}. QRES introduces a "Body/Mind" architecture: a deterministic \texttt{no\_std} core ("The Body") that guarantees bit-perfect reproducibility via Q16.16 fixed-point arithmetic, and an adaptive background daemon ("The Mind") that dynamically switches between neural prediction and bit-packing based on real-time signal entropy.
-
-Our evaluation across 7 diverse datasets demonstrates:
-\begin{enumerate}
-    \item \textbf{Deterministic Consensus:} The Q16.16 engine enables "Deterministic Sparse Updates," reducing daily synchronization bandwidth from 2.3 GB to just 8 KB (seeds) while maintaining identical state across x86, ARM, and WASM targets.
-    \item \textbf{Hybrid Robustness:} A "Gatekeeper" mechanism automatically bypasses neural prediction during high-entropy events (e.g., storms), ensuring strictly positive compression gain (\textbf{2.8x}) and zero latency spikes even in worst-case scenarios.
-    \item \textbf{Production Performance:} On structured data (e.g., ECG), QRES achieves \textbf{4.0x--4.9x} ratios, outperforming standard Zstd by 2x while running on 150mW microcontrollers.
-\end{enumerate}
-
-QRES demonstrates that strict determinism and architectural decoupling are prerequisites for robust, privacy-preserving intelligence at the edge.
+Edge computing environments are increasingly characterized by high entropy, intermittent connectivity, and strict hardware constraints. Traditional centralized management fails to scale effectively in these adversarial conditions. This paper introduces the Quantum-Resilient Entropy System (QRES) v18, a decentralized operating system for neural swarms. Unlike conventional consensus mechanisms that rely on heavy cryptographic proofs, QRES utilizes deterministic compression as a lightweight proof-of-work. We introduce the SwarmNeuron architecture, which enables nodes to autonomously detect local entropy spikes ("Surprise") and evolve predictive bytecodes. Furthermore, we present a Persistent Evolution layer ("The Hippocampus"), allowing learned strategies to survive system reboots via a Lamarckian inheritance mechanism. Simulation results demonstrate that a 100-node swarm can self-heal from 15\% packet loss interference zones within 30 epochs, effectively propagating adaptive strategies through hardware-constrained gossip protocols without a central coordinator.
 \end{abstract}
 
 \vspace{0.2cm}
@@ -45,27 +34,27 @@ QRES demonstrates that strict determinism and architectural decoupling are prere
 \section{Introduction}
 The proliferation of Internet of Things (IoT) devices has created a crisis of data gravity: generating reliable intelligence at the edge requires moving massive amounts of sensor data to the cloud, incurring prohibitive latency and privacy risks. Federated Learning (FL) \cite{mcmahan2017communication, bonawitz2017practical} attempts to solve this by moving the model to the data, but existing frameworks (e.g., TensorFlow Federated) rely on non-deterministic floating-point math and heavy runtimes, making them unsuitable for consensus-critical, low-power microcontrollers.
 
-We argue that **compression and learning are identical problems** in distributed systems. A good predictor is a good compressor. To operationalize this at the edge, we propose \textbf{QRES}, a system built on two systems-level guarantees:
+We argue that **compression and learning are identical problems** in distributed systems. A good SwarmNeuron is a good compressor. To operationalize this at the edge, we propose \textbf{QRES}, a system built on two systems-level guarantees:
 \begin{enumerate}
     \item \textbf{Bit-Perfect Determinism:} By replacing IEEE 754 floating-point math with a custom Q16.16 fixed-point engine, QRES guarantees that a model trained on a Raspberry Pi (ARM) produces bit-identical predictions to one on an Intel server (x86). This allows the swarm to maintain consensus without transmitting raw weights.
-    \item \textbf{Architectural Decoupling:} We separate the system into a stable, deterministic "Core" (The Body) and an adaptive, experimental "Daemon" (The Mind). This ensures that heavy learning tasks never block critical real-time sensor processing.
+    \item \textbf{Architectural Decoupling:} We separate the system into a stable, deterministic "Core" (The Body) and an adaptive, experimental "Simulation Environment". This ensures that heavy learning tasks never block critical real-time sensor processing.
 \end{enumerate}
 
 \section{System Design}
 
-\subsection{The "Body/Mind" Architecture}
+\subsection{The Swarm Architecture}
 QRES adopts a decoupled architecture (Figure \ref{fig:arch}) to isolate real-time guarantees from adaptive learning.
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.48\textwidth]{figures/figure1_architecture.pdf}
-\caption{QRES architecture separating the deterministic Core (Body) from the adaptive Daemon (Mind).}
+\caption{QRES architecture separating the deterministic Core (Body) from the adaptive Simulation Environment.}
 \label{fig:arch}
 \end{figure}
 
 \begin{itemize}
-    \item \textbf{The Core (Body):} A pure \texttt{no\_std} Rust library (\texttt{crates/qres\_core}) that executes the compression codec. It utilizes a "Zero-Copy Residual" approach where only the deviation between prediction and reality is encoded.
-    \item \textbf{The Daemon (Mind):} A background service (\texttt{crates/qres\_daemon}) that handles "Meta-Learning." It employs a PPO-based RL agent to dynamically re-weight the predictor ensemble \cite{maass1997networks, roy2019towards} based on local data entropy.
+    \item \textbf{The Core (Body):} A pure \texttt{no\_std} Rust library (\texttt{crates/qres\_core}) that executes the \texttt{SwarmNeuron} logic. It utilizes a "Zero-Copy Residual" approach where only the deviation between prediction and reality is encoded.
+    \item \textbf{The Simulation Environment:} A visualization tool (\texttt{tools/swarm\_sim}) that handles "Meta-Learning." It employs evolutionary algorithms to dynamically re-weight the \texttt{SwarmNeuron} ensemble \cite{maass1997networks, roy2019towards} based on local data entropy.
 \end{itemize}
 
 \subsection{Deterministic Sparse Updates}
@@ -90,6 +79,21 @@ Floating-point non-determinism is a major source of divergence in distributed sy
 \end{equation}
 This allows us to treat model states as Merkle Trees, enabling instant verification of swarm consensus, which is impossible with standard floats.
 
+\section{Persistent Evolutionary Memory}
+
+\subsection{The GeneStorage Abstraction}
+The \texttt{GeneStorage} trait provides a hardware-agnostic interface for ensuring \texttt{no\_std} compatibility, allowing the system to write to \texttt{std::fs} (Simulation) or EEPROM/Flash (Embedded Hardware) without changing the core logic.
+
+\subsection{Lamarckian Inheritance}
+Contrast Darwinian evolution (random mutation, which QRES uses for discovery) with Lamarckian evolution (inheritance of acquired characteristics). By saving the \texttt{EvolvedNeuron} bytecode to non-volatile memory, the swarm prevents "knowledge loss" during power cycles—a critical feature for energy-harvesting IoT devices.
+
+\subsection{Verification via Simulation}
+\begin{itemize}
+    \item \textbf{Setup:} A 100-node grid subject to a moving high-entropy noise zone.
+    \item \textbf{Constraint:} Maximum Transmission Unit (MTU) limited to 1400 bytes; Genes are $\sim$1600 bytes.
+    \item \textbf{Result:} The system demonstrates "Stuttering Propagation," where successful packet reassembly triggers a phase shift from High-Entropy (Red) to Low-Entropy (Purple) states, which persists across simulation restarts.
+\end{itemize}
+
 \section{Evaluation}
 We evaluated QRES on 7 diverse datasets using a cluster of heterogeneous devices (x86 Cloud, ARM Edge).
 
@@ -98,7 +102,7 @@ Table \ref{tab:compression} shows that the "Prediction-as-Compression" approach 
 
 \begin{table}[h]
 \centering
-\caption{Compression Ratios (Original / Compressed)}
+\caption{Predictive Efficiency (Original / Compressed)}
 \label{tab:compression}
 \begin{tabular}{lccc}
 \toprule
