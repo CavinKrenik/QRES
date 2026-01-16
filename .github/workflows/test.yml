@@ -7,6 +7,14 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
 jobs:
   core-engine-test:
     name: Rust Core & SIMD

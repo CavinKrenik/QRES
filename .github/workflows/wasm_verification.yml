@@ -7,6 +7,14 @@ on:
       - 'crates/qres_core/**'
       - 'crates/qres_wasm/**'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
 jobs:
   build-wasm:
     runs-on: ubuntu-latest

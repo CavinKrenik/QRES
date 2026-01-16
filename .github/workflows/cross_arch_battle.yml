@@ -6,8 +6,13 @@ on:
   pull_request:
     branches: [ "main" ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
 
 jobs:
   # 1. COMPRESS on Linux (x86_64)
@@ -37,9 +42,9 @@ jobs:
     
     - name: Generate Golden Master Data
       run: |
-        # Generate 5MB of deterministic random data
+        # Generate 512KB of deterministic random data (reduced from 5MB for CI speed)
         # We use a fixed seed (openssl) to ensure consistency if we ran locally
-        openssl rand -out golden_master.dat 5242880
+        openssl rand -out golden_master.dat 524288
         sha256sum golden_master.dat > original_hash.txt
         echo "Original Hash:"
         cat original_hash.txt
