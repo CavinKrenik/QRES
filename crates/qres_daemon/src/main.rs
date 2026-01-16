@@ -15,7 +15,9 @@ pub mod swarm_p2p;
 use crate::living_brain::LivingBrain;
 use clap::{Parser, Subcommand};
 use qres_core::tensor::MpsCompressor;
-use qres_core::{compress_chunk, config::QresConfig, decompress_chunk_with_state, PredictorSet, QresError};
+use qres_core::{
+    compress_chunk, config::QresConfig, decompress_chunk_with_state, PredictorSet, QresError,
+};
 // use qres_core::QresError;
 use std::fs::{self, File};
 use std::io::{self, Read, Write};

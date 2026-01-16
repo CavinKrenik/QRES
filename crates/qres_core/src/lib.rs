@@ -92,11 +92,11 @@ use transformer::TransformerPredictor;
 // ============================================================================
 
 /// A bundle of all predictors used in v4 encoding/decoding.
-/// 
+///
 /// This struct allows reusing predictor memory across multiple chunks,
 /// eliminating ~22MB of heap allocation overhead per chunk (SimplePredictor
 /// uses 16MB, LzMatchPredictor uses ~5MB).
-/// 
+///
 /// # Usage
 /// ```ignore
 /// let mut state = PredictorSet::new(None, None);
@@ -117,7 +117,7 @@ pub struct PredictorSet {
 
 impl PredictorSet {
     /// Create a new PredictorSet, allocating all predictor memory.
-    /// 
+    ///
     /// This allocates approximately 22MB:
     /// - SimplePredictor: 16MB (order-3 context table)
     /// - LzMatchPredictor: ~5MB (1MB history + 4MB hash table)
@@ -135,7 +135,7 @@ impl PredictorSet {
     }
 
     /// Reset all predictors to their initial state without reallocating memory.
-    /// 
+    ///
     /// This uses `.fill(0)` on internal buffers instead of dropping and
     /// reallocating, saving ~22MB of allocation overhead per call.
     pub fn reset(&mut self, init_weights: Option<&[i32]>, global_weights: Option<&[i32]>) {
@@ -259,7 +259,9 @@ fn predictive_encode_v4_with_state(
 
         batch_counter += 1;
         if batch_counter >= UPDATE_BATCH_SIZE {
-            state.mixer.update_lazy(UPDATE_BATCH_SIZE, reconstructed, &preds);
+            state
+                .mixer
+                .update_lazy(UPDATE_BATCH_SIZE, reconstructed, &preds);
             batch_counter = 0;
         }
 
@@ -563,17 +565,17 @@ pub fn decompress_chunk(
 }
 
 /// Decompress a chunk using a pre-allocated PredictorSet.
-/// 
+///
 /// This function eliminates ~22MB of allocation overhead per chunk by reusing
 /// the predictor memory from a `PredictorSet`. The caller is responsible for
 /// calling `state.reset()` before each chunk to ensure bit-perfect compatibility.
-/// 
+///
 /// # Arguments
 /// * `compressed` - The compressed chunk data including header
 /// * `_predictor_id` - Predictor ID (currently unused, kept for API compatibility)
 /// * `_weights` - Optional weight bytes for neural codec modes
 /// * `state` - A pre-allocated PredictorSet that will be reset and reused
-/// 
+///
 /// # Example
 /// ```ignore
 /// let mut state = PredictorSet::new(None, None);
@@ -636,7 +638,11 @@ pub fn decompress_chunk_with_state(
             };
 
             state.reset(init_w, global_w);
-            Ok(predictive_decode_v4_with_state(&compressed[5..], decomp_len, state))
+            Ok(predictive_decode_v4_with_state(
+                &compressed[5..],
+                decomp_len,
+                state,
+            ))
         }
         0x02 => {
             let header_size = 5 + WEIGHTS_LEN;
