@@ -13,6 +13,7 @@ jobs:
   # 1. COMPRESS on Linux (x86_64)
   producer-x86:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
     - uses: actions/checkout@v4
 
@@ -64,6 +65,7 @@ jobs:
   consumer-arm:
     needs: producer-x86
     runs-on: macos-latest # Runs on M1/M2 chips
+    timeout-minutes: 20
     steps:
     - uses: actions/checkout@v4
 

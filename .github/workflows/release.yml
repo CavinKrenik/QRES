@@ -12,6 +12,7 @@ jobs:
   build_wheels:
     name: Build Wheels (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
@@ -46,6 +47,7 @@ jobs:
   build_cli:
     name: Build CLI (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
@@ -82,6 +84,7 @@ jobs:
   build_wasm:
     name: Build WASM Core
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - name: Install wasm-pack
@@ -98,6 +101,7 @@ jobs:
     name: Build Studio (${{ matrix.os }})
     needs: [build_wasm]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
@@ -150,6 +154,7 @@ jobs:
     name: Publish Release
     needs: [build_wheels, build_cli, build_studio]
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
