@@ -230,10 +230,7 @@ impl Predictor for LzMatchPredictor {
         let match_pos = self.table[h];
 
         // Check if match is valid and within current chunk
-        if match_pos > 0
-            && match_pos + 4 < self.pos
-            && self.ctx_matches(match_pos, start)
-        {
+        if match_pos > 0 && match_pos + 4 < self.pos && self.ctx_matches(match_pos, start) {
             return self.get(match_pos + 4);
         }
         self.get(self.pos - 1)
@@ -243,7 +240,7 @@ impl Predictor for LzMatchPredictor {
         // Write to circular buffer - O(1), no allocation
         self.history[self.pos & LZ_BUFFER_MASK] = actual;
         self.pos += 1;
-        
+
         if self.pos > 4 {
             let start = self.pos - 5;
             let h = self.hash_ctx(start) & self.hash_mask;
