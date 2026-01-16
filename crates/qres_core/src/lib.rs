@@ -451,11 +451,7 @@ pub fn decompress_chunk(
     ) as usize;
 
     match codec_mode {
-        0x00 | 0x01 => Ok(predictive_decode_v4(
-            &compressed[5..],
-            decomp_len,
-            _weights,
-        )),
+        0x00 | 0x01 => Ok(predictive_decode_v4(&compressed[5..], decomp_len, _weights)),
         0x02 => {
             let header_size = 5 + WEIGHTS_LEN;
             if compressed.len() < header_size {
