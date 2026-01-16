@@ -266,6 +266,7 @@ fn compute_batch_stats(data: &[i8]) -> (f64, f64) {
     #[cfg(all(feature = "std", target_arch = "x86_64"))]
     {
         if is_x86_feature_detected!("avx2") {
+            // SAFETY: AVX2 support is explicitly checked above via is_x86_feature_detected!
             return unsafe { compute_batch_stats_avx2(data) };
         }
     }

@@ -28,6 +28,7 @@ venv/
 
 # QRES Output & Test Data
 *.qres
+swarms_memory/
 *.bin
 
 # Editor / IDE

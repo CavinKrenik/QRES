@@ -1,5 +1,7 @@
 # QRES Performance Benchmarks
 
+> ⚠️ **Note:** These benchmarks apply to the v15 Core Engine's compression efficiency. For v18.0.0 Swarm Convergence metrics (Time-to-Consensus, Evolution Rate), please see the "Performance" section in the root `README.md`.
+
 Performance metrics for QRES neural compression.
 
 ---

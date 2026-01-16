@@ -4,7 +4,8 @@ version = "18.0.0"
 edition = "2021"
 
 [features]
-default = ["std"]
+# default = ["std"]
+default = []
 std = ["serde/std", "rand/std", "rand/std_rng", "dep:walkdir", "constriction/std"]
 python = ["pyo3", "std"]
 dp = ["dep:opendp", "std"]

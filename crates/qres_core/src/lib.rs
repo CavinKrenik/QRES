@@ -177,6 +177,7 @@ fn predictive_encode_v4(
         let f32_count = w_bytes.len() / 4;
         if f32_count > 0 {
             let ptr = w_bytes.as_ptr() as *const f32;
+            // SAFETY: f32_count is checked above. Caller ensures alignment.
             let slice = unsafe { core::slice::from_raw_parts(ptr, f32_count) };
 
             if f32_count >= 2 * NUM_MODELS {
@@ -301,6 +302,7 @@ fn predictive_decode_v4(
         let f32_count = w_bytes.len() / 4;
         if f32_count > 0 {
             let ptr = w_bytes.as_ptr() as *const f32;
+            // SAFETY: f32_count is checked above. Caller ensures alignment.
             let slice = unsafe { core::slice::from_raw_parts(ptr, f32_count) };
 
             if f32_count >= 2 * NUM_MODELS {

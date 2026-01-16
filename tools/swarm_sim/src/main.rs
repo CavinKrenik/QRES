@@ -60,7 +60,9 @@ struct DiskGeneStorage {
 impl DiskGeneStorage {
     fn new(dir: &str) -> Self {
         // Create directory if it doesn't exist
-        let _ = fs::create_dir_all(dir);
+        if let Err(e) = fs::create_dir_all(dir) {
+            eprintln!("⚠️ WARNING: Failed to initialize persistence layer: {}", e);
+        }
         DiskGeneStorage {
             storage_dir: dir.to_string(),
         }

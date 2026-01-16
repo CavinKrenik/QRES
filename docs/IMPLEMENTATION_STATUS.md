@@ -2,6 +2,12 @@
 
 This document clarifies what's production-ready vs. experimental vs. roadmap.
 
+## v18.0.0 (The Neural Swarm) - COMPLETED
+- [x] **The Mind:** Bevy-based "God View" Simulator (`tools/swarm_sim`).
+- [x] **The Cortex:** `SwarmNeuron` trait with `no_std` support.
+- [x] **The Hippocampus:** `GeneStorage` trait and Disk persistence implementation.
+- [x] **Emergence:** Verified "Viral Cure" propagation in 15% packet loss scenarios.
+
 ## ✅ Fully Implemented & Tested
 
 - **Core Compression Engine** (`qres_core`): Q16.16 fixed-point determinism, bit-perfect across architectures

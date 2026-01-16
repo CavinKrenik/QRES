@@ -4,6 +4,17 @@ All notable changes to this project are documented here.
 
 ---
 
+## [v18.0.0] - 2026-01-15
+
+### Added
+- **Neural Swarm Simulator:** `tools/swarm_sim` with Bloom/HDR visuals.
+- **Persistence Layer:** `GeneStorage` trait for Lamarckian evolution.
+- **Active Neurons:** Refactored `Predictor` into `SwarmNeuron`.
+
+### Changed
+- Pivoted primary architecture from Compression Library to Distributed OS.
+- `qres_core` is now strictly `no_std` by default.
+
 ## [16.0.0] - 2026-01-14
 
 ### Changed

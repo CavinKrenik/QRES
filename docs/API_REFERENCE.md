@@ -1,4 +1,20 @@
-# QRES API Reference (v16.5)
+# QRES v18 API Reference
+
+## Core Traits (`qres_core`)
+The primary interface is defined in the `cortex` module.
+
+### `trait SwarmNeuron`
+The "Brain" of a node.
+* `fn predict(&self, history: &[u8]) -> u8`: Deterministic prediction hot-path.
+* `fn adapt(&mut self, signals: &[SpikeEvent])`: Neuroplasticity update.
+* `fn export_gene(&self) -> Vec<u8>`: Serializes the current strategy.
+
+### `trait GeneStorage`
+The "Hippocampus" (Persistence Layer).
+* `fn save_gene(&mut self, id: u32, gene: &[u8]) -> bool`: Persist strategy to flash/disk.
+* `fn load_gene(&self, id: u32) -> Option<Vec<u8>>`: Recover strategy on reboot.
+
+---
 
 ## 🏗️ Rust Core API (`qres_core`)
 

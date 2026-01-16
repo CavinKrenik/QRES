@@ -1,17 +1,12 @@
-# QRES File Specification (v12.0)
+# QRES v18 Protocol Specification
 
-**Version:** 16.5
-**Magic:** `QRES` (0x51 0x52 0x45 0x53)
-**Extension:** `.qres`
+## Overview
+QRES v18 is a protocol for decentralized neural consensus. While it produces `.qres` artifacts (saved genes), its primary function is defining the `SwarmNeuron` trait for behavior and the Gossip headers used for gene propagation.
 
-## 1. Core Philosophy: Determinism
-
-QRES v12 guarantees bit-perfect reproduction of decompressed data across all platforms (different OS, CPU, Endianness).
-
-To achieve this:
-*   **No Floating Point:** All internal math (predictors, neural weights, mixing) is performed using **Q16.16 Fixed Point** integers (`i32`).
-*   **No Unseeded Randomness:** Any randomization (e.g., in `MetaBrain` exploration) is seeded deterministically from the file header or block hash.
-*   **Static Topologies:** Neural network layouts are frozen at compile time for `qres_core`.
+## Core Specifications
+1. **The Neuron Protocol:** Defines how nodes compute residuals (`I16F16`) and detect 'Surprise' (Entropy).
+2. **The Gene Format:** A bytecode serialization standard for transmitting learned strategies across the gossip network.
+3. **Consensus:** A deterministic, reputation-weighted agreement mechanism.
 
 ---
 
