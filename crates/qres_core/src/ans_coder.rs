@@ -264,15 +264,7 @@ unsafe fn compute_batch_stats_avx2(data: &[i8]) -> (f64, f64) {
 }
 
 fn compute_batch_stats(data: &[i8]) -> (f64, f64) {
-    #[cfg(all(feature = "std", target_arch = "x86_64"))]
-    {
-        if is_x86_feature_detected!("avx2") {
-            // SAFETY: AVX2 support is explicitly checked above via is_x86_feature_detected!
-            return unsafe { compute_batch_stats_avx2(data) };
-        }
-    }
-
-    // Scalar fallback (Matches AVX2 logic for determinism)
+    // Deterministic scalar path on all architectures; avoids AVX/SIMD drift across x86 vs ARM.
     let mut total_sum_i32 = 0i32;
     let mut total_sq_i32 = 0i32;
 
