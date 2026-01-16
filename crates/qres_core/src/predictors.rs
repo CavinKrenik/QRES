@@ -1,6 +1,9 @@
 pub trait Predictor {
     fn predict_next(&self) -> u8;
     fn update(&mut self, actual: u8);
+    /// Reset internal state to initial values without reallocating memory.
+    /// This allows reusing predictors across chunks to avoid allocation overhead.
+    fn reset(&mut self);
 }
 
 use alloc::boxed::Box;
@@ -56,6 +59,14 @@ impl Predictor for SimplePredictor {
         self.prev3 = self.prev2;
         self.prev2 = self.prev1;
         self.prev1 = actual;
+    }
+
+    fn reset(&mut self) {
+        self.prev1 = 0;
+        self.prev2 = 0;
+        self.prev3 = 0;
+        // Zero the context table in-place - NO reallocation
+        self.context.fill(0);
     }
 }
 
@@ -162,6 +173,25 @@ impl Predictor for GraphPredictor {
         self.history[self.cursor] = actual;
         self.cursor = (self.cursor + 1) % 64;
     }
+
+    fn reset(&mut self) {
+        // Reset history and cursor
+        self.history = [0; 64];
+        self.cursor = 0;
+        // CRITICAL: Reset weights to exact initial Q16.16 values for v18 bit-perfect compatibility
+        // Initial values: 0.0, 0.05, 0.05, 0.05, 0.05, 0.1, 0.2, 0.5
+        self.weights = [
+            0,
+            float_to_fixed(0.05),
+            float_to_fixed(0.05),
+            float_to_fixed(0.05),
+            float_to_fixed(0.05),
+            float_to_fixed(0.1),
+            float_to_fixed(0.2),
+            float_to_fixed(0.5),
+        ];
+        self.learning_rate = float_to_fixed(0.015);
+    }
 }
 
 // --- Task A: LzMatchPredictor (LZ77 Simulation) ---
@@ -247,6 +277,13 @@ impl Predictor for LzMatchPredictor {
             self.table[h] = start;
         }
     }
+
+    fn reset(&mut self) {
+        self.pos = 0;
+        // Zero tables in-place - NO reallocation (saves ~5MB per chunk)
+        self.table.fill(0);
+        self.history.fill(0);
+    }
 }
 
 // --- Task B: Zero Predictor (Baseline) ---
@@ -269,4 +306,7 @@ impl Predictor for ZeroPredictor {
         0
     }
     fn update(&mut self, _actual: u8) {}
+    fn reset(&mut self) {
+        // No state to reset
+    }
 }

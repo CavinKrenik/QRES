@@ -82,6 +82,11 @@ impl Predictor for TransformerPredictor {
         self.history[self.pos & self.buffer_mask] = byte;
         self.pos += 1;
     }
+
+    fn reset(&mut self) {
+        self.history.fill(0);
+        self.pos = 0;
+    }
 }
 
 impl Default for TransformerPredictor {

@@ -15,7 +15,7 @@ pub mod swarm_p2p;
 use crate::living_brain::LivingBrain;
 use clap::{Parser, Subcommand};
 use qres_core::tensor::MpsCompressor;
-use qres_core::{compress_chunk, config::QresConfig, decompress_chunk, QresError};
+use qres_core::{compress_chunk, config::QresConfig, decompress_chunk_with_state, PredictorSet, QresError};
 // use qres_core::QresError;
 use std::fs::{self, File};
 use std::io::{self, Read, Write};
@@ -226,6 +226,10 @@ fn decompress_file(input: &str, output: &str) -> io::Result<()> {
     let mut total_output = 0u64;
     let start = std::time::Instant::now();
 
+    // OPTIMIZATION: Allocate PredictorSet ONCE (saves ~22MB allocation per chunk)
+    // The PredictorSet is reset internally by decompress_chunk_with_state before each use
+    let mut predictor_state = PredictorSet::new(None, None);
+
     loop {
         // Read chunk size
         let mut size_buf = [0u8; 4];
@@ -241,9 +245,8 @@ fn decompress_file(input: &str, output: &str) -> io::Result<()> {
         let mut compressed = vec![0u8; chunk_size];
         input_file.read_exact(&mut compressed)?;
 
-        // Decompress
-        // Decompress
-        let result = decompress_chunk(&compressed, 0, weights_arg);
+        // Decompress using reusable predictor state (eliminates ~22MB alloc/dealloc per chunk)
+        let result = decompress_chunk_with_state(&compressed, 0, weights_arg, &mut predictor_state);
 
         let decompressed = match result {
             Ok(d) => d,

@@ -21,4 +21,9 @@ impl SpectralPredictor {
     pub fn predict(&mut self) -> u8 {
         self.last
     }
+
+    /// Reset internal state to initial values without reallocating memory.
+    pub fn reset(&mut self) {
+        self.last = 0;
+    }
 }
