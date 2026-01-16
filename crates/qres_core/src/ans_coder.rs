@@ -272,17 +272,23 @@ fn compute_batch_stats(data: &[i8]) -> (f64, f64) {
         }
     }
 
-    // Scalar fallback
+    // Scalar fallback (Matches AVX2 logic for determinism)
+    let mut total_sum_i32 = 0i32;
+    let mut total_sq_i32 = 0i32;
+
+    for &x in data {
+        let val = x as i32;
+        total_sum_i32 += val;
+        total_sq_i32 += val * val;
+    }
+
     let n = data.len() as f64;
-    let sum: f64 = data.iter().map(|&x| x as f64).sum();
-    let mean = sum / n;
-    let m2: f64 = data
-        .iter()
-        .map(|&x| {
-            let diff = x as f64 - mean;
-            diff * diff
-        })
-        .sum();
+    let total_sum = total_sum_i32 as f64;
+    let total_sq = total_sq_i32 as f64;
+
+    let mean = total_sum / n;
+    // Use raw moments to match AVX2 implementation exactly
+    let m2 = total_sq - (total_sum * total_sum) / n;
 
     (mean, m2)
 }

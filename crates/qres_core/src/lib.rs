@@ -158,23 +158,24 @@ fn predictive_encode_v4(
     let mut lz_match = LzMatchPredictor::new();
     let mut transformer = TransformerPredictor::new();
 
-    let (init_w, global_w) = if let Some(w_bytes) = weights {
-        let word_count = w_bytes.len() / 4;
-        if word_count > 0 {
-            let ptr = w_bytes.as_ptr() as *const i32;
-            // SAFETY: Caller ensures alignment and byte length is valid for i32s.
-            let slice = unsafe { core::slice::from_raw_parts(ptr, word_count) };
+    // FIXED: Safe and Deterministic Q16.16 loading
+    // Parse bytes as Little Endian explicitly to avoid architecture drift (x86 vs ARM)
+    let mut safe_weights_vec = Vec::new();
+    if let Some(w_bytes) = weights {
+        for chunk in w_bytes.chunks_exact(4) {
+            safe_weights_vec.push(i32::from_le_bytes(chunk.try_into().unwrap()));
+        }
+    }
 
-            if word_count >= 2 * NUM_MODELS {
-                (
-                    Some(&slice[0..NUM_MODELS]),
-                    Some(&slice[NUM_MODELS..2 * NUM_MODELS]),
-                )
-            } else if word_count >= NUM_MODELS {
-                (Some(&slice[0..NUM_MODELS]), None)
-            } else {
-                (None, None)
-            }
+    let (init_w, global_w) = if !safe_weights_vec.is_empty() {
+        let wc = safe_weights_vec.len();
+        if wc >= 2 * NUM_MODELS {
+            (
+                Some(&safe_weights_vec[0..NUM_MODELS]),
+                Some(&safe_weights_vec[NUM_MODELS..2 * NUM_MODELS]),
+            )
+        } else if wc >= NUM_MODELS {
+            (Some(&safe_weights_vec[0..NUM_MODELS]), None)
         } else {
             (None, None)
         }
@@ -261,22 +262,24 @@ fn predictive_decode_v4(
     let mut lz_match = LzMatchPredictor::new();
     let mut transformer = TransformerPredictor::new();
 
-    let (init_w, global_w) = if let Some(w_bytes) = weights {
-        let word_count = w_bytes.len() / 4;
-        if word_count > 0 {
-            let ptr = w_bytes.as_ptr() as *const i32;
-            let slice = unsafe { core::slice::from_raw_parts(ptr, word_count) };
+    // FIXED: Safe and Deterministic Q16.16 loading
+    // Parse bytes as Little Endian explicitly to avoid architecture drift (x86 vs ARM)
+    let mut safe_weights_vec = Vec::new();
+    if let Some(w_bytes) = weights {
+        for chunk in w_bytes.chunks_exact(4) {
+            safe_weights_vec.push(i32::from_le_bytes(chunk.try_into().unwrap()));
+        }
+    }
 
-            if word_count >= 2 * NUM_MODELS {
-                (
-                    Some(&slice[0..NUM_MODELS]),
-                    Some(&slice[NUM_MODELS..2 * NUM_MODELS]),
-                )
-            } else if word_count >= NUM_MODELS {
-                (Some(&slice[0..NUM_MODELS]), None)
-            } else {
-                (None, None)
-            }
+    let (init_w, global_w) = if !safe_weights_vec.is_empty() {
+        let wc = safe_weights_vec.len();
+        if wc >= 2 * NUM_MODELS {
+            (
+                Some(&safe_weights_vec[0..NUM_MODELS]),
+                Some(&safe_weights_vec[NUM_MODELS..2 * NUM_MODELS]),
+            )
+        } else if wc >= NUM_MODELS {
+            (Some(&safe_weights_vec[0..NUM_MODELS]), None)
         } else {
             (None, None)
         }
