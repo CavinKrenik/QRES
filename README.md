@@ -101,6 +101,8 @@ Convergence benchmarks showing 100 nodes reaching consensus on a shared predicti
 
 ### Run the Neural Swarm Simulator
 
+![Neural Swarm Visualization](docs/images/SwarmVisual.gif)
+
 ```bash
 cargo run -p swarm_sim --release
 ```
