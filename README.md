@@ -1,4 +1,4 @@
-﻿# QRES: Quantum-Resilient Entropy System
+﻿# QRES: Neural Swarm Operating System
 
 [![v18.0](https://img.shields.io/badge/version-18.0-blue.svg)](https://github.com/CavinKrenik/QRES/releases)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18261441.svg)](https://doi.org/10.5281/zenodo.18261441)
@@ -211,7 +211,7 @@ If you use QRES in research, please cite:
 ```bibtex
 @software{qres2026,
   author = {Krenik, Cavin},
-  title = {QRES: Quantum-Resilient Entropy System},
+  title = {QRES: Neural Swarm Operating System},
   url = {https://github.com/CavinKrenik/QRES},
   doi = {10.5281/zenodo.18261441},
   year = {2026}

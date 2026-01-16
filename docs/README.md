@@ -1,6 +1,6 @@
 # QRES Documentation Index
 
-Complete reference for the QRES (Quantum-Resilient Entropy System) neural swarm platform.
+Complete reference for the QRES Neural Swarm Operating System platform.
 
 ---
 
