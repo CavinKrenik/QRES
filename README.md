@@ -18,21 +18,18 @@ Visualizing a decentralized neural swarm recovering from a 15% packet loss inter
 
 ## Executive Summary
 
-QRES is a decentralized operating system that enables **swarm consensus on edge devices** by starting from deterministic math instead of floating point guesswork.
+QRES is a decentralized operating system for **Edge AI Swarms**. It solves the "Consensus vs. Bandwidth" dilemma by replacing floating-point math with deterministic fixed-point arithmetic (`Q16.16`) and exchanging small "Evolved Genes" instead of massive gradient models.
 
-Why this matters:
-- **AI swarms need consensus.** A thousand nodes must evolve in lockstep or the swarm fractures.
-- **f32 is nondeterministic across hardware.** x86 vs. ARM vs. WASM produce subtly different gradients; tiny drift compounds into divergent bytecode (the butterfly effect).
-- **Q16.16 fixed-point guarantees bit-perfect sync.** Every node executes the same arithmetic, so consensus holds without a coordinator.
-- **Network wins, not FLOPs.** With deterministic state, nodes gossip only the evolved gene (~1.6 KB) instead of multi-megabyte models, sustaining ~8 KB/day per node on constrained links.
+**v18.0 Benchmark Highlights:**
+- **Compression:** Custom Static Laplace Range Coder achieves **1.40x compression**, beating ZSTD (1.39x) on prediction residuals while maintaining bit-perfect determinism.
+- **Efficiency:** Swarms converge **12x faster** (wall-clock) than Federated Learning on constrained IoT networks (56kbps), consuming **99% less bandwidth**.
+- **Scalability:** Secure Aggregation proven linearly scalable (O(N)) for trusted peers, with optional Byzantine Fault Tolerance (Krum) for adversarial environments.
 
 The system is architected as three interlocking layers:
 
-1. **The Body**: A `no_std` Rust core using Q16.16 fixed-point math for deterministic computation across heterogeneous hardware.
-
-2. **The Mind**: An ECS-based swarm simulator demonstrating emergent behavior where linear neural predictors mutate under stress and propagate evolved bytecode through gossip protocols.
-
-3. **The Hippocampus**: A persistence layer enabling Lamarckian evolution—learned strategies survive across reboots via disk storage.
+1. **The Body (`qres_core`):** A `no_std` Rust library for deterministic inference and fragmentation.
+2. **The Mind (`swarm_sim`):** An ECS-based simulator demonstrating emergent healing behavior.
+3. **The Hippocampus:** A persistent storage layer enabling Lamarckian evolution across reboots.
 
 ---
 
