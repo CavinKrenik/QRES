@@ -347,19 +347,7 @@ pub fn compress_chunk(
     let mut is_neural = false;
     let mut stored_init_weights = Vec::new();
 
-    if let Some(nw) = crate::meta_brain::predict_init_weights(chunk) {
-        is_neural = true;
-        for f in nw.iter().take(NUM_PREDICTORS) {
-            let b = f.to_le_bytes();
-            stored_init_weights.extend_from_slice(&b);
-            effective_weights.extend_from_slice(&b);
-        }
-        while stored_init_weights.len() < WEIGHTS_LEN {
-            let b = 0i32.to_le_bytes();
-            stored_init_weights.extend_from_slice(&b);
-            effective_weights.extend_from_slice(&b);
-        }
-    } else if let Some(w) = _weights {
+    if let Some(w) = _weights {
         let take = w.len().min(WEIGHTS_LEN);
         effective_weights.extend_from_slice(&w[0..take]);
         if take > 0 {
