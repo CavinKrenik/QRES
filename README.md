@@ -18,7 +18,7 @@ Visualizing a decentralized neural swarm recovering from a 15% packet loss inter
 
 ## Executive Summary
 
-QRES is a decentralized operating system for edge AI swarms. It combines deterministic consensus (via fixed-point arithmetic), emergent healing (via MTU-constrained gene gossip), and persistent evolutionary memory (via the Hippocampus layer). Nodes converge on shared predictive models 100x faster than traditional federated learning while consuming 1/1000th the bandwidth (8 KB/day typical).
+QRES is a decentralized operating system for edge AI swarms. It combines deterministic consensus (via fixed-point arithmetic), emergent healing (via MTU-constrained gene gossip), and persistent evolutionary memory (via the Hippocampus layer). In v18 cloud benchmarks, swarms converged an order of magnitude faster than baseline federated learning while holding bandwidth near ~8 KB/day; see docs/CLOUD_BENCHMARK_RESULTS.md for scenarios and metrics.
 
 The system is architected as three interlocking layers:
 
