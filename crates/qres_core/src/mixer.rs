@@ -97,8 +97,8 @@ impl Mixer {
         // But weights are Q16. So weight * (pred << 16) >> 16 == weight * pred.
         // We can just accumulate weight * pred then result is Q16.
         let mut ensemble_sum: i32 = 0;
-        for i in 0..NUM_MODELS {
-            ensemble_sum += mul_q16(self.weights[i], (preds[i] as i32) << 16);
+        for (i, &pred) in preds.iter().enumerate().take(NUM_MODELS) {
+            ensemble_sum += mul_q16(self.weights[i], (pred as i32) << 16);
         }
 
         // 2. Calculate AR(2) Prediction
@@ -233,8 +233,8 @@ impl Mixer {
     }
 
     fn update_weights(&mut self, y: i32, preds: &[u8; NUM_MODELS]) {
-        for i in 0..NUM_MODELS {
-            let p_q16 = (preds[i] as i32) << 16;
+        for (i, &pred) in preds.iter().enumerate().take(NUM_MODELS) {
+            let p_q16 = (pred as i32) << 16;
             let diff = p_q16 - y;
             let error = diff.abs();
 
@@ -255,8 +255,8 @@ impl Mixer {
         if let Some(global) = self.global_weights {
             // mu = 0.001 -> 66
             const MU: i32 = 66;
-            for i in 0..8 {
-                let diff_g = global[i] - self.weights[i];
+            for (i, &g_val) in global.iter().enumerate() {
+                let diff_g = g_val - self.weights[i];
                 self.weights[i] += mul_q16(diff_g, MU);
             }
         }
