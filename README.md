@@ -3,7 +3,7 @@
 [![v18.0](https://img.shields.io/badge/version-18.0-blue.svg)](https://github.com/CavinKrenik/QRES/releases)
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.18261441-blue)](https://doi.org/10.5281/zenodo.18261441)
 [![no_std](https://img.shields.io/badge/no_std-compatible-green.svg)](https://docs.rust-embedded.org/book/intro/no-std.html)
-[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE-MIT)
 [![Rust 2021](https://img.shields.io/badge/rust-2021-orange.svg)](https://www.rust-lang.org/)
 
 ---
@@ -234,7 +234,7 @@ Contributions are welcome. See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for guide
 
 ## License
 
-MIT License. See [LICENSE](LICENSE) for details.
+Dual-licensed under [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE), at your option.
 
 ---
 

@@ -35,7 +35,7 @@ keywords:
   - Internet of Things
   - Rust
 
-license: Apache-2.0
+license: MIT OR Apache-2.0
 
 repository-code: "https://github.com/CavinKrenik/QRES"
 url: "https://doi.org/10.5281/zenodo.18246044"
