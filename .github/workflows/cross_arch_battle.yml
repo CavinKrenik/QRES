@@ -94,10 +94,18 @@ jobs:
         cargo clean -p qres_core -p qres_daemon
         cargo build --release -p qres_daemon
 
+    - name: Show Binary Info
+      run: |
+        ls -la ./target/release/qres_daemon
+        file ./target/release/qres_daemon
+        echo "Compressed file size:"
+        ls -la compressed.qres
+
     - name: Decompress Data (macOS ARM)
       run: |
-        # Binary is now qres_daemon (from the daemon crate)
-        ./target/release/qres_daemon decompress compressed.qres restored.dat
+        echo "Starting decompression at $(date)"
+        time ./target/release/qres_daemon decompress compressed.qres restored.dat
+        echo "Finished decompression at $(date)"
 
     - name: Verify Integrity
       run: |
