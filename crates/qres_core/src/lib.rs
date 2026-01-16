@@ -240,7 +240,7 @@ fn predictive_encode_v4(
     let compressed_data = ans.finish();
 
     if compressed_data.len() > output.len() {
-        return Err(QresError::Other(String::from("Buffer too small")));
+        return Err(QresError::CompressionError(String::from("Expansion detected")));
     }
 
     output[..compressed_data.len()].copy_from_slice(&compressed_data);
