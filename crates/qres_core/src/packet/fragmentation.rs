@@ -1,4 +1,5 @@
-#![cfg_attr(not(feature = "std"), no_std)]
+//! MTU-aware packet fragmentation with CRC32 integrity.
+//! Splits large payloads into SAFE_MTU-sized fragments for constrained links.
 
 use alloc::vec::Vec;
 

@@ -27,7 +27,7 @@ impl AnsWriter {
     /// Otherwise emit escape (0x7F) followed by raw i8 byte.
     pub fn write_residual(&mut self, residual: i8) {
         let val = residual as i32;
-        if val >= -63 && val <= 63 {
+        if (-63..=63).contains(&val) {
             // Pack into 7 bits: bit 7 = sign, bits 0-6 = magnitude
             let mag = val.unsigned_abs() as u8;
             let sign_bit = if val < 0 { 0x80 } else { 0x00 };
@@ -79,7 +79,7 @@ impl AnsReader {
             let mag = (byte & 0x7F) as i32;
             let negative = (byte & 0x80) != 0;
             if negative {
-                -(mag as i8) as i8
+                -(mag as i8)
             } else {
                 mag as i8
             }
