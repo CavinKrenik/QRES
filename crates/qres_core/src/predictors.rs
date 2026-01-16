@@ -6,7 +6,6 @@ pub trait Predictor {
 use alloc::boxed::Box;
 use alloc::vec;
 use alloc::vec::Vec;
-use core::convert::TryInto;
 
 // --- Constants for Fixed-Point Arithmetic (Q16.16) ---
 // 1.0 in fixed point = 1 << 16 = 65536
@@ -166,6 +165,12 @@ impl Predictor for GraphPredictor {
 }
 
 // --- Task A: LzMatchPredictor (LZ77 Simulation) ---
+// Uses a fixed-size circular buffer to avoid O(n²) reallocations.
+// Buffer size matches CHUNK_SIZE (1MB) to ensure bit-perfect predictions.
+
+const LZ_BUFFER_SIZE: usize = 1024 * 1024; // 1MB - matches CHUNK_SIZE
+const LZ_BUFFER_MASK: usize = LZ_BUFFER_SIZE - 1;
+
 pub struct LzMatchPredictor {
     table: Vec<usize>,
     history: Vec<u8>,
@@ -185,19 +190,33 @@ impl LzMatchPredictor {
         let hash_size = 1 << HASH_BITS;
         LzMatchPredictor {
             table: vec![0; hash_size],
-            history: Vec::with_capacity(65536),
+            history: vec![0u8; LZ_BUFFER_SIZE], // Pre-allocate fixed buffer
             pos: 0,
             hash_mask: hash_size - 1,
         }
     }
 
     #[inline(always)]
-    fn hash(data: &[u8]) -> usize {
-        if data.len() < 4 {
-            return 0;
-        }
-        let key = u32::from_le_bytes(data[0..4].try_into().unwrap());
+    fn get(&self, idx: usize) -> u8 {
+        self.history[idx & LZ_BUFFER_MASK]
+    }
+
+    #[inline(always)]
+    fn hash_ctx(&self, start: usize) -> usize {
+        let b0 = self.get(start) as u32;
+        let b1 = self.get(start + 1) as u32;
+        let b2 = self.get(start + 2) as u32;
+        let b3 = self.get(start + 3) as u32;
+        let key = b0 | (b1 << 8) | (b2 << 16) | (b3 << 24);
         (key.wrapping_mul(0x9E3779B9)) as usize
+    }
+
+    #[inline(always)]
+    fn ctx_matches(&self, pos1: usize, pos2: usize) -> bool {
+        self.get(pos1) == self.get(pos2)
+            && self.get(pos1 + 1) == self.get(pos2 + 1)
+            && self.get(pos1 + 2) == self.get(pos2 + 2)
+            && self.get(pos1 + 3) == self.get(pos2 + 3)
     }
 }
 
@@ -207,26 +226,27 @@ impl Predictor for LzMatchPredictor {
             return 0;
         }
         let start = self.pos - 4;
-        let ctx = &self.history[start..self.pos];
-        let h = Self::hash(ctx) & self.hash_mask;
+        let h = self.hash_ctx(start) & self.hash_mask;
         let match_pos = self.table[h];
 
+        // Check if match is valid and within current chunk
         if match_pos > 0
-            && match_pos + 4 < self.history.len()
-            && &self.history[match_pos..match_pos + 4] == ctx
+            && match_pos + 4 < self.pos
+            && self.ctx_matches(match_pos, start)
         {
-            return self.history[match_pos + 4];
+            return self.get(match_pos + 4);
         }
-        self.history[self.pos - 1]
+        self.get(self.pos - 1)
     }
 
     fn update(&mut self, actual: u8) {
-        self.history.push(actual);
+        // Write to circular buffer - O(1), no allocation
+        self.history[self.pos & LZ_BUFFER_MASK] = actual;
         self.pos += 1;
+        
         if self.pos > 4 {
             let start = self.pos - 5;
-            let ctx = &self.history[start..self.pos - 1];
-            let h = Self::hash(ctx) & self.hash_mask;
+            let h = self.hash_ctx(start) & self.hash_mask;
             self.table[h] = start;
         }
     }
