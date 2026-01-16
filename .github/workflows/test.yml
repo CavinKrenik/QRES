@@ -17,6 +17,8 @@ jobs:
       
       - name: Install Rust Stable
         uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
 
       - name: Cache Cargo
         uses: actions/cache@v4
@@ -30,8 +32,6 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
-        with:
-          components: clippy, rustfmt
 
       - name: Check Formatting
         run: cargo fmt --check
