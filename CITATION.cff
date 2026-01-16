@@ -1,33 +1,34 @@
 cff-version: 1.2.0
 message: "If you use QRES in academic work, please cite the associated Zenodo publication."
 
-# [UPDATED] New v16 Title
-title: "QRES: An Adaptive Hybrid Compression System for Edge IoT"
-version: "v16.5.0"
+# [UPDATED] New v18 Title
+title: "QRES: A Decentralized Operating System for Neural Swarms"
+version: "v18.0.0"
 # [UPDATED] DOI from your README
-doi: "10.5281/zenodo.18246044"
-date-released: "2026-01-14"
+doi: "10.5281/zenodo.18261441"
+date-released: "2026-01-15"
 
 authors:
   - family-names: Krenik
     given-names: Cavin
     orcid: "https://orcid.org/0009-0008-9183-1278"
 
-# [UPDATED] Abstract matches the new "Hybrid Gatekeeper" narrative
+# [UPDATED] Abstract matches the new "Neural Swarm" narrative
 abstract: >
-  QRES is an adaptive hybrid compression system designed for constrained
-  Edge IoT environments. It utilizes a "Hybrid Gatekeeper" architecture
-  that dynamically switches between a lightweight Bit-Packing pipeline
-  (for high-entropy data) and a Neural Residual Predictor (for structured
-  signals). This approach eliminates data expansion on noisy streams while
-  achieving high compression ratios (up to 25x) on structured telemetry.
-  The system is implemented in no_std Rust with bit-perfect Q16.16 
-  fixed-point determinism.
+  QRES is a decentralized operating system for neural swarms, designed for
+  high-entropy edge environments. It introduces a "SwarmNeuron" architecture
+  that enables nodes to autonomously detect entropy spikes and evolve predictive
+  bytecodes. The system features a Persistent Evolution layer ("The Hippocampus"),
+  allowing learned strategies to survive reboots via Lamarckian inheritance.
+  Built on a purely deterministic no_std Rust core, QRES enables bit-perfect
+  consensus without heavy cryptographic proofs.
 
 keywords:
-  - Adaptive Compression
-  - Time-Series Data
-  - Edge Computing
+  - Neural Swarms
+  - Edge OS
+  - Deterministic Computing
+  - Federated Learning
+  - Lamarckian Evolution
   - Hybrid Architecture
   - Bit-Packing
   - Neural Residual Prediction

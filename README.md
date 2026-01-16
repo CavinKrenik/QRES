@@ -1,6 +1,7 @@
 ﻿# QRES: Quantum-Resilient Entropy System
 
 [![v18.0](https://img.shields.io/badge/version-18.0-blue.svg)](https://github.com/CavinKrenik/QRES/releases)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18261441.svg)](https://doi.org/10.5281/zenodo.18261441)
 [![no_std](https://img.shields.io/badge/no_std-compatible-green.svg)](https://docs.rust-embedded.org/book/intro/no-std.html)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Rust 2021](https://img.shields.io/badge/rust-2021-orange.svg)](https://www.rust-lang.org/)
@@ -212,6 +213,7 @@ If you use QRES in research, please cite:
   author = {Krenik, Cavin},
   title = {QRES: Quantum-Resilient Entropy System},
   url = {https://github.com/CavinKrenik/QRES},
+  doi = {10.5281/zenodo.18261441},
   year = {2026}
 }
 ```
