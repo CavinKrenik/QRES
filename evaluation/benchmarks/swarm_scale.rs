@@ -25,7 +25,7 @@ async fn spawn_node(id: usize, duration: u64) {
         // 2. Mock "sync" (sleep)
         tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
 
-        if id % 10 == 0 {
+        if id.is_multiple_of(10) {
             // Periodic "heavy" task
             let _ = (0..10_000).map(|i| (i as f32).sqrt()).sum::<f32>();
         }
