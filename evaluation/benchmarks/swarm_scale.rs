@@ -50,7 +50,11 @@ async fn main() {
         .open(&csv_path)
         .expect("Failed to open CSV");
 
-    writeln!(file, "nodes,memory_mb,memory_per_node_kb,cpu_usage_est,success_rate").unwrap();
+    writeln!(
+        file,
+        "nodes,memory_mb,memory_per_node_kb,cpu_usage_est,success_rate"
+    )
+    .unwrap();
 
     let mut sys = System::new_all();
 
@@ -78,7 +82,7 @@ async fn main() {
         // 4. Measure Peak Memory
         sys.refresh_all();
         let peak_mem = sys.used_memory();
-        
+
         // Calculate Delta
         // Note: Casting to f64 avoids overflow
         let mem_delta_mb = (peak_mem.saturating_sub(start_mem)) as f64 / 1024.0 / 1024.0;
@@ -101,7 +105,10 @@ async fn main() {
         let cpu_est = 1.0; // Mock placeholder
 
         println!("   ✅ Complete in {:.2}s", duration.as_secs_f64());
-        println!("   🧠 Memory Delta: {:.2} MB ({:.2} KB/node)", mem_delta_mb, mem_per_node_kb);
+        println!(
+            "   🧠 Memory Delta: {:.2} MB ({:.2} KB/node)",
+            mem_delta_mb, mem_per_node_kb
+        );
         println!("   🎯 Success Rate: {:.1}%", success_rate);
 
         // Write to CSV
