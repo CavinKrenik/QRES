@@ -37,3 +37,7 @@ path = "src/preventative_scaling.rs"
 [[bin]]
 name = "comprehensive_runner"
 path = "src/comprehensive_runner.rs"
+
+[[bin]]
+name = "swarm_scale"
+path = "swarm_scale.rs"

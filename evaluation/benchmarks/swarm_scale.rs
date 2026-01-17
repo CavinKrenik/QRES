@@ -1,8 +1,7 @@
-use std::env;
 use std::fs::{self, OpenOptions};
 use std::io::Write;
 use std::time::Instant;
-use sysinfo::System;
+use sysinfo::{System, SystemExt};
 use tokio::task::JoinSet;
 
 // Simulation parameters

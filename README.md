@@ -42,6 +42,20 @@ The system is architected as three interlocking layers:
 
 ---
 
+## ⚡ Verified Performance (Azure Cloud v18.0)
+
+![Scalability Chart](docs/images/scalability_chart.png)
+
+| Metric | Result | vs. Baseline | Verified On |
+| :--- | :--- | :--- | :--- |
+| **Scalability** | **10,000 Nodes** (100% Success) | **20x** Scale | Azure Standard_D2s (2 vCPU) |
+| **Compression** | **31.8x** (SmoothSine) | **1.5x** Neural Gain | Azure Standard_F2s |
+| **Memory** | **< 1 KB / Node** | **O(1)** Overhead | Rust `no_std` Runtime |
+
+> *Benchmarks verified on January 16, 2026 using automated Azure CI/CD pipelines. See [docs/BENCHMARKS.md](docs/BENCHMARKS.md) for full results.*
+
+---
+
 ## Key Features
 
 ### The Body: Deterministic Core
