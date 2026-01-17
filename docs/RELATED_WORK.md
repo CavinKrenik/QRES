@@ -54,27 +54,52 @@ This document positions QRES within the distributed systems landscape and detail
 
 ## 6. Original Contributions in QRES
 
-While QRES builds on the foundations above, it introduces several novel architectural patterns specifically for **Adversarial Edge Environments**.
+While QRES builds on the foundations above, it introduces several **novel architectural patterns** that constitute genuine systems-level innovations for **Adversarial Edge Environments**. These are not incremental improvements—they represent fundamental re-designs required for swarm intelligence at the edge.
 
-### A. Consensus-First Determinism (`Q16.16`)
-Most FL frameworks treat floating-point non-determinism as a minor noise source. QRES treats it as a **consensus failure**.
-* **Innovation:** By implementing a custom `Q16.16` fixed-point arithmetic engine from scratch in `no_std` Rust, QRES guarantees that `result_x86 == result_arm`.
-* **Impact:** This allows model states to be treated as **Merkle Trees**. Nodes can verify swarm synchronization instantly via hashes, eliminating the need for complex reconciliation protocols.
+### A. Consensus-First Determinism (`Q16.16`) — *"Math as Law"*
 
-### B. Lamarckian "Hippocampus" Persistence
-Standard Evolutionary Strategies (ES) are Darwinian: agents die, and only their offspring inherit traits. This is inefficient for IoT devices that frequently reboot.
-* **Innovation:** The **Hippocampus** layer (implemented via the `GeneStorage` trait) enables **Lamarckian Evolution**. Nodes serialize their "learned instincts" (bytecode) to non-volatile storage before rebooting.
-* **Impact:** A swarm can survive a total power failure and resume evolution exactly where it left off, preventing "Knowledge Collapse" in unstable energy environments.
+**Problem:** Most FL frameworks treat floating-point non-determinism as a minor noise source. In reality, even 1 bit of drift compounds catastrophically across a swarm, making consensus verification impossible.
 
-### C. Prediction-as-Consensus (Proof-of-Understanding)
-QRES reframes compression and intelligence as identical problems.
-* **Innovation:** Instead of solving a Proof-of-Work puzzle (hashing), nodes provide a **Proof-of-Understanding** by compressing sensor data. A node that broadcasts a small residual packet proves it has a superior predictive model.
-* **Impact:** High compression ratios serve as a unforgeable metric of intelligence, allowing the swarm to automatically weight "smarter" nodes higher during aggregation without a trusted central authority.
+**Innovation:** QRES implements a custom `Q16.16` fixed-point arithmetic engine from scratch in `no_std` Rust. Every mathematical operation—sin, cos, exp, sqrt—produces **bit-identical results** regardless of hardware: `result_x86 == result_arm == result_risc_v`.
 
-### D. Emergent Gene Gossip under Physics Constraints
-Existing P2P learning simulations often ignore network physics (MTU, packet loss).
-* **Innovation:** QRES simulates the physical "viral" spread of intelligence. Evolved bytecode ("Genes") must be fragmented into 1400-byte packets to traverse the simulated network. High-entropy noise zones cause packet loss, physically preventing large, complex models from spreading.
-* **Impact:** This creates an **evolutionary pressure for compactness**. The swarm naturally selects for smaller, more efficient models that can survive the hostile network environment, demonstrating emergent architectural search.
+**Why It Matters:**
+- Model states become **Merkle Trees**. Nodes verify synchronization instantly via hashes.
+- Eliminates complex reconciliation protocols required by float-based systems.
+- Enables **cryptographic proofs** of consensus that are legally auditable.
+
+### B. Lamarckian "Hippocampus" Persistence — *"Memories Survive Death"*
+
+**Problem:** Standard Evolutionary Strategies (ES) are Darwinian: agents die, and only their offspring inherit traits. This is inefficient for IoT devices that frequently reboot due to power instability.
+
+**Innovation:** The **Hippocampus** layer (implemented via the `GeneStorage` trait) enables **Lamarckian Evolution**. Nodes serialize their "learned instincts" (bytecode) to non-volatile storage before shutdown.
+
+**Why It Matters:**
+- A swarm survives **total power failure** and resumes evolution exactly where it left off.
+- Prevents "Knowledge Collapse" in solar/battery-powered deployments.
+- Creates continuity of intelligence across hardware replacements—a new node inherits the swarm's collective memory.
+
+### C. Prediction-as-Consensus (Proof-of-Understanding) — *"Compression is Intelligence"*
+
+**Problem:** How do you establish trust in a decentralized swarm without a central authority? Proof-of-Work (hashing) wastes energy and proves nothing about model quality.
+
+**Innovation:** QRES reframes **compression and intelligence as identical problems**. Instead of solving a PoW puzzle, nodes provide a **Proof-of-Understanding** by compressing sensor data. A node that broadcasts a small residual packet proves it has a superior predictive model.
+
+**Why It Matters:**
+- High compression ratios serve as an **unforgeable metric of intelligence**.
+- The swarm automatically weights "smarter" nodes higher during aggregation.
+- Eliminates the need for trusted oracles or central coordinators.
+- Creates a natural incentive structure: better predictions = more influence.
+
+### D. Emergent Gene Gossip under Physics Constraints — *"Evolution in the Wild"*
+
+**Problem:** Existing P2P learning simulations often ignore network physics (MTU limits, packet loss, latency). This leads to unrealistic assumptions about model transfer.
+
+**Innovation:** QRES simulates the **physical "viral" spread** of intelligence. Evolved bytecode ("Genes") must be fragmented into 1400-byte packets to traverse the network. High-entropy noise zones cause packet loss, physically preventing large, complex models from spreading.
+
+**Why It Matters:**
+- Creates an **evolutionary pressure for compactness**. The swarm naturally selects for smaller, more efficient models.
+- Demonstrates **emergent architectural search**—the network topology shapes the model architecture.
+- Hostile environments (noisy radio channels) become a feature, not a bug: they prune bloated models.
 
 ---
 

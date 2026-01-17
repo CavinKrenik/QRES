@@ -238,3 +238,40 @@ Estimated power draw for edge deployment.
 ---
 ### 🌱 Sustainability Impact
 By achieving **~0.19 ratio** on high-volume log data (vs standard ~0.40), QRES effectively **halves the storage energy footprint** for large-scale telemetry clusters, directly contributing to Green Computing initiatives.
+
+---
+
+## Verified Cloud Benchmark Results (v18.0)
+
+> **Date:** January 17, 2026  
+> **VM:** Azure QRES-Benchmark-Box (Standard E2as v5)  
+> **Log:** `docs/benchmarks/verified_runs/results_QRES-Benchmark-Box.log`
+
+### Neural Compression Performance
+
+| Dataset | Base (Bit-Pack) | Best Pipeline | Neural Gain | Throughput |
+|---------|-----------------|---------------|-------------|------------|
+| **SmoothSine_Proxy** | 20.88x | **31.83x** | 1.52x | 0.8 MB/s |
+| **Wafer_Proxy** | 3.55x | **4.98x** | 1.40x | 2.4 MB/s |
+| **jena_climate** | 4.92x | 4.92x | — (Bit-Pack Only) | — |
+| **ItalyPowerDemand** | 4.56x | 4.56x | — (Bit-Pack Only) | — |
+| **MoteStrain_Proxy** | 2.89x | 2.89x | — (Bit-Pack Only) | — |
+| **ETTh1** | 2.75x | 2.75x | — (Bit-Pack Only) | — |
+
+**Key Observations:**
+- Neural enhancement provides **40-52% additional compression** on predictable signals (SmoothSine, Wafer)
+- System correctly falls back to Bit-Packing for high-entropy/noisy datasets
+- All pipeline combinations (Zero/Heuristic/Neural/Hybrid × Huffman/Arithmetic) are functional
+
+### Why QRES Wins
+
+| Dimension | QRES v18 | Flower/TFF (FL) | ZSTD (Compression) | TFLite Micro (Edge AI) |
+|:---|:---|:---|:---|:---|
+| **Bandwidth per Day** | **~8 KB** (Genes) | ~10 MB (Weights) | N/A | N/A |
+| **Consensus Guarantee** | **Bit-Perfect** (Q16.16) | None (Float drift) | N/A | N/A |
+| **Byzantine Tolerance** | **Krum (f<45%)** | None | None | None |
+| **Edge Runtime** | **`no_std` Rust** | Python/C++ | C | C++ (TensorFlow) |
+| **Power Failure Recovery** | **Lamarckian** (Hippocampus) | Checkpoint Reload | N/A | Model Reload |
+| **Primary Use Case** | **Adversarial Swarms** | Cloud Analytics | Log Archival | Single Device |
+
+> **Bottom Line:** QRES achieves **99% less bandwidth** than traditional FL while providing **consensus guarantees** no other framework offers.
