@@ -16,6 +16,24 @@ Performance metrics for QRES neural compression.
 
 ---
 
+## Competitive Landscape
+
+Comparison against industry-standard frameworks for Edge AI and Compression.
+
+| Feature | **QRES v18** | **Federated Learning** (Flower/TFF) | **Compression** (ZSTD) |
+| :--- | :--- | :--- | :--- |
+| **Core Philosophy** | **Consensus-First** (Prediction) | **Accuracy-First** (Gradients) | **Storage-First** (Entropy) |
+| **Bandwidth** | **~8 KB / day** (Genes) | **MBs / round** (Weights) | N/A (Static files) |
+| **Determinism** | **Bit-Perfect** (Q16.16) | **Partial** (Float32 drift) | **Byte-Exact** |
+| **Edge Runtime** | **`no_std` Rust** (MCU capable) | Python/C++ (Requires OS) | C (Fast but no learning) |
+| **Byzantine Tol.** | **Krum (f < 45%)** | None / Plugin-based | None |
+| **Recovery** | **Lamarckian Persistence** | Checkpoints | N/A |
+| **Use Case** | **Adversarial Swarms** | Cross-Device Analytics | Log Archival |
+
+> **Key Takeaway:** QRES sacrifices raw training speed for **consensus guarantees** and **extreme bandwidth efficiency**, making it ideal for adversarial, resource-constrained swarm deployments.
+
+---
+
 ## Streaming Latency (v15.3)
 
 In the IoT Dashboard configuration, QRES operates on a **per-packet basis** (10Hz stream).
