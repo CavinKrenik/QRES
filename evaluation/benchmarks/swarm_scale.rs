@@ -6,7 +6,7 @@ use sysinfo::System;
 use tokio::task::JoinSet;
 
 // Simulation parameters
-const TEST_DURATION_SECS: u64 = 5;
+const TEST_DURATION_SECS: u64 = 10; // Increased to 10s for stability at scale
 
 // Mock node behavior
 async fn spawn_node(id: usize, duration: u64) {
@@ -35,7 +35,7 @@ async fn spawn_node(id: usize, duration: u64) {
 
 #[tokio::main]
 async fn main() {
-    println!("🚀 QRES Scalability Benchmark (v15.2)");
+    println!("🚀 QRES Massive Scale Benchmark (v18.0)");
     println!("========================================");
 
     // Ensure output directory
@@ -43,7 +43,7 @@ async fn main() {
     let _ = fs::create_dir_all(output_dir);
 
     // Open CSV file
-    let csv_path = format!("{}/scalability.csv", output_dir);
+    let csv_path = format!("{}/scalability_massive.csv", output_dir);
     let mut file = OpenOptions::new()
         .create(true)
         .write(true)
@@ -55,29 +55,41 @@ async fn main() {
 
     let mut sys = System::new_all();
 
-    // Test scenarios: 10, 50, 100, 200 nodes
-    for node_count in [10, 50, 100, 200] {
+    // UPDATED: Test scenarios: 100 to 10,000 nodes
+    let scenarios = [100, 500, 1000, 2500, 5000, 10_000];
+
+    for node_count in scenarios {
         println!("\nTesting {} nodes...", node_count);
 
+        // 1. Snapshot Baseline Memory
         sys.refresh_all();
         let start_mem = sys.used_memory();
 
         let start_time = Instant::now();
         let mut set = JoinSet::new();
 
+        // 2. Spawn the Swarm
         for i in 0..node_count {
             set.spawn(spawn_node(i, TEST_DURATION_SECS));
         }
 
-        // Wait for stability
+        // 3. Wait for stability (Warm-up)
         tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
 
+        // 4. Measure Peak Memory
         sys.refresh_all();
         let peak_mem = sys.used_memory();
+        
+        // Calculate Delta
+        // Note: Casting to f64 avoids overflow
         let mem_delta_mb = (peak_mem.saturating_sub(start_mem)) as f64 / 1024.0 / 1024.0;
-        let mem_per_node_kb = (mem_delta_mb * 1024.0) / node_count as f64;
+        let mem_per_node_kb = if node_count > 0 {
+            (mem_delta_mb * 1024.0) / node_count as f64
+        } else {
+            0.0
+        };
 
-        // Wait for all to finish
+        // 5. Wait for completion
         let mut success_count = 0;
         while let Some(res) = set.join_next().await {
             if res.is_ok() {
@@ -87,7 +99,7 @@ async fn main() {
 
         let duration = start_time.elapsed();
         let success_rate = (success_count as f64 / node_count as f64) * 100.0;
-        let cpu_est = 1.0; // Mock placeholder, difficult to measure accurately per process in this simple harness
+        let cpu_est = 1.0; // Mock placeholder
 
         println!("   ✅ Complete in {:.2}s", duration.as_secs_f64());
         println!("   🧠 Memory Delta: {:.2} MB ({:.2} KB/node)", mem_delta_mb, mem_per_node_kb);
@@ -100,6 +112,9 @@ async fn main() {
             node_count, mem_delta_mb, mem_per_node_kb, cpu_est, success_rate
         )
         .unwrap();
+
+        // Cooldown to let OS reclaim memory
+        tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
     }
 
     println!("\n💾 Results saved to {}", csv_path);
