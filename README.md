@@ -270,4 +270,14 @@ See [CITATION.cff](CITATION.cff) for additional metadata.
 
 ---
 
+## Publications
+
+| Paper | Venue | DOI |
+|-------|-------|-----|
+| **Deterministic Rematerialization: Convergent Evolution in Cloud Kernels and Edge Swarms** | Preprint (2026) | [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.18305656-blue)](https://doi.org/10.5281/zenodo.18305656) |
+
+This paper formalizes the theoretical foundation of QRES, identifying a structural isomorphism between IO-aware GPU kernels (FlashAttention, Fused Cross-Entropy) and QRES's silent consensus protocol. Both converge on **Deterministic Rematerialization**—discarding intermediate state and recomputing on demand—to achieve orders-of-magnitude reductions in data movement.
+
+---
+
 **Status**: Stable. Version 18.0 (Neural Swarm Architecture) complete. The pivot from deterministic compression to emergent swarms is verified in simulation. Ready for edge deployment.
