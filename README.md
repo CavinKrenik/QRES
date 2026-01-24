@@ -6,6 +6,10 @@
 [![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE-MIT)
 [![Rust 2021](https://img.shields.io/badge/rust-2021-orange.svg)](https://www.rust-lang.org/)
 
+**Architectural Scope:**  
+> QRES is intentionally narrow. Misuse will fail.  
+> Read **[SCOPE.md](./docs/SCOPE.md)** before deployment or evaluation.
+
 ---
 
 ## Emergent Intelligence in Action
