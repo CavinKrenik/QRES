@@ -55,6 +55,7 @@ pub mod archive;
 #[cfg(feature = "std")]
 pub mod compression;
 pub mod config;
+pub mod consensus;
 pub mod cortex;
 #[cfg(feature = "std")]
 pub mod dedup;
@@ -76,7 +77,6 @@ pub mod python_api;
 #[cfg(feature = "std")]
 pub mod resource_management;
 pub mod secure_agg;
-pub mod consensus;
 pub mod spectral;
 pub mod tensor;
 pub mod transformer;

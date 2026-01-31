@@ -139,10 +139,7 @@ mod tests {
         let vectors = vec![vec![I16F16::from_num(1.0)]];
         assert!(aggregate_krum(&vectors, 0).is_none());
 
-        let vectors = vec![
-            vec![I16F16::from_num(1.0)],
-            vec![I16F16::from_num(2.0)],
-        ];
+        let vectors = vec![vec![I16F16::from_num(1.0)], vec![I16F16::from_num(2.0)]];
         assert!(aggregate_krum(&vectors, 0).is_none());
     }
 
@@ -202,6 +199,10 @@ mod tests {
 
         // Should still reject the outlier even with f=0
         let val: f32 = result[0].to_num();
-        assert!(val < 10.0, "f=0 Krum should still avoid obvious outlier: {}", val);
+        assert!(
+            val < 10.0,
+            "f=0 Krum should still avoid obvious outlier: {}",
+            val
+        );
     }
 }

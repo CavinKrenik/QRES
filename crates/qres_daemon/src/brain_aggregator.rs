@@ -65,7 +65,6 @@ impl BrainAggregator {
         }
     }
 
-
     /// Add a brain update to the buffer
     /// Returns Some((aggregated confidence, accepted_peers, rejected_peers)) if buffer is full and ready for aggregation
     pub fn add_update(
@@ -120,10 +119,8 @@ impl BrainAggregator {
             match result_fixed {
                 Some(fixed_result) => {
                     // Convert back to f32
-                    let weights: Vec<f32> = fixed_result
-                        .iter()
-                        .map(|val| val.to_num::<f32>())
-                        .collect();
+                    let weights: Vec<f32> =
+                        fixed_result.iter().map(|val| val.to_num::<f32>()).collect();
 
                     // Krum selects 1 vector, find which one
                     let selected_idx = fixed_vectors
@@ -137,7 +134,13 @@ impl BrainAggregator {
                         let dim = updates[0].len();
                         let n_f = n as f32;
                         (0..dim)
-                            .map(|i| updates.iter().map(|u| u.get(i).unwrap_or(&0.0)).sum::<f32>() / n_f)
+                            .map(|i| {
+                                updates
+                                    .iter()
+                                    .map(|u| u.get(i).unwrap_or(&0.0))
+                                    .sum::<f32>()
+                                    / n_f
+                            })
                             .collect()
                     } else {
                         weights.clone()
@@ -151,9 +154,7 @@ impl BrainAggregator {
 
                     if diff > 0.1 {
                         // Krum result is significantly different from Mean - outlier was rejected!
-                        info!(
-                            "🛡️ BFT DEFENSE ACTIVE: Malicious outlier rejected"
-                        );
+                        info!("🛡️ BFT DEFENSE ACTIVE: Malicious outlier rejected");
                         info!(
                             mean_first = ?mean_val.first(),
                             krum_first = ?weights.first(),
