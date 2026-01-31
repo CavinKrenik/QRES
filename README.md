@@ -126,6 +126,28 @@ Krum successfully defends against increasingly sophisticated attack scenarios:
 | **B** | Coordination Attack (2 attackers) | 1.89 | **0.03** | ✅ Robust |
 | **C** | 8D Gene Vector | 4.25 | **0.10** | ✅ Robust |
 
+#### 📉 Operating Envelope & Tolerance Limits
+
+QRES is designed to withstand up to **~40% network compromise**. Beyond the theoretical limit ($n < 2f + 3$), the consensus mechanism fails gracefully.
+
+![Tolerance Curve](docs/images/tolerance_curve.png)
+
+| Byzantine % | Krum Error | Status |
+|-------------|------------|--------|
+| **10%** | 0.19 | ✅ Secure |
+| **20%** | 0.20 | ✅ Secure |
+| **30%** | 0.16 | ✅ Secure |
+| **40%** | 0.17 | ⚠️ At Limit |
+| **50%** | 12.72 | ❌ Breakdown |
+
+> **Recommendation:** Configure `expected_byzantines_fraction` to **1.5×** your anticipated threat level to stay in the Safe Zone.
+
+#### 🎬 Convergence Under Attack
+
+Watch honest nodes converge to consensus while ignoring coordinated attackers:
+
+![Consensus Evolution](docs/images/consensus_evolution.gif)
+
 ---
 
 ## Performance
