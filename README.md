@@ -114,6 +114,18 @@ QRES uses deterministic I16F16 Krum aggregation to reject malicious updates. In 
    Total Correction:    39.60
 ```
 
+#### Robustness Stress Tests
+
+Krum successfully defends against increasingly sophisticated attack scenarios:
+
+![Robustness Comparison](docs/images/robustness_comparison.png)
+
+| Scenario | Attack Type | Naive Mean Error | Krum Error | Result |
+|----------|-------------|------------------|------------|--------|
+| **A** | Subtle Poisoning (1.5x) | 0.14 | **0.00** | ✅ Robust |
+| **B** | Coordination Attack (2 attackers) | 1.89 | **0.03** | ✅ Robust |
+| **C** | 8D Gene Vector | 4.25 | **0.10** | ✅ Robust |
+
 ---
 
 ## Performance
