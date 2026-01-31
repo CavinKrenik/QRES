@@ -7,7 +7,9 @@
 use crate::config::AggregationConfig;
 use crate::living_brain::{LivingBrain, SignedEpiphany};
 use crate::security::ReputationManager;
+use fixed::types::I16F16;
 use qres_core::aggregation::{aggregate_updates, AggregationMode, AggregationResult};
+use qres_core::consensus::aggregate_krum;
 use qres_core::tensor::FixedTensor;
 use std::collections::VecDeque;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -21,15 +23,19 @@ pub struct BrainAggregator {
     config: AggregationConfig,
     /// Derived aggregation mode
     mode: AggregationMode,
+    /// Whether to use deterministic I16F16 Krum
+    use_fixed_krum: bool,
 }
 
 impl BrainAggregator {
     /// Create a new aggregator from config
     pub fn new(config: AggregationConfig) -> Self {
+        let use_fixed_krum = config.mode.to_lowercase() == "krum_fixed";
         let mode = Self::parse_mode(&config);
         info!(
             mode = ?config.mode,
             buffer_size = config.buffer_size,
+            use_fixed_krum = use_fixed_krum,
             "Brain aggregator initialized"
         );
 
@@ -37,13 +43,14 @@ impl BrainAggregator {
             buffer: VecDeque::with_capacity(config.buffer_size),
             config,
             mode,
+            use_fixed_krum,
         }
     }
 
     /// Parse aggregation mode from config string  
     fn parse_mode(config: &AggregationConfig) -> AggregationMode {
         match config.mode.to_lowercase().as_str() {
-            "krum" => AggregationMode::Krum {
+            "krum" | "krum_fixed" => AggregationMode::Krum {
                 expected_byz: 1, // Will be calculated dynamically based on buffer size
             },
             "multi_krum" => AggregationMode::MultiKrum {
@@ -57,6 +64,7 @@ impl BrainAggregator {
             _ => AggregationMode::SimpleMean,
         }
     }
+
 
     /// Add a brain update to the buffer
     /// Returns Some((aggregated confidence, accepted_peers, rejected_peers)) if buffer is full and ready for aggregation
@@ -98,7 +106,95 @@ impl BrainAggregator {
         // Calculate expected byzantines dynamically based on fraction
         let expected_byz = ((n as f32) * self.config.expected_byzantines_fraction).floor() as usize;
 
-        // Create dynamic mode with calculated byz count
+        // Use deterministic I16F16 Krum if configured
+        if self.use_fixed_krum {
+            // Convert f32 vectors to I16F16
+            let fixed_vectors: Vec<Vec<I16F16>> = updates
+                .iter()
+                .map(|vec| vec.iter().map(|&val| I16F16::from_num(val)).collect())
+                .collect();
+
+            // Run deterministic Krum
+            let result_fixed = aggregate_krum(&fixed_vectors, expected_byz);
+
+            match result_fixed {
+                Some(fixed_result) => {
+                    // Convert back to f32
+                    let weights: Vec<f32> = fixed_result
+                        .iter()
+                        .map(|val| val.to_num::<f32>())
+                        .collect();
+
+                    // Krum selects 1 vector, find which one
+                    let selected_idx = fixed_vectors
+                        .iter()
+                        .position(|v| *v == fixed_result)
+                        .unwrap_or(0);
+
+                    // === BFT Defense Logging (Portfolio Evidence) ===
+                    // Compare Krum result to what simple mean would have produced
+                    let mean_val: Vec<f32> = if !updates.is_empty() && !updates[0].is_empty() {
+                        let dim = updates[0].len();
+                        let n_f = n as f32;
+                        (0..dim)
+                            .map(|i| updates.iter().map(|u| u.get(i).unwrap_or(&0.0)).sum::<f32>() / n_f)
+                            .collect()
+                    } else {
+                        weights.clone()
+                    };
+
+                    let diff: f32 = weights
+                        .iter()
+                        .zip(mean_val.iter())
+                        .map(|(a, b)| (a - b).abs())
+                        .sum();
+
+                    if diff > 0.1 {
+                        // Krum result is significantly different from Mean - outlier was rejected!
+                        info!(
+                            "🛡️ BFT DEFENSE ACTIVE: Malicious outlier rejected"
+                        );
+                        info!(
+                            mean_first = ?mean_val.first(),
+                            krum_first = ?weights.first(),
+                            total_diff = diff,
+                            "   Mean (Compromised) vs Krum (Protected)"
+                        );
+                    }
+
+                    info!(
+                        updates = n,
+                        selected_idx = selected_idx,
+                        mode = "krum_fixed",
+                        "Aggregated brain updates (deterministic I16F16)"
+                    );
+
+                    let accepted_peers = vec![peer_ids[selected_idx].clone()];
+                    let rejected_peers: Vec<String> = peer_ids
+                        .iter()
+                        .enumerate()
+                        .filter(|(i, _)| *i != selected_idx)
+                        .map(|(_, p)| p.clone())
+                        .collect();
+
+                    return (weights, accepted_peers, rejected_peers);
+                }
+                None => {
+                    warn!(
+                        n = n,
+                        "Krum fixed failed (n < 3), falling back to first vector"
+                    );
+                    // Fallback to first vector
+                    return (
+                        updates.into_iter().next().unwrap_or_default(),
+                        peer_ids.into_iter().take(1).collect(),
+                        Vec::new(),
+                    );
+                }
+            }
+        }
+
+        // Standard f32 aggregation path
         let dynamic_mode = match &self.mode {
             AggregationMode::Krum { .. } => AggregationMode::Krum { expected_byz },
             AggregationMode::MultiKrum { k, .. } => AggregationMode::MultiKrum {

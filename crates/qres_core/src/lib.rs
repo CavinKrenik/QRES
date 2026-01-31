@@ -76,6 +76,7 @@ pub mod python_api;
 #[cfg(feature = "std")]
 pub mod resource_management;
 pub mod secure_agg;
+pub mod consensus;
 pub mod spectral;
 pub mod tensor;
 pub mod transformer;

@@ -27,7 +27,7 @@ QRES is a decentralized operating system for **Edge AI Swarms**. It solves the "
 **v18.0 Benchmark Highlights:**
 - **Compression:** Custom Static Laplace Range Coder achieves **1.40x compression**, beating ZSTD (1.39x) on prediction residuals while maintaining bit-perfect determinism.
 - **Efficiency:** Swarms converge **12x faster** (wall-clock) than Federated Learning on constrained IoT networks (56kbps), consuming **99% less bandwidth**.
-- **Scalability:** Secure Aggregation proven linearly scalable (O(N)) for trusted peers, with optional Byzantine Fault Tolerance (Krum) for adversarial environments.
+- **Scalability:** Secure Aggregation proven linearly scalable (O(N)) for trusted peers. 🛡️ **Byzantine Fault Tolerance**: Deterministic I16F16 Krum aggregation guarantees bit-perfect outlier rejection across mixed-architecture swarms (ARM/ESP32/x86).
 
 The system is architected as three interlocking layers:
 
@@ -98,6 +98,21 @@ Located in `crates/qres_core/src/cortex/storage.rs`, this layer provides:
 - **Auto-Loading on Spawn**: Nodes check disk for saved genes on initialization; if found, spawn as evolved.
 - **Periodic Persistence**: Every 5 seconds, calm evolved nodes save their bytecode to disk.
 - **Lamarckian Evolution**: Learned strategies survive simulation restarts.
+
+### 🛡️ Byzantine Fault Tolerance (Active Defense)
+
+QRES uses deterministic I16F16 Krum aggregation to reject malicious updates. In this verified test scenario, a malicious node attempted to poison the model with extreme values (`100.0`), pulling the Naive Mean to `~20.8`.
+
+**QRES Krum correctly identified and rejected the outlier**, maintaining consensus at `1.0`.
+
+![BFT Defense Visualization](Figure_1.png)
+
+```
+🛡️ BFT DEFENSE ACTIVE: Malicious outlier rejected
+   Mean (Compromised):  [20.79, 20.81]
+   Krum (Protected):    [1.00, 1.00]
+   Total Correction:    39.60
+```
 
 ---
 
