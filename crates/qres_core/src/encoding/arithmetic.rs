@@ -189,7 +189,7 @@ pub fn decompress_bfp(
 
     // 2. Mantissas
     let content = &data[1..];
-    if content.len() % 2 != 0 {
+    if !content.len().is_multiple_of(2) {
         return Err(crate::QresError::InvalidData(
             "Invalid BFP payload length".into(),
         ));

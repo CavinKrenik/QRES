@@ -58,12 +58,13 @@ This document outlines the **Defense-in-Depth** security architecture of the QRE
 **Focus:** Mathematical resilience against Byzantine faults and poisoning.
 
 ### Implemented
-- **Krum Algorithm**: Outlier-resistant aggregation (selects vectors closest to geometric median).
+- **Trimmed Mean (v19.0)**: Replaced Krum. Statistically robust aggregation that removes the top-$f$ and bottom-$f$ outliers per dimension.
+- **Krum Algorithm (Legacy)**: Retained as fallback for small swarms ($N < 5$).
 - **Dreaming Sanity Check**: Validates synthetic "dreamt" data against real validation buffers.
 
 ### Roadmap
-- **Trimmed Mean / Median**: Statistical robustness for scalar updates.
 - **Pre-Merge Validation**: Local validation set testing for *all* incoming updates (not just dreams).
+- **Sybil Resistance (PoW)**: Lightweight proof-of-work for identity creation (if PKI is not used).
 
 ---
 
@@ -72,7 +73,7 @@ This document outlines the **Defense-in-Depth** security architecture of the QRE
 | Attack Vector | Primary Defense | Secondary Defense |
 |:---|:---|:---|
 | **Sybil Attack** | Node PKI (Layer 1) | Reputation Cost (Layer 2) |
-| **Model Poisoning** | Krum (Layer 4) | Reputation Banning (Layer 2) |
+| **Model Poisoning** | Trimmed Mean (Layer 4) | Reputation Banning (Layer 2) |
 | **Gradient Inversion** | Differential Privacy (Layer 3) | Secure Aggregation (Layer 3) |
-| **"Lazy Worker" Spoofing** | ZK Proofs (Layer 3) | Krum (Layer 4) |
+| **"Lazy Worker" Spoofing** | ZK Proofs (Layer 3) | Reputation (Layer 2) |
 | **Man-in-the-Middle** | Ed25519 Signatures (Layer 1) | Transport Encryption (Layer 1) |

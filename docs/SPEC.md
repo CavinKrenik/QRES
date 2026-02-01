@@ -1,12 +1,12 @@
-# QRES v18 Protocol Specification
+# QRES v19 Protocol Specification
 
 ## Overview
-QRES v18 is a protocol for decentralized neural consensus. While it produces `.qres` artifacts (saved genes), its primary function is defining the `SwarmNeuron` trait for behavior and the Gossip headers used for gene propagation.
+QRES v19 is a protocol for decentralized neural consensus. While it produces `.qres` artifacts (saved genes), its primary function is defining the `SwarmNeuron` trait for behavior and the Gossip headers used for gene propagation.
 
 ## Core Specifications
-1. **The Neuron Protocol:** Defines how nodes compute residuals (`I16F16`) and detect 'Surprise' (Entropy).
+1. **The Neuron Protocol:** Defines how nodes compute residuals (`I16F16`) and BFP gradients (`Bfp16Vec`).
 2. **The Gene Format:** A bytecode serialization standard for transmitting learned strategies across the gossip network.
-3. **Consensus:** A deterministic, reputation-weighted agreement mechanism.
+3. **Consensus:** A deterministic, reputation-weighted agreement mechanism using Trimmed Mean Aggregation.
 
 ---
 
@@ -15,7 +15,7 @@ QRES v18 is a protocol for decentralized neural consensus. While it produces `.q
 | Offset | Length | Type | Description |
 | :--- | :--- | :--- | :--- |
 | 0 | 4 | `[u8; 4]` | Magic Bytes (`QRES`) |
-| 4 | 2 | `u16` | Major Version (12) |
+| 4 | 2 | `u16` | Major Version (19) |
 | 6 | 2 | `u16` | Minor Version (0) |
 | 8 | 4 | `u32` | Flags (Bitmask) |
 | 12 | 8 | `u64` | Total Uncompressed Size |
@@ -49,23 +49,37 @@ Contains compressed residuals (prediction errors).
 | :--- | :--- | :--- |
 | Block ID | 1 byte | `0x0D` |
 | Compressed Len | 4 bytes | Size of bit-packed payload |
-| Original Len | 4 bytes | Size of raw data |
-| Payload | N bytes | Bit-packed residuals (Delta + RLE + Huffman) |
+### 3.3 Summary Gene (Type `0x13`) - v19.0
+Contains rapid onboarding state.
+
+| Field | Size | Details |
+| :--- | :--- | :--- |
+| Block ID | 1 byte | `0x13` |
+| Round | 8 bytes | `u64` Round Index |
+| Hash | 32 bytes | History Hash |
+| Consensus | N bytes | BFP-16 Encoded Vector |
+| Variance | N bytes | BFP-16 Encoded Vector |
 
 ---
 
-## 4. Deterministic Math Specification (Q16.16)
+## 4. Deterministic Math Specification
 
-All predictors must implement the `Predictor` trait using `i32`:
+### 4.1 State Consensus (Q16.16)
+All consensus state must use `i32` fixed point:
 
 ```rust
 // Current prediction value (16 bits integer, 16 bits fraction)
 type Q16 = i32;
-
-fn predict(history: &[u8]) -> u8 {
-    let prediction: Q16 = calculate_weighted_sum(history);
-    (prediction >> 16) as u8 // Truncate to integer byte
-}
+// 0.1 + 0.2 = round(6553.6 + 13107.2) = 19661
 ```
 
-This ensures that `0.1 + 0.2` is represented as `6553 + 13107 = 19660` on all systems, avoiding IEEE 754 variance.
+### 4.2 Gradient Updates (BFP-16) - v19.0
+All gradients must use Block Floating Point to preserve dynamic range at low learning rates:
+
+```rust
+struct Bfp16Vec {
+    exponent: i8,      // Shared exponent
+    mantissas: Vec<i16> // Signed 16-bit integers
+}
+// Value[i] = mantissa[i] * 2^(exponent)
+```

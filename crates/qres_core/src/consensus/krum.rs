@@ -53,7 +53,7 @@ impl Bfp16Vec {
         let exp_f32 = max_abs.log2().ceil() - 15.0;
 
         // Clamp exponent to valid range if needed
-        let exponent = (exp_f32 as i8).max(-126).min(126);
+        let exponent = (exp_f32 as i8).clamp(-126, 126);
 
         // 3. Quantize
         // scale = 2^(-exponent)

@@ -2,9 +2,9 @@
 
 This document clarifies what's production-ready vs. experimental vs. roadmap.
 
-## v18.0.0 (The Neural Swarm) - COMPLETED
-- [x] **The Mind:** Bevy-based "God View" Simulator (`tools/swarm_sim`).
-- [x] **The Cortex:** `SwarmNeuron` trait with `no_std` support.
+## v19.0.0 (The Immune System Era) - COMPLETED
+- [x] **The Immune System:** Byzantine-resilient aggregation (`TrimmedMean`).
+- [x] **Precision Upgrade:** High-dynamic range gradients (`Bfp16Vec`).
 - [x] **The Hippocampus:** `GeneStorage` trait and Disk persistence implementation.
 - [x] **Emergence:** Verified "Viral Cure" propagation in 15% packet loss scenarios.
 

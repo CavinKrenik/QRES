@@ -7452,7 +7452,7 @@ dependencies = [
 
 [[package]]
 name = "qres-studio"
-version = "18.0.0"
+version = "19.0.0"
 dependencies = [
  "lazy_static",
  "qres_core",
@@ -7471,7 +7471,7 @@ dependencies = [
 
 [[package]]
 name = "qres_core"
-version = "18.0.0"
+version = "19.0.0"
 dependencies = [
  "anyhow",
  "blake3",
@@ -7502,7 +7502,7 @@ dependencies = [
 
 [[package]]
 name = "qres_daemon"
-version = "18.0.0"
+version = "19.0.0"
 dependencies = [
  "axum",
  "chrono",
@@ -7530,7 +7530,7 @@ dependencies = [
 
 [[package]]
 name = "qres_wasm"
-version = "18.0.0"
+version = "19.0.0"
 dependencies = [
  "console_error_panic_hook",
  "js-sys",
@@ -8987,7 +8987,7 @@ checksum = "0193cc4331cfd2f3d2011ef287590868599a2f33c3e69bc22c1a3d3acf9e02fb"
 
 [[package]]
 name = "swarm_sim"
-version = "0.1.0"
+version = "19.0.0"
 dependencies = [
  "bevy",
  "qres_core",

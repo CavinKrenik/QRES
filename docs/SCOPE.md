@@ -12,7 +12,7 @@ The following are explicit non-goals of QRES.
 > "QRES uses consensus and hashes, so it's a blockchain-like ledger for IoT."
 
 **The Reality**
-Blockchains optimize for *trustlessness*—they assume participants are adversarial. QRES optimizes for *bandwidth efficiency* under the assumption that nodes are cooperative but severely resource-constrained.
+Blockchains optimize for *trustlessness*—they assume participants are adversarial. QRES optimizes for *bandwidth efficiency* under the assumption that the majority of nodes are cooperative but severely resource-constrained.
 
 **Why this matters**
 Blockchain consensus mechanisms (Proof of Work, Proof of Stake) deliberately burn compute and bandwidth to establish trust. QRES exists to eliminate unnecessary data movement. Introducing ledger history, global ordering, or economic incentives would directly violate its core design objective.
@@ -89,7 +89,7 @@ Topology management, partition healing, and convergence behavior are the respons
 ## Summary: Explicit Non-Goals
 
 QRES is explicitly **not** designed for:
-* Adversarial or Byzantine environments
+* Universal untrusted environments (e.g. Public Blockchains)
 * Large-scale model storage beyond single-node RAM
 * Discrete state synchronization
 * Hard real-time or safety-critical control systems
@@ -116,7 +116,7 @@ QRES is the correct tool only if **all** of the following are true:
 - [ ] Bandwidth is expensive relative to local computation.
 - [ ] The full model fits within the smallest node's RAM.
 - [ ] Input signals are continuous and differentiable.
-- [ ] Nodes are cooperative and under common administrative control.
+- [ ] The majority of nodes are cooperative (f < 33%).
 - [ ] Eventual consistency is acceptable (soft real-time is sufficient).
 - [ ] Privacy concerns are about casual observation, not state-level adversaries.
 

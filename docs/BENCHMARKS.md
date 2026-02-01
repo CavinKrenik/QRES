@@ -1,6 +1,6 @@
 # QRES Performance Benchmarks
 
-> ⚠️ **Note:** These benchmarks apply to the v15 Core Engine's compression efficiency. For v18.0.0 Swarm Convergence metrics (Time-to-Consensus, Evolution Rate), please see the "Performance" section in the root `README.md`.
+> ⚠️ **Note:** These benchmarks apply to the v19.0 Core Engine. For Swarm Convergence metrics (Time-to-Consensus, Evolution Rate), please see the "Performance" section in the root `README.md`.
 
 Performance metrics for QRES neural compression.
 
@@ -11,8 +11,8 @@ Performance metrics for QRES neural compression.
 | Property | Value |
 |----------|-------|
 | **Hardware** | Intel Ice Lake (AWS c6i.4xlarge) |
-| **Version** | QRES v12.0 (Swarm Scaling Era) |
-| **Agent** | MetaBrain v5 (SNN + Tensor Predictor) |
+| **Version** | QRES v19.0 (Immune System Era) |
+| **Agent** | MetaBrain v6 (TrimmedMean + BFP) |
 
 ---
 
@@ -20,14 +20,14 @@ Performance metrics for QRES neural compression.
 
 Comparison against industry-standard frameworks for Edge AI and Compression.
 
-| Feature | **QRES v18** | **Federated Learning** (Flower/TFF) | **Compression** (ZSTD) |
+| Feature | **QRES v19** | **Federated Learning** (Flower/TFF) | **Compression** (ZSTD) |
 | :--- | :--- | :--- | :--- |
 | **Core Philosophy** | **Consensus-First** (Prediction) | **Accuracy-First** (Gradients) | **Storage-First** (Entropy) |
-| **Bandwidth** | **~8 KB / day** (Genes) | **MBs / round** (Weights) | N/A (Static files) |
+| **Bandwidth** | **74 Bytes / Onboarding** | **MBs / round** (Weights) | N/A (Static files) |
 | **Determinism** | **Bit-Perfect** (Q16.16) | **Partial** (Float32 drift) | **Byte-Exact** |
 | **Edge Runtime** | **`no_std` Rust** (MCU capable) | Python/C++ (Requires OS) | C (Fast but no learning) |
-| **Byzantine Tol.** | **Krum (f < 45%)** | None / Plugin-based | None |
-| **Recovery** | **Lamarckian Persistence** | Checkpoints | N/A |
+| **Byzantine Tol.** | **Trimmed Mean (f < 33%)** | None / Plugin-based | None |
+| **Recovery** | **Summary Gene Sync** | Checkpoints | N/A |
 | **Use Case** | **Adversarial Swarms** | Cross-Device Analytics | Log Archival |
 
 > **Key Takeaway:** QRES sacrifices raw training speed for **consensus guarantees** and **extreme bandwidth efficiency**, making it ideal for adversarial, resource-constrained swarm deployments.
