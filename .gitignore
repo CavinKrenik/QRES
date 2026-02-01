@@ -28,6 +28,7 @@ venv/
 
 # Runtime logs
 snn_stats.txt
+results.txt
 
 # QRES Output & Test Data
 *.qres
