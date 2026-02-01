@@ -2,6 +2,7 @@
 
 [![v18.0](https://img.shields.io/badge/version-18.0-blue.svg)](https://github.com/CavinKrenik/QRES/releases)
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.18261441-blue)](https://doi.org/10.5281/zenodo.18261441)
+[![Paper](https://img.shields.io/badge/Paper-BFT%20for%20Edge%20Learning-green.svg)](paper_bft/QRES__Deterministic_Byzantine_Fault_Tolerancefor_Resource_Constrained_Edge_Learning.pdf)
 [![no_std](https://img.shields.io/badge/no_std-compatible-green.svg)](https://docs.rust-embedded.org/book/intro/no-std.html)
 [![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE-MIT)
 [![Rust 2021](https://img.shields.io/badge/rust-2021-orange.svg)](https://www.rust-lang.org/)
