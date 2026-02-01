@@ -9,6 +9,7 @@
 //! Reference: Blanchard et al., "Machine Learning with Adversaries: Byzantine Tolerant Gradient Descent"
 
 use core::cmp::Ordering;
+use fixed::types::I16F16;
 
 #[cfg(not(feature = "std"))]
 use alloc::vec::Vec;
@@ -106,6 +107,29 @@ impl Aggregator for TrimmedMeanAggregator {
     }
 }
 
+/// Byzantine-tolerant Trimmed Mean aggregator
+/// Removes strictly 'f' largest and smallest values per dimension.
+#[derive(Clone, Debug)]
+pub struct TrimmedMeanByzAggregator {
+    pub f: usize,
+}
+
+impl Default for TrimmedMeanByzAggregator {
+    fn default() -> Self {
+        Self { f: 1 }
+    }
+}
+
+impl Aggregator for TrimmedMeanByzAggregator {
+    fn aggregate(&self, updates: &[Vec<f32>]) -> AggregationResult {
+        aggregate_updates(updates, &AggregationMode::TrimmedMeanByz { f: self.f })
+    }
+
+    fn name(&self) -> &'static str {
+        "TrimmedMeanByz"
+    }
+}
+
 /// Aggregation mode for combining model updates
 #[derive(Clone, Debug, Default)]
 pub enum AggregationMode {
@@ -119,6 +143,8 @@ pub enum AggregationMode {
     MultiKrum { expected_byz: usize, k: usize },
     /// Coordinate-wise trimmed mean (remove outliers before averaging)
     TrimmedMean { trim_fraction: f32 },
+    /// Byzantine-tolerant trimmed mean (remove top/bottom f values)
+    TrimmedMeanByz { f: usize },
     /// Coordinate-wise median
     Median,
 }
@@ -161,6 +187,7 @@ pub fn aggregate_updates(updates: &[Vec<f32>], mode: &AggregationMode) -> Aggreg
         AggregationMode::TrimmedMean { trim_fraction } => {
             trimmed_mean(updates, n, d, *trim_fraction)
         }
+        AggregationMode::TrimmedMeanByz { f } => trimmed_mean_byz(updates, n, d, *f),
         AggregationMode::Median => median_agg(updates, n, d),
     }
 }
@@ -305,6 +332,57 @@ fn trimmed_mean(updates: &[Vec<f32>], n: usize, d: usize, trim_fraction: f32) ->
     }
 }
 
+/// Byzantine-tolerant trimmed mean - removes top/bottom f values
+fn trimmed_mean_byz(updates: &[Vec<f32>], n: usize, d: usize, f: usize) -> AggregationResult {
+    let trim_count = f;
+
+    if trim_count * 2 >= n {
+        // Can't trim that much, fallback to median
+        #[cfg(feature = "std")]
+        eprintln!(
+            "Warning: Too many Byzantine nodes for Trimmed Mean (f={}, n={}). Falling back to Median.",
+            f, n
+        );
+        return median_agg(updates, n, d);
+    }
+
+    let mut result = vec![0.0f32; d];
+    // Use fixed point division for deterministic result
+    let remaining_fixed = I16F16::from_num(n - 2 * trim_count);
+
+    // Check for division by zero (should cover by if check above, but for safety)
+    let remaining_inv = if remaining_fixed != 0 {
+        I16F16::ONE / remaining_fixed
+    } else {
+        I16F16::ZERO
+    };
+
+    for (dim, res_val) in result.iter_mut().enumerate() {
+        // Collect values for this dimension and convert to I16F16 for deterministic sorting/summing
+        let mut values: Vec<I16F16> = updates
+            .iter()
+            .map(|u| I16F16::from_num(u.get(dim).copied().unwrap_or(0.0)))
+            .collect();
+
+        values.sort_unstable();
+
+        // Trim extremes and average using fixed point accumulator
+        let mut sum = I16F16::ZERO;
+        for &val in &values[trim_count..(n - trim_count)] {
+            sum = sum.saturating_add(val);
+        }
+
+        let avg = sum.saturating_mul(remaining_inv);
+        *res_val = avg.to_num();
+    }
+
+    AggregationResult {
+        weights: result,
+        selected_indices: (0..n).collect(),
+        rejected_indices: Vec::new(),
+    }
+}
+
 /// Coordinate-wise median aggregation
 fn median_agg(updates: &[Vec<f32>], n: usize, d: usize) -> AggregationResult {
     let mut result = vec![0.0f32; d];
@@ -430,6 +508,25 @@ mod tests {
         assert!(
             (result.weights[0] - 1.0).abs() < 0.2,
             "Trimmed mean should be ~1.0"
+        );
+    }
+
+    #[test]
+    fn test_trimmed_mean_byz() {
+        // f=1, n=5 -> discards top 1 and bottom 1, averages middle 3
+        let updates = vec![
+            vec![0.0],   // Discarded (Small)
+            vec![1.0],   // Keep
+            vec![1.1],   // Keep
+            vec![0.9],   // Keep
+            vec![100.0], // Discarded (Large)
+        ];
+        let result = aggregate_updates(&updates, &AggregationMode::TrimmedMeanByz { f: 1 });
+
+        let expected_avg = (1.0 + 1.1 + 0.9) / 3.0;
+        assert!(
+            (result.weights[0] - expected_avg).abs() < 0.01,
+            "Should average middle 3"
         );
     }
 

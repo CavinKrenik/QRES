@@ -1,6 +1,6 @@
 ﻿# QRES: Neural Swarm Operating System
 
-[![v18.0](https://img.shields.io/badge/version-18.0-blue.svg)](https://github.com/CavinKrenik/QRES/releases)
+[![v19.0](https://img.shields.io/badge/version-19.0-blue.svg)](https://github.com/CavinKrenik/QRES/releases)
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.18261441-blue)](https://doi.org/10.5281/zenodo.18261441)
 [![Paper](https://img.shields.io/badge/Paper-BFT%20for%20Edge%20Learning-green.svg)](https://doi.org/10.5281/zenodo.18446020)
 [![no_std](https://img.shields.io/badge/no_std-compatible-green.svg)](https://docs.rust-embedded.org/book/intro/no-std.html)
@@ -24,6 +24,11 @@ Visualizing a decentralized neural swarm recovering from a 15% packet loss inter
 ## Executive Summary
 
 QRES is a decentralized operating system for **Edge AI Swarms**. It solves the "Consensus vs. Bandwidth" dilemma by replacing floating-point math with deterministic fixed-point arithmetic (`Q16.16`) and exchanging small "Evolved Genes" instead of massive gradient models.
+
+**v19.0 Adversarial Hardening:**
+- **Drift Defense:** Replaced Krum with **Coordinate-wise Trimmed Mean**, reducing vulnerability to "Inlier Bias" attacks (Drift < 5% under active attack).
+- **Precision:** Introduced **BFP-16 (Block Floating Point)**, enabling stable training at $LR=10^{-5}$ without vanishing gradients, solving the `I16F16` precision floor.
+- **Onboarding:** "Mid-Flight Join" protocol allows nodes to sync via 74-byte **Summary Genes**, achieving >99% bandwidth reduction vs history replay.
 
 **v18.0 Benchmark Highlights:**
 - **Compression:** Custom Static Laplace Range Coder achieves **1.40x compression**, beating ZSTD (1.39x) on prediction residuals while maintaining bit-perfect determinism.

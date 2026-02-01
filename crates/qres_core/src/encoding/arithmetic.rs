@@ -160,3 +160,50 @@ pub fn decompress_residuals(data: &[u8], original_len: usize) -> Vec<u8> {
 
     output
 }
+
+/// Compresses BFP-16 vector components (exponent + mantissas)
+/// Format: [exponent: i8][mantissas: 16-bit BE...]
+pub fn compress_bfp(exponent: i8, mantissas: &[i16]) -> Vec<u8> {
+    let mut buffer = Vec::with_capacity(1 + mantissas.len() * 2);
+    // 1. Shared Exponent
+    buffer.push(exponent as u8);
+
+    // 2. Mantissas (Big Endian)
+    for &m in mantissas {
+        buffer.extend_from_slice(&m.to_be_bytes());
+    }
+    buffer
+}
+
+/// Decompresses BFP-16 vector components
+pub fn decompress_bfp(
+    data: &[u8],
+    _valid_len: usize, // Ignored for raw format, but kept for signature compatibility if needed
+) -> crate::Result<(i8, Vec<i16>)> {
+    if data.is_empty() {
+        return Err(crate::QresError::InvalidData("Empty BFP data".into()));
+    }
+
+    // 1. Shared Exponent
+    let exponent = data[0] as i8;
+
+    // 2. Mantissas
+    let content = &data[1..];
+    if content.len() % 2 != 0 {
+        return Err(crate::QresError::InvalidData(
+            "Invalid BFP payload length".into(),
+        ));
+    }
+
+    let count = content.len() / 2;
+    let mut mantissas = Vec::with_capacity(count);
+
+    let mut i = 0;
+    while i < content.len() {
+        let bytes = [content[i], content[i + 1]];
+        mantissas.push(i16::from_be_bytes(bytes));
+        i += 2;
+    }
+
+    Ok((exponent, mantissas))
+}

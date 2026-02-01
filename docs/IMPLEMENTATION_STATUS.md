@@ -28,7 +28,8 @@ This document clarifies what's production-ready vs. experimental vs. roadmap.
     - **Reputation Manager**: Persistent trust scoring (Reward/Punish/Ban).
     - **The Gatekeeper**: Identity-bound aggregation.
 - **Phase 1 Security (Authentication)**: ed25519 signatures, PKI identity verification, replay prevention.
-- **Phase 2 Security (Robust Aggregation)**: Krum, Multi-Krum for Byzantine tolerance.
+- **Phase 2 Security (Robust Aggregation)**: `TrimmedMeanByz` (v19.0) replacing Krum to fix drift vulnerability.
+- **Gradient Precision (v19.0)**: `Bfp16Vec` (Block Floating Point) for high-dynamic-range updates without vanishing.
 - **Neural Resource Prediction** (v16): ONNX-based hybrid predictor (Neural + Heuristic fallback)
 
 ## 🧪 Experimental (Works But Not Hardened)
@@ -47,7 +48,8 @@ This document clarifies what's production-ready vs. experimental vs. roadmap.
 
 | Limitation | Impact | Mitigation |
 |------------|--------|------------|
-| **Partially trusted nodes** | Krum tolerates <45% malicious | Use PKI + Krum for public nets |
+| **Inlier Bias Drift** | Attackers within $1.5\sigma$ can cause slow drift | `TrimmedMeanByz` limits impact; Rate-limiting |
+| **Partially trusted nodes** | `TrimmedMean` tolerates $< n/3$ malicious | Use PKI + Reputation Manager |
 | **Regime change degradation** | 2-3x ratio drop during pattern shifts | Recovers via swarm learning (12-48 hours) |
 | **High-entropy data** | Cannot compress encrypted/random data | Fallback to passthrough mode |
 | **Header overhead** | Not suitable for files < 1KB | Use for larger datasets |

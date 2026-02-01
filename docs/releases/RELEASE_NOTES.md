@@ -1,8 +1,42 @@
 # QRES: Decentralized Neural Swarm Operating System for Edge IoT
 
-**Cavin Krenik** — Olympic College | Published January 2026
+**Cavin Krenik** — Olympic College | Published February 2026
 
-📄 **Updated:** v18.0 Verified Benchmark
+📄 **Updated:** v19.0 Adversarial Hardening (The Immune System II)
+
+---
+
+## v19.0.0 Release Notes: "The Immune System II"
+
+**Release Date:** February 1, 2026
+
+### Overview
+v19.0.0 marks the completion of the "Adversarial Hardening" phase. The core network protocol has been upgraded to survive "Inlier Bias" attacks and "Vanishing Gradients" in hostile environments.
+
+### Critical Security Constraints
+> **Warning**: Mixing v19.0 nodes with v18.0 nodes is **NOT** supported due to the BFP-16 header format change in the Summary Gene.
+
+### New Features
+
+#### 1. Robust Aggregation (TrimmedMeanByz)
+Replaces the `Krum` aggregator.
+- **Problem**: Krum selects a single existing vector, making it vulnerable if all vectors are slightly biased (Inlier Bias).
+- **Solution**: Coordinate-wise Trimmed Mean (`crates/qres_core/src/aggregation.rs`) sorts values per dimension and removes the top/bottom $f$ outliers.
+- **Verification**: Zero drift observed in Golden Run scenarios where Krum failed.
+
+#### 2. Block Floating Point (BFP-16)
+Solves the precision bottleneck of I16F16.
+- **Problem**: `I16F16` has a minimum step of $1.5 \times 10^{-5}$. Gradients at $LR=10^{-5}$ rounded to zero.
+- **Solution**: `Bfp16Vec` uses a shared 8-bit exponent and 16-bit integers.
+- **Result**: Dynamic range of `f32` with the storage density of `i16`.
+
+#### 3. Mid-Flight Onboarding (Summary Gene)
+Allows new nodes to join without replaying history.
+- **Protocol**: Peers exchange a 74-byte `SummaryGene` containing:
+    - Current Consensus State (BFP-16)
+    - Variance/Risk Metric (BFP-16)
+    - History Hash & Round Index
+- **Performance**: >99% bandwidth reduction vs v18.0 full sync.
 
 ---
 

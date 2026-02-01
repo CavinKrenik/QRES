@@ -11,6 +11,74 @@ use alloc::vec::Vec;
 use std::vec::Vec;
 
 use fixed::types::I16F16;
+use serde::{Deserialize, Serialize};
+
+/// Block Floating Point Vector (BFP-16)
+/// Solves the "vanishing update" problem for low learning rates by using
+/// a shared exponent for the entire vector.
+/// Value = mantissa * 2^exponent
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Bfp16Vec {
+    /// Shared exponent for the block
+    pub exponent: i8,
+    /// 16-bit signed mantissas
+    pub mantissas: Vec<i16>,
+}
+
+impl Bfp16Vec {
+    /// Create Bfp16Vec from f32 slice
+    pub fn from_f32_slice(data: &[f32]) -> Self {
+        if data.is_empty() {
+            return Self {
+                exponent: 0,
+                mantissas: Vec::new(),
+            };
+        }
+
+        // 1. Find max absolute value
+        let max_abs = data.iter().map(|x| x.abs()).fold(0.0f32, |a, b| a.max(b));
+
+        if max_abs == 0.0 {
+            return Self {
+                exponent: 0,
+                mantissas: vec![0; data.len()],
+            };
+        }
+
+        // 2. Calculate optimal exponent
+        // We want max_abs * 2^(-exp) <= 32767
+        // exp >= log2(max_abs) - log2(32767)
+        // exp = ceil(log2(max_abs) - 14.99993)
+        // Using -15.0 ensures we maximize dynamic range usage (matches Python)
+        let exp_f32 = max_abs.log2().ceil() - 15.0;
+
+        // Clamp exponent to valid range if needed
+        let exponent = (exp_f32 as i8).max(-126).min(126);
+
+        // 3. Quantize
+        // scale = 2^(-exponent)
+        let scale = 2.0f32.powi(-(exponent as i32));
+        let mantissas = data
+            .iter()
+            .map(|&x| {
+                let scaled = x * scale;
+                // Clamp to i16 range (saturating)
+                scaled.clamp(-32767.0, 32767.0).round() as i16
+            })
+            .collect();
+
+        Self {
+            exponent,
+            mantissas,
+        }
+    }
+
+    /// Convert back to Vec<f32>
+    pub fn to_vec_f32(&self) -> Vec<f32> {
+        let scale = 2.0f32.powi(self.exponent as i32);
+        self.mantissas.iter().map(|&m| m as f32 * scale).collect()
+    }
+}
 
 /// Calculates the squared Euclidean distance between two fixed-point vectors.
 ///

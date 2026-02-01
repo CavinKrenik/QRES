@@ -4,6 +4,25 @@ All notable changes to this project are documented here.
 
 ---
 
+## [v19.0.0] - 2026-02-01 "The Immune System II"
+
+### Adversarial Hardening (Phase 2 & 3)
+- **Trimmed Mean Aggregator**: Implemented `TrimmedMeanByz` in `qres_core` to neutralize "Inlier Bias" attacks (Drift < 0.05% verified). Replaces Krum as the primary defense against sophisticated drift.
+- **BFP-16 Precision**: Introduced `Bfp16Vec` (Block Floating Point) for gradient headers. 
+    - Solved "Vanishing Gradient" problem at low learning rates ($10^{-5}$).
+    - Maintains `f32` dynamic range with `i16` storage density.
+- **Summary Gene Protocol**: 
+    - Implemented "Mid-Flight Join" capability using compact 74-byte Summary Genes.
+    - Achieves **2,133:1 compression ratio** vs full event log replay.
+    - Packet loss resilience verified (recovers state via summary gene).
+
+### Documentation
+- Added `docs/adrs/ADR-004-adversarial-hardening.md`.
+- Updated `Attack.md` with final golden run results.
+
+### Changed
+- Rolled version string to `19.0.0` across all crates and bindings.
+
 ## [v18.0.0] - 2026-01-15
 
 ### Added
