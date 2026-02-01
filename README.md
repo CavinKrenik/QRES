@@ -52,7 +52,19 @@ The system is architected as three interlocking layers:
 
 ---
 
-## ⚡ Verified Performance (Azure Cloud v18.0)
+## ⚡ Verified Performance (v19.0)
+
+### 1. Precision & Convergence (BFP-16)
+The transition to Block Floating Point (`Bfp16Vec`) eliminates the "Precision Floor" of simple fixed-point math while maintaining bit-perfect determinism.
+
+![Accuracy Shadow](docs/images/accuracy_shadow.png)
+
+### 2. Extreme Bandwidth Efficiency
+The "Summary Gene" protocol (v19.0) enables nodes to join ongoing swarms by downloading a compressed state vector rather than the full transaction history.
+
+![Onboarding Zip](docs/images/onboarding_zip.png)
+
+### 3. Cloud Scalability (Azure)
 
 ![Scalability Chart](docs/images/scalability_chart.png)
 
@@ -67,6 +79,8 @@ The system is architected as three interlocking layers:
 ---
 
 ## Key Features
+
+![System Architecture](docs/images/system_architecture.png)
 
 ### The Body: Deterministic Core
 
