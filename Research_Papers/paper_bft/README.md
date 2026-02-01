@@ -33,13 +33,13 @@ pdflatex paper.tex  # Run twice for references
 
 ## Regenerating Figures
 
-All visualization scripts are in `../tools/`:
+All visualization scripts are in `../../tools/`:
 
 ```bash
-python ../tools/visualize_attack.py          # Fig 1
-python ../tools/visualize_robustness.py      # Fig 2
-python ../tools/visualize_tolerance.py       # Fig 3
-python ../tools/figure3_static_evolution.py  # Fig 4
+python ../../tools/visualize_attack.py          # Fig 1
+python ../../tools/visualize_robustness.py      # Fig 2
+python ../../tools/visualize_tolerance.py       # Fig 3
+python ../../tools/figure3_static_evolution.py  # Fig 4
 ```
 
 ## Citation
