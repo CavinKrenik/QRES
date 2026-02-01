@@ -239,7 +239,7 @@ Complete documentation is organized in the [docs/](docs/) directory:
 | **Theory & Research** | [THEORY.md](docs/theory/THEORY.md), [SNN_ENERGY_ANALYSIS.md](docs/theory/SNN_ENERGY_ANALYSIS.md) |
 | **Implementation Guides** | [P2P_IMPLEMENTATION.md](docs/guides/P2P_IMPLEMENTATION.md), [SECURITY_IMPLEMENTATION_GUIDE.md](docs/guides/SECURITY_IMPLEMENTATION_GUIDE.md) |
 | **Process** | [CONTRIBUTING.md](docs/CONTRIBUTING.md), [SECURITY_ROADMAP.md](docs/SECURITY_ROADMAP.md) |
-| **Benchmarks** | [BENCHMARKS.md](docs/BENCHMARKS.md), [CLOUD_BENCHMARK_RESULTS.md](docs/CLOUD_BENCHMARK_RESULTS.md) |
+| **Benchmarks** | [BENCHMARKS.md](docs/BENCHMARKS.md), [CLOUD_BENCHMARK_RESULTS.md](docs/CLOUD_BENCHMARK_RESULTS.md), [COST_COMPARISON.md](docs/COST_COMPARISON.md) |
 | **Media** | [IMAGES.md](docs/IMAGES.md) |
 
 For a complete index, see [docs/README.md](docs/README.md).
