@@ -199,6 +199,8 @@ All experiments use the Python prototype of Krum for rapid iteration. Each exper
 
 ## v19.0 Final Verification
 
+**Related Study:** See [research/Ablation_Study.md](research/Ablation_Study.md) for the Multi-Krum vs. Median/Mean ablation that underpins the "Novel Composition" claim.
+
 ### Golden Run: Integrated Multi-Krum + BFP-16 - 2026-02-01
 
 - **Objective:** Prove that the coordinate-wise trimmed mean aggregator and BFP-16 arithmetic work together without interference in a single simulation.

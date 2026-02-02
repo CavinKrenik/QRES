@@ -15,9 +15,9 @@
 
 ## Emergent Intelligence in Action
 
-![Neural Swarm Emergence](docs/images/neural_swarm_emergence.gif)
+![Consensus Evolution](docs/images/consensus_evolution.gif)
 
-Visualizing a decentralized neural swarm recovering from a 15% packet loss interference zone. A single mutation propagates its evolved bytecode to heal the network through hardware-constrained gossip. This behavior emerges from network physics constraints, not central orchestration.
+Honest nodes converge to consensus while coordinated attackers are ignored; evolved genes propagate to heal the swarm under packet loss and bandwidth limits.
 
 ---
 
@@ -33,7 +33,14 @@ QRES is a decentralized operating system for **Edge AI Swarms**. It solves the "
 **v18.0 Benchmark Highlights:**
 - **Compression:** Custom Static Laplace Range Coder achieves **1.40x compression**, beating ZSTD (1.39x) on prediction residuals while maintaining bit-perfect determinism.
 - **Efficiency:** Swarms converge **12x faster** (wall-clock) than Federated Learning on constrained IoT networks (56kbps), consuming **99% less bandwidth**.
-- **Scalability:** Secure Aggregation proven linearly scalable (O(N)) for trusted peers. 🛡️ **Byzantine Fault Tolerance**: Deterministic I16F16 Krum aggregation guarantees bit-perfect outlier rejection across mixed-architecture swarms (ARM/ESP32/x86).
+- **Scalability:** Secure Aggregation proven linearly scalable (O(N)) for trusted peers. 🛡️ **Byzantine Fault Tolerance**: Deterministic I16F16 coordinate-wise trimmed mean keeps consensus stable across mixed-architecture swarms (ARM/ESP32/x86).
+
+## Strategic Technical Overview (v19.0)
+- Deterministic Rematerialization replaces state shipping: nodes replay training steps locally to reach consensus under tight bandwidth budgets.
+- Aggregator resilience: coordinate-wise trimmed mean (Multi-Krum) delays breakdown ~2× vs Mean and ~3× vs Median before the 5% drift threshold; see [research/Ablation_Study.md](research/Ablation_Study.md).
+- Precision engine: BFP-16 matches Float32 on MNIST and prevents I16F16 update stalling at $LR=10^{-5}$.
+- Onboarding and scale: Summary Genes cut join bandwidth by ~99.95% (≈150 B vs 312 KB) with zero divergence for mid-flight joiners; resilience holds to ~30% coordinated bias when $f < 0.33$.
+- Production boundaries: continuous/differentiable inputs only, model size capped by the smallest node (~320 KB), soft real-time only; see [docs/SCOPE.md](docs/SCOPE.md) for the negative space.
 
 The system is architected as three interlocking layers:
 
@@ -119,54 +126,17 @@ Located in `crates/qres_core/src/cortex/storage.rs`, this layer provides:
 - **Periodic Persistence**: Every 5 seconds, calm evolved nodes save their bytecode to disk.
 - **Lamarckian Evolution**: Learned strategies survive simulation restarts.
 
-### 🛡️ Byzantine Fault Tolerance (Active Defense)
+### 🛡️ Byzantine Fault Tolerance (v19 Ablation)
 
-QRES uses deterministic I16F16 Krum aggregation to reject malicious updates. In this verified test scenario, a malicious node attempted to poison the model with extreme values (`100.0`), pulling the Naive Mean to `~20.8`.
+Coordinate-wise trimmed mean (Multi-Krum variant) replaces legacy Krum to resist coordinated inlier bias. The v19 ablation sweep shows breakdown thresholds across biases:
 
-**QRES Krum correctly identified and rejected the outlier**, maintaining consensus at `1.0`.
+- Naive Mean fails by 15% bias; Median fails immediately at 5%.
+- Trimmed Mean holds drift-probability 0% at 5% and delays breakdown to 10%+, with lower drift magnitudes at 20%+.
 
-![BFT Defense Visualization](Figure_1.png)
+![Aggregator Sensitivity](docs/images/sensitivity_plot.png)
 
-```
-🛡️ BFT DEFENSE ACTIVE: Malicious outlier rejected
-   Mean (Compromised):  [20.79, 20.81]
-   Krum (Protected):    [1.00, 1.00]
-   Total Correction:    39.60
-```
-
-#### Robustness Stress Tests
-
-Krum successfully defends against increasingly sophisticated attack scenarios:
-
-![Robustness Comparison](docs/images/robustness_comparison.png)
-
-| Scenario | Attack Type | Naive Mean Error | Krum Error | Result |
-|----------|-------------|------------------|------------|--------|
-| **A** | Subtle Poisoning (1.5x) | 0.14 | **0.00** | ✅ Robust |
-| **B** | Coordination Attack (2 attackers) | 1.89 | **0.03** | ✅ Robust |
-| **C** | 8D Gene Vector | 4.25 | **0.10** | ✅ Robust |
-
-#### 📉 Operating Envelope & Tolerance Limits
-
-QRES is designed to withstand up to **~40% network compromise**. Beyond the theoretical limit ($n < 2f + 3$), the consensus mechanism fails gracefully.
-
-![Tolerance Curve](docs/images/tolerance_curve.png)
-
-| Byzantine % | Krum Error | Status |
-|-------------|------------|--------|
-| **10%** | 0.19 | ✅ Secure |
-| **20%** | 0.20 | ✅ Secure |
-| **30%** | 0.16 | ✅ Secure |
-| **40%** | 0.17 | ⚠️ At Limit |
-| **50%** | 12.72 | ❌ Breakdown |
-
-> **Recommendation:** Configure `expected_byzantines_fraction` to **1.5×** your anticipated threat level to stay in the Safe Zone.
-
-#### 🎬 Convergence Under Attack
-
-Watch honest nodes converge to consensus while ignoring coordinated attackers:
-
-![Consensus Evolution](docs/images/consensus_evolution.gif)
+- Full study and dataset: [research/Ablation_Study.md](research/Ablation_Study.md)
+- Recommendation: set `expected_byzantines_fraction` to **1.5×** expected Sybil budget; expect resilience up to ~30% coordinated bias in this workload.
 
 ---
 
