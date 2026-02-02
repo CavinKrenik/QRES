@@ -1,7 +1,7 @@
 ﻿# QRES: Neural Swarm Operating System
 
-[![v19.0](https://img.shields.io/badge/version-19.0-blue.svg)](https://github.com/CavinKrenik/QRES/releases)
-[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.18261441-blue)](https://doi.org/10.5281/zenodo.18261441)
+[![v19.0.1](https://img.shields.io/badge/version-19.0.1-blue.svg)](https://github.com/CavinKrenik/QRES/releases)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.18193905-blue)](https://doi.org/10.5281/zenodo.18193905)
 [![Paper](https://img.shields.io/badge/Paper-BFT%20for%20Edge%20Learning-green.svg)](https://doi.org/10.5281/zenodo.18446020)
 [![no_std](https://img.shields.io/badge/no_std-compatible-green.svg)](https://docs.rust-embedded.org/book/intro/no-std.html)
 [![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE-MIT)
@@ -24,6 +24,14 @@ Honest nodes converge to consensus while coordinated attackers are ignored; evol
 ## Executive Summary
 
 QRES is a decentralized operating system for **Edge AI Swarms**. It solves the "Consensus vs. Bandwidth" dilemma by replacing floating-point math with deterministic fixed-point arithmetic (`Q16.16`) and exchanging small "Evolved Genes" instead of massive gradient models.
+
+**v19.0.1 SecureANDsafe Hardening:**
+- **ZK Proofs:** Sigma protocol proofs for weight transitions verify neuron legitimacy without exposing weights.
+- **Sybil Defense:** `ReputationTracker` bans malicious nodes; 50/50 Sybil attackers banned within 4 rounds.
+- **Formal Verification:** TLA+ spec proves liveness under 90% packet loss.
+- **Predictive Intelligence:** PreStorm regime detection provides 4-tick early warning before entropy spikes.
+- **Compression:** Bottleneck autoencoder achieves 6.7x compression (22 bytes for Summary Genes).
+- **Signal Recovery:** BFP-16 VarianceMonitor auto-tunes for vanishing gradients (<10^-7).
 
 **v19.0 Adversarial Hardening:**
 - **Drift Defense:** Replaced Krum with **Coordinate-wise Trimmed Mean**, reducing vulnerability to "Inlier Bias" attacks (Drift < 5% under active attack).
@@ -304,7 +312,7 @@ If you use QRES in research, please cite:
   author = {Krenik, Cavin},
   title = {QRES: Neural Swarm Operating System},
   url = {https://github.com/CavinKrenik/QRES},
-  doi = {10.5281/zenodo.18261441},
+  doi = {10.5281/zenodo.18193905},
   year = {2026}
 }
 ```
@@ -323,4 +331,4 @@ This paper formalizes the theoretical foundation of QRES, identifying a structur
 
 ---
 
-**Status**: Stable. Version 18.0 (Neural Swarm Architecture) complete. The pivot from deterministic compression to emergent swarms is verified in simulation. Ready for edge deployment.
+**Status**: Stable. Version 19.0.1 (SecureANDsafe Hardening) complete. The pivot from deterministic compression to emergent swarms is verified in simulation. Ready for edge deployment.

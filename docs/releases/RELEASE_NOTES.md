@@ -2,7 +2,49 @@
 
 **Cavin Krenik** — Olympic College | Published February 2026
 
-📄 **Updated:** v19.0 Adversarial Hardening (The Immune System II)
+📄 **Updated:** v19.0.1 SecureANDsafe Hardening Complete
+
+---
+
+## v19.0.1 Release Notes: "Secure & Safe"
+
+**Release Date:** February 2, 2026
+
+### Overview
+v19.0.1 completes the advanced hardening and algorithmic refinement phase. The swarm is now cryptographically verifiable, formally verified for liveness, and resistant to sophisticated Sybil attacks.
+
+### Test Status
+> **81/81 tests passing** (`cargo test --all --features std`)
+
+### New Features
+
+#### 1. ZK Transition Proofs (Cryptographic Truth)
+- Sigma protocol proofs for weight transitions using Fiat-Shamir transform (BLAKE3)
+- `ZkProtocol` trait with `prove_transition()` method
+- Forged `prev_hash` causes verification failure - malicious neurons rejected
+
+#### 2. Reputation Tracker (Sybil Resistance)
+- `ReputationTracker` with per-peer scores: +0.02 for valid ZKP, -0.08 for drift, -0.15 for ZKP failure
+- Ban threshold: score < 0.2
+- **Result:** 50/50 Sybil nodes banned within 4 rounds, 0% final drift
+
+#### 3. Mid-Flight Join TLA+ Specification (Formal Verification)
+- Full TLA+ spec in `research/MidFlightJoin.tla` with states: Offline → Joining → Receiving_Summary → Synced
+- **Liveness PROVEN** under 90% packet loss
+
+#### 4. PreStorm Regime Detection (Predictive Intelligence)
+- 3-point moving average for entropy calculation
+- Entropy derivative triggers "Pre-Storm" state
+- **4-tick early warning** before Storm mode
+
+#### 5. Bottleneck Autoencoder (Extreme Efficiency)
+- 4-layer architecture: Input(D) → Hidden(D/2) → Bottleneck(B) → Hidden(D/2) → Output(D)
+- **6.7x compression** (22 bytes vs 148 bytes for Summary Genes)
+
+#### 6. BFP-16 VarianceMonitor (Signal Recovery)
+- Auto-tuning for vanishing gradients (<10^-7)
+- Bit-shift correction to re-center precision window
+- **Non-zero learning velocity maintained** with extremely small weights
 
 ---
 

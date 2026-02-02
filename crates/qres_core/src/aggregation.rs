@@ -130,6 +130,141 @@ impl Aggregator for TrimmedMeanByzAggregator {
     }
 }
 
+/// Weighted Trimmed Mean aggregator (Sybil-Resistant)
+/// Each node's contribution is weighted by `1.0 * reputation_score`.
+/// Nodes with low reputation have negligible influence on consensus.
+#[derive(Clone, Debug)]
+pub struct WeightedTrimmedMeanAggregator {
+    /// Number of top/bottom values to trim per dimension
+    pub f: usize,
+    /// Reputation weights per node (same order as updates)
+    pub reputation_weights: Vec<f32>,
+}
+
+impl WeightedTrimmedMeanAggregator {
+    pub fn new(f: usize, reputation_weights: Vec<f32>) -> Self {
+        Self {
+            f,
+            reputation_weights,
+        }
+    }
+}
+
+impl Aggregator for WeightedTrimmedMeanAggregator {
+    fn aggregate(&self, updates: &[Vec<f32>]) -> AggregationResult {
+        weighted_trimmed_mean(updates, self.f, &self.reputation_weights)
+    }
+
+    fn name(&self) -> &'static str {
+        "WeightedTrimmedMean"
+    }
+}
+
+/// Weighted trimmed mean: nodes contribute proportionally to their reputation.
+/// After trimming top/bottom `f` values per dimension, remaining values are
+/// averaged with reputation-based weights.
+fn weighted_trimmed_mean(
+    updates: &[Vec<f32>],
+    f: usize,
+    reputation_weights: &[f32],
+) -> AggregationResult {
+    if updates.is_empty() {
+        return AggregationResult {
+            weights: Vec::new(),
+            selected_indices: Vec::new(),
+            rejected_indices: Vec::new(),
+        };
+    }
+
+    let n = updates.len();
+    let d = updates[0].len();
+
+    if f * 2 >= n {
+        // Can't trim that much, fallback to weighted mean
+        return weighted_mean(updates, reputation_weights);
+    }
+
+    let mut result = vec![0.0f32; d];
+
+    for (dim, res_val) in result.iter_mut().enumerate().take(d) {
+        // Collect (value, reputation_weight, original_index)
+        let mut dim_values: Vec<(f32, f32, usize)> = updates
+            .iter()
+            .enumerate()
+            .map(|(i, u)| {
+                let val = u.get(dim).copied().unwrap_or(0.0);
+                let rep = reputation_weights.get(i).copied().unwrap_or(0.5);
+                (val, rep, i)
+            })
+            .collect();
+
+        // Sort by value
+        dim_values.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(core::cmp::Ordering::Equal));
+
+        // Trim top f and bottom f
+        let trimmed = &dim_values[f..(n - f)];
+
+        // Weighted average of remaining
+        let total_weight: f32 = trimmed.iter().map(|(_, w, _)| w).sum();
+        if total_weight > 0.0 {
+            let weighted_sum: f32 = trimmed.iter().map(|(val, w, _)| val * w).sum();
+            *res_val = weighted_sum / total_weight;
+        }
+    }
+
+    AggregationResult {
+        weights: result,
+        selected_indices: (0..n).collect(),
+        rejected_indices: Vec::new(),
+    }
+}
+
+/// Simple weighted mean (fallback when trimming isn't possible)
+fn weighted_mean(updates: &[Vec<f32>], reputation_weights: &[f32]) -> AggregationResult {
+    if updates.is_empty() {
+        return AggregationResult {
+            weights: Vec::new(),
+            selected_indices: Vec::new(),
+            rejected_indices: Vec::new(),
+        };
+    }
+
+    let n = updates.len();
+    let d = updates[0].len();
+    let mut result = vec![0.0f32; d];
+
+    let total_weight: f32 = (0..n)
+        .map(|i| reputation_weights.get(i).copied().unwrap_or(0.5))
+        .sum();
+
+    if total_weight == 0.0 {
+        return AggregationResult {
+            weights: result,
+            selected_indices: (0..n).collect(),
+            rejected_indices: Vec::new(),
+        };
+    }
+
+    for (i, update) in updates.iter().enumerate() {
+        let w = reputation_weights.get(i).copied().unwrap_or(0.5);
+        for (j, &val) in update.iter().enumerate() {
+            if j < d {
+                result[j] += val * w;
+            }
+        }
+    }
+
+    for x in result.iter_mut() {
+        *x /= total_weight;
+    }
+
+    AggregationResult {
+        weights: result,
+        selected_indices: (0..n).collect(),
+        rejected_indices: Vec::new(),
+    }
+}
+
 /// Aggregation mode for combining model updates
 #[derive(Clone, Debug, Default)]
 pub enum AggregationMode {
