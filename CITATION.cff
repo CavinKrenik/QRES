@@ -3,7 +3,7 @@ message: "If you use QRES in academic work, please cite the software and relevan
 
 title: "QRES: A Decentralized Operating System for Neural Swarms"
 version: "v19.0.0"
-doi: "10.5281/zenodo.18261441"
+doi: "10.5281/zenodo.18193905"
 date-released: "2026-02-01"
 
 authors:
@@ -36,7 +36,7 @@ keywords:
 license: MIT OR Apache-2.0
 
 repository-code: "https://github.com/CavinKrenik/QRES"
-url: "https://doi.org/10.5281/zenodo.18261441"
+url: "https://doi.org/10.5281/zenodo.18193905"
 
 preferred-citation:
   type: software
@@ -47,7 +47,7 @@ preferred-citation:
   title: "QRES: A Decentralized Operating System for Neural Swarms"
   year: 2026
   version: "v19.0.0"
-  doi: "10.5281/zenodo.18261441"
+  doi: "10.5281/zenodo.18193905"
 
 references:
   - type: article
