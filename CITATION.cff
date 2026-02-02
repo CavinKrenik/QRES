@@ -2,9 +2,9 @@ cff-version: 1.2.0
 message: "If you use QRES in academic work, please cite the software and relevant papers below."
 
 title: "QRES: A Decentralized Operating System for Neural Swarms"
-version: "v18.0.0"
+version: "v19.0.0"
 doi: "10.5281/zenodo.18261441"
-date-released: "2026-01-15"
+date-released: "2026-02-01"
 
 authors:
   - family-names: Krenik
@@ -46,7 +46,7 @@ preferred-citation:
       orcid: "https://orcid.org/0009-0008-9183-1278"
   title: "QRES: A Decentralized Operating System for Neural Swarms"
   year: 2026
-  version: "v18.0.0"
+  version: "v19.0.0"
   doi: "10.5281/zenodo.18261441"
 
 references:
