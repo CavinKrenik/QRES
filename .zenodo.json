@@ -1,0 +1,31 @@
+{
+  "title": "QRES: Neural Swarm Operating System",
+  "upload_type": "software",
+  "description": "QRES is a decentralized operating system for edge AI swarms. It replaces state shipping with deterministic rematerialization, uses coordinate-wise trimmed mean aggregation for adversarial resilience, and employs BFP-16 arithmetic for precision on constrained hardware.",
+  "creators": [
+    {
+      "name": "Krenik, Cavin",
+      "orcid": "0009-0008-9183-1278"
+    }
+  ],
+  "keywords": [
+    "Edge AI",
+    "Neural Swarms",
+    "Deterministic Computing",
+    "Byzantine Fault Tolerance",
+    "Federated Learning",
+    "Rust"
+  ],
+  "license": "MIT",
+  "access_right": "open",
+  "version": "v19.0.0",
+  "publication_date": "2026-02-01",
+  "related_identifiers": [
+    {
+      "relation": "isSupplementTo",
+      "identifier": "https://github.com/CavinKrenik/QRES",
+      "scheme": "url"
+    }
+  ],
+  "notes": "Concept DOI: 10.5281/zenodo.18261441. Keep this as the repository DOI; papers use separate DOIs."
+}
