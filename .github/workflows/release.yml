@@ -207,3 +207,4 @@ jobs:
           body_path: docs/releases/RELEASE_NOTES.md
           files: dist/*
           generate_release_notes: true
+          draft: false  # Explicit - ensures Zenodo webhook fires immediately
